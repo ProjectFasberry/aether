@@ -28,7 +28,7 @@ const ServersList = reatomComponent(({ ctx }) => {
 
   if (ctx.spy(avServersAction.statusesAtom).isPending) {
     return (
-      <div className="flex w-full gap-2 items-center *:rounded-lg *:h-46 *:w-full">
+      <div className="flex w-full gap-2 items-center *:rounded-xl *:h-46 *:w-full">
         <Skeleton />
         <Skeleton />
       </div>
@@ -43,7 +43,7 @@ const ServersList = reatomComponent(({ ctx }) => {
       {data.map((i) => (
         <div
           key={i.value}
-          className="flex flex-col gap-4 w-full border border-neutral-800 rounded-lg p-4"
+          className="flex flex-col gap-4 w-full border border-neutral-600 rounded-xl p-4"
         >
           <Typography className='font-semibold text-base'>
             {i.name}

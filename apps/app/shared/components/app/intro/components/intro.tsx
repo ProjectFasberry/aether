@@ -38,7 +38,7 @@ export const Intro = () => {
   return (
     <div
       id="intro"
-      className="flex flex-col items-center relative rounded-lg overflow-hidden w-full md:h-96 min-h-72 max-h-80"
+      className="flex flex-col items-center relative rounded-xl overflow-hidden w-full md:h-96 min-h-72 max-h-80"
     >
       <div className="absolute bg-gradient-to-r inset-0 w-full h-full from-black/80 via-black/40 to-transparent z-5" />
       <img

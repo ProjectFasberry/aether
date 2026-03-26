@@ -48,7 +48,7 @@
     @apply w-full px-2 sm:px-0;
     max-width: clamp(420px, 80vw, 1200px);
   }
-  
+
   @keyframes loading-spinner {
     0% {
       stroke-dasharray: 0.01px, 43.97px;
@@ -249,57 +249,62 @@
   --color-water-end: oklch(39.7% 0.47 303);
   --color-water-nether: oklch(43.9% 0.25 26);
 
-  --color-link: #aaaaff;
-  --color-panel: #C6C6C6;
-  --color-panel-dark: #373737;
-  --color-gold: #FFAA00;
-  --color-gray: #AAAAAA;
-  --color-blue: #5555FF;
-  --color-green: #55FF55;
-  --color-aqua: #55FFFF;
-  --color-red: #FF5555;
-  --color-light-purple: #55FF55;
-  --color-yellow: #55FF55;
-  --color-discord-color: #7289da;
-  --color-discord-server-color: #68FBAC;
-  --color-blue-server-color: #C2CBFB;
-  --color-green-server-color: #8FFD8F;
-  --color-red-server-color: #FB3E3E;
-  --color-muffin-server-color: #FFC0CB;
-  --color-bisquite-server-color: #BEABF6;
-  --color-project-color: #00cdb0;
-  --color-project-color-pink: #fabbfb;
-  --color-background-dark: #0D0D0D;
-  --color-background-light: #dcdcdc;
+  --color-link: oklch(74.41% 0.108 279.7);
+  --color-panel: oklch(81.93% 0 0);
+  --color-panel-dark: oklch(31.32% 0 0);
+  --color-gold: oklch(77.19% 0.178 70.66);
+  --color-gray: oklch(73.18% 0 0);
+  --color-blue: oklch(54.45% 0.255 279.7);
+  --color-green: oklch(88.33% 0.25 142.5);
+  --color-aqua: oklch(91.31% 0.137 195.46);
+  --color-red: oklch(65.54% 0.207 24.3);
+  --color-light-purple: oklch(88.33% 0.25 142.5);
+  --color-yellow: oklch(88.33% 0.25 142.5);
 
-  --color-dark-blue: #0000AA;
-  --color-dark-green: #00AA00;
-  --color-dark-aqua: #00AAAA;
-  --color-dark-red: #AA0000;
-  --color-dark-purple: #AA00AA;
-  --color-dark-gray: #555555;
+  /* Brand & Server Colors */
+  --color-discord-color: oklch(61.42% 0.113 268.45);
+  --color-discord-server-color: oklch(89.84% 0.17 158.42);
+  --color-blue-server-color: oklch(83.17% 0.057 274.67);
+  --color-green-server-color: oklch(91.35% 0.197 142.5);
+  --color-red-server-color: oklch(61.94% 0.228 25.1);
+  --color-muffin-server-color: oklch(84.73% 0.065 10.97);
+  --color-bisquite-server-color: oklch(75.56% 0.108 285.45);
+  --color-project-color: oklch(74.45% 0.145 177.34);
+  --color-project-color-pink: oklch(84.58% 0.091 326.68);
+  --color-background-dark: oklch(14.2% 0 0);
+  --color-background-light: oklch(89.37% 0 0);
 
-  --color-wool-orange: #B24CD8;
-  --color-wool-magenta: #00AA00;
-  --color-wool-light-blue: #6699D8;
-  --color-wool-yellow: #E5E533;
-  --color-wool-lime: #7FCC19;
-  --color-wool-pink: #F27FA5;
+  /* Dark Variants */
+  --color-dark-blue: oklch(25.9% 0.187 279.7);
+  --color-dark-green: oklch(59.16% 0.166 142.5);
+  --color-dark-aqua: oklch(62.9% 0.091 195.46);
+  --color-dark-red: oklch(39.81% 0.161 28.59);
+  --color-dark-purple: oklch(40.67% 0.17 318.5);
+  --color-dark-gray: oklch(42.53% 0 0);
 
-  --color-grass-DEFAULT: #79C05A;
-  --color-grass-jungle: #59C93C;
-  --color-grass-dark-forest: #507A32;
-  --color-grass-swamp-green: #4C763C;
-  --color-grass-plains: #91BD59;
-  --color-grass-forest: #79C05A;
-  --color-grass-birch-forest: #88BB67;
-  --color-grass-ocean: #8EB971;
-  --color-grass-meadow: #83BB6D;
-  --color-grass-tiaga: #86B783;
-  --color-grass-snowy: #80B497;
-  --color-grass-swamp: #6A7039;
-  --color-grass-badlands: #90814D;
-  --color-grass-desert: #BFB755;
+  /* World & Item Colors */
+  --color-wool-orange: oklch(53.28% 0.227 308.57);
+  --color-wool-magenta: oklch(59.16% 0.166 142.5);
+  --color-wool-light-blue: oklch(63.97% 0.096 254.34);
+  --color-wool-yellow: oklch(88.01% 0.17 106.57);
+  --color-wool-lime: oklch(74.77% 0.189 128.87);
+  --color-wool-pink: oklch(69.85% 0.158 357.73);
+
+  /* Grass Biomes */
+  --color-grass-DEFAULT: oklch(73.18% 0.147 134.46);
+  --color-grass-jungle: oklch(74.01% 0.198 138.83);
+  --color-grass-dark-forest: oklch(49.2% 0.101 131.63);
+  --color-grass-swamp-green: oklch(47.53% 0.082 133.5);
+  --color-grass-plains: oklch(74.52% 0.142 124.6);
+  --color-grass-forest: oklch(73.18% 0.147 134.46);
+  --color-grass-birch-forest: oklch(72.78% 0.117 131.81);
+  --color-grass-ocean: oklch(72.54% 0.102 134.42);
+  --color-grass-meadow: oklch(72.78% 0.108 137.6);
+  --color-grass-tiaga: oklch(71.86% 0.076 146.57);
+  --color-grass-snowy: oklch(70.81% 0.063 167.36);
+  --color-grass-swamp: oklch(46.85% 0.069 113.88);
+  --color-grass-badlands: oklch(55.19% 0.076 89.92);
+  --color-grass-desert: oklch(73.81% 0.122 103.88);
 }
 
 .ui-loader {

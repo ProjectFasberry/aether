@@ -2,7 +2,6 @@ import { Link } from "@/shared/components/config/link";
 import { usePageContext } from "vike-react/usePageContext";
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
-import { getStaticObject } from "../../../lib/volume";
 import { atom } from '@reatom/core';
 import { reatomComponent } from '@reatom/npm-react';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@repo/ui/sheet';
@@ -11,6 +10,7 @@ import { Typography } from "@repo/ui/typography";
 import { Fragment } from "react/jsx-runtime";
 import { tv } from "tailwind-variants";
 import { APP_URL } from "@/shared/env";
+import { getStaticObject } from "@/shared/lib/volume";
 
 const MAIN_HEADER = [
   { name: "Главная", href: "/", },

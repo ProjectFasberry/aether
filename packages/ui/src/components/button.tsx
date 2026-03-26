@@ -1,4 +1,4 @@
-import { LoaderCircleIcon } from "lucide-react"
+import { IconCircleDotted } from "@tabler/icons-react"
 import { ButtonHTMLAttributes } from "react"
 import { tv, VariantProps } from "tailwind-variants"
 
@@ -35,7 +35,7 @@ export const Button = ({ className, isLoading, withSpinner, background, children
       {...props}
     >
       {(withSpinner && isLoading) && (
-        <LoaderCircleIcon className="animate-spin duration-300 mr-2" size={20} />
+        <IconCircleDotted className="animate-spin duration-300 mr-2" size={20} />
       )}
       {children}
     </button>

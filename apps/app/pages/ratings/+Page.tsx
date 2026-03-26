@@ -21,7 +21,7 @@ const RatingsList = reatomComponent(({ ctx }) => {
               <Link
                 key={n.value}
                 href={`/ratings/${item.key}/${n.value}`}
-                className="flex border text-nowrap truncate min-w-0 border-neutral-800 p-4 hover:bg-neutral-800 rounded-lg"
+                className="flex border text-nowrap truncate min-w-0 border-neutral-700 p-4 hover:bg-neutral-800 rounded-xl"
               >
                 {n.title}
               </Link>

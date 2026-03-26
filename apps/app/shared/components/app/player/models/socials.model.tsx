@@ -1,9 +1,9 @@
 import { client } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
 import { isEmptyArray } from "@/shared/lib/array"
-import { IconBrandDiscord, IconBrandTelegram } from "@tabler/icons-react"
 import { ReactNode } from "react"
 import { toast } from "sonner"
+import { Icon } from "@/shared/ui/icon"
 
 export type PlayerSocialsValuePayload = {
   id: string | number,
@@ -28,8 +28,8 @@ export const playerSocialsAction = reatomAsync(async (ctx, nickname: string) => 
 )
 
 export const SOCIAL_ICONS: Record<PlayerSocialsPayload["type"], () => ReactNode> = {
-  telegram: () => <IconBrandTelegram size={20} className="text-blue-500" />,
-  discord: () => <IconBrandDiscord size={20} className="text-discord-color" />,
+  telegram: () => <Icon name="sprite:telegram-icon" className="size-5" />,
+  discord: () => <Icon name="sprite:discord-icon" className="size-5" />,
 }
 
 type SocialEventMap = {

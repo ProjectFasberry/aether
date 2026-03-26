@@ -34,7 +34,7 @@ const NewsSkeleton = () => {
 const newsItemVariant = tv({
   base: `
     flex flex-col flex-shrink-0 md:flex-[0_0_calc((100%/2)-0.5rem)] w-full lg:flex-1 
-    h-56 sm:h-72 border border-neutral-800 rounded-lg overflow-hidden
+    h-56 sm:h-72 border border-neutral-600 rounded-xl overflow-hidden
   `,
   slots: {
     img: `object-cover h-[148px] sm:h-[200px]`,
@@ -94,7 +94,7 @@ export const News = () => {
       <Typography className="text-3xl font-bold">
         Новости
       </Typography>
-      <div className={scrollableVariant({ className: "flex rounded-lg scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+      <div className={scrollableVariant({ className: "flex rounded-xl scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
         <NewsList />
       </div>
     </div>

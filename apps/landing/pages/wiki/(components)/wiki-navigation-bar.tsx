@@ -6,7 +6,7 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import { IconArrowLeft, IconCategory } from "@tabler/icons-react";
 import { useCallback, useState } from "react";
-import { wikiCategoriesAction, wikiCategoriesAtom, wikiParamAtom } from "../models/wiki.model";
+import { wikiCategoriesAction, wikiCategoriesAtom, wikiParamAtom } from "./wiki.model";
 import { atom } from "@reatom/core";
 import { clientOnly } from "vike-react/clientOnly";
 

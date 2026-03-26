@@ -1,5 +1,5 @@
-import { WikiNavigation } from "@/shared/components/landing/wiki/components/wiki-navigation-bar";
-import { wikiCategoriesAction } from "@/shared/components/landing/wiki/models/wiki.model";
+import { WikiNavigation } from "@/pages/wiki/(components)/wiki-navigation-bar";
+import { wikiCategoriesAction } from "@/pages/wiki/(components)/wiki.model";
 import { useUpdate } from "@reatom/npm-react";
 import { MainWrapperPage } from "@repo/ui/main-wrapper";
 import { ReactNode } from "react";

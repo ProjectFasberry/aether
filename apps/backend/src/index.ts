@@ -26,10 +26,15 @@ async function entrypoint() {
 
 async function services() {
   appLogger.log(`Starting services`);
-  
-  await Promise.all([
-    startNats(), connectToRcon(), startMinio(), initRedis()
-  ])
+
+  appLogger.log(`Starting NATS...`);
+  await startNats();
+
+  appLogger.log(`Starting Minio...`);
+  await startMinio();
+
+  appLogger.log(`Starting Redis...`);
+  await initRedis();
 
   appLogger.log(`Finished services`);
 }

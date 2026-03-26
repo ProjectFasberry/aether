@@ -11,7 +11,7 @@ const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land
     <Link
       href={createLink("land", ulid)}
       className="flex p-2 lg:p-4 border 
-        hover:bg-neutral-800 duration-300 ease-in-out border-neutral-800 cursor-pointer rounded-lg"
+        hover:bg-neutral-800 duration-300 ease-in-out border-neutral-600 cursor-pointer rounded-xl"
     >
       <div className="flex items-center gap-3 w-full lg:w-3/4">
         {details?.banner ? (

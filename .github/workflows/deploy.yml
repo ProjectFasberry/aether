@@ -9,7 +9,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-
+      VITE_LANDING_ENDPOINT: https://fasberry.fun
+      PUBLIC_ENV__TG_NAME: fasberry
+      VITE_APP_URL: https://app.fasberry.fun
+      VITE_MAIN_DOMAIN: fasberry.fun
+      PUBLIC_ENV__API_URL: https://api.fasberry.fun
+      VITE_VOLUME_URL: https://volume.fasberry.fun
+      
     steps:
       - uses: actions/checkout@v4
 

@@ -1,6 +1,6 @@
 import { Link } from '@/shared/components/config/link';
+import { getStaticObject } from '@/shared/lib/volume';
 import { Fragment } from 'react';
-import { getStaticObject } from '../../../lib/volume';
 
 const FOOTER_LINKS = [
   { name: 'Конфиденциальность', href: '/privacy' },

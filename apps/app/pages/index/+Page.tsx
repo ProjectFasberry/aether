@@ -33,7 +33,7 @@ const Contacts = reatomComponent(({ ctx }) => {
           key={idx}
           target="_blank"
           rel="noreferrer"
-          className={`flex items-center justify-between p-4 group rounded-lg ${item.color}`}
+          className={`flex items-center justify-between p-4 group rounded-xl ${item.color}`}
         >
           <div className="flex items-center gap-2 sm:gap-4">
             <img src={item.img} alt="TG" width={36} height={36} />

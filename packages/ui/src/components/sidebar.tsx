@@ -1,6 +1,5 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { PanelLeftIcon } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip"
 import { cn } from "@repo/shared/lib/cn"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "./sheet"
@@ -10,6 +9,7 @@ import { Separator } from "./separator"
 import { tv, VariantProps } from "tailwind-variants"
 import { Skeleton } from "./skeleton"
 import { useIsMobile } from "../hooks/use-is-mobile"
+import { IconLayoutSidebarRightInactive } from "@tabler/icons-react"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -260,7 +260,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelLeftIcon className="text-neutral-400" />
+      <IconLayoutSidebarRightInactive className="text-neutral-400" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   )

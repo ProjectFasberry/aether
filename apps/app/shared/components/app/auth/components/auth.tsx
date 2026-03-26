@@ -20,12 +20,12 @@ import { Input } from "@repo/ui/input"
 import { tv } from "tailwind-variants";
 import { Typography } from "@repo/ui/typography";
 import { CAP_INSTANCE_URL, CAP_SITEKEY, LANDING_URL } from "@/shared/env";
-import { Eye, EyeOff } from "lucide-react";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@repo/ui/select"
 import { AtomState } from "@reatom/core";
 import { ReactNode } from "react";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../models/pof.model";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 export const formVariant = tv({
   base: `rounded-lg border border-neutral-800 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60`
@@ -78,7 +78,7 @@ const PasswordInput = reatomComponent(({ ctx }) => {
         className="absolute cursor-pointer right-0 top-1/2 text-neutral-400 -translate-1/2"
         onClick={() => passwordShowAtom(ctx, (state) => !state)}
       >
-        {show ? <Eye size={18} /> : <EyeOff size={18} />}
+        {show ? <IconEye size={18} /> : <IconEyeOff size={18} />}
       </div>
     </div>
   )

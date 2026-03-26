@@ -13,7 +13,7 @@ import { sectionVariant, sectionVariantChild } from "@/shared/styles/variants";
 import { usePageContext } from "vike-react/usePageContext";
 import { translate } from "@/shared/locales/helpers";
 import { withAssign } from "@reatom/framework";
-import { LayoutSettings, weatherAtom } from "@/shared/components/landing/layouts/settings";
+import { LayoutSettings, weatherAtom } from "@/shared/components/layouts/settings";
 
 const introImage = getStaticObject("arts", "server-status-widget.webp")
 const shareImage = getStaticObject("arts", "bzzvanet-.jpg")

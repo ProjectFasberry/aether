@@ -1,5 +1,4 @@
-import { MAIL_FASBERRY_SUPPORT } from "@/shared/data/configs";
-import { TG_NAME } from "@/shared/env";
+import { SUPPORT_EMAIL, TG_NAME } from "@/shared/env";
 import { MainWrapperPage } from "@repo/ui/main-wrapper";
 import { Typography } from "@repo/ui/typography";
 
@@ -39,11 +38,11 @@ export default function InfoContactsPage() {
             </Typography>
             <div className="flex flex-col gap-y-4">
               <a
-                href={`mailto:${MAIL_FASBERRY_SUPPORT}`}
+                href={`mailto:${SUPPORT_EMAIL}`}
                 target="_blank"
               >
                 <Typography color="white">
-                  {MAIL_FASBERRY_SUPPORT}
+                  {SUPPORT_EMAIL}
                 </Typography>
               </a>
             </div>

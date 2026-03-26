@@ -11,9 +11,7 @@ export default function Page() {
     <div className="flex flex-col gap-6 w-full h-full">
       <PageHeaderImage img={storeImage} />
       <div className="flex flex-col gap-4 h-full w-full">
-        <Typography className="text-3xl font-semibold">
-          Магазин
-        </Typography>
+        <Typography className="text-3xl font-semibold">Магазин</Typography>
         <StoreSearch />
         <div className="flex flex-col gap-4 xl:flex-row items-start w-full h-full">
           <div className="flex flex-col gap-2 h-full w-full xl:w-1/5">

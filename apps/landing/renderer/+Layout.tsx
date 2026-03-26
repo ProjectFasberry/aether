@@ -7,11 +7,11 @@ import { PropsWithChildren } from "react";
 import { usePageContext } from "vike-react/usePageContext";
 import { useUpdate } from "@reatom/npm-react";
 import { pageContextAtom } from '@/shared/models/global.model';
-import { ReatomProvider } from '@/shared/components/landing/layouts/reatom-provider';
-import { Footer } from '@/shared/components/landing/layouts/footer';
-import { Header } from '@/shared/components/landing/layouts/header';
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from "@vercel/speed-insights/react"
+import { ReatomProvider } from '@/shared/components/layouts/reatom-provider';
+import { Footer } from '@/shared/components/layouts/footer';
+import { Header } from '@/shared/components/layouts/header';
 
 const SyncPageContext = () => {
   const pageContext = usePageContext()

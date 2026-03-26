@@ -1,6 +1,6 @@
-import { WikiContentItem } from "@/shared/components/landing/wiki/components/wiki-content";
+import { WikiContentItem } from "@/pages/wiki/(components)/wiki-content";
 import { useUpdate } from "@reatom/npm-react";
-import { wikiParamAtom } from "@/shared/components/landing/wiki/models/wiki.model";
+import { wikiParamAtom } from "@/pages/wiki/(components)/wiki.model";
 import { usePageContext } from "vike-react/usePageContext";
 
 export default function Page() {

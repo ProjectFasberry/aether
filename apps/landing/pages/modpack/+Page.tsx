@@ -1,6 +1,5 @@
-import { ModpackList } from "@/shared/components/landing/modpacks/modpack-list";
+import { ModpackList } from "@/pages/modpack/(components)/modpack-list";
 import { MainWrapperPage } from "@repo/ui/main-wrapper";
-import { Typography } from "@repo/ui/typography";
 
 export default function Page() {
   return (

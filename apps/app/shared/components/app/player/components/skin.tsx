@@ -10,9 +10,8 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import React, { useEffect, useRef, useState } from "react";
 import { skinRotatingAtom, skinAnimationAtom, SKIN_ANIMATIONS } from "../../player/models/skin-animation.model";
-import { IconRotate } from "@tabler/icons-react";
+import { IconPlus, IconRotate, IconUpload, IconX } from "@tabler/icons-react";
 import { isClientAtom } from "@/shared/models/page-context.model";
-import { PlusIcon, Upload, X } from "lucide-react";
 import { Button } from "@repo/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import {
@@ -62,7 +61,6 @@ const SkinRender = reatomComponent(({ ctx }) => {
           height="390"
           width="300"
           options={{ zoom: 0.8 }}
-          className="cursor-move"
           onReady={({ viewer }) => skinViewerAtom(ctx, viewer)}
           fallback={<SkinRenderSkeleton />}
         />
@@ -216,7 +214,7 @@ const SkinMainHead = reatomComponent(({ ctx }) => {
 
 const SkinRenderWrapper = () => {
   return (
-    <div className="flex flex-col justify-between w-full lg:min-h-[450px] lg:border lg:border-neutral-700 rounded-lg">
+    <div className="flex flex-col justify-between w-full lg:min-h-[450px] lg:border lg:border-neutral-600 rounded-xl">
       <div className="flex flex-col order-last lg:order-first py-4 items-center gap-2 w-full h-full">
         <div className="hidden lg:flex">
           <SkinRender />
@@ -302,7 +300,7 @@ const SelectedSkinData = reatomComponent(({ ctx }) => {
             </Typography>
           </div>
         </div>
-        <X
+        <IconX
           size={20}
           className="text-neutral-400"
           onClick={() => skinFileAtom.reset(ctx)}
@@ -350,7 +348,7 @@ const SkinControlInput = reatomComponent(({ ctx }) => {
     >
       <input ref={inputRef} onChange={onChange} type="file" className="hidden" />
       <div className='flex items-center justify-center rounded-lg h-10 w-10 border border-neutral-800'>
-        <Upload size={24} className="text-neutral-400" />
+        <IconUpload size={24} className="text-neutral-400" />
       </div>
       <Typography className="font-semibold tracking-6">
         Перетяните или выберите файл
@@ -393,7 +391,7 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
         <Button
           className={skinControlVariants({ variant: "default", className: "p-0 hover:bg-neutral-800" })}
         >
-          <Upload size={18} />
+          <IconUpload size={18} />
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -434,7 +432,7 @@ const SkinSetButton = reatomComponent(({ ctx }) => {
       className={skinControlVariants({ variant: "default", className: "p-0 hover:bg-neutral-800" })}
       onClick={() => setSkinAction(ctx)}
     >
-      <PlusIcon size={18} />
+      <IconPlus size={18} />
     </Button>
   )
 }, "SkinSetButton")

@@ -1,7 +1,6 @@
 import { MainWrapperPage } from "@repo/ui/main-wrapper";
 import { Typography } from "@repo/ui/typography";
-import { MAIL_FASBERRY_SUPPORT } from "@/shared/data/configs";
-import { LANDING_ENDPOINT as MINECRAFT_SITE_DOMAIN } from "@/shared/env";
+import { LANDING_ENDPOINT as MINECRAFT_SITE_DOMAIN, SUPPORT_EMAIL } from "@/shared/env";
 
 export default function InfoPrivacyPage() {
   return (
@@ -126,7 +125,7 @@ export default function InfoPrivacyPage() {
               <Typography color="white">
                 4.2. Также Оператор имеет право направлять Пользователю уведомления о новых продуктах и услугах, специальных предложениях и различных событиях.
                 Пользователь всегда может отказаться от получения информационных сообщений, направив Оператору письмо на адрес
-                электронной почты {MAIL_FASBERRY_SUPPORT} с пометкой
+                электронной почты {SUPPORT_EMAIL} с пометкой
                 «Отказ от уведомлений о новых продуктах и услугах и специальных предложениях».
               </Typography>
               <Typography color="white">
@@ -171,11 +170,11 @@ export default function InfoPrivacyPage() {
               </Typography>
               <Typography color="white">
                 6.3. В случае выявления неточностей в персональных данных, Пользователь может актуализировать их самостоятельно,
-                путем направления Оператору уведомление на адрес электронной почты Оператора {MAIL_FASBERRY_SUPPORT} с пометкой «Актуализация персональных данных».
+                путем направления Оператору уведомление на адрес электронной почты Оператора {SUPPORT_EMAIL} с пометкой «Актуализация персональных данных».
               </Typography>
               <Typography color="white">
                 6.4. Срок обработки персональных данных является неограниченным. Пользователь может в любой момент отозвать свое согласие на обработку персональных данных,
-                направив Оператору уведомление посредством электронной почты на электронный адрес Оператора {MAIL_FASBERRY_SUPPORT}
+                направив Оператору уведомление посредством электронной почты на электронный адрес Оператора {SUPPORT_EMAIL}
                 с пометкой «Отзыв согласия на обработку персональных данных».
               </Typography>
             </div>
@@ -204,7 +203,7 @@ export default function InfoPrivacyPage() {
             <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 8.1. Пользователь может получить любые разъяснения по интересующим вопросам, касающимся обработки его персональных данных,
-                обратившись к Оператору с помощью электронной почты {MAIL_FASBERRY_SUPPORT}.
+                обратившись к Оператору с помощью электронной почты {SUPPORT_EMAIL}.
               </Typography>
               <Typography color="white">
                 8.2. В данном документе будут отражены любые изменения политики обработки персональных данных Оператором.

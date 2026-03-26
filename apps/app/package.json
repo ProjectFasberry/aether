@@ -47,13 +47,12 @@
     "consola": "3.4.2",
     "dayjs": "1.11.11",
     "embla-carousel-react": "8.6.0",
-    "hono": "4.10.5",
+    "hono": "4.12.9",
     "ky": "1.14.0",
-    "lucide-react": "0.468.0",
     "motion": "12.19.2",
     "qrcode.react": "4.2.0",
     "radix-ui": "1.4.2",
-    "@hono/node-server": "1.19.6",
+    "@hono/node-server": "1.19.11",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-error-boundary": "6.0.0",
@@ -69,6 +68,7 @@
     "zod": "4.1.11"
   },
   "devDependencies": {
+    "@neodx/svg": "0.8.0",
     "@repo/config-biome": "workspace:*",
     "@repo/config-typescript": "workspace:*",
     "@tailwindcss/vite": "4.1.12",
@@ -79,11 +79,8 @@
     "tailwindcss": "4.1.8",
     "tw-animate-css": "1.3.4",
     "typescript": "5.8.3",
-    "vite": "npm:rolldown-vite@latest",
+    "vite": "7.2.7",
     "vite-bundle-analyzer": "1.2.3",
     "vite-tsconfig-paths": "5.1.4"
-  },
-  "overrides": {
-    "vite": "npm:rolldown-vite@latest"
   }
 }

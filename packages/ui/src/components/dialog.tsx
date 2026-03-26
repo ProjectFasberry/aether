@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import { X } from 'lucide-react';
 import {
   type HTMLMotionProps,
   type Transition,
 } from 'motion/react';
 import { cn } from '@repo/shared/lib/cn';
+import { IconX } from '@tabler/icons-react';
 
 type DialogContextType = {
   isOpen: boolean;
@@ -127,7 +127,7 @@ function DialogContent({
               transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden 
               disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4`}
           >
-            <X />
+            <IconX />
             <span className="sr-only">Закрыть</span>
           </DialogPrimitive.Close>
         )}

@@ -1,7 +1,7 @@
 import { useConfig } from 'vike-react/useConfig';
 import { PageContextServer } from 'vike/types';
 import { wrapTitle } from '@/shared/lib/wrap-title';
-import { Wiki } from '@/shared/components/landing/wiki/models/wiki.model';
+import { Wiki } from '@/pages/wiki/(components)/wiki.model';
 import { client } from '@/shared/api/client';
 import { getUrl } from '@/shared/lib/helpers';
 import { renderToMarkdown } from '@tiptap/static-renderer/pm/markdown'

@@ -5,11 +5,12 @@ import { Typography, typographyVariants } from "@repo/ui/typography";
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@repo/ui/dialog';
 import { Link } from "@/shared/components/config/link";
 import { getStaticObject } from '@/shared/lib/volume';
-import { serverStatusAction } from "@/shared/components/landing/status/models/status.model";
 import { tv } from "tailwind-variants";
 import { Button } from "@repo/ui/button";
 import { usePageContext } from "vike-react/usePageContext";
 import { APP_URL } from "@/shared/env";
+import { client } from "@/shared/api/client"
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
 
 export type Player = {
   uuid: string;
@@ -20,6 +21,28 @@ export type PlayerStatusProps = {
   nickname: string
 }
 
+type ServerStatus = {
+  proxy: {
+    online: number,
+    players: Array<string>,
+    status: string,
+    max: number
+  },
+  servers: {
+    [key: string]: {
+      online: number
+    }
+  }
+}
+
+const serverStatusAction = reatomAsync(async (ctx) => {
+  return ctx.schedule(async () => {
+    const res = await client("server/status", { searchParams: { type: "servers" }, signal: ctx.controller.signal })
+    const data = await res.json<{ data: ServerStatus } | { error: string }>()
+    if (!data || "error" in data) return null;
+    return data.data;
+  })
+}, "serverStatusAction").pipe(withCache({ swr: false }), withDataAtom(), withStatusesAtom())
 
 const serverTitle = tv({
   extend: typographyVariants,

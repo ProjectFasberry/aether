@@ -38,7 +38,7 @@ const output = await Bun.build({
   outdir: './dist',
   minify: true, 
   sourcemap: true,
-  target: "bun"
+  target: "bun",
 })
 
 console.log(getBuildFilesInfo(output.outputs))

@@ -11,7 +11,7 @@ import { tv } from "tailwind-variants";
 import { Input } from "@repo/ui/input";
 
 export const storeSectionWrapper = tv({
-  base: `bg-neutral-900 rounded-lg`,
+  base: `bg-neutral-900 rounded-xl`,
   variants: {
     variant: {
       default: "p-2 sm:p-3 lg:p-4",

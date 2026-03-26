@@ -7,7 +7,6 @@ import pLimit from "p-limit";
 import { general } from "#/shared/database/general-db";
 import type { SkinsHistory } from "@repo/shared/types/entities/other";
 import { sql } from "kysely";
-import { createCanvas, loadImage } from "canvas";
 import { AVATARS_BUCKET, getMinio } from "#/shared/minio/init";
 import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_ENDPOINT } from "#/shared/env";
 import { logger } from "#/utils/config/logger";
@@ -30,6 +29,7 @@ import type { KyInstance } from "ky";
 import type { Context } from "elysia";
 import { nanoid } from "nanoid";
 import { getRedisKey } from "#/helpers/redis";
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 
 export type Skin = {
   textures: {
@@ -107,17 +107,18 @@ async function getDefaultSkin() {
     .executeTakeFirstOrThrow()
 }
 
-async function getHeadFromSkin(url: string, size = 128) {
+export async function getHeadFromSkin(url: string, size = 128) {
   const skin = await loadImage(url);
+
   const canvas = createCanvas(size, size);
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext('2d');
 
   ctx.imageSmoothingEnabled = false;
 
-  ctx.drawImage(skin, 8, 8, 8, 8, 0, 0, size, size);
-  ctx.drawImage(skin, 40, 8, 8, 8, 0, 0, size, size);
+  ctx.drawImage(skin, 8, 8, 8, 8, 0, 0, size, size);  
+  ctx.drawImage(skin, 40, 8, 8, 8, 0, 0, size, size); 
 
-  return canvas.toBuffer("image/png");
+  return canvas.toBuffer('image/png');
 }
 
 async function performHead(data: SkinsHistory[], nickname: string) {

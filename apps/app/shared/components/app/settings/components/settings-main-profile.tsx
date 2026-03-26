@@ -1,8 +1,7 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { IconPlus, IconX } from "@tabler/icons-react";
+import { IconCircleDotted, IconPlus, IconX } from "@tabler/icons-react";
 import { Button } from "@repo/ui/button";
-import { LoaderCircle } from "lucide-react";
 import { tv } from "tailwind-variants";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
@@ -103,7 +102,7 @@ const ProfileSocialsListItem = reatomComponent<PlayerSocialsPayload>(({ ctx, typ
         onClick={() => socialRemoveWrapperAction(ctx, type)}
       >
         {isLoading
-          ? <LoaderCircle className="animate-spin" size={18} />
+          ? <IconCircleDotted className="animate-spin" size={18} />
           : <IconX size={18} />
         }
       </Button>

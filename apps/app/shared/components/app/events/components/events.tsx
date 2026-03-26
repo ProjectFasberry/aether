@@ -26,10 +26,10 @@ type EventCardProps = NonNullable<AtomState<typeof eventsAction.dataAtom>>[numbe
 const eventCardVariant = tv({
   base: `
     flex flex-col md:flex-[0_0_calc((100%/3)-0.666rem)] flex-shrink-0 w-full
-    h-48 p-2 sm:p-4 border border-neutral-800 rounded-lg overflow-hidden justify-between
+    h-48 p-2 sm:p-4 border border-neutral-600 rounded-xl overflow-hidden justify-between
   `,
   slots: {
-    firstGroup: "flex items-center justify-start bg-neutral-50 rounded-lg p-2 w-full truncate",
+    firstGroup: "flex items-center justify-start bg-neutral-50 rounded-md p-2 w-full truncate",
     secondGroup: "flex flex-col justify-between h-full mt-2"
   }
 })
@@ -98,7 +98,7 @@ export const Events = () => {
       <Typography className="text-3xl font-bold">
         Последние события
       </Typography>
-      <div className={scrollableVariant({ className: "flex rounded-lg scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+      <div className={scrollableVariant({ className: "flex rounded-xl scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
         <EventsList />
       </div>
     </div>

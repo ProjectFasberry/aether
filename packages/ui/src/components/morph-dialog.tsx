@@ -15,7 +15,6 @@ import {
   Variant,
 } from 'motion/react';
 import { createPortal } from 'react-dom';
-import { XIcon } from 'lucide-react';
 import { RefObject } from 'react';
 import { tv } from 'tailwind-variants';
 
