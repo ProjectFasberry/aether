@@ -1,4 +1,4 @@
-import z from "zod";
+import * as z from "zod/v4";
 import { action, atom, AtomMut } from "@reatom/core";
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { createNewsSchema } from "@repo/shared/schemas/news";

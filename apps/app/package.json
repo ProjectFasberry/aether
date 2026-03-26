@@ -14,7 +14,7 @@
     "build:prod": "make build",
     "build:tag": "make tag",
     "build:push": "make push",
-    "release": "make build && make tag && make push"
+    "release": "make all"
   },
   "sideEffects": [
     "**/*.css"

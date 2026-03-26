@@ -8,7 +8,7 @@ import { general } from "#/shared/database/general-db";
 import type { SkinsHistory } from "@repo/shared/types/entities/other";
 import { sql } from "kysely";
 import { AVATARS_BUCKET, getMinio } from "#/shared/minio/init";
-import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_ENDPOINT } from "#/shared/env";
+import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } from "#/shared/env";
 import { logger } from "#/utils/config/logger";
 import { getGuardBot } from "#/shared/bot";
 import { getChats } from "#/shared/constants/chats";
@@ -86,7 +86,7 @@ export async function getSkinsHistory({ nickname }: { nickname: string }) {
 }
 
 const getDefaultSkinHead = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
-const getCustomHead = (nickname: string, identifier: string) => `${VOLUME_ENDPOINT}/${AVATARS_BUCKET}/${getAvatarName(nickname, identifier)}`
+const getCustomHead = (nickname: string, identifier: string) => `${VOLUME_URL}/${AVATARS_BUCKET}/${getAvatarName(nickname, identifier)}`
 
 function isCustomSkin(identifier: string) {
   return identifier.startsWith("sr")

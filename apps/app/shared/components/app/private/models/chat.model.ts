@@ -5,7 +5,7 @@ import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom
 import { action, atom, batch, Ctx } from "@reatom/core";
 import { onDisconnect, reatomMap, withAssign, withReset } from "@reatom/framework";
 import { makeChangeValidator } from "../../shop/models/store-recipient.model";
-import z from "zod";
+import * as z from "zod/v4";
 import { toast } from "sonner";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 

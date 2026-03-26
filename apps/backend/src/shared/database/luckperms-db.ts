@@ -3,20 +3,12 @@ import type { DB as lpDBType } from "@repo/shared/types/db/luckperms-database-ty
 import { PostgresDialect } from "kysely";
 import pg, { type PoolConfig } from "pg";
 import { poolOptsHooks } from './lobby-db';
-import { LUCKPERMS_POSTGRES_DB, LUCKPERMS_POSTGRES_HOST, LUCKPERMS_POSTGRES_PASSWORD, LUCKPERMS_POSTGRES_PORT, LUCKPERMS_POSTGRES_USER } from '../env';
+import { LUCKPERMS_POSTGRES_URI as connectionString } from '../env';
 
 const { Pool } = pg;
 
-export const inherit = {
-  host: LUCKPERMS_POSTGRES_HOST,
-  database: LUCKPERMS_POSTGRES_DB,
-  user: LUCKPERMS_POSTGRES_USER,
-  password: LUCKPERMS_POSTGRES_PASSWORD,
-  port: Number(LUCKPERMS_POSTGRES_PORT),
-}
-
 const config: PoolConfig = {
-  ...inherit,
+  connectionString,
   max: 10
 }
 

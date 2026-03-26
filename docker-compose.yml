@@ -151,7 +151,7 @@ services:
   #   build:
   #     context: .
   #     dockerfile: apps/backend/Dockerfile
-  #   image: ${REGISTRY_URL}/fasberry/fasberry-backend:latest
+  #   image: ${REGISTRY_HOST}/fasberry/fasberry-backend:latest
   #   ports:
   #     - "4104:4104"
   #   environment: 

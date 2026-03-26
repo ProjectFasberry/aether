@@ -8,7 +8,7 @@ import { isProduction } from "#/shared/env";
 import { ipPlugin } from "../plugins/ip";
 import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
-import { CAP_INSTANCE_URL, CAP_SECRET, CAP_SITE_KEY } from "#/shared/env";
+import { CAP_URL, CAP_SECRET, CAP_SITE_KEY } from "#/shared/env";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { libertybans } from "#/shared/database/libertybans-db";
@@ -88,7 +88,7 @@ export const validateBannedStatus = () => new Elysia()
 
 const capClient = client.extend((opts) => ({
   ...opts,
-  prefixUrl: `${CAP_INSTANCE_URL}/${CAP_SITE_KEY}`
+  prefixUrl: `${CAP_URL}/${CAP_SITE_KEY}`
 }))
 
 const ERRORS: Record<string, string> = {

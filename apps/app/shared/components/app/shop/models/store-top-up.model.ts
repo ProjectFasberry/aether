@@ -6,7 +6,7 @@ import { reatomRecord, withReset } from "@reatom/framework"
 import { currencyCryptoSchema } from "@repo/shared/constants/currencies"
 import { createOrderTopUpSchema, OutputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/payment"
 import { navigate } from "vike/client/router"
-import z, { ZodError } from "zod"
+import * as z from "zod/v4"
 
 type Schema = z.infer<typeof createOrderTopUpSchema>
 type TopUpSearch = "recipient" | "target"
@@ -17,7 +17,7 @@ export const topUpMethodCurrencyAtom = atom<Schema["method"]["currency"] | null>
 export const topUpTargetAtom = atom<Schema["target"]>("CHARISM", "topUpTarget").pipe(withReset());
 export const topUpCommentAtom = atom<Schema["comment"]>(undefined, "topUpComment").pipe(withReset());
 export const topUpValueAtom = atom<Schema["value"]>(0, "topUpValue").pipe(withReset());
-export const topUpValidationErrorAtom = atom<ZodError<Schema> | null>(null, "topUpValidationError").pipe(withReset())
+export const topUpValidationErrorAtom = atom<z.ZodError<Schema> | null>(null, "topUpValidationError").pipe(withReset())
 export const topUpResultErrorAtom = atom<Error | null>(null, "topUpResultError").pipe(withReset())
 export const topUpSearchAtom = reatomRecord<Partial<Record<TopUpSearch, string>>>({}, "topUpSearch")
 
@@ -131,7 +131,7 @@ export const topUpAction = reatomAsync(async (ctx) => {
       topUpResultErrorAtom(ctx, e)
     }
 
-    if (e instanceof ZodError) {
+    if (e instanceof z.ZodError) {
       const error = e;
       console.error(error);
 

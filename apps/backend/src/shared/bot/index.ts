@@ -1,5 +1,5 @@
 import { Bot, TelegramError } from "gramio";
-import { isProduction, GUARD_BOT_TOKEN as token } from "../env";
+import { isProduction, BOT_GUARD_TOKEN as token } from "../env";
 import { logger } from "#/utils/config/logger";
 import { GUARD_COMMANDS } from "./cmds";
 import { getChats } from "../constants/chats";

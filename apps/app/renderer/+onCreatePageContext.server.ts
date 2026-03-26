@@ -31,6 +31,8 @@ function getTopCountry(acceptLanguage?: string): string | null {
 }
 
 export const onCreatePageContext = async (pageContext: PageContextServer) => {
+  if (pageContext.urlOriginal.startsWith("http://localhost")) throw redirect("http://127.0.0.1:3006")
+
   logRouting(pageContext.urlPathname, "onCreatePageContext");
 
   const { headers, urlPathname, locale } = pageContext;

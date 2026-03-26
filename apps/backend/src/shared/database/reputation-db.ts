@@ -3,18 +3,10 @@ import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { poolOptsHooks } from "./lobby-db";
-import { REPUTATION_MYSQL_DB, REPUTATION_MYSQL_HOST, REPUTATION_MYSQL_PASSWORD, REPUTATION_MYSQL_PORT, REPUTATION_MYSQL_USER } from "../env";
-
-export const inherit = {
-  host: REPUTATION_MYSQL_HOST,
-  user: REPUTATION_MYSQL_USER,
-  password: REPUTATION_MYSQL_PASSWORD,
-  port: Number(REPUTATION_MYSQL_PORT),
-  database: REPUTATION_MYSQL_DB,
-}
+import { REPUTATION_MYSQL_URI as uri } from "../env";
 
 const config: PoolOptions = {
-  ...inherit,
+  uri,
   connectionLimit: 10
 }
 

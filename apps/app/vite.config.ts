@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       tsconfigPaths(),
-      analyzer({ enabled: false }),
+      analyzer({ enabled: false, analyzerMode: "static", openAnalyzer: false, }),
       svg({
         inputRoot: 'assets/svg',
         output: 'public/sprites',
@@ -31,8 +31,7 @@ export default defineConfig(({ mode }) => {
       noExternal: process.env.NODE_ENV === 'production' ? true : undefined
     },
     build: {
-      target: "es2022",
-      sourcemap: false
+      target: "esnext",
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

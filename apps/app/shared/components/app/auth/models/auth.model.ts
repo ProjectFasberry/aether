@@ -5,7 +5,7 @@ import { reatomRecord, sleep, withAssign, withReset } from "@reatom/framework"
 import { toast } from "sonner"
 import { logError } from "@/shared/lib/log"
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
-import z, { ZodError } from "zod"
+import * as z from "zod/v4"
 import { registerSchema, authSchema as loginSchema } from "@repo/shared/schemas/auth"
 import { withSearchParamsPersist } from '@reatom/url'
 import { pof } from "./pof.model"
@@ -231,7 +231,7 @@ export const authorizeAction = reatomAsync(async (ctx) => {
   onFulfill: async (ctx, res) => {
     if (!res) return;
 
-    if (res instanceof ZodError) {
+    if (res instanceof z.ZodError) {
       const issue = res.issues.map(d => d)[0];
       const property = issue.path[0].toString() as ErrorType;
 

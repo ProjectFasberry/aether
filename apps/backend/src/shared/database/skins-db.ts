@@ -3,18 +3,10 @@ import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { poolOptsHooks } from "./lobby-db";
-import { SKINS_MYSQL_DB, SKINS_MYSQL_HOST, SKINS_MYSQL_PASSWORD, SKINS_MYSQL_PORT, SKINS_MYSQL_USER } from "../env";
-
-export const inherit = {
-  host: SKINS_MYSQL_HOST,
-  user: SKINS_MYSQL_USER,
-  password: SKINS_MYSQL_PASSWORD,
-  port: Number(SKINS_MYSQL_PORT),
-  database: SKINS_MYSQL_DB,
-}
+import { SKINS_MYSQL_URI as uri } from "../env";
 
 const config: PoolOptions = {
-  ...inherit,
+  uri,
   connectionLimit: 10
 }
 

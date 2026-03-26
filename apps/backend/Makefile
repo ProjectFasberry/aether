@@ -3,18 +3,19 @@ ifneq (,$(wildcard ../../.env))
     export
 endif
 
-REGISTRY := $(REGISTRY_URL)
+REGISTRY := $(REGISTRY_HOST)
 PROJECT := $(REGISTRY_PROJECT)
 IMAGE := $(REGISTRY_BACKEND_IMAGE)
 TAG = latest
+FULL_IMAGE_NAME := $(REGISTRY)/$(PROJECT)/$(IMAGE):$(TAG)
 
 build:
 	docker build -t $(IMAGE):$(TAG) -f $(abspath Dockerfile) $(abspath ../..)
 
 tag: build
-	docker tag $(IMAGE):$(TAG) $(REGISTRY)/$(PROJECT)/$(IMAGE):$(TAG)
+	docker tag $(IMAGE):$(TAG) $(FULL_IMAGE_NAME)
 
 push: tag
-	docker push $(REGISTRY)/$(PROJECT)/$(IMAGE):$(TAG)
+	docker push $(FULL_IMAGE_NAME)
 
 all: push

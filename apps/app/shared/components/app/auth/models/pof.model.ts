@@ -15,7 +15,9 @@ export const pof = atom(null, "pof").pipe(
           res = false
         }
 
-        console.log(res);
+        if (import.meta.env.DEV) {
+          console.log(res);
+        }
 
         return res
       })

@@ -173,7 +173,7 @@ make release
 ```
 
 **Configuration**: Requires environment variables in `../../.env`:
-- `REGISTRY_URL` - Docker registry URL
+- `REGISTRY_HOST` - Docker registry host
 - `REGISTRY_PROJECT` - Project namespace
 - `REGISTRY_BACKEND_IMAGE` - Image name
 

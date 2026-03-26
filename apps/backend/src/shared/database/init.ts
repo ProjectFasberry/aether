@@ -9,6 +9,7 @@ import type { Pool as MySQLPool } from 'mysql2';
 import type { Pool as PGPool, PoolClient as PGClient } from 'pg';
 import { libertybansPool } from "./libertybans-db";
 import { appLogger } from "#/utils/config/logger";
+import { planPool } from "./plan-db"
 
 type SupportedPools = MySQLPool | PGPool;
 
@@ -35,7 +36,8 @@ const DATABASES_FOR_CHECK: Record<string, SupportedPools> = {
   reputation: reputationPool,
   skins: skinsPool,
   playerpoints: playerPointsPool,
-  libertybans: libertybansPool
+  libertybans: libertybansPool,
+  plan: planPool
 };
 
 function checkMySQLHealth(pool: MySQLPool): Promise<void> {

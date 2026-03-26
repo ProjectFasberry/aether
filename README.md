@@ -318,7 +318,7 @@ bun run docker-infra:up   # Start only (no apps)
 
 Store in root `.env`:
 ```env
-REGISTRY_URL=your-registry
+REGISTRY_HOST=your-registry-host
 REGISTRY_PROJECT=your-project
 REGISTRY_APP_IMAGE=app-image-name
 REGISTRY_BACKEND_IMAGE=backend-image-name

@@ -5,13 +5,13 @@ import { logger } from "#/utils/config/logger";
 import type { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema";
 import { PaymentStatus } from "@repo/shared/types/db/payments-database-types";
 import type { z } from "zod";
-import { FRONTEND_PREFIX } from "#/shared/env";
+import { FRONTEND_URL } from "#/shared/env";
 import { CreateOrderTopUpSchema } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
 import { type CryptoPayPayload, EXCHANGE_RATES_KEY } from "./cryptobot/cryptobot.model";
 import { invariant } from "#/helpers/invariant";
 
-export const getOrderLink = (uniqueId: string) => `${FRONTEND_PREFIX}/store/order/${uniqueId}`
+export const getOrderLink = (uniqueId: string) => `${FRONTEND_URL}/store/order/${uniqueId}`
 export const getOrderKey = (uniqueId: string) => `order:${uniqueId}`
 export const getOrderInitiatorIndexKey = (initiator: string) => `index:initiator:${initiator}`
 export const getOrderRateKey = (initiator: string) => `rate:order_limit:${initiator}`

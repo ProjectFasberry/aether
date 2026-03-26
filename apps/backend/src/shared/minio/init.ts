@@ -1,13 +1,13 @@
 import * as Minio from "minio"
 import { logger } from "#/utils/config/logger"
-import { MINIO_ACCESS_KEY, MINIO_ENDPOINT, MINIO_PORT, MINIO_SECRET_KEY } from "../env"
+import { MINIO_ACCESS_KEY, MINIO_HOST, MINIO_PORT, MINIO_SECRET_KEY } from "../env"
 import { INTERNAl_FILES, loadInternalFiles } from "#/utils/minio/load-internal-files"
 import { invariant } from "#/helpers/invariant"
 
 export const minioLogger = logger.withTag("Minio")
 
 const config: Minio.ClientOptions = {
-  endPoint: MINIO_ENDPOINT,
+  endPoint: MINIO_HOST,
   port: MINIO_PORT,
   useSSL: false,
   accessKey: MINIO_ACCESS_KEY,
