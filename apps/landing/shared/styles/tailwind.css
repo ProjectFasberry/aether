@@ -5,7 +5,7 @@
 
 @source "../../../../packages/ui/**/*.{ts,tsx}";
 
-@plugin 'tailwind-scrollbar' {
+@plugin "tailwind-scrollbar" {
   nocompatible: true;
 }
 
@@ -266,19 +266,4 @@
   --color-wool-yellow: #E5E533;
   --color-wool-lime: #7FCC19;
   --color-wool-pink: #F27FA5;
-
-  --color-grass-DEFAULT: #79C05A;
-  --color-grass-jungle: #59C93C;
-  --color-grass-dark-forest: #507A32;
-  --color-grass-swamp-green: #4C763C;
-  --color-grass-plains: #91BD59;
-  --color-grass-forest: #79C05A;
-  --color-grass-birch-forest: #88BB67;
-  --color-grass-ocean: #8EB971;
-  --color-grass-meadow: #83BB6D;
-  --color-grass-tiaga: #86B783;
-  --color-grass-snowy: #80B497;
-  --color-grass-swamp: #6A7039;
-  --color-grass-badlands: #90814D;
-  --color-grass-desert: #BFB755;
 }

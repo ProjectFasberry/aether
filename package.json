@@ -1,39 +1,41 @@
 {
-  "name": "fasberry-minecraft",
-  "private": true,
-  "scripts": {
-    "start": "bun scripts/run start",
-    "build": "bun scripts/run build",
-    "dev": "bun scripts/run dev",
-    "lint": "bun scripts/run lint",
-    "type-check": "bun scripts/run type-check",
-    "-------------------------": "",
-    "generate:types": "bun --filter=@repo/shared run generate $1",
-    "--------------------------": "",
-    "docker-infra:up": "docker compose -f '../../fasberry/configs/infra/docker-compose.yml' up -d",
-    "docker-infra:down": "docker compose -f '../../fasberry/configs/infra/docker-compose.yml' down",
-    "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "docker-start": "bun run docker-infra:up && bun run docker:up",
-    "docker-down": "bun run docker-infra:down && bun run docker:down",
-    "---------------------------": "",
-    "app:build": "NODE_ENV=production bun --filter=app run build:prod",
-    "app:release": "bun --filter=app run release",
-    "----------------------------": "",
-    "backend:build": "NODE_ENV=production bun --filter=backend run build:prod",
-    "backend:release": "bun --filter=backend run release",
-    "-----------------------------": "",
-    "landing:build": "NODE_ENV=production bun --filter=landing run build",
-    "landing:release": "bun --filter=landing run deploy"
-  },
-  "devDependencies": {
-    "concurrently": "9.1.2",
-    "cross-env": "7.0.3",
-    "@types/bun": "1.2.22",
-    "@biomejs/biome": "2.2.4"
-  },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+	"name": "fasberry-minecraft",
+	"private": true,
+	"scripts": {
+		"start": "bun scripts/run start",
+		"build": "bun scripts/run build",
+		"dev": "bun scripts/run dev",
+		"lint": "bun scripts/run lint",
+		"type-check": "bun scripts/run type-check",
+		"postinstall": "lefthook install",
+		"-------------------------": "",
+		"generate:types": "bun --filter=@repo/shared run generate $1",
+		"--------------------------": "",
+		"docker-infra:up": "docker compose -f './infra/docker-compose.yml' up -d",
+		"docker-infra:down": "docker compose -f './infra/docker-compose.yml' down",
+		"docker:up": "docker compose up -d",
+		"docker:down": "docker compose down",
+		"docker-start": "bun run docker-infra:up && bun run docker:up",
+		"docker-down": "bun run docker-infra:down && bun run docker:down",
+		"---------------------------": "",
+		"app:build": "NODE_ENV=production bun --filter=app run build:prod",
+		"app:release": "bun --filter=app run release",
+		"----------------------------": "",
+		"backend:build": "NODE_ENV=production bun --filter=backend run build:prod",
+		"backend:release": "bun --filter=backend run release",
+		"-----------------------------": "",
+		"landing:build": "NODE_ENV=production bun --filter=landing run build",
+		"landing:release": "bun --filter=landing run deploy"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.4",
+		"@types/bun": "1.2.22",
+		"concurrently": "9.1.2",
+		"cross-env": "7.0.3",
+		"lefthook": "2.1.4"
+	},
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	]
 }

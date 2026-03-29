@@ -17,7 +17,7 @@ import {
 import { useClickOutside } from './morph-dialog';
 import { cn } from '@repo/shared/lib/cn';
 
-const TRANSITION = {
+const TRANSITION: Transition = {
   type: 'spring',
   bounce: 0.1,
   duration: 0.4,
@@ -176,7 +176,7 @@ function MorphingPopoverContent({
       'MorphingPopoverContent must be used within MorphingPopover'
     );
 
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement | null>(null);
   useClickOutside(ref, context.close);
 
   useEffect(() => {

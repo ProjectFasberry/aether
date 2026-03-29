@@ -13,6 +13,7 @@ import { ReactNode } from "react";
 import { CreateNews, EditNews, NewsWrapper, ViewNews } from "@/shared/components/app/private/components/news";
 import { CreateEvent, EventsWrapper, ViewEvent } from "@/shared/components/app/private/components/events";
 import { BannersWrapper, CreateBanner, EditBanner, ViewBanner } from "@/shared/components/app/private/components/banners";
+import { ActionsHeader } from "@/shared/components/app/private/components/ui";
 
 const list: Record<string, Partial<Record<ActionType, ReactNode>>> = {
   "news": {
@@ -48,21 +49,6 @@ const ActionsHeaderSlot = reatomComponent<{ parent: ActionParent }>(({ ctx, pare
 
   return list[parent][targetType]
 }, "ActionsHeaderSlot")
-
-const ActionsHeader = (
-  { title, parent }: { title: string, parent: ActionParent }
-) => {
-  return (
-    <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-2 h-8">
-        <Typography className="text-xl font-semibold">
-          {title}
-        </Typography>
-      </div>
-      <ActionsHeaderSlot parent={parent} />
-    </div>
-  )
-}
 
 const events = action((ctx) => {
   const pageContext = ctx.get(pageContextAtom);
@@ -104,19 +90,27 @@ export default function Page() {
         </div>
       </div>
       <div className="flex flex-col gap-4 w-full h-full bg-neutral-900 rounded-xl p-4">
-        <ActionsHeader parent="event" title="Ивенты" />
+        <ActionsHeader title="Ивенты">
+          <ActionsHeaderSlot parent="event" />
+        </ActionsHeader>
         <EventsWrapper />
       </div>
       <div className="flex flex-col gap-4 w-full h-full bg-neutral-900 rounded-xl p-4">
-        <ActionsHeader parent="banner" title="Баннеры" />
+        <ActionsHeader title="Баннеры">
+          <ActionsHeaderSlot parent="banner" />
+        </ActionsHeader>
         <BannersWrapper />
       </div>
       <div className="flex flex-col gap-4 w-full h-full bg-neutral-900 rounded-xl p-4">
-        <ActionsHeader parent="news" title="Новости" />
+        <ActionsHeader title="Новости" >
+          <ActionsHeaderSlot parent="news" />
+        </ActionsHeader>
         <NewsWrapper />
       </div>
       <div className="flex flex-col gap-4 w-full h-full bg-neutral-900 rounded-xl p-4">
-        <ActionsHeader parent="dictionaries" title="Справочник" />
+        <ActionsHeader title="Справочник">
+          <ActionsHeaderSlot parent="dictionaries" />
+        </ActionsHeader>
         <DictionariesWrapper />
       </div>
     </div>

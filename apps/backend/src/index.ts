@@ -1,62 +1,50 @@
-import "../imports"
-import "../declare.d.ts"
+import "../imports";
+import "../declare.d.ts";
 
 import { handleFatalError } from "./utils/config/handle-log";
 import { checkDatabasesHealth } from "./shared/database/init";
-import { startGuardBot } from "./shared/bot";
 import { initURLS } from "./shared/constants/urls";
 import { initChats } from "./shared/constants/chats";
 import { initPermissions } from "./shared/constants/permissions";
-import { appLogger } from "./utils/config/logger";
 import { startMinio } from "./shared/minio/init";
 import { initRedis } from "./shared/redis/init";
 import { startNats } from "./shared/nats/init";
 import { startJobs } from "./shared/cron/init";
 import { connectToRcon } from "./shared/rcon/init";
+import { isProduction } from "./shared/env";
 
 async function entrypoint() {
-  appLogger.log(`Starting entrypoint`);
-
-  await Promise.all([
-    initURLS(), initChats(), checkDatabasesHealth()
-  ])
-
-  appLogger.log(`Finished entrypoint`);
+	await initURLS();
+	await initChats();
+	await initPermissions();
+	await checkDatabasesHealth();
 }
 
 async function services() {
-  appLogger.log(`Starting services`);
-
-  appLogger.log(`Starting NATS...`);
-  await startNats();
-
-  appLogger.log(`Starting Minio...`);
-  await startMinio();
-
-  appLogger.log(`Starting Redis...`);
-  await initRedis();
-
-  appLogger.log(`Finished services`);
+	await startNats();
+	await startMinio();
+	await initRedis();
 }
 
 async function startServices() {
-  await entrypoint();
-  await services();
+	await entrypoint();
+	await services();
 
-  startJobs();
-  startGuardBot();
+	startJobs();
+
+	if (isProduction) {
+		const { startGuardBot } = await import("./shared/bot");
+		startGuardBot();
+	}
 }
 
 async function start() {
-  await initPermissions();
-  await startServices();
+	await startServices();
 
-  const { startApp } = await import("./app");
-  await startApp()
+	const { startApp } = await import("./app");
+	startApp();
 }
 
-start()
+start();
 
-process
-  .on('uncaughtException', handleFatalError)
-  .on('unhandledRejection', handleFatalError)
+process.on("uncaughtException", handleFatalError).on("unhandledRejection", handleFatalError);

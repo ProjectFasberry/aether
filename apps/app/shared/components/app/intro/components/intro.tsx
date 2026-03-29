@@ -53,7 +53,7 @@ export const Intro = () => {
           <Typography className="text-xl font-semibold">
             Добро пожаловать!
           </Typography>
-          <Typography className="text-2xl font-bold leading-tight">
+          <Typography className="text-3xl font-[PIXY] leading-[1.1]">
             Fasberry Project
           </Typography>
           <Typography className="text-base leading-tight truncate md:max-w-2/3 xl:max-w-2/5 text-wrap">

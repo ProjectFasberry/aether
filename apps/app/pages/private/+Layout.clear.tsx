@@ -33,6 +33,7 @@ const links = [
   { title: "Игрок", value: "/private/users" },
   { title: "История", value: "/private/history" },
   { title: "Test", value: "/private/test" },
+  { title: "Панель", value: "/private/panel" }
 ]
 
 const Navigation = () => {

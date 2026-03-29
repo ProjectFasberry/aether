@@ -3,7 +3,7 @@ import { ButtonHTMLAttributes } from "react"
 import { tv, VariantProps } from "tailwind-variants"
 
 const buttonVariants = tv({
-  base: `inline-flex px-4 py-2 rounded-md active:scale-[0.99] duration-300 ease-in-out cursor-pointer items-center justify-center
+  base: `inline-flex px-4 py-2 rounded-lg active:scale-[0.99] duration-300 ease-in-out cursor-pointer items-center justify-center
     disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
   `,
   variants: {

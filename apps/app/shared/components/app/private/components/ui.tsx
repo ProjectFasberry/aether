@@ -2,8 +2,9 @@ import { Link } from "@/shared/components/config/link"
 import { cn } from "@repo/shared/lib/cn"
 import { Button } from "@repo/ui/button"
 import { Icon, IconArrowRight, IconPencil, IconPlus, IconProps, IconX } from "@tabler/icons-react"
-import { ButtonHTMLAttributes } from "react"
+import { ButtonHTMLAttributes, ReactNode } from "react"
 import { tv, VariantProps } from "tailwind-variants"
+import { Typography } from "@repo/ui/typography"
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 
@@ -98,3 +99,18 @@ export const itemVariant = tv({
     variant: "default"
   }
 })
+
+export const ActionsHeader = (
+  { title, children }: { title: string, children?: ReactNode }
+) => {
+  return (
+    <div className="flex items-center justify-between w-full">
+      <div className="flex items-center gap-2 h-8">
+        <Typography className="text-xl font-semibold">
+          {title}
+        </Typography>
+      </div>
+      {children}
+    </div>
+  )
+}

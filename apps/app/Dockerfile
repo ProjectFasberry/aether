@@ -17,15 +17,15 @@ WORKDIR /apps/app
 ENV NODE_ENV=production
 RUN bun run build
 
-FROM node:24-alpine3.22 AS runtime
+FROM node:25.8.2-alpine3.23 AS runtime
 
 WORKDIR /
 
 COPY --from=build /apps/app/dist ./dist
 COPY --from=build /apps/app/package.json ./package.json
 
-RUN rm -rf node_modules
-
 ENV NODE_ENV=production
+USER node
+
 CMD ["node", "dist/server/index.mjs"]
 EXPOSE 3003

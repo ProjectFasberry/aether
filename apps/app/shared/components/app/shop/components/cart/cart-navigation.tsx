@@ -17,7 +17,7 @@ export const CartNavigation = () => {
   return (
     <div
       className={scrollableVariant({
-        className: "flex items-center bg-neutral-900 overflow-x-auto scrollbar-h-2 p-1.5 rounded-lg gap-2 sm:w-full"
+        className: "flex items-center overflow-x-auto scrollbar-h-2 gap-1 sm:w-full"
       })}
     >
       <BackButton href="/store" />
@@ -29,7 +29,7 @@ export const CartNavigation = () => {
         >
           <Button
             className="group-data-[state=active]:text-neutral-950 group-data-[state=inactive]:text-neutral-50
-             h-10 group-data-[state=active]:bg-neutral-50 group-data-[state=inactive]:bg-neutral-800 text-nowrap"
+             h-10 group-data-[state=active]:bg-neutral-50 rounded-xl group-data-[state=inactive]:bg-neutral-800 text-nowrap"
           >
             <Typography className="font-semibold">
               {badge.title}

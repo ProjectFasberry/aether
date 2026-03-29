@@ -57,7 +57,7 @@ const CartContentEmpty = () => {
       <Typography color="gray">
         Перейдите в магазин, чтобы найти всё, что нужно.
       </Typography>
-      <Link href="/store">
+      <Link href="/store" className="w-fit">
         <Button background="default" className="font-semibold">
           В магазин
         </Button>
@@ -81,7 +81,7 @@ const CartListContent = reatomComponent(({ ctx }) => {
   if (isEmpty) return <CartContentEmpty />;
 
   return (
-    <div className="flex flex-col gap-4 lg:w-2/3">
+    <div className="flex flex-col gap-4 lg:w-2/3 bg-neutral-900/60 p-3 lg:p-4 rounded-xl">
       <div className="flex flex-col gap-1">
         <Typography className="text-xl font-semibold">
           Содержимое
@@ -109,7 +109,7 @@ export const CartContent = () => {
         </Typography>
         <div className="flex flex-col lg:flex-row items-start w-full gap-6 h-fit">
           <CartListContent />
-          <div className="flex flex-col lg:w-1/3 bg-neutral-900 gap-4 sm:p-3 lg:p-4 rounded-lg w-full">
+          <div className="flex flex-col lg:w-1/3 bg-neutral-900/60 gap-4 p-3 lg:p-4 rounded-xl w-full">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center w-full gap-2">
                 <div className="flex-1 flex w-full">

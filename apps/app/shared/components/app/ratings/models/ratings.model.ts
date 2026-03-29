@@ -4,190 +4,122 @@ import { withReset } from "@reatom/framework";
 import { withHistory } from "@/shared/lib/reatom-helpers";
 import { logError } from "@/shared/lib/log";
 import {
-  RatingBelkoin,
-  RatingCharism,
-  RatingLands,
-  RatingParkour,
-  RatingPlaytime,
-  RatingReputation,
-  RatingsPayload
-} from "@repo/shared/types/entities/rating"
+	RatingBelkoin,
+	RatingCharism,
+	RatingLands,
+	RatingParkour,
+	RatingPlaytime,
+	RatingReputation,
+	RatingsPayload,
+} from "@repo/shared/types/entities/rating";
 import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
 
 type RatingMap = {
-  playtime: RatingPlaytime[]
-  lands_chunks: RatingLands[]
-  reputation: RatingReputation[]
-  charism: RatingCharism[]
-  belkoin: RatingBelkoin[]
-  parkour: RatingParkour[]
-}
+	playtime: RatingPlaytime[];
+	lands_chunks: RatingLands[];
+	reputation: RatingReputation[];
+	charism: RatingCharism[];
+	belkoin: RatingBelkoin[];
+	parkour: RatingParkour[];
+};
 
 //#region
-export const ratingByAtom = atom<string>("playtime", "ratingBy").pipe(withHistory(1))
-export const ratingServerAtom = atom<Maybe<string>>(undefined, "ratingServer")
+export const ratingByAtom = atom<string>("playtime", "ratingBy").pipe(withHistory(1));
+export const ratingServerAtom = atom<Maybe<string>>(undefined, "ratingServer");
 
-export const ratingAscAtom = atom(false, "ratingAsc")
-export const ratingEndCursorAtom = atom<Maybe<string>>(undefined, "ratingEndCursor").pipe(withReset())
+export const ratingAscAtom = atom(false, "ratingAsc");
+export const ratingEndCursorAtom = atom<Maybe<string>>(undefined, "ratingEndCursor").pipe(withReset());
 
 function getParams(ctx: Ctx) {
-  const opts = {
-    asc: ctx.get(ratingAscAtom),
-    cursor: ctx.get(ratingEndCursorAtom),
-    server: ctx.get(ratingServerAtom)
-  }
+	const opts = {
+		asc: ctx.get(ratingAscAtom),
+		cursor: ctx.get(ratingEndCursorAtom),
+		server: ctx.get(ratingServerAtom),
+	};
 
-  const by = ctx.get(ratingByAtom) as keyof RatingMap
+	const by = ctx.get(ratingByAtom) as keyof RatingMap;
 
-  return { by, opts }
+	return { by, opts };
 }
 
 export async function getRatings(
-  by: keyof RatingMap,
-  {
-    endCursor, asc, limit = 50, server
-  }: {
-    endCursor?: string, asc: boolean, limit?: number, server?: string
-  },
-  init: RequestInit
+	by: keyof RatingMap,
+	{
+		endCursor,
+		asc,
+		limit = 50,
+		server,
+	}: {
+		endCursor?: string;
+		asc: boolean;
+		limit?: number;
+		server?: string;
+	},
+	init: RequestInit,
 ) {
-  const opts = { limit, endCursor, asc, server }
+	const opts = { limit, endCursor, asc, server };
 
-  return client<RatingsPayload>(`server/rating/${by}`, { ...init, retry: 1, throwHttpErrors: false })
-    .pipe(withQueryParams(opts), withAbort(init.signal))
-    .exec()
+	return client<RatingsPayload>(`server/rating/${by}`, { ...init, retry: 1, throwHttpErrors: false })
+		.pipe(withQueryParams(opts), withAbort(init.signal))
+		.exec();
 }
 
-export const ratingDataAtom = atom<RatingsPayload["data"] | null>(null, "ratingData").pipe(withReset())
-export const ratingMetaAtom = atom<RatingsPayload["meta"] | null>(null, "ratingMeta").pipe(withReset())
+export const ratingDataAtom = atom<RatingsPayload["data"] | null>(null, "ratingData").pipe(withReset());
+export const ratingMetaAtom = atom<RatingsPayload["meta"] | null>(null, "ratingMeta").pipe(withReset());
 
-export const ratingsAction = reatomAsync(async (ctx) => {
-  const { opts, by } = getParams(ctx)
+export const ratingsAction = reatomAsync(
+	async (ctx) => {
+		const { opts, by } = getParams(ctx);
 
-  return await ctx.schedule(() =>
-    getRatings(by, opts, { signal: ctx.controller.signal })
-  )
-}, {
-  name: "ratingsAction",
-  onFulfill: (ctx, res) => {
-    batch(ctx, () => {
-      ratingDataAtom(ctx, res.data.length === 0 ? null : res.data)
-      ratingMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => {
-    logError(e)
-  }
-}).pipe(withStatusesAtom(), withErrorAtom())
+		return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+	},
+	{
+		name: "ratingsAction",
+		onFulfill: (ctx, res) => {
+			batch(ctx, () => {
+				ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
+				ratingMetaAtom(ctx, res.meta);
+			});
+		},
+		onReject: (_, e) => {
+			logError(e);
+		},
+	},
+).pipe(withStatusesAtom(), withErrorAtom());
 //#endregion
 
 //#region
-export const updateRatingAction = reatomAsync(async (ctx) => {
-  const { by, opts } = getParams(ctx);
+export const updateRatingAction = reatomAsync(
+	async (ctx) => {
+		const { by, opts } = getParams(ctx);
 
-  return await ctx.schedule(() =>
-    getRatings(by, opts, { signal: ctx.controller.signal })
-  )
-}, {
-  name: "updateRatingAction",
-  onFulfill: (ctx, res) => {
-    batch(ctx, () => {
-      ratingDataAtom(ctx, res.data.length === 0 ? null : res.data)
-      ratingMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => {
-    logError(e)
-  },
-}).pipe(withStatusesAtom())
+		return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+	},
+	{
+		name: "updateRatingAction",
+		onFulfill: (ctx, res) => {
+			batch(ctx, () => {
+				ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
+				ratingMetaAtom(ctx, res.meta);
+			});
+		},
+		onReject: (_, e) => {
+			logError(e);
+		},
+	},
+).pipe(withStatusesAtom());
 
-export const ratingIsViewAtom = atom(false, "ratingIsView")
+export const ratingIsViewAtom = atom(false, "ratingIsView");
 
 ratingIsViewAtom.onChange((ctx, state) => {
-  if (!state) return;
+	if (!state) return;
 
-  const meta = ctx.get(ratingMetaAtom)
-  const hasMore = meta?.hasNextPage;
+	const meta = ctx.get(ratingMetaAtom);
+	const hasMore = meta?.hasNextPage;
 
-  if (hasMore) {
-    ratingEndCursorAtom(ctx, meta.endCursor);
-    updateRatingAction(ctx)
-  }
-})
-//#endregion
-
-//#region
-export const RATINGS_SECTIONS = {
-  global: {
-    title: "Глобальные",
-    childs: [
-      "parkour",
-      "belkoin"
-    ]
-  },
-  servers: {
-    bisquite: {
-      title: "Bisquite",
-      childs: [
-        "charism",
-        "playtime",
-        "lands_chunks",
-        "reputation",
-      ]
-    },
-    muffin: {
-      title: "Muffin",
-      childs: [
-        "charism",
-        "playtime"
-      ]
-    }
-  }
-}
-
-const RATINGS_SECTIONS_BY_KEY: Record<string, string> = {
-  "charism": "Харизма",
-  "reputation": "Репутация",
-  "lands_chunks": "Территории",
-  "belkoin": "Белкоин",
-  "playtime": "Время игры",
-  "parkour": "Паркур"
-}
-
-type Node = Pick<typeof RATINGS_SECTIONS.global, "title"> & {
-  childs: { title: string, value: string }[],
-  key: string
-};
-
-export const buildRatings = () => {
-  const result: Node[] = [];
-
-  for (const [k, value] of Object.entries(RATINGS_SECTIONS)) {
-    if ("childs" in value) {
-      result.push({
-        title: value.title,
-        key: k,
-        childs: value.childs.map(key => ({
-          title: RATINGS_SECTIONS_BY_KEY[key],
-          value: key,
-        })),
-      });
-      continue;
-    }
-    for (const [k, v] of Object.entries(value)) {
-      if ("childs" in v) {
-        result.push({
-          title: v.title,
-          key: k,
-          childs: v.childs.map(key => ({
-            title: RATINGS_SECTIONS_BY_KEY[key],
-            value: key,
-          })),
-        });
-      }
-    }
-  }
-
-  return result;
-};
+	if (hasMore) {
+		ratingEndCursorAtom(ctx, meta.endCursor);
+		updateRatingAction(ctx);
+	}
+});
 //#endregion

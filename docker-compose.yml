@@ -46,8 +46,8 @@ services:
     command: ["/usr/local/bin/init.sh"]
       
   bisquite-db:
-    container_name: bisquite-db
     image: mariadb:11.8
+    container_name: bisquite-db
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -69,8 +69,8 @@ services:
       retries: 3
 
   luckperms-db:
-    container_name: luckperms-db
     image: postgres:15.1
+    container_name: luckperms-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${LUCKPERMS_POSTGRES_USER}
@@ -90,8 +90,8 @@ services:
       retries: 3
       
   general-db:
-    container_name: general-db
     image: postgres:18
+    container_name: general-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${GENERAL_POSTGRES_USER}
@@ -111,8 +111,8 @@ services:
       retries: 3
 
   eco-db:
-    container_name: eco-db
     image: mysql:9.2
+    container_name: eco-db
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -125,8 +125,8 @@ services:
       - ./data/db/minecraft/eco/data:/var/lib/mysql
 
   shared-db:
-    container_name: shared-db
     image: mariadb:11.8
+    container_name: shared-db
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -147,11 +147,11 @@ services:
       retries: 3
       
   # backend:
+  #   image: ${REGISTRY_HOST}/fasberry/fasberry-backend:latest
   #   container_name: backend
   #   build:
   #     context: .
   #     dockerfile: apps/backend/Dockerfile
-  #   image: ${REGISTRY_HOST}/fasberry/fasberry-backend:latest
   #   ports:
   #     - "4104:4104"
   #   environment: 

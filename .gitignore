@@ -11,6 +11,7 @@ node_modules
 .env.development.local
 .env.test.local
 .env.production.local
+.env.traefik
 
 # Testing
 coverage
@@ -22,6 +23,11 @@ coverage
 .vercel
 
 /data/
+/infra/data
+/infra/config/traefik/dynamic.yml
+/infra/config/traefik/traefik.yml
+/infra/config/traefik/logs
+/infra/config/traefik/certs
 
 # Build Outputs
 out/
@@ -40,3 +46,6 @@ yarn-error.log*
 
 # Local Netlify folder
 .netlify
+
+/apps/panel/
+/docker-compose.prod.yml

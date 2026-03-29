@@ -7,7 +7,7 @@ export const BackButton = ({ href }: { href?: string }) => {
     <Button
       background="default"
       onClick={() => href ? navigate(href) : window.history.back()}
-      className="h-10 p-0 aspect-square w-fit"
+      className="h-10 p-0 aspect-square rounded-xl w-fit"
     >
       <IconArrowLeft size={22} className='text-neutral-400' />
     </Button>

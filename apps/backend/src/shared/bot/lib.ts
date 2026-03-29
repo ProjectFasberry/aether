@@ -1,5 +1,5 @@
 import { initPlayerSkin, updatePlayersSkins } from "#/modules/server/skin/skin.model";
-import { type Bot, format, type MessageContext } from "gramio";
+import { format } from "gramio";
 import { botLogger, getGuardBot } from ".";
 import { getServerStatus } from "#/modules/server/status/status.model";
 import { type CommandCtx, GUARD_COMMANDS } from "./cmds";
@@ -8,173 +8,316 @@ import { getRcon } from "../rcon/init";
 import { getChats, revalidateChats } from "../constants/chats";
 import { getUrls, revalidateUrls } from "../constants/urls";
 import { wrapError } from "#/helpers/wrap-error";
+import { PROD_HOST, WATCHTOWER_API_TOKEN, WATCHTOWER_PORT } from "../env";
 
 export async function botInfoCmdCb(ctx: CommandCtx) {
-  const cmds = Array.from(GUARD_COMMANDS.entries()).map(([cmd, pd]) => `${cmd}: ${pd.type}`).join(", ")
+	const commandsList = GUARD_COMMANDS.map((cmd) => {
+		return `• <code>/${cmd.name}</code>`;
+	}).join("\n");
 
-  const text = format`
-    loaded=${cmds}
-  `
+	const message = format`
+<b>🤖 Информация о командах</b>
 
-  ctx.send(text)
-  ctx.delete({ message_id: ctx.id })
+Загружено обработчиков: <code>${GUARD_COMMANDS.length}</code>
+
+${commandsList}
+
+<i>🔐 — только приватные чаты
+🌍 — публично доступные</i>
+  `;
+
+	await ctx.send(message, { parse_mode: "HTML" });
+	await ctx.delete().catch(() => {});
 }
 
 export async function backendInfoCmdCb(ctx: CommandCtx) {
-  const urls = Object.entries(getUrls()).map(([k, v]) => `${k}: ${v}`).join(", ")
-  const chats = getChats().join(", ")
+	const urlsEntries = Array.from(getUrls().entries());
+	const chatsList = getChats();
 
-  const text = format`
-    chats=${chats}
-    urls=${urls}
-  `
+	const urlsText =
+		urlsEntries.length > 0 ? urlsEntries.map(([key, val]) => `• <code>${key}</code>: ${val}`).join("\n") : "пусто";
 
-  ctx.send(text)
-  ctx.delete({ message_id: ctx.id })
+	const chatsText = chatsList.length > 0 ? chatsList.map((id) => `• <code>${id}</code>`).join("\n") : "пусто";
+
+	const message = format`
+🖥 Backend Information
+
+🔗 Endpoints:
+${urlsText}
+
+💬 Whitelisted Chats:
+${chatsText}
+    `;
+
+	await ctx.send(message, { parse_mode: "HTML" });
+	await ctx.delete().catch(() => {});
 }
 
 export async function revalidateChatsCmdCb(ctx: CommandCtx) {
-  const result = await revalidateChats()
+	const result = await revalidateChats();
 
-  if (!result.ok) {
-    ctx.reply(`chats is not revalidated. Error: ${wrapError(result.error).error}`)
-    return;
-  }
+	if (!result.ok) {
+		const errorMessage = wrapError(result.error).error;
 
-  const msg = `chats revalidated, prev=${result.data.prev}, loaded=${result.data.upd}`
-  
-  ctx.send(msg)
-  ctx.delete({ message_id: ctx.id })
+		ctx.send(
+			format`
+            ❌ <b>Ошибка обновления чатов</b>
+            
+            <code>${errorMessage}</code>
+        `,
+			{ parse_mode: "HTML" },
+		);
+
+		return;
+	}
+
+	const { prev, upd } = result.data;
+	const diff = upd - prev;
+	const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+
+	const message = format`
+        ✅ <b>Список чатов обновлен</b>
+        
+        📊 Сводка конфигурации:
+        • Было в памяти: <code>${prev}</code>
+        • Загружено сейчас: <code>${upd}</code>
+        • Изменение: <code>${diffText}</code>
+    `;
+
+	await ctx.send(message, { parse_mode: "HTML" });
+	await ctx.delete().catch(() => {});
 }
 
 export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
-  const result = await revalidateUrls()
+	const result = await revalidateUrls();
 
-  if (!result.ok) {
-    ctx.reply(`urls is not revalidated. Error: ${wrapError(result.error).error}`)
-    return;
-  }
+	if (!result.ok) {
+		const errorMessage = wrapError(result.error).error;
 
-  const msg = `urls revalidated, prev=${result.data.prev}, loaded=${result.data.upd}`
+		ctx.send(
+			format`
+      ❌ <b>Ошибка ревалидации URL</b>
+      
+      <code>${errorMessage}</code>
+    `,
+			{ parse_mode: "HTML" },
+		);
 
-  ctx.send(msg)
-  ctx.delete({ message_id: ctx.id })
+		return;
+	}
+
+	const { prev, upd } = result.data;
+	const diff = upd - prev;
+	const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+
+	const message = format`
+    ✅ <b>URL успешно обновлены</b>
+    
+    📊 Данные конфигурации:
+    • Было: <code>${prev}</code>
+    • Стало: <code>${upd}</code>
+    • Изменение: <code>${diffText}</code>
+  `;
+
+	await ctx.send(message, { parse_mode: "HTML" });
+	await ctx.delete().catch(() => {});
 }
 
+type TaskResult = boolean | Map<string, boolean>;
+
 export async function updateSkinCmdCb(ctx: CommandCtx) {
-  const parts = ctx.args?.split(/\s+/) ?? [];
+	const [targetPlayer] = ctx.args?.split(/\s+/) ?? [];
+	const chatId = ctx.chat.id.toString();
 
-  let targetPlayer: string | null = null;
+	const BATCH_OPTS = { batchSize: 1000, conc: 100 };
 
-  if (parts && parts.length >= 1) {
-    targetPlayer = parts[0]
-  }
+	const isSinglePlayer = Boolean(targetPlayer);
 
-  type EventResult = boolean | Map<string, boolean>;
+	const taskFn = isSinglePlayer
+		? () => initPlayerSkin(targetPlayer!)
+		: () => updatePlayersSkins(BATCH_OPTS.conc, BATCH_OPTS.batchSize);
 
-  const opts = { batchSize: 1000, conc: 100 }
+	const startNotice = isSinglePlayer
+		? `🚀 Обновление скина игрока: <code>${targetPlayer}</code>`
+		: `🚀 Массовое обновление скинов (batch: ${BATCH_OPTS.batchSize}, conc: ${BATCH_OPTS.conc})`;
 
-  const eventFn: () => Promise<EventResult> = targetPlayer
-    ? () => initPlayerSkin(targetPlayer)
-    : () => updatePlayersSkins(opts.conc, opts.batchSize)
+	executeBackgroundTask(ctx, chatId, taskFn, startNotice);
 
-  const message = targetPlayer
-    ? `start updating player ${targetPlayer}`
-    : `start updating players. args: ${Object.entries(opts).map(([k, v]) => `${k}=${v}`).join(", ")}`
+	await ctx.delete().catch(() => {});
+}
 
-  async function startEvent<T>(
-    ctx: MessageContext<Bot>,
-    chat_id: string,
-    fn: () => Promise<T>,
-    startMsg: string,
-    finishMsg: (payload: T) => string
-  ) {
-    try {
-      await ctx.send(startMsg)
+async function executeBackgroundTask<T>(
+	ctx: CommandCtx,
+	chatId: string,
+	fn: () => Promise<TaskResult>,
+	startMsg: string,
+) {
+	try {
+		await ctx.send(startMsg, { parse_mode: "HTML" });
 
-      const fnResult = await fn()
+		const result = await fn();
 
-      const bot = getGuardBot();
-      bot.api.sendMessage({ chat_id, text: finishMsg(fnResult) })
-    } catch (e) {
-      botLogger.error(e)
-    }
-  }
+		let resultText: string;
 
-  startEvent(
-    ctx,
-    ctx.chat.id.toString(),
-    eventFn,
-    message,
-    (payload) => `result= 
-      ${payload instanceof Map ? JSON.stringify(Array.from(payload.values())) : payload}
-    `
-  )
+		if (result instanceof Map) {
+			const values = Array.from(result.values());
+			const successCount = values.filter((v) => v === true).length;
+			resultText = `✅ Завершено. Успешно: ${successCount}/${values.length}`;
+		} else {
+			resultText = result ? "✅ Успешно завершено" : "❌ Ошибка при выполнении";
+		}
+
+		const bot = getGuardBot();
+
+		await bot.api.sendMessage({
+			chat_id: chatId,
+			text: `📊 <b>Результат задачи:</b>\n${resultText}`,
+			parse_mode: "HTML",
+		});
+	} catch (e) {
+		botLogger.error(e);
+
+		const bot = getGuardBot();
+
+		await bot.api
+			.sendMessage({
+				chat_id: chatId,
+				text: `❌ <b>Критическая ошибка задачи</b>\n<code>${String(e)}</code>`,
+				parse_mode: "HTML",
+			})
+			.catch(() => {});
+	}
 }
 
 export async function statusCmdCb(ctx: CommandCtx) {
-  async function get() {
-    const status = await getServerStatus()
+	const status = await getServerStatus();
 
-    const proxyText = status?.proxy
-      ? `${status?.proxy.online + "/" + status?.proxy.max}`
-      : "n/a";
+	const proxyInfo = status?.proxy ? `${status.proxy.online}/${status.proxy.max}` : "n/a";
 
-    const servers = status?.servers ? Object.entries(status.servers) : []
+	const serversEntries = Object.entries(status?.servers ?? {});
+	const serversText =
+		serversEntries.length > 0
+			? serversEntries.map(([name, data]) => `• ${name}: ${data.online}/${data.max}`).join("\n")
+			: "n/a";
 
-    const serversText = servers.length
-      ? servers.map(([s, v]) => `${s}:${v.online}/${v.max}`).join("\n")
-      : "n/a"
+	const message = format`
+📊 Статус серверов
 
-    const text = format`
-      Global online: ${proxyText}
-      Servers:
-        ${serversText}
+🌐 Общий онлайн: <code>${proxyInfo}</code>
+
+🖥 Детализация:
+${serversText}
     `;
 
-    return text
-  }
+	await ctx.send(message, { parse_mode: "HTML" });
+	await ctx.delete().catch(() => {});
+}
 
-  const text = await get();
-
-  ctx.send(text);
-  ctx.delete({ message_id: ctx.id });
+export function getCommandName(ctx: CommandCtx, fallback: string = "command"): string {
+	// @ts-expect-error
+	if (ctx.info?.name) return ctx.info.name;
+	if ((ctx as any).command) return (ctx as any).command;
+	if (ctx.text) return ctx.text.split(/\s+/)[0].slice(1).split("@")[0];
+	return fallback;
 }
 
 export async function serverAlertCmdCb(ctx: CommandCtx) {
-  if (!ctx.args || !ctx.args.length) {
-    ctx.reply("Input message")
-    return;
-  }
+	const alertMessage = ctx.args?.trim();
 
-  const message = ctx.args
+	if (!alertMessage) {
+		const cmdName = getCommandName(ctx, "alert");
 
-  const rcon = getRcon()
-  const result = await rcon.send(`alert ${message}`)
+		ctx.send(
+			format`
+            ⚠️ <b>Отсутствует текст объявления</b>
+            
+            Использование: <code>/${cmdName} [текст сообщения]</code>
+            
+            <i>Пример: /${cmdName} Сервер будет перезагружен через 5 минут</i>
+        `,
+			{ parse_mode: "HTML" },
+		);
 
-  ctx.send(`Call's result: ${result}`)
-  ctx.send(`Message sent`)
-  ctx.delete({ message_id: ctx.id })
+		return;
+	}
+
+	const rcon = getRcon();
+
+	try {
+		const result = await rcon.send(`alert ${alertMessage}`);
+
+		const report = format`
+            📢 <b>Объявление отправлено на сервер</b>
+            
+            📝 Текст: <code>${alertMessage}</code>
+            🖥 Ответ сервера: <code>${result || "ok"}</code>
+        `;
+
+		await ctx.send(report, { parse_mode: "HTML" });
+	} catch (e) {
+		botLogger.error(e);
+		await ctx.send(`❌ <b>Ошибка RCON:</b> <code>${String(e)}</code>`, { parse_mode: "HTML" });
+	}
+
+	await ctx.delete().catch(() => {});
 }
 
 export async function startCmdCb(ctx: CommandCtx) {
-  const list = Array.from(GUARD_COMMANDS.keys())
+	const commandsForMenu = GUARD_COMMANDS.filter((cmd) => cmd.description).map((cmd) => ({
+		command: cmd.name,
+		description: cmd.description!,
+	}));
 
-  const kb = new Keyboard()
-    .columns(2)
-    .add(
-      ...list.map((cmd) =>
-        Keyboard.text(`/${cmd}`)
-      )
-    )
+	const kb = new Keyboard()
+		.columns(2)
+		.add(...commandsForMenu.map((cmd) => Keyboard.text(`/${cmd.command}`)))
+		.resized();
 
-  const text = `Available cmds:\n${list.map(x => `/${x}`).join("\n")}`;
+	const commandsList = commandsForMenu.map((x) => `• <b>/${x.command}</b> — <i>${x.description}</i>`).join("\n");
 
-  ctx.send(text, { reply_markup: kb })
-  ctx.delete({ message_id: ctx.id })
+	const welcomeText = format`
+👋 <b>Добро пожаловать в админ-панель!</b>
+
+Доступные команды управления:
+${commandsList}
+
+<i>Выберите команду на клавиатуре или введите её вручную.</i>
+    `;
+
+	await ctx.send(welcomeText, {
+		reply_markup: kb,
+		parse_mode: "HTML",
+	});
+
+	await ctx.delete().catch(() => {});
 }
 
 export async function publicStartCmdCb(ctx: CommandCtx) {
-  ctx.send("Hi")
-  ctx.delete({ message_id: ctx.id })
+	await ctx.send("Hi! Fasberry project is available: https://fasberry.fun");
+	await ctx.delete().catch(() => {});
+}
+
+export async function forceUpdateWatchtower(ctx: CommandCtx) {
+	try {
+		const url = `http://${PROD_HOST}:${WATCHTOWER_PORT}/v1/update`;
+
+		const res = await fetch(url, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${WATCHTOWER_API_TOKEN}`,
+			},
+			tls: {
+				rejectUnauthorized: false,
+			},
+		});
+
+		if (res.ok) {
+			const text = await res.text();
+			await ctx.send(`Signal sent: ${text}`);
+		} else {
+			await ctx.send(`Watchtower error ${res.status}`);
+		}
+	} catch (e) {
+		await ctx.send(`Network error ${JSON.stringify(e)}`);
+	}
 }

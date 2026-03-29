@@ -1,4 +1,4 @@
-import { IconArrowBadgeRight, IconBasket, IconCategory, IconChevronUp, IconMap, IconStars, TablerIcon } from "@tabler/icons-react";
+import { IconArrowBadgeRight, IconBasket, IconBuildingStore, IconCategory, IconChevronUp, IconMap, IconStars, TablerIcon } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
 import { CONFIG_PANEL_READ_PERMISSION, currentUserAtom, currentUserPermsAtom } from "@/shared/models/current-user.model";
@@ -167,7 +167,7 @@ const HeaderUser = reatomComponent(({ ctx }) => {
   if (!currentUser) return null;
 
   return (
-    <div className="flex items-center w-fit min-w-0 cursor-pointer gap-2 h-10 bg-neutral-800 px-2 rounded-lg">
+    <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
       <Link
         href={createLink("player", currentUser.nickname)}
         className="flex items-center gap-2 h-8 overflow-hidden"
@@ -178,9 +178,6 @@ const HeaderUser = reatomComponent(({ ctx }) => {
           propWidth={32}
           className="min-w-8 min-h-8 w-8 h-8 aspect-square"
         />
-        <Typography className="text-base text-neutral-50 font-semibold truncate">
-          {currentUser.nickname.slice(0, 32)}
-        </Typography>
       </Link>
       <HeaderMenu />
     </div>
@@ -230,12 +227,12 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
       aria-label="Перейти на главную"
       href="/store/cart"
       data-trigger={isTriggered}
-      className="duration-150 relative flex items-center h-10 justify-center bg-neutral-800 p-2 rounded-xl
+      className="relative max-h-8 w-8 max-w-8 flex items-center h-8 justify-center 
         data-[trigger=true]:scale-[1.15] group data-[trigger=false]:scale-100
       "
     >
-      <IconBasket
-        size={26}
+      <IconBuildingStore
+        size={28}
         className="group-data-[trigger=true]:text-green-500 group-data-[trigger=false]:text-neutral-400"
       />
       {cartLength >= 1 && (
@@ -257,8 +254,8 @@ export const Logotype = () => {
       href="/"
       className="flex h-full w-fit items-center gap-2"
     >
-      <img src="/favicon.ico" width={48} height={48} alt="" className="min-w-12 w-12 max-h-12 min-h-12" />
-      <Typography className="hidden self-end md:inline font-bold text-2xl">
+      <img src="/favicon.ico" width={40} height={40} alt="" className="min-w-10 w-10 max-h-10 min-h-10" />
+      <Typography className="font-[PIXY] self-end text-3xl">
         Fasberry
       </Typography>
     </Link>
@@ -269,7 +266,7 @@ const HeaderUserBar = () => {
   const pathname = usePageContext().urlPathname;
 
   return (
-    <div className="flex gap-1 items-center w-full justify-end">
+    <div className="flex gap-4 items-center w-full justify-end">
       {pathname.includes("/store") && <HeaderCartTrigger />}
       <HeaderUser />
     </div>

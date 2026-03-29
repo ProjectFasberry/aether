@@ -9,6 +9,11 @@
   nocompatible: true;
 }
 
+@font-face {
+  font-family: "PIXY";
+  src: url("/fonts/PIXY.ttf") format("truetype");
+}
+
 :root {
   --bprogress-color: #00AA00;
 }

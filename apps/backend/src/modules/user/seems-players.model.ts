@@ -9,7 +9,8 @@ import { sql } from "kysely";
 import pLimit from "p-limit";
 import z from "zod";
 
-export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) => getRedisKey("internal", `seems-like:last-update:${nickname}:data`);
+export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) =>
+	getRedisKey("internal", `seems-like:last-update:${nickname}:data`);
 export const SEEMS_LIKE_LIST_KEY = (nickname: string) => getRedisKey("internal", `seems-like:list:${nickname}:data`);
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
@@ -17,257 +18,249 @@ const TTL_MS = SIX_HOURS_MS;
 const LIMIT = 32;
 
 export async function updateSeemsLikeList() {
-  const redis = getRedis();
-  const BATCH_SIZE = 100;
-  const CONCURRENCY = 16;
-  const limit = pLimit(CONCURRENCY);
+	const redis = getRedis();
+	const BATCH_SIZE = 100;
+	const CONCURRENCY = 16;
+	const limit = pLimit(CONCURRENCY);
 
-  const players = await general
-    .selectFrom("players")
-    .select(["nickname", "uuid"])
-    .limit(1000)
-    .execute();
+	const players = await general.selectFrom("players").select(["nickname", "uuid"]).limit(1000).execute();
 
-  if (players.length === 0) {
-    console.warn("Not found players for updating");
-    return;
-  }
+	if (players.length === 0) {
+		console.warn("Not found players for updating");
+		return;
+	}
 
-  console.log(`Start updating for ${players.length} players...`);
+	console.log(`Start updating for ${players.length} players...`);
 
-  const start = Date.now();
-  const candidates: { nickname: string; uuid: string }[] = [];
+	const start = Date.now();
+	const candidates: { nickname: string; uuid: string }[] = [];
 
-  const pipeline = redis.multi();
+	const pipeline = redis.multi();
 
-  for (const p of players) {
-    pipeline.get(SEEMS_LIKE_LAST_UPDATE_KEY(p.nickname));
-  }
+	for (const p of players) {
+		pipeline.get(SEEMS_LIKE_LAST_UPDATE_KEY(p.nickname));
+	}
 
-  const results = await pipeline.exec();
-  if (!results) return;
+	const results = await pipeline.exec();
+	if (!results) return;
 
-  results.forEach((res, i) => {
-    const [, value] = res as [Error | null, string | null];
+	results.forEach((res, i) => {
+		const [, value] = res as [Error | null, string | null];
 
-    const ts = Number(value ?? 0);
+		const ts = Number(value ?? 0);
 
-    if (!value || isNaN(ts) || start - ts > SIX_HOURS_MS) {
-      candidates.push(players[i]);
-    }
-  });
+		if (!value || Number.isNaN(ts) || start - ts > SIX_HOURS_MS) {
+			candidates.push(players[i]);
+		}
+	});
 
-  if (candidates.length === 0) {
-    console.log("All collections are fresh");
-    return;
-  }
+	if (candidates.length === 0) {
+		console.log("All collections are fresh");
+		return;
+	}
 
-  if (!isProduction) {
-    console.log(`Updating ${candidates.length} players`);
-  }
+	if (!isProduction) {
+		console.log(`Updating ${candidates.length} players`);
+	}
 
-  let successCount = 0;
-  let errorCount = 0;
+	let successCount = 0;
+	let errorCount = 0;
 
-  async function processBatch(batch: { nickname: string; uuid: string }[], index: number) {
-    const batchStart = Date.now();
+	async function processBatch(batch: { nickname: string; uuid: string }[], index: number) {
+		const batchStart = Date.now();
 
-    const batchResult = await processSeemsLikePlayersBatch(batch);
+		const batchResult = await processSeemsLikePlayersBatch(batch);
 
-    await Promise.all(
-      batch.map((player) =>
-        limit(async () => {
-          try {
-            const data = batchResult[player.nickname];
-            const multi = redis.multi();
+		await Promise.all(
+			batch.map((player) =>
+				limit(async () => {
+					try {
+						const data = batchResult[player.nickname];
+						const multi = redis.multi();
 
-            multi.set(SEEMS_LIKE_LIST_KEY(player.nickname), JSON.stringify(data), "PX", TTL_MS);
-            multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname), Date.now().toString(), "PX", TTL_MS);
+						multi.set(SEEMS_LIKE_LIST_KEY(player.nickname), JSON.stringify(data), "PX", TTL_MS);
+						multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname), Date.now().toString(), "PX", TTL_MS);
 
-            await multi.exec();
+						await multi.exec();
 
-            successCount++;
+						successCount++;
 
-            if (!isProduction) {
-              console.log(`${player.nickname} updated (${successCount}/${candidates.length})`);
-            }
-          } catch (err) {
-            errorCount++;
-            console.error(`Error: ${player.nickname}:`, err);
-          }
-        })
-      )
-    );
+						if (!isProduction) {
+							console.log(`${player.nickname} updated (${successCount}/${candidates.length})`);
+						}
+					} catch (err) {
+						errorCount++;
+						console.error(`Error: ${player.nickname}:`, err);
+					}
+				}),
+			),
+		);
 
-    if (!isProduction) {
-      console.log(
-        `Batch #${index + 1} (${batch.length} players) proccessed for ${Date.now() - batchStart}ms`
-      );
-    }
-  }
+		if (!isProduction) {
+			console.log(`Batch #${index + 1} (${batch.length} players) proccessed for ${Date.now() - batchStart}ms`);
+		}
+	}
 
-  for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
-    const batch = candidates.slice(i, i + BATCH_SIZE);
-    await processBatch(batch, i / BATCH_SIZE);
-    await new Promise((res) => setTimeout(res, 500));
-  }
+	for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
+		const batch = candidates.slice(i, i + BATCH_SIZE);
+		await processBatch(batch, i / BATCH_SIZE);
+		await new Promise((res) => setTimeout(res, 500));
+	}
 
-  console.log(
-    `Updating result: ${successCount} success, ${errorCount} errors. Time: ${(Date.now() - start) / 1000}s`
-  );
+	console.log(`Updating result: ${successCount} success, ${errorCount} errors. Time: ${(Date.now() - start) / 1000}s`);
 }
 
 async function getRandomPlayers(limit: number) {
-  return general
-    .selectFrom("players")
-    .select(["nickname", "uuid"])
-    .orderBy(sql`RANDOM()`)
-    .limit(limit)
-    .execute();
+	return general.selectFrom("players").select(["nickname", "uuid"]).orderBy(sql`RANDOM()`).limit(limit).execute();
 }
 
 export async function processSeemsLikePlayersBatch(
-  batch: { nickname: string; uuid: string }[]
+	batch: { nickname: string; uuid: string }[],
 ): Promise<Record<string, SeemsLikePlayer[]>> {
-  const batchNicknames = batch.map(p => p.nickname);
+	const batchNicknames = batch.map((p) => p.nickname);
 
-  const lands = await bisquite
-    .selectFrom("lands_lands")
-    .innerJoin("lands_players", "lands_players.edit_land", "lands_lands.ulid")
-    .select(["lands_lands.ulid", "lands_lands.members", "lands_players.name as player_name"])
-    .where("lands_players.name", "in", batchNicknames)
-    .orderBy("lands_lands.created_at", "asc")
-    .execute();
-  
-  const playerToMembersMap: Record<string, Set<string>> = {};
+	const lands = await bisquite
+		.selectFrom("lands_lands")
+		.innerJoin("lands_players", "lands_players.edit_land", "lands_lands.ulid")
+		.select(["lands_lands.ulid", "lands_lands.members", "lands_players.name as player_name"])
+		.where("lands_players.name", "in", batchNicknames)
+		.orderBy("lands_lands.created_at", "asc")
+		.execute();
 
-  for (const { ulid, members } of lands) {
-    type Members = Record<string, { chunks: number }>
+	const playerToMembersMap: Record<string, Set<string>> = {};
 
-    if (!playerToMembersMap[ulid]) {
-      playerToMembersMap[ulid] = new Set()
-    }
+	for (const { ulid, members } of lands) {
+		type Members = Record<string, { chunks: number }>;
 
-    const parsedMembers = safeJsonParse<Members>(members);
+		if (!playerToMembersMap[ulid]) {
+			playerToMembersMap[ulid] = new Set();
+		}
 
-    if (parsedMembers.ok) {
-      for (const [memberUUID, _] of Object.entries(parsedMembers.value)) {
-        if (memberUUID !== ulid) {
-          playerToMembersMap[ulid].add(memberUUID);
-        }
-      }
-    } else {
-      console.error(new Error(parsedMembers.error.message))
-    }
-  }
+		const parsedMembers = safeJsonParse<Members>(members);
 
-  const allMembersSet = new Set<string>();
+		if (parsedMembers.ok) {
+			for (const [memberUUID, _] of Object.entries(parsedMembers.value)) {
+				if (memberUUID !== ulid) {
+					playerToMembersMap[ulid].add(memberUUID);
+				}
+			}
+		} else {
+			console.error(new Error(parsedMembers.error.message));
+		}
+	}
 
-  Object.values(playerToMembersMap).forEach(set =>
-    set.forEach(name => allMembersSet.add(name))
-  );
+	const allMembersSet = new Set<string>();
 
-  const allMembers = Array.from(allMembersSet);
+	Object.values(playerToMembersMap).forEach((set) => {
+		set.forEach((name) => {
+			allMembersSet.add(name);
+		});
+	});
 
-  type FullPlayer = { nickname: string; uuid: string; role_id?: number }
+	const allMembers = Array.from(allMembersSet);
 
-  const fullPlayersMap: Record<string, FullPlayer> = {};
+	type FullPlayer = { nickname: string; uuid: string; role_id?: number };
 
-  if (allMembers.length > 0) {
-    const fullPlayers = await general
-      .selectFrom("players")
-      .select(["nickname", "uuid", "role_id"])
-      .where("uuid", "in", allMembers)
-      .orderBy("role_id", "desc")
-      .execute();
+	const fullPlayersMap: Record<string, FullPlayer> = {};
 
-    fullPlayers.forEach(p => fullPlayersMap[p.nickname] = p);
-  }
+	if (allMembers.length > 0) {
+		const fullPlayers = await general
+			.selectFrom("players")
+			.select(["nickname", "uuid", "role_id"])
+			.where("uuid", "in", allMembers)
+			.orderBy("role_id", "desc")
+			.execute();
 
-  const result: Record<string, SeemsLikePlayer[]> = {};
+		fullPlayers.forEach((p) => {
+			fullPlayersMap[p.nickname] = p;
+		});
+	}
 
-  for (const player of batch) {
-    const data: SeemsLikePlayer[] = [];
-    const members = playerToMembersMap[player.nickname] ?? new Set();
+	const result: Record<string, SeemsLikePlayer[]> = {};
 
-    members.delete(player.nickname);
+	for (const player of batch) {
+		const data: SeemsLikePlayer[] = [];
+		const members = playerToMembersMap[player.nickname] ?? new Set();
 
-    let count = 0;
+		members.delete(player.nickname);
 
-    const med = Math.log2(lands.filter(l => l.player_name === player.nickname).length + 1) / 3;
-    const seemsRate = Math.min(1, med);
+		let count = 0;
 
-    for (const name of members) {
-      const player = fullPlayersMap[name];
+		const med = Math.log2(lands.filter((l) => l.player_name === player.nickname).length + 1) / 3;
+		const seemsRate = Math.min(1, med);
 
-      const { nickname, uuid } = player;
+		for (const name of members) {
+			const player = fullPlayersMap[name];
 
-      if (player && count < LIMIT) {
-        data.push({ nickname, uuid, seemsRate });
-        count++;
-      }
-    }
+			const { nickname, uuid } = player;
 
-    if (data.length === 0) {
-      const randomPlayers = await getRandomPlayers(LIMIT + 1)
+			if (player && count < LIMIT) {
+				data.push({ nickname, uuid, seemsRate });
+				count++;
+			}
+		}
 
-      for (const p of randomPlayers) {
-        if (p.nickname === player.nickname) {
-          continue;
-        }
+		if (data.length === 0) {
+			const randomPlayers = await getRandomPlayers(LIMIT + 1);
 
-        data.push({ nickname: p.nickname, uuid: p.uuid, seemsRate: 0.1 });
+			for (const p of randomPlayers) {
+				if (p.nickname === player.nickname) {
+					continue;
+				}
 
-        if (data.length >= LIMIT) {
-          break;
-        };
-      }
-    }
+				data.push({ nickname: p.nickname, uuid: p.uuid, seemsRate: 0.1 });
 
-    result[player.nickname] = data;
-  }
+				if (data.length >= LIMIT) {
+					break;
+				}
+			}
+		}
 
-  return result;
+		result[player.nickname] = data;
+	}
+
+	return result;
 }
 
 export async function getSeemsLikePlayersByPlayer(
-  nickname: string,
-  { limit }: z.infer<typeof seemsPlayersSchema>
+	nickname: string,
+	{ limit }: z.infer<typeof seemsPlayersSchema>,
 ): Promise<SeemsLikePlayersPayload> {
-  const redis = getRedis()
+	const redis = getRedis();
 
-  const dataStr = await redis.get(SEEMS_LIKE_LIST_KEY(nickname))
+	const dataStr = await redis.get(SEEMS_LIKE_LIST_KEY(nickname));
 
-  if (!dataStr) return {
-    data: [],
-    meta: { count: 0 }
-  }
+	if (!dataStr)
+		return {
+			data: [],
+			meta: { count: 0 },
+		};
 
-  const result = safeJsonParse<SeemsLikePlayer[]>(dataStr)
+	const result = safeJsonParse<SeemsLikePlayer[]>(dataStr);
 
-  if (!result.ok) {
-    console.error(result.error.message)
+	if (!result.ok) {
+		console.error(result.error.message);
 
-    return {
-      data: [],
-      meta: { count: 0 }
-    }
-  }
+		return {
+			data: [],
+			meta: { count: 0 },
+		};
+	}
 
-  let data = result.value.filter(d => d.nickname !== nickname);
+	let data = result.value.filter((d) => d.nickname !== nickname);
 
-  if (limit) {
-    data = data.slice(0, limit)
-  }
+	if (limit) {
+		data = data.slice(0, limit);
+	}
 
-  return {
-    data,
-    meta: {
-      count: data.length
-    }
-  }
+	return {
+		data,
+		meta: {
+			count: data.length,
+		},
+	};
 }
 
 export const seemsPlayersSchema = z.object({
-  limit: z.coerce.number().optional()
-})
+	limit: z.coerce.number().optional(),
+});
