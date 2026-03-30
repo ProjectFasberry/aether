@@ -7,7 +7,7 @@
 		"dev": "bun scripts/run dev",
 		"lint": "bun scripts/run lint",
 		"type-check": "bun scripts/run type-check",
-		"postinstall": "lefthook install",
+		"postinstall": "[ \"$NODE_ENV\" != \"production\" ] && lefthook install || true",
 		"-------------------------": "",
 		"generate:types": "bun --filter=@repo/shared run generate $1",
 		"--------------------------": "",
@@ -24,6 +24,9 @@
 		"backend:build": "NODE_ENV=production bun --filter=backend run build:prod",
 		"backend:release": "bun --filter=backend run release",
 		"-----------------------------": "",
+		"panel:build": "NODE_ENV=production bun --filter=panel run build:prod",
+		"panel:release": "bun --filter=panel run release",
+		"------------------------------": "",
 		"landing:build": "NODE_ENV=production bun --filter=landing run build",
 		"landing:release": "bun --filter=landing run deploy"
 	},

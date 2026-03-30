@@ -24,6 +24,7 @@
 		"release": "make all"
 	},
 	"dependencies": {
+		"@bogeychan/elysia-logger": "0.1.10",
 		"@elysiajs/bearer": "1.4.1",
 		"@elysiajs/cors": "1.4.0",
 		"@elysiajs/openapi": "1.4.11",
@@ -35,7 +36,6 @@
 		"@oslojs/crypto": "1.0.1",
 		"@oslojs/encoding": "1.1.0",
 		"@repo/shared": "workspace:*",
-		"@tqman/nice-logger": "1.1.1",
 		"bcryptjs": "3.0.2",
 		"bowser": "2.13.1",
 		"consola": "3.4.2",
@@ -67,7 +67,6 @@
 		"@types/pg": "8.11.10",
 		"bun-types": "1.2.17",
 		"drizzle-kit": "0.31.4",
-		"typescript": "5.8.3",
-		"yaml": "2.8.3"
+		"typescript": "5.8.3"
 	}
 }

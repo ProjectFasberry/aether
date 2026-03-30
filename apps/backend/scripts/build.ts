@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-function getBuildFilesInfo(outputs: Bun.BuildOutput["outputs"]) {
+async function getBuildFilesInfo(output: Bun.BuildOutput) {
 	const files: unknown[] = [];
 
 	function processArtifact(artifact: Bun.BuildArtifact) {
@@ -26,8 +26,14 @@ function getBuildFilesInfo(outputs: Bun.BuildOutput["outputs"]) {
 		}
 	}
 
-	for (const output of outputs) {
-		processArtifact(output);
+	for (const target of output.outputs) {
+		processArtifact(target);
+	}
+
+	// @ts-expect-error
+	if (output.metafile) {
+		// @ts-expect-error
+		await Bun.write("./dist/meta.json", JSON.stringify(output.metafile));
 	}
 
 	return files;
@@ -39,6 +45,8 @@ const output = await Bun.build({
 	minify: true,
 	sourcemap: true,
 	target: "bun",
+	// @ts-expect-error
+	metafile: true,
 });
 
-console.log(getBuildFilesInfo(output.outputs));
+console.log(await getBuildFilesInfo(output));

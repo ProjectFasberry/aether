@@ -1,0 +1,150 @@
+import Elysia from "elysia";
+import { isProduction } from "../shared/env";
+import { HttpStatusEnum } from "elysia-http-status-code/status";
+import type { Context } from "elysia";
+import { general } from "../shared/database";
+import { getRedis } from "../shared/redis";
+import { logger } from "../shared/logger";
+import { safeJsonParse } from "@repo/shared/lib/utils";
+
+type UserSessionPayload = {
+	nickname: string;
+	browser: string;
+	ip: string;
+	os: string;
+	platform: string;
+	created_at: string | Date;
+};
+
+export const validateLogger = logger.withTag("Validation");
+export const getUserKey = (token: string) => `session:${token}`;
+export const SESSION_KEY = "session";
+
+export async function getPermissions(nickname: string, role_id: number): Promise<string[]> {
+	const effectivePermissions = await general
+		.selectFrom("permissions as p")
+		.select(["p.name"])
+		.where(
+			"p.id",
+			"in",
+			general.selectFrom("role_permissions as rp").where("rp.role_id", "=", role_id).select("rp.permission_id"),
+		)
+		.union(
+			general
+				.selectFrom("permissions as p")
+				.innerJoin("players_permissions as pp", "pp.permission_id", "p.id")
+				.where("pp.nickname", "=", nickname)
+				.select(["p.name"]),
+		)
+		.execute();
+
+	const perms = effectivePermissions.map((p) => p.name);
+	return perms;
+}
+
+export async function getUserNickname(token: string): Promise<string | null> {
+	const redis = getRedis();
+
+	const data = await redis.get(getUserKey(token));
+	if (!data) return null;
+
+	const result = safeJsonParse<UserSessionPayload>(data);
+	if (!result.ok) return null;
+
+	return result.value.nickname ?? null;
+}
+
+export async function handleAuthedByApiUser(headers: Context["headers"]): Promise<{ nickname: string } | null> {
+	const apiKeyRaw = headers["authorization"];
+	const apiKey = apiKeyRaw?.replace("Bearer", "").trim();
+
+	if (!!apiKey && apiKey.trim().length !== 0) {
+		const query = await general
+			.selectFrom("api_keys")
+			.select(["key", "nickname"])
+			.where("key", "=", apiKey)
+			.executeTakeFirst();
+
+		if (!query) return null;
+
+		return { nickname: query.nickname };
+	}
+
+	return null;
+}
+
+export const defineSession = () =>
+	new Elysia()
+		.derive(({ cookie }) => {
+			const sessionCookie = cookie[SESSION_KEY];
+			const session = sessionCookie.value as string | undefined;
+			return { session };
+		})
+		.as("global");
+
+export const validatePermission = (permission: string) =>
+	new Elysia()
+		.use(defineUserRole())
+		.derive(async ({ role, nickname, status }) => {
+			if (!isProduction) {
+				validateLogger.log("validatePermission");
+			}
+
+			const perms = await getPermissions(nickname, role.id);
+
+			const targetIsExist = perms.includes(permission);
+			if (!targetIsExist) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "restricted_by_role");
+
+			return { role, permission };
+		})
+		.as("scoped");
+
+export const defineUser = () =>
+	new Elysia()
+		.use(defineSession())
+		.derive(async ({ session, status, headers }) => {
+			const result = await handleAuthedByApiUser(headers);
+			if (result) return result;
+
+			if (!isProduction) {
+				validateLogger.log("defineUser");
+			}
+
+			if (!session) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+
+			const nickname: string | null = await getUserNickname(session);
+			if (!nickname) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+
+			return { nickname };
+		})
+		.as("scoped");
+
+export const defineUserRole = () =>
+	new Elysia()
+		.use(defineUser())
+		.derive(async ({ nickname, status, headers }) => {
+			let role: { id: number; name: string } | null = null;
+
+			const result = await handleAuthedByApiUser(headers);
+
+			if (result) {
+				// todo: impl correct way for define the highest role
+				role = { id: 3, name: "admin" };
+				return { role };
+			}
+
+			if (!isProduction) {
+				validateLogger.log("defineUserRole");
+			}
+
+			role = await general
+				.selectFrom("players")
+				.innerJoin("roles", "roles.id", "players.role_id")
+				.select(["roles.id", "roles.name"])
+				.where("players.nickname", "=", nickname)
+				.executeTakeFirstOrThrow();
+
+			if (!role) throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR);
+			return { role };
+		})
+		.as("scoped");

@@ -1,25 +1,16 @@
-import { store } from "./modules/store";
-import { auth } from "./modules/auth";
-import { serverGroup } from "./modules/server";
-import { shared } from "./modules/shared";
-import { root } from "./modules/root";
-import { showRoutes } from "./utils/config/print-routes";
-import { ipPlugin } from "./lib/plugins/ip";
-import { privated } from "./modules/private";
-import { rate } from "./modules/user/like.route";
-import { Elysia, t, type ElysiaConfig, type ValidationError } from "elysia";
-import { serverTiming as serverTimingPlugin } from "@elysiajs/server-timing";
-import { me } from "#/modules/user/me.route";
-import { rateLimitPlugin } from "./lib/plugins/rate-limit";
-import { corsPlugin } from "./lib/plugins/cors";
-import { prometheusPlugin } from "./lib/plugins/prometheus";
-import { safeJsonParse } from "./utils/config/transforms";
-import { loggerPlugin } from "./lib/plugins/logger";
-import { openApiPlugin } from "./lib/plugins/openapi";
 import { PORT } from "./shared/env";
+import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
+import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
+import { serverTiming as serverTimingPlugin } from "@elysiajs/server-timing";
+import { corsPlugin } from "./lib/plugins/cors";
+import { ipPlugin } from "./lib/plugins/ip";
+// import { prometheusPlugin } from "./lib/plugins/prometheus";
+import { openApiPlugin } from "./lib/plugins/openapi";
+import { loggerPlugin } from "./lib/plugins/logger";
 import { defineSession } from "./lib/middlewares/define";
 import { updateSession } from "./modules/auth/auth.model";
 import { appLogger } from "./utils/config/logger";
+import { main, root } from "./routes";
 
 const appConfig: ElysiaConfig<string> = {
 	serve: {
@@ -32,29 +23,24 @@ export function startApp() {
 	appLogger.log(`Starting app...`);
 
 	const app = new Elysia(appConfig)
-		// .use(loggerPlugin())
-		.group("/perf", (app) =>
-			app.get("/ping", () => "pong").post("/user", ({ body }) => ({ status: "ok", received: body.username })),
-		)
-		.use(prometheusPlugin())
+		// .use(prometheusPlugin())
 		.use(openApiPlugin())
-		.use(rateLimitPlugin())
 		.use(serverTimingPlugin())
 		.use(ipPlugin())
 		.use(corsPlugin())
+		.use(loggerPlugin())
 		.use(root)
 		.use(defineSession())
-		.onBeforeHandle(async ({ cookie, session }) => updateSession(session, cookie))
-		.use(shared)
-		.use(auth)
-		.use(me)
-		.use(serverGroup)
-		.use(store)
-		.use(privated)
-		.use(rate)
-		.onError(({ code, error }) => {
-			appLogger.error(error, code);
+		.onBeforeHandle(async ({ cookie, session }) => await updateSession(session, cookie))
+		.use(main)
+		// .onAfterHandle(({ responseValue }) => {
+		// 	if (responseValue instanceof Response) return responseValue
 
+		// 	return {
+		// 		data: responseValue,
+		// 	}
+		// })
+		.onError(({ code, error }) => {
 			let message: string | ValidationError = "Internal Server Error";
 
 			if (code === "VALIDATION") {
@@ -63,8 +49,13 @@ export function startApp() {
 				return { error: message };
 			}
 
+			if (code === "NOT_FOUND") {
+				return { error: "Not found" };
+			}
+
 			if ("response" in error) {
 				const response = error.response as { error?: string } | number;
+				appLogger.error(error, code);
 
 				if (typeof response === "object" && response !== null) {
 					if (response.error) message = response.error;

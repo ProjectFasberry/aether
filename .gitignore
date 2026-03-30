@@ -47,5 +47,4 @@ yarn-error.log*
 # Local Netlify folder
 .netlify
 
-/apps/panel/
 /docker-compose.prod.yml

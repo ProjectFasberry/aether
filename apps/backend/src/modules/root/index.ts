@@ -1,60 +1,45 @@
 import Elysia from "elysia";
-import { appGroup } from "./app";
-import { validateGroup } from "./validate";
-import { service } from "./service";
 import { initPlayerSkin, updatePlayersSkins } from "../server/skin/skin.model";
 import z from "zod";
 import bearer from "@elysiajs/bearer";
 import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { general } from "#/shared/database/general-db";
 
-export const forceSkinInit = new Elysia()
-  .get("/skin/:nickname", async ({ params: { nickname }, query }) => {
-    if (query.type === 'single') {
-      const ok = await initPlayerSkin(nickname)
-      if (!ok) return { data: "error" }
-      return { data: "updated" }
-    }
+export const forceSkinInit = new Elysia().get(
+	"/skin/:nickname",
+	async ({ params: { nickname }, query }) => {
+		if (query.type === "single") {
+			const ok = await initPlayerSkin(nickname);
+			if (!ok) return { data: "error" };
+			return { data: "updated" };
+		}
 
-    if (query.type === 'all') {
-      updatePlayersSkins()
-    }
+		if (query.type === "all") {
+			updatePlayersSkins();
+		}
 
-    return { data: "started" }
-  }, {
-    query: z.object({
-      type: z.enum(["single", "all"]).optional().default("single")
-    })
-  })
+		return { data: "started" };
+	},
+	{
+		query: z.object({
+			type: z.enum(["single", "all"]).optional().default("single"),
+		}),
+	},
+);
 
 export const force = new Elysia()
-  .use(bearer())
-  .derive(async ({ bearer, status }) => {
-    if (!bearer) {
-      throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED)
-    }
+	.use(bearer())
+	.derive(async ({ bearer, status }) => {
+		if (!bearer) {
+			throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+		}
 
-    const isExist = await general
-      .selectFrom("api_keys")
-      .select("key")
-      .where("key", "=", bearer)
-      .executeTakeFirst()
+		const isExist = await general.selectFrom("api_keys").select("key").where("key", "=", bearer).executeTakeFirst();
 
-    if (!isExist?.key) {
-      throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED)
-    }
+		if (!isExist?.key) {
+			throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+		}
 
-    return { bearer: isExist.key }
-  })
-  .group("/force", app => app
-    .group("/init", app => app
-      .use(forceSkinInit)
-    )
-  )
-
-export const root = new Elysia()
-  .get("/health", ({ status }) => status(200))
-  .use(appGroup)
-  .use(validateGroup)
-  .use(service)
-  .use(force)
+		return { bearer: isExist.key };
+	})
+	.group("/force", (app) => app.group("/init", (app) => app.use(forceSkinInit)));
