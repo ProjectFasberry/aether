@@ -31,7 +31,13 @@ jobs:
         run: bun run --cwd apps/landing build
 
       - name: Build vercel output
-        run: bunx vercel build --cwd apps/landing
+        run: bunx vercel build --token ${{ secrets.VERCEL_TOKEN }} --cwd apps/landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
       - name: Deploy to vercel
-        run: bunx vercel deploy --prebuilt --cwd apps/landing --prod --token $VERCEL_TOKEN
+        run: bunx vercel deploy --prebuilt --prod --token ${{ secrets.VERCEL_TOKEN }} --cwd apps/landing
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
