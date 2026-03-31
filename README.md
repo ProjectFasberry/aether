@@ -8,13 +8,14 @@ Unified monorepo containing all applications and shared packages for the Fasberr
 
 ## 1. Overview
 
-Fasberry Minecraft is a full-stack Minecraft platform with:
+Fasberry Minecraft is a full-stack Minecraft project with:
 
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `app` | React Frontend | User dashboard for server control and management |
+| `app` | React Frontend | Main frontend app |
 | `landing` | React Frontend | Public landing page deployed on Vercel |
-| `backend` | Elysia API | Core REST API with NATS, Redis, PostgreSQL |
+| `backend` | Elysia API | Core REST API |
+| `panel` | Elysia API | Admin REST API |
 | `ui` | Library | Shared React components (Radix UI + Tailwind) |
 | `shared` | Library | Shared types, utilities, and constants |
 
@@ -23,7 +24,7 @@ Fasberry Minecraft is a full-stack Minecraft platform with:
 ## 2. Requirements
 
 - **Bun** ≥ 1.2.0
-- **Node.js** ≥ 22
+- **Node.js** ≥ 24
 - **Docker** & **Docker Compose** (infrastructure only)
 - **Git** ≥ 2.40
 - OS: macOS, Linux, or WSL2 (Windows)
@@ -56,9 +57,10 @@ bun run dev
 ```
 
 **What launches:**
-- `backend` → `http://localhost:4104` (REST API + Swagger)
-- `app` → `http://localhost:3000` (React app)
-- `landing` → `http://localhost:3005` (Landing page)
+- `backend` → `http://localhost:4104`
+- `app` → `http://localhost:3003 (3006)`
+- `landing` → `http://localhost:3005`
+- `panel` → `http://localhost:4105`
 
 **Dev mode features:**
 - Hot Module Replacement (HMR) for React components
@@ -90,7 +92,7 @@ bun run start
 
 ### Development Infrastructure
 
-Start supporting services (PostgreSQL, Redis, NATS, MinIO, etc.):
+Start supporting services (PostgreSQL, Redis (Dragonfly), NATS, MinIO, etc.):
 
 ```bash
 bun run docker-start
@@ -98,10 +100,9 @@ bun run docker-start
 
 **What starts:**
 - **PostgreSQL** - Primary database (`localhost:5432`)
-- **Redis** - Cache layer (`localhost:6379`)
 - **NATS** - Message broker (`localhost:4222`)
 - **MinIO** - Object storage (`localhost:9000`)
-- **Dragonfly** - Cache (optional)
+- **Dragonfly** - Cache layer (`localhost:6379`)
 
 Stop services:
 ```bash
@@ -127,6 +128,9 @@ cd apps/backend && make release
 
 # Landing
 cd apps/landing && vercel deploy --prebuilt --prod
+
+# Panel
+cd apps/panel && make release
 ```
 
 Each app has its own Dockerfile and Makefile for containerization.
@@ -138,25 +142,30 @@ Each app has its own Dockerfile and Makefile for containerization.
 ```
 fasberry-minecraft/
 ├── apps/                    # Applications
-│   ├── app/                # React frontend (main dashboard)
-│   │   ├── pages/          # File-based routes
-│   │   ├── renderer/       # Vike configuration
+│   ├── app/                # Main frontend (vike + react)
+│   │   ├── pages/          # Pages
+│   │   ├── renderer/       # Layout & configuration
 │   │   ├── server/         # Node.js server entry
-│   │   ├── shared/         # App-specific utilities
-│   │   └── public/         # Static assets
-│   ├── landing/            # Public landing page (Vercel)
-│   │   ├── pages/          # Static pages
-│   │   ├── renderer/       # Layout & meta configuration
-│   │   └── shared/         # Landing utilities
-│   └── backend/            # Elysia REST API
+│   │   └── shared/         # App-specific utilities
+│   ├── landing/            # Landing frontend (vike + react)
+│   │   ├── pages/          # Pages
+│   │   ├── renderer/       # Layout & configuration
+│   │   └── shared/         # App-specific utilities
+│   ├── backend/            # Main backend (Elysia, Bun based)
+│   │   ├── src/
+│   │   │   ├── app.ts      # API configuration
+│   │   │   ├── index.ts    # Startup entry
+│   │   │   ├── modules/    # Route handlers by feature
+│   │   │   ├── lib/        # Plugins & middlewares
+│   │   │   ├── shared/     # Services
+│   │   │   └── drizzle/    # Database schema & migrations
+│   │   ├── scripts/        # Build & studio scripts
+│   │   └── Dockerfile
+│   └── panel/              # Admin backend (Elysia, Bun based)
 │       ├── src/
-│       │   ├── app.ts      # API configuration
 │       │   ├── index.ts    # Startup entry
 │       │   ├── modules/    # Route handlers by feature
-│       │   ├── lib/        # Plugins & middlewares
-│       │   ├── shared/     # Services (DB, Redis, NATS, etc.)
-│       │   └── drizzle/    # Database schema & migrations
-│       ├── scripts/        # Build & studio scripts
+│       │   └── shared/     # Services
 │       └── Dockerfile
 ├── packages/               # Shared libraries
 │   ├── ui/                # React component library
@@ -182,31 +191,22 @@ fasberry-minecraft/
 
 | Path | Purpose |
 |------|---------|
-| `apps/app` | Main dashboard React app |
-| `apps/backend` | REST API server |
-| `apps/landing` | Public landing page |
-| `packages/ui` | Reusable components |
+| `apps/app` | Main frontend |
+| `apps/landing` | Landing frontend |
+| `apps/backend` | Main backend |
+| `apps/panel` | Admin backend |
+| `packages/config-biome` | Biomejs config |
+| `packages/config-typescript` | Typescript configs |
 | `packages/shared` | Shared types & constants |
+| `packages/ui` | Shared UI components (react based, radix, tailwind) |
 | `data/` | Docker volumes for services |
+| `infra` | Infra configs |
+| `infra/data` | Docker volumes for infra services |
 | `scripts/` | Root orchestration scripts |
 
 ---
 
 ## 6. Logging
-
-### Development Logs
-
-Logs appear in terminal during `bun run dev`:
-
-```
-[backend] Starting app...
-[backend] ✓ App listening on http://0.0.0.0:4104
-[app] VITE ready in 1234 ms
-[app] ➜ App server running at:
-[app] > Local: http://localhost:3000
-[landing] ➜ landing server running at:
-[landing] > Local: http://localhost:3005
-```
 
 **Log levels:**
 - `✓` / `✔` - Success
@@ -251,7 +251,6 @@ docker logs -f [container-id]
 
 ```bash
 bun run dev          # Start all apps + watch mode
-bun run dev -- --filter=backend  # Single app
 bun run lint         # Lint all code
 bun run type-check   # TypeScript check
 ```
@@ -260,9 +259,7 @@ bun run type-check   # TypeScript check
 
 ```bash
 bun run build        # Build all apps
-bun app:build        # Build app only
-bun backend:build    # Build backend only
-bun landing:build    # Build landing only
+bun run start        # Start all apps
 ```
 
 ### Database
@@ -325,19 +322,10 @@ REGISTRY_BACKEND_IMAGE=backend-image-name
 ```
 
 Per-app overrides in `apps/[app]/.env.local`
-
+Examples in `apps/[app]/.env.example`
 ---
 
 ## 9. Troubleshooting
-
-### Port Already in Use
-```bash
-# App on different port
-VITE_APP_PORT=3001 bun run dev
-
-# Backend on different port
-PORT=4105 bun run dev
-```
 
 ### Services Won't Start
 ```bash
@@ -370,6 +358,7 @@ bun run type-check
 ## 10. Documentation
 
 - **App README**: [apps/app/README.md](apps/app/README.md)
+- **Panel README**: [apps/panel/README.md](apps/panel/README.md)
 - **Backend README**: [apps/backend/README.md](apps/backend/README.md)
 - **Landing README**: [apps/landing/README.md](apps/landing/README.md)
 - **UI Library README**: [packages/ui/README.md](packages/ui/README.md)
@@ -380,4 +369,4 @@ bun run type-check
 
 ## 11. License
 
-Distributed under the MIT License. See [LICENSE](./LICENSE) for details.
+Distributed under the GPL-3.0 License. See [LICENSE](./LICENSE) for details.
