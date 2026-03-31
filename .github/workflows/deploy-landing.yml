@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'apps/landing/**'
+      - 'apps/landing/public/**'
+      - 'apps/landing/package.json'
 
 jobs:
   deploy:
