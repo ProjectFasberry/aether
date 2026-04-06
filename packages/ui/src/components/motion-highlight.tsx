@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { AnimatePresence, Transition, motion } from 'motion/react';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 
 type MotionHighlightMode = 'children' | 'parent';
 

@@ -4,7 +4,7 @@ import {
   type HTMLMotionProps,
   type Transition,
 } from 'motion/react';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 import { IconX } from '@tabler/icons-react';
 
 type DialogContextType = {

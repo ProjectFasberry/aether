@@ -1,6 +1,6 @@
 import { Kysely, PostgresDialect } from "kysely";
 import pg, { type PoolConfig } from "pg";
-import type { DB as authDBType } from "@repo/shared/types/db/auth-database-types";
+import type { DB as authDBType } from "@repo/shared/types/db/general-database-types";
 import { GENERAL_POSTGRES_URI as connectionString } from "./env";
 import { poolOptsHooks } from "./utils";
 

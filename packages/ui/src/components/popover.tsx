@@ -9,7 +9,7 @@ import {
   type PopoverContentProps as PopoverContentPrimitiveProps,
   type PopoverCloseProps as PopoverClosePrimitiveProps,
 } from './animate-popover';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 
 type PopoverProps = PopoverPrimitiveProps;
 

@@ -1,5 +1,5 @@
-import { cn } from "@repo/shared/lib/cn"
 import { ComponentPropsWithRef } from "react"
+import { cn } from "../lib/cn"
 
 export const PageHeaderImage = ({ 
   img, className, imgAlign = "top", ...props 

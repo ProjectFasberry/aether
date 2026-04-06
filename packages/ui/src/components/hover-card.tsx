@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { HoverCard as HoverCardPrimitive } from 'radix-ui';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 
 function HoverCard({
   ...props

@@ -18,6 +18,7 @@ async function entrypoint() {
 	await initChats();
 	await initPermissions();
 	await checkDatabasesHealth();
+	await connectToRcon();
 }
 
 async function services() {

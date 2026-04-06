@@ -190,7 +190,7 @@ async function executeBackgroundTask<T>(
 }
 
 export async function statusCmdCb(ctx: CommandCtx) {
-	const status = await getServerStatus();
+	const status = await getServerStatus({});
 
 	const proxyInfo = status?.proxy ? `${status.proxy.online}/${status.proxy.max}` : "n/a";
 

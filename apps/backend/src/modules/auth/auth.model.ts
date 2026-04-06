@@ -7,7 +7,7 @@ import { safeJsonParse } from "#/utils/config/transforms";
 import { textSets } from "#/utils/minio/load-internal-files";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import type { registerSchema } from "@repo/shared/schemas/auth";
-import type { DB } from "@repo/shared/types/db/auth-database-types";
+import type { DB } from "@repo/shared/types/db/general-database-types";
 import dayjs from "dayjs";
 import type { Kysely, Transaction } from "kysely";
 import type z from "zod";

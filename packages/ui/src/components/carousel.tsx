@@ -8,7 +8,7 @@ import {
   useState,
 } from 'react';
 import { motion, Transition, useMotionValue } from 'motion/react';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 
 export type CarouselContextType = {

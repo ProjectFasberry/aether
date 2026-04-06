@@ -1,6 +1,6 @@
 import * as React from "react"
 import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
-import { cn } from "@repo/shared/lib/cn"
+import { cn } from '../lib/cn';
 
 type CheckboxProps = React.ComponentProps<typeof CheckboxPrimitive.Root>
 

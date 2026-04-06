@@ -1,10 +1,10 @@
 import { Link } from "@/shared/components/config/link"
-import { cn } from "@repo/shared/lib/cn"
 import { Button } from "@repo/ui/button"
 import { Icon, IconArrowRight, IconPencil, IconPlus, IconProps, IconX } from "@tabler/icons-react"
 import { ButtonHTMLAttributes, ReactNode } from "react"
 import { tv, VariantProps } from "tailwind-variants"
 import { Typography } from "@repo/ui/typography"
+import { cn } from "@/shared/lib/cn"
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 

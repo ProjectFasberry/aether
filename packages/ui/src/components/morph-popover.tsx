@@ -15,7 +15,7 @@ import {
   Variants,
 } from 'motion/react';
 import { useClickOutside } from './morph-dialog';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 
 const TRANSITION: Transition = {
   type: 'spring',

@@ -2,164 +2,187 @@ import { invariant } from "#/helpers/invariant";
 import { getRedisKey } from "#/helpers/redis";
 import { client } from "#/shared/api/client";
 import { getUrls } from "#/shared/constants/urls";
+import { general } from "#/shared/database/general-db";
 import { PANEL_PASSWORD, PANEL_USER } from "#/shared/env";
 import { getRedis } from "#/shared/redis/init";
+import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
-import type { StatusPayload } from "@repo/shared/types/entities/other";
+import type { DB } from "@repo/shared/types/db/general-database-types";
+import { t } from "elysia";
+import type { Selectable } from "kysely";
 
-type CountPayload = { count: number }
+export const serverSchema = t.Object({
+	online: t.Number(),
+	fullname: t.String(),
+	thumbnail: t.String(),
+	max: t.Number(),
+	players: t.Array(t.String()),
+	status: t.String(),
+	available: t.Boolean(),
+	description: t.Optional(t.String()),
+});
+
+export const statusSchema = t.Object({
+	proxy: t.Object({
+		status: t.String(),
+		online: t.Number(),
+		max: t.Number(),
+		players: t.Array(t.String()),
+	}),
+	servers: t.Record(t.String(), serverSchema),
+});
+
+export const statusQuerySchema = t.Object({
+	q: t.Optional(t.Union([t.Literal("excluded"), t.Literal("all")], { default: "all" })),
+});
+
+export type StatusPayload = (typeof statusSchema)["static"];
+export type StatusQuery = (typeof statusQuerySchema)["static"];
 
 type Player = {
-  username: string,
-  uuid: string,
-  currentServer: string
-}
+	username: string;
+	uuid: string;
+	currentServer: string;
+};
 
-type PlayerListPayload = {
-  count: number,
-  players: Player[]
-}
-
-type ServersPayload = { [key: string]: number }
-
-export type PlayerPayload = Player & {
-  ping: number,
-  sessionDurationSeconds: number
-}
-
-type HealthPayload = { status: string }
-
-const initial = {
-  status: "offline",
-  online: 0,
-  max: 200,
-  players: []
-}
+const INITIAL_PROXY_DATA: StatusPayload["proxy"] = {
+	status: "offline",
+	online: 0,
+	max: 200,
+	players: [],
+};
 
 function getClient() {
-  const urls = getUrls();
-  const panelUrl = urls.get("panel")
-
-  invariant(panelUrl, "Panel url is not defined")
-
-  return client.extend((opts) => ({ 
-    ...opts,
-    prefixUrl: `https://${panelUrl}`
-  }));
+	const urls = getUrls();
+	const panelUrl = urls.get("panel");
+	invariant(panelUrl, "Panel url is not defined");
+	return client.extend((opts) => ({ ...opts, prefixUrl: `https://${panelUrl}` }));
 }
 
 const authHeaders = {
-  "authorization": `Basic ${btoa(PANEL_USER + ":" + PANEL_PASSWORD)}`
-}
+	authorization: `Basic ${btoa(PANEL_USER + ":" + PANEL_PASSWORD)}`,
+};
 
-async function getCount(): Promise<CountPayload> {
-  const client = getClient();
-  return client("count", { headers: { ...authHeaders } }).json()
-}
+export async function getPlayerStatusGlobal(nickname: string) {
+	type PlayerPayload = Player & {
+		ping: number;
+		sessionDurationSeconds: number;
+	};
 
-async function getPlayerList(): Promise<PlayerListPayload> {
-  const client = getClient();
-  return client("playerlist", { headers: { ...authHeaders } }).json()
-}
+	const client = getClient();
 
-async function getServers(): Promise<ServersPayload> {
-  const client = getClient();
-  return client("servers", { headers: { ...authHeaders } }).json()
-}
+	const result = await client(`player/${nickname}`, { headers: { ...authHeaders }, timeout: 1000, retry: 1 })
+		.json<PlayerPayload>()
+		.catch(() => null);
 
-async function getHealth(): Promise<HealthPayload> {
-  const client = getClient();
-  return client("health", { headers: { ...authHeaders } }).json()
-}
-
-export async function getPlayerStatusGlobal(username: string): Promise<PlayerPayload | null> {
-  const client = getClient();
-
-  try {
-    return await client(`player/${username}`, { headers: { ...authHeaders }, timeout: 1000, retry: 1 }).json()
-  } catch (e) {
-    return null;
-  }
+	return result;
 }
 
 async function getProxyStats() {
-  const [onlineResult, serversResult, statusResult, playersList] = await Promise.all([
-    getCount(), getServers(), getHealth(), getPlayerList()
-  ])
+	async function getTarget<T>(path: string): Promise<T | null> {
+		return client(path, { headers: { ...authHeaders } })
+			.json<T>()
+			.catch(() => null);
+	}
 
-  return {
-    online: onlineResult.count,
-    servers: serversResult,
-    status: statusResult.status,
-    playersList
-  }
+	const [onlineResult, serversResult, statusResult, playersList] = await Promise.all([
+		getTarget<{ count: number }>("count"),
+		getTarget<{ [key: string]: number }>("servers"),
+		getTarget<{ status: string }>("health"),
+		getTarget<{ count: number; players: Player[] }>("playerlist"),
+	]);
+
+	return {
+		online: onlineResult?.count ?? 0,
+		servers: serversResult ?? {},
+		status: statusResult?.status ?? "offline",
+		playersList: playersList ?? { players: [], count: 0 },
+	};
 }
 
+const mapServerData = (
+	serverName: string,
+	onlineCount: number,
+	allPlayers: Player[],
+	serversData: Selectable<DB["servers"]>[],
+) => {
+	const nameLower = serverName.toLowerCase();
+	const dbData = serversData.find((d) => d.origin === nameLower);
+
+	return [
+		nameLower,
+		{
+			online: onlineCount,
+			players: allPlayers.filter((p) => p.currentServer === serverName).map((p) => p.username),
+			fullname: dbData?.fullname ?? "unknown",
+			thumbnail: dbData?.thumbnail ?? "",
+			status: "online",
+			max: 200,
+			description: dbData?.description,
+			available: dbData?.available ?? true,
+			excluded: dbData?.excluded ?? false,
+		},
+	] as const;
+};
+
 async function getData() {
-  try {
-    const proxy = await getProxyStats()
+	try {
+		const [proxyStats, serversData] = await Promise.all([
+			getProxyStats(),
+			general.selectFrom("servers").selectAll().execute(),
+		]);
 
-    if (proxy.status !== 'ok') {
-      const data = {
-        proxy: initial,
-        servers: {}
-      }
+		if (proxyStats.status !== "ok") {
+			return { proxy: INITIAL_PROXY_DATA, servers: {} };
+		}
 
-      return data;
-    }
+		const serverEntries = Object.entries(proxyStats.servers).map(([name, online]) =>
+			mapServerData(name, online, proxyStats.playersList.players, serversData),
+		);
 
-    const servers: StatusPayload["servers"] = Object.entries(proxy.servers)
-      .reduce((acc, [key, _]) => {
-        const online = proxy.servers[key];
-        const list = proxy.playersList.players
-          .filter(d => d.currentServer === key)
-          .map(d => d.username);
-
-        acc[key.toLowerCase()] = {
-          online,
-          players: list,
-          status: "online",
-          max: 200
-        };
-
-        return acc;
-      }, {} as StatusPayload["servers"]);
-
-    const data: StatusPayload = {
-      proxy: {
-        status: "online",
-        online: proxy.playersList.count,
-        max: 200,
-        players: proxy.playersList.players.map(d => d.username)
-      },
-      servers
-    }
-
-    return data;
-  } catch (e) {
-    if (e instanceof Error) {
-      console.error("Failed to update server status", e.message);
-    }
-  }
+		return {
+			proxy: {
+				status: "online",
+				online: proxyStats.playersList.count,
+				max: 200,
+				players: proxyStats.playersList.players.map((d) => d.username),
+			},
+			servers: Object.fromEntries(serverEntries),
+		};
+	} catch (e) {
+		logger.error("Failed to update server status", e);
+		return null;
+	}
 }
 
 export async function updateServerStatus() {
-  const redis = getRedis()
-  const data = await getData()
-  await redis.set(SERVER_STATUS_KEY, JSON.stringify(data))
+	const redis = getRedis();
+	const data = await getData();
+	await redis.set(SERVER_STATUS_KEY, JSON.stringify(data));
 }
 
-const SERVER_STATUS_KEY = getRedisKey("internal", "server-status:data")
+const SERVER_STATUS_KEY = getRedisKey("internal", "server-status:data");
 
-export async function getServerStatus() {
-  const redis = getRedis()
+export async function getServerStatus({ query }: { query?: StatusQuery }) {
+	const redis = getRedis();
 
-  const dataStr = await redis.get(SERVER_STATUS_KEY)
-  if (!dataStr) return null;
+	const dataStr = await redis.get(SERVER_STATUS_KEY);
+	if (!dataStr) return null;
 
-  const result = safeJsonParse<StatusPayload>(dataStr)
-  if (!result.ok) return null;
+	const result = safeJsonParse<StatusPayload>(dataStr);
+	if (!result.ok) return null;
 
-  const data = result.value
-  return data;
+	const data = result.value;
+
+	if (query?.q === "excluded") {
+		return {
+			...data,
+			servers: Object.fromEntries(
+				// @ts-expect-error
+				Object.entries(data.servers).filter(([_, s]) => !s.excluded),
+			),
+		};
+	}
+
+	return data;
 }

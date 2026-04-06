@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import { AnimatePresence, motion, type Transition } from 'motion/react';
-import { cn } from '@repo/shared/lib/cn';
+import { cn } from '../lib/cn';
 
 type TooltipContextType = {
   isOpen: boolean;

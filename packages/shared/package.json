@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"scripts": {
 		"type-check": "bun tsc -b",
-		"generate": "bun run ./scripts/generate-types.ts"
+		"types:db-generate": "bun run ./scripts/db/types-generate.ts"
 	},
 	"dependencies": {
 		"clsx": "2.1.1",
