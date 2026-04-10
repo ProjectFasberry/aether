@@ -163,4 +163,4 @@ services:
 
 networks:
   fasberry:
-    external: true
+    name: "fasberry"

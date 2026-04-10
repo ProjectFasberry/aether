@@ -1,44 +1,30 @@
 {
-  "compilerOptions": {
-    "isolatedModules": true,
-    "target": "esnext",
-    "lib": ["esnext"],
-    "moduleDetection": "force",
-    "module": "preserve",
-    "moduleResolution": "bundler",
-    "types": ["bun-types"],
-    "allowJs": true,
-    "verbatimModuleSyntax": false,
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
-    "composite": true,
-    "incremental": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "outDir": "dist",
-    "paths": {
-      "#/*": [
-        "./src/*"
-      ],
-      "@repo/shared/*": [
-        "../../packages/shared/*"
-      ]
-    }
-  },
-  "include": [
-    "./**/*.ts",
-    "./**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "./src/drizzle"
-  ],
-  "references": [
-    { "path": "../../packages/shared" }
-  ],
+	"compilerOptions": {
+		"isolatedModules": true,
+		"target": "esnext",
+		"lib": ["esnext"],
+		"moduleDetection": "force",
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"types": ["bun-types"],
+		"allowJs": true,
+		"verbatimModuleSyntax": false,
+		"resolveJsonModule": true,
+		"declaration": true,
+		"declarationMap": true,
+		"composite": true,
+		"incremental": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"outDir": "dist",
+		"paths": {
+			"#/*": ["./src/*"],
+			"@repo/shared/*": ["../../packages/shared/*"]
+		}
+	},
+	"include": ["./**/*.ts", "./**/*.tsx"],
+	"exclude": ["node_modules", "dist", "./src/drizzle"],
+	"references": [{ "path": "../../packages/shared" }]
 }

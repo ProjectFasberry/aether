@@ -1,6 +1,7 @@
 import { invariant } from "#/helpers/invariant";
 import { getRedisKey } from "#/helpers/redis";
-import { client } from "#/shared/api/client";
+import { getStaticUrl } from "#/helpers/volume";
+import { client as rootClient } from "#/shared/api/client";
 import { getUrls } from "#/shared/constants/urls";
 import { general } from "#/shared/database/general-db";
 import { PANEL_PASSWORD, PANEL_USER } from "#/shared/env";
@@ -19,7 +20,7 @@ export const serverSchema = t.Object({
 	players: t.Array(t.String()),
 	status: t.String(),
 	available: t.Boolean(),
-	description: t.Optional(t.String()),
+	description: t.Optional(t.Nullable(t.String())),
 });
 
 export const statusSchema = t.Object({
@@ -56,7 +57,7 @@ function getClient() {
 	const urls = getUrls();
 	const panelUrl = urls.get("panel");
 	invariant(panelUrl, "Panel url is not defined");
-	return client.extend((opts) => ({ ...opts, prefixUrl: `https://${panelUrl}` }));
+	return rootClient.extend((opts) => ({ ...opts, prefixUrl: `https://${panelUrl}` }));
 }
 
 const authHeaders = {
@@ -80,6 +81,7 @@ export async function getPlayerStatusGlobal(nickname: string) {
 
 async function getProxyStats() {
 	async function getTarget<T>(path: string): Promise<T | null> {
+		const client = getClient();
 		return client(path, { headers: { ...authHeaders } })
 			.json<T>()
 			.catch(() => null);
@@ -115,7 +117,7 @@ const mapServerData = (
 			online: onlineCount,
 			players: allPlayers.filter((p) => p.currentServer === serverName).map((p) => p.username),
 			fullname: dbData?.fullname ?? "unknown",
-			thumbnail: dbData?.thumbnail ?? "",
+			thumbnail: getStaticUrl(dbData?.thumbnail ?? ""),
 			status: "online",
 			max: 200,
 			description: dbData?.description,

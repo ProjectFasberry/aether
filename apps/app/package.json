@@ -20,7 +20,7 @@
 		"**/*.css"
 	],
 	"dependencies": {
-		"@better-captcha/react": "0.3.0",
+		"@better-captcha/react": "0.7.0",
 		"@bprogress/core": "1.3.4",
 		"@bprogress/react": "1.2.7",
 		"@hono/node-server": "1.19.11",

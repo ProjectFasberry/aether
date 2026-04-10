@@ -1,45 +1,24 @@
 {
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "module": "esnext",
-    "noPropertyAccessFromIndexSignature": false,
-    "noEmit": true,
-    "moduleResolution": "Bundler",
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
-    "target": "ES2022",
-    "lib": [
-      "DOM",
-      "DOM.Iterable",
-      "ESNext"
-    ],
-    "types": [
-      "vite/client",
-      "vike-react"
-    ],
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@repo/ui/*": [
-        "../../packages/ui/src/components/*"
-      ]
-    }
-  },
-  "include": [
-    "./vite.config.ts",
-    "./declare.d.ts",
-    "./env.d.ts",
-    "./**/*.ts",
-    "./**/*.tsx"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+	"compilerOptions": {
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"module": "esnext",
+		"noPropertyAccessFromIndexSignature": false,
+		"noEmit": true,
+		"moduleResolution": "Bundler",
+		"jsx": "react-jsx",
+		"jsxImportSource": "react",
+		"target": "ES2022",
+		"lib": ["DOM", "DOM.Iterable", "ESNext"],
+		"types": ["vite/client", "vike-react"],
+		"paths": {
+			"@/*": ["./*"],
+			"@repo/ui/*": ["../../packages/ui/src/components/*"]
+		}
+	},
+	"include": ["./vite.config.ts", "./declare.d.ts", "./env.d.ts", "./**/*.ts", "./**/*.tsx"],
+	"exclude": ["dist", "node_modules"]
 }
