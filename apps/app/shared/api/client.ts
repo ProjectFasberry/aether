@@ -9,7 +9,7 @@ const baseConfig: Options = {
 
 export const SKIP_HOOK_HEADER = "X-Skip-Error-Handling";
 
-const instanceConfig: Options = {
+const hooksConfig: Options = {
 	hooks: {
 		afterResponse: [
 			async (_request, _options, response) => {
@@ -42,11 +42,11 @@ const instanceConfig: Options = {
 export const clientInstance = ky.create({
 	...baseConfig,
 	prefixUrl: API_PREFIX_URL,
-	...instanceConfig,
+	...hooksConfig,
 });
 
 export const panelClientInstance = ky.create({
 	...baseConfig,
 	prefixUrl: PANEL_API_PREFIX_URL,
-	...instanceConfig,
+	...hooksConfig,
 });

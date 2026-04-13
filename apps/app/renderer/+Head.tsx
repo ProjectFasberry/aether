@@ -15,8 +15,6 @@ export default function HeadDefault() {
           <link rel="preconnect" href={VOLUME_URL} />
         </>
       )}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <meta name="keywords" content="fasberry, minecraft, фасберри, фесберри, фесберри проект, майнкрафт сервер,
       майнкрафт, майнкрафт играть, minecraft play, сервера майнкрафт бесплатно, список серверов майнкрафта,
       полу-ванильные сервера майнкрафта, полуванила майнкрафт, rp сервер майнкрафт, rpg сервер майнкрафт,
@@ -27,13 +25,11 @@ export default function HeadDefault() {
       <meta property="og:locale" content="ru_RU" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Fasberry Project" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link
-        rel="preload"
-        as="style"
+        rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap"
-        onLoad={e => {
-          e.currentTarget.rel = 'stylesheet';
-        }}
       />
       <noscript>
         <link

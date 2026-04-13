@@ -1,10 +1,9 @@
 import vikeReact from "vike-react/config";
 import type { Config } from "vike/types";
-import vikePhoton from 'vike-photon/config'
 
 export default {
   title: "Fasberry",
-  extends: [vikeReact, vikePhoton],
+  extends: [vikeReact],
   reactStrictMode: false,
   prefetchStaticAssets: 'viewport',
   passToClient: ['snapshot'],

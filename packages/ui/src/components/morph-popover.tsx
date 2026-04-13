@@ -11,8 +11,8 @@ import {
   AnimatePresence,
   MotionConfig,
   motion,
-  Transition,
-  Variants,
+  type Transition,
+  type Variants,
 } from 'motion/react';
 import { useClickOutside } from './morph-dialog';
 import { cn } from '../lib/cn';

@@ -1,19 +1,17 @@
-// import { Hono } from 'hono'
-// import vike from '@vikejs/hono'
 import type { Server } from "vike/types";
-import vike from "vike/fetch";
+import { Elysia } from "elysia";
+import vike from "@vikejs/elysia";
 
-console.log(typeof Bun === "undefined" ? "node runtime" : "bun runtime");
+const app = new Elysia();
+vike(app);
 
 export default {
-	fetch(req) {
-		console.log(req);
-		return vike.fetch(req);
-	},
+	fetch: app.fetch,
 	prod: {
 		port: 3006,
-		bun: {
-			port: 3006,
+		onReady(server) {
+			console.log("Server ready", server.options);
+			console.log(typeof Bun === "undefined" ? "nodejs runtime" : "bun runtime");
 		},
 	},
 } satisfies Server;

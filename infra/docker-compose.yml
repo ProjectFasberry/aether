@@ -161,6 +161,59 @@ services:
   #   depends_on:
   #     - fluent-bit
 
+  # infisical-backend:
+  #   container_name: infisical-backend
+  #   image: infisical/infisical:latest # PIN THIS TO A SPECIFIC TAG
+  #   restart: unless-stopped
+  #   depends_on:
+  #     infisical-pg:
+  #       condition: service_healthy
+  #     infisical-redis:
+  #       condition: service_started
+  #   pull_policy: always
+  #   env_file: 
+  #     - ./.env.infisical
+  #   ports:
+  #     - 9004:8080
+  #   environment:
+  #     - NODE_ENV=production
+  #   networks:
+  #     - infisical
+
+  # infisical-redis:
+  #   container_name: infisical-dev-redis
+  #   image: redis
+  #   env_file: 
+  #     - ./.env.infisical
+  #   restart: always
+  #   environment:
+  #     - ALLOW_EMPTY_PASSWORD=yes
+  #   networks:
+  #     infisical:
+  #       aliases:
+  #         - redis
+  #   volumes:
+  #     - ./data/infisical/redis:/data
+
+  # infisical-pg:
+  #   container_name: infisical-pg
+  #   image: postgres:14-alpine
+  #   restart: always
+  #   env_file: 
+  #     - ./.env.infisical
+  #   volumes:
+  #     - ./data/infisical/pg:/var/lib/postgresql/data
+  #   networks:
+  #     infisical:
+  #       aliases:
+  #         - db
+  #   healthcheck:
+  #     test: "pg_isready --username=$${POSTGRES_USER} && psql --username=$${POSTGRES_USER} --list"
+  #     interval: 5s
+  #     timeout: 10s
+  #     retries: 10
+
 networks:
   fasberry:
     name: "fasberry"
+  # infisical:

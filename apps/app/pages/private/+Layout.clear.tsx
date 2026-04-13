@@ -14,7 +14,7 @@ import {
   SidebarGroupLabel,
   useSidebar
 } from "@repo/ui/sidebar"
-import { Logotype } from "@/shared/components/app/layout/components/header";
+import { Logotype } from "@/shared/components/app/layout/components/logotype";
 import { UserInfo } from "@/shared/components/app/private/components/user-info";
 import { AlertDialog } from "@/shared/components/config/alert-dialog";
 

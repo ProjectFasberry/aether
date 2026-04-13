@@ -1,14 +1,15 @@
-import { InputHTMLAttributes } from "react"
-import { tv, VariantProps } from "tailwind-variants"
+import type { InputHTMLAttributes } from "react"
+import { tv, type VariantProps } from "tailwind-variants"
 
 const inputVariants = tv({
   base: `
-    inline-flex px-4 py-2 text-lg rounded-xl placeholder:text-neutral-400
-    focus-within:outline focus-within:outline-2 focus-within:outline-green
+    inline-flex px-4 py-2 text-base rounded-xl placeholder:text-neutral-400
+    focus-within:outline border focus-within:border-2 focus-within:outline-green
   `,
   variants: {
     variant: {
-      default: "bg-neutral-800"
+      default: "bg-neutral-800",
+      ghost: "bg-transparent"
     }
   },
   defaultVariants: {

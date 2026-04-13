@@ -1,7 +1,6 @@
 import StarterKit from "@tiptap/starter-kit"
 import { TextStyleKit } from "@tiptap/extension-text-style"
 import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react"
-import { useCallback } from "react"
 import { tv } from "tailwind-variants"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { TableKit } from '@tiptap/extension-table'
@@ -137,7 +136,7 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
     },
   })
 
-  const setLink = useCallback(() => {
+  const setLink = () => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('URL', previousUrl)
 
@@ -157,18 +156,18 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
         alert(e.message)
       }
     }
-  }, [editor])
+  }
 
   const isTable = ctx.spy(isTableAtom);
   const isLink = ctx.spy(isLinkAtom);
 
-  const addImage = useCallback(() => {
+  const addImage = () => {
     const url = window.prompt('URL')
 
     if (url) {
       editor.chain().focus().setImage({ src: url }).run()
     }
-  }, [editor])
+  }
 
   return (
     <>

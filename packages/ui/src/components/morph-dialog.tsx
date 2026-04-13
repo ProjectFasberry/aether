@@ -11,11 +11,11 @@ import {
   motion,
   AnimatePresence,
   MotionConfig,
-  Transition,
-  Variant,
+  type Transition,
+  type Variant,
 } from 'motion/react';
 import { createPortal } from 'react-dom';
-import { RefObject } from 'react';
+import type { RefObject } from 'react';
 import { tv } from 'tailwind-variants';
 
 export function useClickOutside<T extends HTMLElement>(

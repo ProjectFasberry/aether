@@ -1,7 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react";
 import {
   acceptRulesAtom,
-  authorizeAction,
   globalErrorAtom,
   errorsTypeAtom,
   findoutAtom,
@@ -26,14 +25,14 @@ import { ReactNode } from "react";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../models/pof.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { Separator } from "@repo/ui/separator";
 
 export const formVariant = tv({
   base: `rounded-lg border border-neutral-800 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60`
 })
 
 const authInput = tv({
-  base: `p-2 h-12 text-lg w-full placeholder:text-neutral-400 
-    bg-transparent border data-[state=error]:border-red-500 data-[state=default]:border-neutral-800`
+  base: `h-12 w-full data-[state=error]:border-red-500 data-[state=default]:border-neutral-800`
 })
 
 const NicknameInput = reatomComponent(({ ctx }) => {
@@ -45,6 +44,7 @@ const NicknameInput = reatomComponent(({ ctx }) => {
       autoCapitalize="off"
       spellCheck="false"
       className={authInput()}
+      variant="ghost"
       data-state={state}
       value={ctx.spy(nicknameAtom)}
       autoComplete="new-nickname"
@@ -72,10 +72,11 @@ const PasswordInput = reatomComponent(({ ctx }) => {
         placeholder="Пароль"
         autoComplete="new-password"
         maxLength={64}
+        variant="ghost"
         type={show ? "text" : "password"}
       />
       <div
-        className="absolute cursor-pointer right-0 top-1/2 text-neutral-400 -translate-1/2"
+        className="absolute bg-neutral-800 rounded-lg p-1 flex items-center justify-center cursor-pointer right-0 top-1/2 text-neutral-400 -translate-1/2"
         onClick={() => passwordShowAtom(ctx, (state) => !state)}
       >
         {show ? <IconEye size={18} /> : <IconEyeOff size={18} />}
@@ -92,6 +93,7 @@ const FindoutReferrerInput = reatomComponent(({ ctx }) => {
       autoCorrect="off"
       autoCapitalize="off"
       spellCheck="false"
+      variant="ghost"
       autoComplete="new-referrer"
       placeholder="Никнейм"
       data-state={state}
@@ -114,6 +116,7 @@ const FindoutOtherInput = reatomComponent(({ ctx }) => {
       spellCheck="false"
       autoComplete="new-other"
       placeholder="Например: Telegram-канал"
+      variant="ghost"
       className={authInput()}
       data-state={state}
       value={ctx.spy(findoutAtom) ?? ""}
@@ -137,7 +140,7 @@ const FindoutOptions = reatomComponent(({ ctx }) => {
       defaultValue={currentItem?.value}
       onValueChange={v => findoutTypeAtom(ctx, v as AtomState<typeof findoutTypeAtom>)}
     >
-      <SelectTrigger className={authInput({ className: "min-h-12 border-neutral-800" })}>
+      <SelectTrigger className="min-h-12">
         {currentItem ? (
           <span className="text-neutral-50">{currentItem.title}</span>
         ) : (
@@ -165,28 +168,25 @@ export const AuthSubmit = reatomComponent(({ ctx }) => {
 
   return (
     <Button
-      background="default"
-      className="w-full"
-      onClick={() => authorizeAction(ctx)}
+      className="w-full bg-green-600"
       disabled={isDisabled}
+      type="submit"
     >
-      <Typography className="font-semibold  text-lg">
-        {ctx.spy(typeAtom) === 'register' ? "Зарегистрироваться" : "Войти"}
-      </Typography>
+      {ctx.spy(typeAtom) === 'register' ? "Зарегистрироваться" : "Войти"}
     </Button>
   )
 }, "AuthSubmit")
 
 const checkbox = tv({
-  base: `peer h-5 w-5 lg:h-6 lg:w-6 cursor-pointer transition-all appearance-none
+  base: `peer h-5 w-5 duration-150 appearance-none
     rounded-lg shadow hover:shadow-md border-[2px] 
-      border-neutral-600 bg-neutral-700 checked:bg-neutral-900 checked:border-black`
+      border-neutral-800 bg-neutral-700 checked:bg-green-600 checked:border-green-700`
 })
 
 const PrivacyTerms = reatomComponent(({ ctx }) => {
   return (
     <div className="inline-flex gap-2 items-start">
-      <label htmlFor="rules" className="flex items-center cursor-pointer relative">
+      <label htmlFor="rules" className="flex items-center relative">
         <input
           id="rules"
           checked={ctx.spy(acceptRulesAtom)}
@@ -214,8 +214,8 @@ const PrivacyTerms = reatomComponent(({ ctx }) => {
           </svg>
         </span>
       </label>
-      <label className="select-none cursor-pointer relative -top-1" htmlFor="rules">
-        <Typography className="text-base sm:text-lg">
+      <label className="select-none relative -top-1" htmlFor="rules">
+        <Typography className="text-sm">
           Я согласен(-на) с положениями
           <a href="/legal/terms" target="_blank" className="inline text-green-500">
             &nbsp;пользовательского соглашения
@@ -243,11 +243,13 @@ export const AuthError = reatomComponent(({ ctx }) => {
 export const RegisterForm = () => {
   return (
     <div className="flex flex-col gap-4 w-full h-full">
-      <NicknameInput />
-      <PasswordInput />
       <div className="flex flex-col gap-2 w-full">
-        <FindoutOptions />
-        <FindoutComponent />
+        <NicknameInput />
+        <PasswordInput />
+        <div className="flex flex-col gap-2 w-full">
+          <FindoutOptions />
+          <FindoutComponent />
+        </div>
       </div>
       <PrivacyTerms />
     </div>
@@ -256,9 +258,28 @@ export const RegisterForm = () => {
 
 export const LoginForm = () => {
   return (
-    <div className="flex flex-col gap-4 w-full h-full">
-      <NicknameInput />
-      <PasswordInput />
+    <div className="flex flex-col gap-6 w-full h-full">
+      <div className="flex flex-col gap-2 w-full">
+        <NicknameInput />
+        <PasswordInput />
+      </div>
+      <div className="flex flex-col w-full gap-2 items-center justify-center">
+        <div className="flex items-center w-full gap-4">
+          <Separator className="flex-1" />
+          <span className="shrink-0 text-sm text-neutral-50">
+            Другие способы входа
+          </span>
+          <Separator className="flex-1" />
+        </div>
+        <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
+          <Button type="button" onClick={() => { }}>
+            Через игру
+          </Button>
+          <Button type="button" onClick={() => { }}>
+            Через QR-code
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }

@@ -15,6 +15,7 @@ import { AlertDialog } from "@/shared/components/config/alert-dialog";
 import { cartDataSelectedItemsLengthAtom, cartIsTriggeredAtom } from "../../shop/models/store-cart.model";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
+import { Logotype } from "./logotype";
 
 const makeMenuLink = (title: string, href: string, permission: string | null, type: "default" | "privated") =>
   ({ title, href, permission, type })
@@ -149,19 +150,19 @@ const AuthorizeButton = () => {
     <Link
       href="/auth"
       aria-label="Авторизоваться"
-      className="inline-flex items-center justify-center gap-1 h-10 min-w-10 p-0 sm:px-4 sm:py-2 bg-green-700 rounded-lg"
+      className="inline-flex items-center justify-center gap-1 h-9 min-w-10 p-0 sm:px-4 sm:py-2 bg-green-600 rounded-xl"
     >
-      <Typography className="hidden sm:inline select-none font-semibold text-neutral-50 text-md sm:text-base">
-        Войти
+      <Typography className="hidden sm:inline font-semibold select-none text-neutral-50 text-sm">
+        Вход
       </Typography>
-      <IconArrowBadgeRight size={22} />
     </Link>
   )
 }
 
 const HeaderUser = reatomComponent(({ ctx }) => {
   const isAuth = ctx.spy(isAuthAtom)
-  if (!isAuth) return <AuthorizeButton />
+  const isNonAuthPage = !usePageContext().urlPathname.includes("auth")
+  if (!isAuth && isNonAuthPage) return <AuthorizeButton />
 
   const currentUser = ctx.spy(currentUserAtom);
   if (!currentUser) return null;
@@ -247,21 +248,6 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
   )
 }, "HeaderCartTrigger")
 
-export const Logotype = () => {
-  return (
-    <Link
-      aria-label="Перейти на главную"
-      href="/"
-      className="flex h-full w-fit items-center gap-2"
-    >
-      <img src="/favicon.ico" width={40} height={40} alt="" className="min-w-10 w-10 max-h-10 min-h-10" />
-      <Typography className="font-[PIXY] self-end text-3xl">
-        Fasberry
-      </Typography>
-    </Link>
-  )
-}
-
 const HeaderUserBar = () => {
   const pathname = usePageContext().urlPathname;
 
@@ -277,19 +263,21 @@ export const Header = ({ withBar = true }: { withBar?: boolean }) => {
   return (
     <>
       <MobileBottomBar />
-      <div className="flex items-center justify-start w-full border-b border-neutral-800 relative z-20 h-20 top-0">
-        <div className="flex items-center justify-between px-2 gap-2 sm:px-6 w-full">
+      <div className="flex items-center justify-start w-full border-b rounded-xl border-neutral-800 relative z-20 h-20 max-h-20 top-0">
+        <div className="flex items-center justify-between px-2 gap-2 sm:px-6 h-full w-full">
           <div className="w-1/5 bg-transparent h-14 relative">
             <Logotype />
           </div>
-          <div
-            className="hidden lg:flex w-3/5 justify-center items-center h-20 text-neutral-400
-            *:flex *:items-center *:justify-center *:border-b *:h-full *:px-10 *:hover:bg-neutral-800
-            *:data-[state=inactive]:border-transparent *:data-[state=active]:border-green-500"
-          >
+          <div className="hidden lg:flex w-3/5 justify-center items-center h-full text-neutral-400">
             {HEADERS_LINKS.map(link => (
-              <Link key={link.title} aria-label={link.label} href={link.href}>
-                <p className="font-semibold">{link.title}</p>
+              <Link
+                key={link.title}
+                aria-label={link.label}
+                href={link.href}
+                className="inline-flex justify-center items-center border-b h-full px-10 hover:bg-neutral-800
+                data-[state=inactive]:border-transparent data-[state=active]:border-green-500"
+              >
+                <p className="font-semibold text-[14px]">{link.title}</p>
               </Link>
             ))}
           </div>

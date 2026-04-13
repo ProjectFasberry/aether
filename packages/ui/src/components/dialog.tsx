@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
-import {
-  type HTMLMotionProps,
-  type Transition,
+import type {
+  HTMLMotionProps,
+  Transition,
 } from 'motion/react';
 import { cn } from '../lib/cn';
 import { IconX } from '@tabler/icons-react';

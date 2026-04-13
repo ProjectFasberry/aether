@@ -62,18 +62,18 @@ const AuthWidgetActions = reatomComponent(({ ctx }) => {
         }}
       >
         <IconArrowRight size={20} className="sm:hidden inline text-neutral-950" />
-        <Typography className="hidden sm:inline text-neutral-950 font-semibold text-base sm:text-lg">
+        <Typography className="hidden sm:inline text-neutral-950 font-semibold text-sm">
           Авторизоваться
         </Typography>
       </Button>
       <Button
-        className="bg-neutral-800 px-2"
+        className="bg-neutral-700 px-2"
         onClick={() => {
           activeWidgetAtom.reset(ctx)
           isShowAuthWidgetAtom(ctx, false)
         }}>
         <IconX size={20} className="sm:hidden inline"/>
-        <Typography className="hidden text-nowrap sm:inline font-semibold text-base sm:text-lg">
+        <Typography className="hidden text-nowrap sm:inline font-semibold text-sm">
           Не показывать
         </Typography>
       </Button>

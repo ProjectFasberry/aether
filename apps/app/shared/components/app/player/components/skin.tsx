@@ -1,5 +1,4 @@
 import { useUpdate } from "@reatom/npm-react";
-import { clientOnly } from "vike-react/clientOnly";
 import { playerParamAtom } from "../models/player.model";
 import { action, atom } from "@reatom/core";
 import { spawn, withInit } from "@reatom/framework";
@@ -34,8 +33,8 @@ import {
 } from "../models/skin.model";
 import { SkinsHistory } from "@repo/shared/types/entities/other";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-
-const ReactSkinview3d = clientOnly(() => import("react-skinview3d").then(m => m.ReactSkinview3d))
+import { ReactSkinview3d } from "react-skinview3d"
+import { ClientOnly } from "vike-react/ClientOnly"
 
 const SkinRenderSkeleton = () => {
   return (
@@ -56,14 +55,16 @@ const SkinRender = reatomComponent(({ ctx }) => {
   return (
     <div className="flex items-center h-[390px] justify-center overflow-hidden w-full">
       {ctx.spy(hardwareAccIsEnabledAtom) ? (
-        <ReactSkinview3d
-          skinUrl={skin.skin_url!}
-          height="390"
-          width="300"
-          options={{ zoom: 0.8 }}
-          onReady={({ viewer }) => skinViewerAtom(ctx, viewer)}
-          fallback={<SkinRenderSkeleton />}
-        />
+        <ClientOnly>
+          <ReactSkinview3d
+            skinUrl={skin.skin_url!}
+            height="390"
+            width="300"
+            options={{ zoom: 0.8 }}
+            onReady={({ viewer }) => skinViewerAtom(ctx, viewer)}
+            fallback={<SkinRenderSkeleton />}
+          />
+        </ClientOnly>
       ) : (
         <div className="flex w-full px-2 py-6 items-center justify-center h-full">
           <Typography color="gray" className="text-lg truncate text-center whitespace-pre-wrap">
@@ -82,7 +83,7 @@ export const hardwareAccIsEnabledAtom = atom(false, "hardwareAccIsEnabled").pipe
 export const initSkinAction = action((ctx, nickname: string) => {
   const isHardwareAccEnabled = ctx.get(hardwareAccIsEnabledAtom)
   if (!isHardwareAccEnabled || !nickname) return;
-  
+
   skinsHistoryAction.cacheAtom.reset(ctx);
   skinsHistoryAction.dataAtom.reset(ctx);
   skinsSelectedAtom.reset(ctx);

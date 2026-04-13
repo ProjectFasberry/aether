@@ -7,9 +7,9 @@
 	"module": "src/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"dev": "bun run --watch src/index.ts",
+		"dev": "infisical run --env=dev --path=/panel -- bun run --watch src/index.ts",
 		"build": "bun build ./src/index.ts --target=bun --outdir=./dist --metafile=./dist/meta.json",
-		"start": "NODE_ENV=production bun run ./dist/index.js",
+		"start": "infisical run --env=prod --path=/panel -- bun run ./dist/index.js",
 		"lint": "bunx biome lint",
 		"type-check": "tsc --noEmit",
 		"------------------": "",

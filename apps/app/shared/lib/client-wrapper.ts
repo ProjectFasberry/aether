@@ -51,6 +51,14 @@ class ApiPipeline<T> {
 	async exec(): Promise<T> {
 		const ctx = this.pipes.reduce((acc, fn) => fn(acc), { path: this.path, options: this.kyOptions } as FetchContext);
 
+		if (typeof window === "undefined" && ctx.options?.headers) {
+			if (ctx.options.headers instanceof Headers) {
+				ctx.options.headers.delete("host");
+			} else {
+				delete (ctx.options.headers as any)["host"];
+			}
+		}
+
 		const res = await this.ky(ctx.path, ctx.options);
 		return parseWrappedJson<T>(res);
 	}

@@ -7,7 +7,7 @@ import { activeWidgetAtom, initWidgets, Widget as WidgetProps } from "../models/
 
 const widgetVariant = tv({
   base: `flex items-center p-2 sm:p-3 lg:p-4 gap-2 sm:gap-4 
-    justify-between rounded-lg w-full overflow-hidden max-h-16 bg-neutral-900 border-2 border-neutral-800`
+    justify-between rounded-lg w-full overflow-hidden max-h-16 bg-neutral-800`
 })
 
 const Widget = ({ title, icon: Icon, description, action }: WidgetProps) => {
@@ -22,18 +22,18 @@ const Widget = ({ title, icon: Icon, description, action }: WidgetProps) => {
     >
       <div className="flex items-center gap-2 sm:gap-4">
         {Icon && (
-          <div className="flex bg-neutral-800 rounded-full p-2 shrink-0">
+          <div className="flex items-center justify-center bg-white/20 rounded-xl h-10 aspect-square shrink-0">
             <Icon size={26} />
           </div>
         )}
         <div className="flex flex-col justify-center min-w-0">
-          <Typography className="truncate w-full font-semibold text-base sm:text-lg whitespace-nowrap">
+          <Typography className="truncate w-full font-semibold text-base whitespace-nowrap">
             {title}
           </Typography>
           {description && (
             <Typography
               color="gray"
-              className="hidden xl:inline truncate text-sm leading-5 whitespace-nowrap"
+              className="hidden xl:inline truncate text-[12px] leading-5 whitespace-nowrap"
             >
               {description}
             </Typography>

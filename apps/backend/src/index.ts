@@ -14,10 +14,10 @@ import { connectToRcon } from "./shared/rcon/init";
 import { isProduction } from "./shared/env";
 
 async function entrypoint() {
+	await checkDatabasesHealth();
 	await initURLS();
 	await initChats();
 	await initPermissions();
-	await checkDatabasesHealth();
 	await connectToRcon();
 }
 

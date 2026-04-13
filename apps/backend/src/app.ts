@@ -29,18 +29,8 @@ export function startApp() {
 		.use(ipPlugin())
 		.use(corsPlugin())
 		.use(loggerPlugin())
-		.use(root)
-		.use(defineSession())
-		.onBeforeHandle(async ({ cookie, session }) => await updateSession(session, cookie))
-		.use(main)
-		// .onAfterHandle(({ responseValue }) => {
-		// 	if (responseValue instanceof Response) return responseValue
-
-		// 	return {
-		// 		data: responseValue,
-		// 	}
-		// })
-		.onError(({ code, error }) => {
+		.onError((payload) => {
+			const { error, code } = payload;
 			let message: string | ValidationError = "Internal Server Error";
 
 			if (code === "VALIDATION") {
@@ -65,7 +55,11 @@ export function startApp() {
 			}
 
 			return { error: message };
-		});
+		})
+		.use(root)
+		.use(defineSession())
+		.onBeforeHandle(async ({ cookie, session }) => await updateSession(session, cookie))
+		.use(main);
 
 	showRoutes(app);
 	app.listen(PORT);

@@ -17,7 +17,7 @@ export const AuthWidgetActions = reatomComponent(({ ctx }) => {
         }}
       >
         <IconArrowRight size={20} className="sm:hidden inline" />
-        <Typography className="hidden sm:inline font-semibold text-base sm:text-lg">
+        <Typography className="hidden sm:inline font-semibold text-sm">
           Авторизоваться
         </Typography>
       </Button>
@@ -30,7 +30,7 @@ export const AuthWidgetActions = reatomComponent(({ ctx }) => {
         }}
       >
         <IconX size={20} className="sm:hidden inline" />
-        <Typography className="hidden text-nowrap sm:inline font-semibold text-base sm:text-lg">
+        <Typography className="hidden text-nowrap sm:inline font-semibold text-sm">
           Не показывать
         </Typography>
       </Button>

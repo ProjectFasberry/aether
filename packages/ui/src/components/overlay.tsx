@@ -1,5 +1,5 @@
-import { HTMLAttributes } from 'react';
-import { tv, VariantProps } from 'tailwind-variants';
+import type { HTMLAttributes } from 'react';
+import { tv, type VariantProps } from 'tailwind-variants';
 
 const overlayVariants = tv({
   base: `block absolute right-0 left-0 bg-gradient-to-tr from-black/80 to-transparent h-full`,

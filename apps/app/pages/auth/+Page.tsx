@@ -1,13 +1,21 @@
-import { AuthError, LoginForm, RegisterForm, AuthSubmit, Verify, formVariant } from "@/shared/components/app/auth/components/auth";
 import { 
+  AuthError, 
+  LoginForm, 
+  RegisterForm, 
+  AuthSubmit, 
+  Verify, 
+  formVariant 
+} from "@/shared/components/app/auth/components/auth";
+import {
   authIsDisabledAtom,
-  authSearchParamsAtom, 
-  authTriggerIsDisabledAtom, 
-  AuthTypeAtom, 
-  typeAtom 
+  authorizeAction,
+  authSearchParamsAtom,
+  authTriggerIsDisabledAtom,
+  AuthTypeAtom,
+  typeAtom
 } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from "@repo/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Typography } from "@repo/ui/typography";
 import { action } from "@reatom/core";
 import { Link } from "@/shared/components/config/link";
@@ -19,7 +27,7 @@ const ResetPassword = reatomComponent(({ ctx }) => {
 
   return (
     <Link href="/auth/restore">
-      <Typography className='text-center text-lg text-green-700'>
+      <Typography className='text-center text-sm text-neutral-400'>
         Я забыл пароль
       </Typography>
     </Link>
@@ -45,25 +53,23 @@ const Auth = reatomComponent(({ ctx }) => {
           data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60 *:h-10 *:w-full"
       >
         <TabsTrigger value="login">
-          <Typography className="text-lg font-semibold">
+          <Typography>
             Вход
           </Typography>
         </TabsTrigger>
         <TabsTrigger value="register">
-          <Typography className="text-lg font-semibold">
+          <Typography>
             Регистрация
           </Typography>
         </TabsTrigger>
       </TabsList>
-      <div className="flex flex-col gap-4 min-w-0 w-full h-full">
-        <TabsContents>
-          <TabsContent value="register">
-            <RegisterForm />
-          </TabsContent>
-          <TabsContent value="login">
-            <LoginForm />
-          </TabsContent>
-        </TabsContents>
+      <div className="flex flex-col gap-6 min-w-0 w-full h-full">
+        <TabsContent value="register">
+          <RegisterForm />
+        </TabsContent>
+        <TabsContent value="login">
+          <LoginForm />
+        </TabsContent>
         <AuthSubmit />
         <ResetPassword />
         <AuthError />
@@ -80,18 +86,29 @@ const events = action((ctx) => {
   authSearchParamsAtom(ctx, search)
 })
 
+const AuthForm = reatomComponent(({ctx}) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    authorizeAction(ctx)
+  }
+
+  return (
+    <form
+      className="flex gap-4 items-center justify-center flex-1 w-full"
+      onSubmit={handleSubmit}
+      autoComplete="off"
+    >
+      <Auth />
+    </form>
+  )
+}, "AuthForm")
+
 export default function Page() {
   useUpdate((ctx) => startPageEvents(ctx, events), [])
 
   return (
     <div className="flex flex-col gap-4 h-[90vh] items-center justify-center w-full">
-      <form
-        className="flex gap-4 items-center justify-center flex-1 w-full"
-        onSubmit={(e) => e.preventDefault()}
-        autoComplete="off"
-      >
-        <Auth />
-      </form>
+      <AuthForm />
       <div className="flex items-start justify-center h-48 w-full">
         <Verify />
       </div>

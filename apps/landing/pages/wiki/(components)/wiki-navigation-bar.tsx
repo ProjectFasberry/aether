@@ -8,7 +8,7 @@ import { IconArrowLeft, IconCategory } from "@tabler/icons-react";
 import { useCallback, useState } from "react";
 import { wikiCategoriesAction, wikiCategoriesAtom, wikiParamAtom } from "./wiki.model";
 import { atom } from "@reatom/core";
-import { clientOnly } from "vike-react/clientOnly";
+import { ClientOnly } from "vike-react/ClientOnly";
 
 const getIsActiveAtom = (value: string) => atom(
   (ctx) => value === ctx.spy(wikiParamAtom) ? "active" : "inactive",
@@ -91,8 +91,6 @@ const List = reatomComponent<{ handle?: () => void }>(({ ctx, handle }) => {
   )
 }, "List")
 
-const ListWrapper = clientOnly(async () => List)
-
 const WikiNavigationMobile = () => {
   const [open, setOpen] = useState(false)
 
@@ -118,7 +116,9 @@ const WikiNavigationMobile = () => {
         >
           <SheetTitle className="text-xl text-center">Навигация</SheetTitle>
           <div className="flex flex-col w-full items-start">
-            <ListWrapper handle={handle} />
+            <ClientOnly>
+              <List handle={handle} />
+            </ClientOnly>
           </div>
         </SheetContent>
       </Sheet>
@@ -159,7 +159,9 @@ export const WikiNavigation = () => {
   return (
     <>
       <div className="card hidden xl:flex flex-col p-0 min-h-[80vh] w-full xl:w-[25%] items-start sticky top-2">
-        <ListWrapper fallback={<NavigationBarSkeleton />} />
+        <ClientOnly fallback={<NavigationBarSkeleton />}>
+          <List />
+        </ClientOnly>
       </div>
       <div className="xl:hidden flex items-center justify-between
         fixed bottom-4 left-1/2 right-0 px-4 -translate-x-1/2 h-12 w-36 aspect-square z-30 rounded-lg bg-neutral-700/60 backdrop-blur-md"

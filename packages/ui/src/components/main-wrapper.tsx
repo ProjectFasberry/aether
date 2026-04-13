@@ -1,4 +1,4 @@
-import { HTMLAttributes } from "react"
+import type { HTMLAttributes } from "react"
 import { tv, type VariantProps } from 'tailwind-variants';
 
 const layoutVars = tv({

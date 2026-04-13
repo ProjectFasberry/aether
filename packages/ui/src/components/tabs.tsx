@@ -1,211 +1,101 @@
-import * as React from 'react';
-import { Tabs as TabsPrimitive } from 'radix-ui';
-import { type HTMLMotionProps, type Transition, motion } from 'motion/react';
-import { cn } from '../lib/cn';
-import { MotionHighlight, MotionHighlightItem } from './motion-highlight';
+import { Tabs as TabsPrimitive } from "radix-ui"
+import { cn } from "../lib/cn"
+import { tv, type VariantProps } from "tailwind-variants"
+import type { ComponentProps } from "react"
 
-type TabsProps = React.ComponentProps<typeof TabsPrimitive.Root>;
-
-function Tabs({ className, ...props }: TabsProps) {
+function Tabs({
+  className,
+  orientation = "horizontal",
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Root>) {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
-      className={cn('flex flex-col gap-2', className)}
+      data-orientation={orientation}
+      className={cn(
+        "group/tabs flex gap-2 data-horizontal:flex-col",
+        className
+      )}
       {...props}
     />
-  );
+  )
 }
 
-type TabsListProps = React.ComponentProps<typeof TabsPrimitive.List> & {
-  activeClassName?: string;
-  transition?: Transition;
-};
+const tabsListVariants = tv(
+  {
+    base: `
+      group/tabs-list inline-flex w-fit items-center justify-center rounded-xl p-[3px] 
+    text-neutral-50 group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit 
+      group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none`,
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        line: "gap-1 bg-transparent",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
 
 function TabsList({
-  ref,
-  children,
   className,
-  activeClassName,
-  transition = {
-    type: 'spring',
-    stiffness: 200,
-    damping: 25,
-  },
+  variant = "default",
   ...props
-}: TabsListProps) {
-  const localRef = React.useRef<HTMLDivElement | null>(null);
-  React.useImperativeHandle(ref, () => localRef.current as HTMLDivElement);
-
-  const [activeValue, setActiveValue] = React.useState<string | undefined>(
-    undefined,
-  );
-
-  const getActiveValue = React.useCallback(() => {
-    if (!localRef.current) return;
-    const activeTab = localRef.current.querySelector<HTMLElement>(
-      '[data-state="active"]',
-    );
-    if (!activeTab) return;
-    setActiveValue(activeTab.getAttribute('data-value') ?? undefined);
-  }, []);
-
-  React.useEffect(() => {
-    getActiveValue();
-
-    const observer = new MutationObserver(getActiveValue);
-
-    if (localRef.current) {
-      observer.observe(localRef.current, {
-        attributes: true,
-        childList: true,
-        subtree: true,
-      });
-    }
-
-    return () => {
-      observer.disconnect();
-    };
-  }, [getActiveValue]);
-
+}: ComponentProps<typeof TabsPrimitive.List> &
+  VariantProps<typeof tabsListVariants>) {
   return (
-    <MotionHighlight
-      controlledItems
-      className={cn('rounded-sm bg-green-700 shadow-sm', activeClassName)}
-      value={activeValue}
-      transition={transition}
-    >
-      <TabsPrimitive.List
-        ref={localRef}
-        data-slot="tabs-list"
-        className={cn(
-          'inline-flex min-h-10 p-2 w-fit items-center justify-start rounded-lg',
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </TabsPrimitive.List>
-    </MotionHighlight>
-  );
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      data-variant={variant}
+      className={cn(tabsListVariants({ variant }), className)}
+      {...props}
+    />
+  )
 }
 
-type TabsTriggerProps = React.ComponentProps<typeof TabsPrimitive.Trigger>;
-
-function TabsTrigger({ className, value, ...props }: TabsTriggerProps) {
+function TabsTrigger({
+  className,
+  ...props
+}: ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
-    <MotionHighlightItem value={value} className="size-full">
-      <TabsPrimitive.Trigger
-        data-slot="tabs-trigger"
-        className={cn(
-          `inline-flex cursor-pointer items-center size-full justify-center
-          whitespace-nowrap rounded-sm text-sm font-medium ring-offset-background transition-all
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-          disabled:pointer-events-none disabled:opacity-50 z-[1]`,
-          className,
-        )}
-        value={value}
-        {...props}
-      />
-    </MotionHighlightItem>
-  );
+    <TabsPrimitive.Trigger
+      data-slot="tabs-trigger"
+      className={cn(
+        `relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-xl border 
+        border-neutral-800 px-2 py-0.5 text-base font-medium whitespace-nowrap transition-all group-data-vertical/tabs:w-full 
+        group-data-vertical/tabs:justify-start focus-visible:border-green-600 focus-visible:ring-[3px] focus-visible:ring-ring/50 
+        focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 
+        has-data-[icon=inline-end]:pr-1
+        has-data-[icon=inline-start]:pl-1 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm 
+        group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 
+        [&_svg:not([class*='size-'])]:size-4
+        group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent 
+        data-[state=active]:bg-neutral-50 data-[state=active]:text-neutral-900 after:absolute after:bg-neutral-50 
+        after:opacity-0 after:transition-opacity
+        group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] 
+        group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 
+        group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 
+        group-data-[variant=line]/tabs-list:data-[state=active]:after:opacity-100`,
+        className
+      )}
+      {...props}
+    />
+  )
 }
-
-type TabsContentProps = React.ComponentProps<typeof TabsPrimitive.Content> &
-  HTMLMotionProps<'div'> & {
-    transition?: Transition;
-  };
 
 function TabsContent({
   className,
-  children,
-  transition = {
-    duration: 0.5,
-    ease: 'easeInOut',
-  },
   ...props
-}: TabsContentProps) {
+}: ComponentProps<typeof TabsPrimitive.Content>) {
   return (
-    <TabsPrimitive.Content asChild {...props}>
-      <motion.div
-        data-slot="tabs-content"
-        className={cn('flex-1 outline-none', className)}
-        layout
-        initial={{ opacity: 0, y: -10, filter: 'blur(4px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-        transition={transition}
-        {...props}
-      >
-        {children}
-      </motion.div>
-    </TabsPrimitive.Content>
-  );
-}
-
-type TabsContentsProps = HTMLMotionProps<'div'> & {
-  children: React.ReactNode;
-  className?: string;
-  transition?: Transition;
-};
-
-function TabsContents({
-  children,
-  className,
-  transition = { type: 'spring', stiffness: 200, damping: 25 },
-  ...props
-}: TabsContentsProps) {
-  const containerRef = React.useRef<HTMLDivElement | null>(null);
-
-  const [height, setHeight] = React.useState(0);
-
-  React.useEffect(() => {
-    if (!containerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      const newHeight = entries?.[0]?.contentRect.height;
-      if (!newHeight) return;
-      requestAnimationFrame(() => {
-        setHeight(newHeight);
-      });
-    });
-
-    resizeObserver.observe(containerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [children]);
-
-  React.useLayoutEffect(() => {
-    if (containerRef.current) {
-      const initialHeight = containerRef.current.getBoundingClientRect().height;
-      setHeight(initialHeight);
-    }
-  }, [children]);
-
-  return (
-    <motion.div
-      data-slot="tabs-contents"
-      layout
-      animate={{ height: height }}
-      transition={transition}
-      className={className}
+    <TabsPrimitive.Content
+      data-slot="tabs-content"
+      className={cn("flex-1 text-sm outline-none", className)}
       {...props}
-    >
-      <div ref={containerRef}>{children}</div>
-    </motion.div>
-  );
+    />
+  )
 }
 
-export {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-  TabsContents,
-  type TabsProps,
-  type TabsListProps,
-  type TabsTriggerProps,
-  type TabsContentProps,
-  type TabsContentsProps,
-};
+export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants }

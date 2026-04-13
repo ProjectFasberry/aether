@@ -5,8 +5,8 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"_start": "NODE_ENV=production node ./dist/server/index.mjs --port 3005",
-		"dev": "NODE_ENV=development vike dev --port 3005",
+		"start": "infisical run --env=prod --path=/landing -- node ./dist/server/index.mjs --port 3005",
+		"dev": "infisical run --env=dev --path=/landing -- bun run vike dev --port 3005",
 		"build": "NODE_ENV=production vike build",
 		"lint": "bunx biome lint",
 		"type-check": "bun tsc -b",
@@ -18,7 +18,6 @@
 	],
 	"dependencies": {
 		"@bprogress/react": "1.2.7",
-		"@photonjs/vercel": "0.1.7",
 		"@reatom/async": "3.16.10",
 		"@reatom/core": "3.10.3",
 		"@reatom/framework": "3.4.68",
@@ -45,9 +44,8 @@
 		"sonner": "2.0.7",
 		"tailwind-variants": "3.1.1",
 		"vercel": "48.9.0",
-		"vike": "0.4.246",
-		"vike-photon": "0.1.17",
-		"vike-react": "0.6.12",
+		"vike": "0.4.257",
+		"vike-react": "0.6.21",
 		"zod": "4.1.11"
 	},
 	"devDependencies": {
@@ -56,6 +54,7 @@
 		"@repo/config-typescript": "workspace:*",
 		"@tailwindcss/typography": "0.5.16",
 		"@tailwindcss/vite": "4.1.12",
+		"vite-plugin-vercel": "11.0.3",
 		"@types/react": "19.1.8",
 		"@types/react-dom": "19.1.6",
 		"@vitejs/plugin-react": "5.0.2",

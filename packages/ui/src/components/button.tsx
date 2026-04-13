@@ -1,9 +1,9 @@
 import { IconCircleDotted } from "@tabler/icons-react"
-import { ButtonHTMLAttributes } from "react"
-import { tv, VariantProps } from "tailwind-variants"
+import type { ButtonHTMLAttributes } from "react"
+import { tv, type VariantProps } from "tailwind-variants"
 
 const buttonVariants = tv({
-  base: `inline-flex px-4 py-2 rounded-lg active:scale-[0.99] duration-300 ease-in-out cursor-pointer items-center justify-center
+  base: `inline-flex px-4 py-2 rounded-lg duration-300 ease-in-out cursor-pointer items-center justify-center
     disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
   `,
   variants: {
@@ -13,7 +13,7 @@ const buttonVariants = tv({
       minecraft: "rounded-none button"
     },
     background: {
-      default: "bg-neutral-800",
+      default: "bg-neutral-700 text-neutral-50",
       white: "bg-neutral-50 text-neutral-950"
     }
   }

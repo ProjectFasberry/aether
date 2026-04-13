@@ -10,8 +10,6 @@ import { Button } from "@repo/ui/button"
 import { navigate } from "vike/client/router"
 import { changesIsExist, landMode, saveChanges } from "../models/edit-land.model"
 import { LandBanner } from "./land-banner"
-import { isClientAtom } from "@/shared/models/page-context.model"
-import { PageLoader } from "@/shared/ui/page-loader"
 
 const LandGallery = reatomComponent(({ ctx }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" })
@@ -75,10 +73,6 @@ const LandToggleMode = reatomComponent(({ ctx }) => {
 }, "LandToggleMode")
 
 export const Land = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom)) {
-    return <PageLoader />
-  }
-
   const land = ctx.spy(landAtom)
   const landOwner = ctx.spy(landOwnerAtom)
   const landGallery = ctx.spy(landGalleryAtom)

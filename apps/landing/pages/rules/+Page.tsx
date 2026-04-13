@@ -15,7 +15,7 @@ import { renderToHTMLString } from '@tiptap/static-renderer'
 import { editorExtensions } from "@/shared/components/config/editor";
 import { dayjs } from "@/shared/lib/create-dayjs";
 import { sectionVariant, sectionVariantChild } from "@/shared/styles/variants";
-import { clientOnly } from "vike-react/clientOnly";
+import { ClientOnly } from "vike-react/ClientOnly";
 
 type RulesTag = {
   title: string,
@@ -54,7 +54,7 @@ const RulesTags = reatomComponent(({ ctx }) => {
   const data = ctx.spy(rulesTagsAction.dataAtom);
 
   if (ctx.spy(rulesTagsAction.statusesAtom).isPending) {
-    return <RulesTagsSkeleton/>
+    return <RulesTagsSkeleton />
   }
 
   if (!data) return null;
@@ -70,7 +70,7 @@ const RulesTags = reatomComponent(({ ctx }) => {
   )
 }, "RulesTags")
 
-type Rules = {
+type RulesType = {
   id: number,
   content: JSONContent,
   category: string,
@@ -81,7 +81,7 @@ type Rules = {
 const rulesAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(async () => {
     const res = await client("shared/rules/list", { signal: ctx.controller.signal, throwHttpErrors: false })
-    const data = await res.json<{ data: Rules[] } | { error: string }>()
+    const data = await res.json<{ data: RulesType[] } | { error: string }>()
     if ("error" in data) return null;
     return data.data
   })
@@ -170,9 +170,6 @@ const Rules = reatomComponent(({ ctx }) => {
 
 const url = getStaticObject("backgrounds", "rules_background.png")
 
-const RulesWrapper = clientOnly(async () => Rules)
-const RulesTagsWrapper = clientOnly(async () => RulesTags);
-
 export default function Page() {
   return (
     <MainWrapperPage variant="with_section">
@@ -211,12 +208,16 @@ export default function Page() {
                 Актуальные теги:
               </Typography>
               <div className="flex flex-wrap gap-2">
-                <RulesTagsWrapper fallback={<RulesTagsSkeleton />} />
+                <ClientOnly fallback={<RulesTagsSkeleton />} >
+                  <RulesTags />
+                </ClientOnly>
               </div>
             </div>
           </div>
           <div id="rules-list" className="flex flex-col gap-6 w-full h-full">
-            <RulesWrapper fallback={<RulesSkeleton />} />
+            <ClientOnly fallback={<RulesSkeleton />} >
+              <Rules />
+            </ClientOnly>
           </div>
         </div>
       </div>

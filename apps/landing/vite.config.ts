@@ -2,17 +2,24 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import vike from "vike/plugin";
+import type {UserConfig} from "vite"
 import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
+import { vercel } from "vite-plugin-vercel/vite"
 
-// @ts-expect-error
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode }): UserConfig => {
 	const env = loadEnv(mode, process.cwd());
 
 	return {
-		plugins: [vike(), react(), tailwindcss(), tsconfigPaths()],
+		plugins: [
+			vike(),
+			vercel(),
+			react(),
+			tailwindcss(),
+			tsconfigPaths()
+		],
 		build: {
-			target: "es2022",
+			target: "esnext",
 			sourcemap: true,
 		},
 		resolve: {
@@ -21,6 +28,9 @@ export default defineConfig(({ mode }) => {
 				"@": path.resolve(__dirname, "./"),
 				"@tabler/icons-react": "@tabler/icons-react/dist/esm/icons/index.mjs",
 			},
+		},
+		ssr: {
+			noExternal: process.env.NODE_ENV === 'production' ? true : undefined
 		},
 		css: {
 			postcss: {
