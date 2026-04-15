@@ -1,17 +1,15 @@
-import { IconArrowBadgeRight, IconBasket, IconBuildingStore, IconCategory, IconChevronUp, IconMap, IconStars, TablerIcon } from "@tabler/icons-react";
+import { IconBasket, IconBuildingStore, IconCategory, IconChevronUp, IconMap, IconStars, TablerIcon } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
 import { CONFIG_PANEL_READ_PERMISSION, currentUserAtom, currentUserPermsAtom } from "@/shared/models/current-user.model";
 import { Avatar } from "@/shared/components/app/avatar/components/avatar";
-import { Button } from "@repo/ui/button";
 import { Typography } from "@repo/ui/typography";
 import { usePageContext } from "vike-react/usePageContext";
 import { Separator } from "@repo/ui/separator";
 import { atom } from "@reatom/framework";
 import { Fragment } from "react/jsx-runtime";
-import { isAuthAtom } from "@/shared/models/page-context.model";
+import { isAuthedAtom } from "@/shared/models/page-context.model";
 import { beforeLogoutAction, logoutAction } from "../../auth/models/logout.model";
-import { AlertDialog } from "@/shared/components/config/alert-dialog";
 import { cartDataSelectedItemsLengthAtom, cartIsTriggeredAtom } from "../../shop/models/store-cart.model";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
@@ -32,11 +30,7 @@ const validatedLinksAtom = atom((ctx) => {
   const opts = ctx.get(currentUserPermsAtom)
 
   const validatedLinks = MENU_LINKS.filter(s => {
-    if (s.type === 'privated') {
-      if (s.permission) {
-        return opts.includes(s.permission)
-      }
-    }
+    if (s.type === 'privated' && s.permission) return opts.includes(s.permission)
 
     return true
   }) as typeof MENU_LINKS[number][]
@@ -45,111 +39,85 @@ const validatedLinksAtom = atom((ctx) => {
 }, "validatedLinks")
 
 const HeaderMenuActions = reatomComponent(({ ctx }) => {
-  const handle = () => beforeLogoutAction(ctx)
-
   return (
     <>
-      <DropdownMenuItem asChild>
-        <Button
-          onClick={() => navigate("/settings/main/profile")}
-          className="flex items-center justify-start gap-2 hover:bg-neutral-800 w-full rounded-lg px-2 py-1"
-        >
-          <Typography className="font-semibold">
-            Настройки
-          </Typography>
-        </Button>
+      <DropdownMenuItem
+        className="gap-2 hover:bg-neutral-800 w-full"
+        onClick={() => navigate("/settings/main/profile")}
+      >
+        <Typography className="font-semibold">
+          Настройки
+        </Typography>
       </DropdownMenuItem>
-      <DropdownMenuItem asChild>
-        <Button
-          className="flex items-center justify-start gap-2 hover:bg-neutral-800 w-full rounded-lg px-2 py-1"
-          disabled={ctx.spy(logoutAction.statusesAtom).isPending}
-          onClick={handle}
-        >
-          <Typography className="font-semibold text-red-500">
-            Выйти из аккаунта
-          </Typography>
-        </Button>
+      <DropdownMenuItem
+        className="gap-2 hover:bg-neutral-800 w-full"
+        disabled={ctx.spy(logoutAction.statusesAtom).isPending}
+        onClick={() => beforeLogoutAction(ctx)}
+      >
+        <Typography className="font-semibold text-red-500">
+          Выйти из аккаунта
+        </Typography>
       </DropdownMenuItem>
     </>
   )
 }, "HeaderMenuActions")
 
-
-const HeaderMenu = reatomComponent(({ ctx }) => {
-  const links = ctx.spy(validatedLinksAtom)
+const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
   const currentUser = ctx.spy(currentUserAtom);
   if (!currentUser) return null;
 
   return (
-    <>
-      <AlertDialog />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger className="group w-8 flex cursor-pointer h-8 items-center justify-center">
-          <IconChevronUp
-            size={20}
-            className="group-data-[state=open]:rotate-0 group-data-[state=closed]:rotate-180
-              duration-150 ease-in-out text-neutral-400"
-          />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
-          <div className="flex flex-col gap-2 w-full">
-            <DropdownMenuItem asChild>
-              <Button
-                onClick={() => navigate(createLink("player", currentUser.nickname))}
-                className="flex items-center justify-start rounded-lg p-2 hover:bg-neutral-800 w-full gap-2 overflow-hidden"
-              >
-                <Avatar
-                  nickname={currentUser.nickname}
-                  propHeight={40}
-                  propWidth={40}
-                  className="min-w-10 min-h-10 w-10 h-10 aspect-square"
-                />
-                <div className="flex flex-col justify-center items-start w-full h-10">
-                  <Typography className="text-sm text-neutral-50 font-semibold leading-4 truncate">
-                    {currentUser.nickname.slice(0, 32)}
-                  </Typography>
-                  <Typography className="text-neutral-400 leading-4 text-sm truncate">
-                    игрок
-                  </Typography>
-                </div>
-              </Button>
-            </DropdownMenuItem>
-            <Separator />
-            {links.map((link, idx, arr) => {
-              const isPrivated = link.type === 'privated'
-              const firstPrivatedIndex = arr.findIndex(l => l.type === 'privated')
-              const lastPrivatedIndex = arr.map(l => l.type).lastIndexOf('privated')
-
-              return (
-                <Fragment key={link.href}>
-                  {isPrivated && idx === firstPrivatedIndex && <Separator />}
-                  <DropdownMenuItem asChild>
-                    <Button
-                      onClick={() => navigate(link.href)}
-                      className="flex items-center justify-start gap-2 hover:bg-neutral-800 rounded-lg px-2 py-1"
-                    >
-                      <Typography className="font-semibold text-neutral-200">
-                        {link.title}
-                      </Typography>
-                    </Button>
-                  </DropdownMenuItem>
-                  {isPrivated && idx === lastPrivatedIndex && <Separator />}
-                </Fragment>
-              )
-            })}
-            <HeaderMenuActions />
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    <DropdownMenuItem
+      className="active:scale-[0.98] select-none cursor-pointer py-2 bg-neutral-800 w-full overflow-hidden"
+      onClick={() => navigate(createLink("player", currentUser.nickname))}
+    >
+      <Avatar
+        nickname={currentUser.nickname}
+        propHeight={40}
+        propWidth={40}
+        className="min-w-10 min-h-10 w-10 h-10 aspect-square"
+      />
+      <div className="flex flex-col justify-center items-start w-full h-10">
+        <Typography className="text-sm text-neutral-50 font-semibold leading-4 truncate">
+          {currentUser.nickname.slice(0, 32)}
+        </Typography>
+        <Typography className="text-neutral-400 leading-4 text-sm truncate">
+          игрок
+        </Typography>
+      </div>
+    </DropdownMenuItem>
   )
-}, "HeaderMenu")
+}, "HeaderMenuCurrentUser")
+
+const HeaderMenuLinks = reatomComponent(({ ctx }) => {
+  const links = ctx.spy(validatedLinksAtom)
+
+  return (
+    links.map((link, idx, arr) => {
+      const isPrivated = link.type === 'privated'
+      const firstPrivatedIndex = arr.findIndex(l => l.type === 'privated')
+      const lastPrivatedIndex = arr.map(l => l.type).lastIndexOf('privated')
+
+      return (
+        <Fragment key={link.href}>
+          {isPrivated && idx === firstPrivatedIndex && <Separator />}
+          <DropdownMenuItem onClick={() => navigate(link.href)}>
+            <Typography className="font-semibold text-neutral-200">
+              {link.title}
+            </Typography>
+          </DropdownMenuItem>
+          {isPrivated && idx === lastPrivatedIndex && <Separator />}
+        </Fragment>
+      )
+    })
+  )
+}, "HeaderMenuLinks")
 
 const AuthorizeButton = () => {
   return (
     <Link
       href="/auth"
-      aria-label="Авторизоваться"
+      aria-label="Вход"
       className="inline-flex items-center justify-center gap-1 h-9 min-w-10 p-0 sm:px-4 sm:py-2 bg-green-600 rounded-xl"
     >
       <Typography className="hidden sm:inline font-semibold select-none text-neutral-50 text-sm">
@@ -159,31 +127,24 @@ const AuthorizeButton = () => {
   )
 }
 
-const HeaderUser = reatomComponent(({ ctx }) => {
-  const isAuth = ctx.spy(isAuthAtom)
-  const isNonAuthPage = !usePageContext().urlPathname.includes("auth")
-  if (!isAuth && isNonAuthPage) return <AuthorizeButton />
-
+const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
   const currentUser = ctx.spy(currentUserAtom);
   if (!currentUser) return null;
 
   return (
-    <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
-      <Link
-        href={createLink("player", currentUser.nickname)}
-        className="flex items-center gap-2 h-8 overflow-hidden"
-      >
-        <Avatar
-          nickname={currentUser.nickname}
-          propHeight={32}
-          propWidth={32}
-          className="min-w-8 min-h-8 w-8 h-8 aspect-square"
-        />
-      </Link>
-      <HeaderMenu />
-    </div>
+    <Link
+      href={createLink("player", currentUser.nickname)}
+      className="flex items-center gap-2 h-8 overflow-hidden"
+    >
+      <Avatar
+        nickname={currentUser.nickname}
+        propHeight={32}
+        propWidth={32}
+        className="min-w-8 min-h-8 w-8 h-8 aspect-square"
+      />
+    </Link>
   )
-}, "HeaderUser")
+}, "HeaderUserCurrentTrigger")
 
 const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
   ({ title, icon, label, href })
@@ -225,39 +186,64 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
 
   return (
     <Link
-      aria-label="Перейти на главную"
+      aria-label="Перейти в корзину"
       href="/store/cart"
       data-trigger={isTriggered}
-      className="relative max-h-8 w-8 max-w-8 flex items-center h-8 justify-center 
-        data-[trigger=true]:scale-[1.15] group data-[trigger=false]:scale-100
-      "
+      className="flex items-center justify-center group duration-100 max-h-8 w-8 max-w-8 h-8 
+        data-[trigger=true]:scale-[1.15] data-[trigger=false]:scale-100"
     >
       <IconBuildingStore
         size={28}
         className="group-data-[trigger=true]:text-green-500 group-data-[trigger=false]:text-neutral-400"
       />
-      {cartLength >= 1 && (
+      {cartLength > 0 && (
         <div
           className="absolute font-semibold -bottom-1 -right-1
           bg-neutral-50 text-neutral-950 rounded-sm aspect-square w-4 h-4 flex items-center justify-center"
         >
-          <span className="text-sm">{cartLength}</span>
+          <span className="text-[12px] leading-none">{cartLength}</span>
         </div>
       )}
     </Link>
   )
 }, "HeaderCartTrigger")
 
-const HeaderUserBar = () => {
+const HeaderUserBar = reatomComponent(({ ctx }) => {
   const pathname = usePageContext().urlPathname;
+
+  const isAuthed = ctx.spy(isAuthedAtom)
+  const isNonAuthPage = pathname === "/auth/"
+  const showCurrentUserMenu = isAuthed && !isNonAuthPage
 
   return (
     <div className="flex gap-4 items-center w-full justify-end">
       {pathname.includes("/store") && <HeaderCartTrigger />}
-      <HeaderUser />
+      {showCurrentUserMenu ? (
+        <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
+          <HeaderUserCurrentTrigger />
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger className="group cursor-pointer h-8 w-8 flex items-center justify-center">
+              <IconChevronUp
+                size={20}
+                className="group-data-[state=open]:rotate-0 group-data-[state=closed]:rotate-180 duration-100 text-neutral-400"
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
+              <div className="flex flex-col gap-2 w-full">
+                <HeaderMenuCurrentUser />
+                <Separator />
+                <HeaderMenuLinks />
+                <HeaderMenuActions />
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ) : (
+        <AuthorizeButton />
+      )}
     </div>
   )
-}
+}, "HeaderUserBar")
 
 export const Header = ({ withBar = true }: { withBar?: boolean }) => {
   return (

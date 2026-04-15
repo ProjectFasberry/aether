@@ -1,18 +1,15 @@
-import { AlertDialog } from "@/shared/components/config/alert-dialog"
-import { isEmptyArray } from "@/shared/lib/array"
-import { client } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
 import { Typography } from "@repo/ui/typography"
 import { SettingsSection } from "./ui"
-import { NotFound } from "@/shared/ui/not-found"
+import { IconDeviceDesktop, IconQrcode } from "@tabler/icons-react"
+import { appState } from "@/shared/models/app.model"
+import { accountActiveSessionsAction, accountCurrentSessionAction, SessionPayload } from "../models/settings-security.model"
 
 const DeleteAccount = reatomComponent(({ ctx }) => {
   return (
     <>
-      <AlertDialog />
       <Button
         disabled={true}
         className="w-fit self-start bg-red-600/80"
@@ -26,35 +23,74 @@ const DeleteAccount = reatomComponent(({ ctx }) => {
   )
 }, "DeleteAccount")
 
-const accountSessionsAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<unknown[]>("auth/sessions").exec()
-  )
-}, "accountSessionsAction").pipe(
-  withDataAtom(null, (_, data) => isEmptyArray(data) ? null : data),
-  withStatusesAtom(),
-  withCache({ swr: false })
-)
-
-const AccountSessionsList = reatomComponent(({ ctx }) => {
-  useUpdate(accountSessionsAction, []);
-
-  const data = ctx.spy(accountSessionsAction.dataAtom);
-  if (!data) return <NotFound title="пусто" />
-
+const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
-      {data.map((session, idx) => (
-        <div key={idx}>
-          {idx}
-        </div>
-      ))}
+      <p>
+        Привяжи устройство к аккаунту, отсканировав QR-код
+      </p>
+      <Button background="white" className="gap-2 font-semibold">
+        <IconQrcode size={16} />
+        Привязать устройство
+      </Button>
+    </div>
+  )
+}, "AccountSessionsConnectNew")
+
+const SessionItem = ({ id, browser, geo }: SessionPayload) => {
+  return (
+    <div className="flex items-center h-12 gap-2 w-full">
+      <div className="flex bg-neutral-700 rounded-full items-center justify-center w-12 h-12">
+        <IconDeviceDesktop size={24} />
+      </div>
+      <div className="flex flex-col">
+        <p>
+          {browser}
+        </p>
+        <p>
+          {geo.city}, {geo.country}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+const AccountSessionsList = reatomComponent(({ ctx }) => {
+  useUpdate((ctx) => {
+    accountActiveSessionsAction(ctx)
+    accountCurrentSessionAction(ctx)
+  }, []);
+
+  const list = ctx.spy(accountActiveSessionsAction.dataAtom);
+  const current = ctx.spy(accountCurrentSessionAction.dataAtom)
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-2 w-full">
+        <p>Текущая сессия</p>
+        {current && (
+          <SessionItem {...current} />
+        )}
+      </div>
+      <div className="flex flex-col gap-2 w-full">
+        <p>Активные сессии</p>
+        {list?.map((session) => (
+          <SessionItem key={session.id} {...session} />
+        ))}
+      </div>
     </div>
   )
 }, "AccountSessionsList")
 
 const AccountSessions = reatomComponent(({ ctx }) => {
-  return <AccountSessionsList />
+  const isMobile = ctx.spy(appState.isMobile)
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      {isMobile && <AccountSessionsConnectNew />}
+      <AccountSessionsList />
+    </div>
+  )
 }, "AccountSessions")
 
 const ChangePassword = reatomComponent(({ ctx }) => {

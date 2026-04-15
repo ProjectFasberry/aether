@@ -5,7 +5,6 @@ import { getRedis } from "#/shared/redis/init";
 import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { textSets } from "#/utils/minio/load-internal-files";
-import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import type { registerSchema } from "@repo/shared/schemas/auth";
 import type { DB } from "@repo/shared/types/db/general-database-types";
 import dayjs from "dayjs";
@@ -14,7 +13,6 @@ import type z from "zod";
 import { createEvent } from "../server/events/events.model";
 import { getNats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
-import Bowser from "bowser";
 import { initPlayerSkin } from "../server/skin/skin.model";
 import { invariant } from "#/helpers/invariant";
 import type { Context } from "elysia";
@@ -42,12 +40,6 @@ export async function getExistsUser(
 	return { hash: query.HASH, result: true };
 }
 
-type CreateSession = {
-	nickname: string;
-	userAgentStr?: string;
-	ip: string;
-};
-
 export type UserSessionPayload = {
 	nickname: string;
 	browser: string;
@@ -72,133 +64,6 @@ export async function getUserNickname(token: string): Promise<string | null> {
 export async function getIsExistsSession(token: string) {
 	const result = await getUserNickname(token);
 	return Boolean(result);
-}
-
-export function generateSessionToken(): string {
-	const bytes = new Uint8Array(20);
-	crypto.getRandomValues(bytes);
-	return encodeBase32LowerCaseNoPadding(bytes);
-}
-
-export async function createSession({
-	userAgentStr,
-	ip,
-	nickname,
-}: CreateSession): Promise<{ expires_at: Date; token: string }> {
-	const redis = getRedis();
-
-	const token = generateSessionToken();
-	const ua = Bowser.parse(userAgentStr ?? "");
-
-	const userSessionsKey = getUserSessionsKey(nickname);
-	const newSessionKey = getUserKey(token);
-	const currentTimestamp = Date.now();
-
-	const pipeline = redis.multi();
-	pipeline.zcard(userSessionsKey);
-
-	const results = await pipeline.exec();
-	invariant(results, "Transaction failed and returned null");
-
-	const [execResult] = results;
-
-	if (execResult[0]) {
-		throw execResult[0];
-	}
-
-	const currentSessionCount = execResult[1] as number;
-
-	if (currentSessionCount >= USER_SESSIONS_LIMIT) {
-		loginLogger.log(`Limit reached for user ${nickname}. Removing the oldest session`);
-
-		const oldestSessions = await redis.zrange(userSessionsKey, 0, 0);
-
-		if (oldestSessions.length > 0) {
-			const oldestToken = oldestSessions[0];
-			const removalPipeline = redis.multi();
-
-			removalPipeline.zrem(userSessionsKey, oldestToken);
-			removalPipeline.del(getUserKey(token));
-
-			await removalPipeline.exec();
-		}
-	}
-
-	const creationPipeline = redis.multi();
-
-	const ip_whitelist = ["127.0.0.1", "::1", "localhost"] as const;
-	type IterateKey = "platform" | "os" | "browser" | "ip";
-	const iterateKeys = ["platform", "os", "browser", "ip"];
-
-	const { browser, engine, os, platform } = ua;
-	const infoUpdated = { browser, engine, os, platform, ip };
-
-	function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, string> {
-		function serializeValue(value: string | object): string {
-			if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
-				return "unknown";
-			}
-			return typeof value === "string" ? value : JSON.stringify(value);
-		}
-
-		const result: Partial<Record<IterateKey, string>> = {};
-
-		for (const [key, value] of Object.entries(raw) as [IterateKey, string | object][]) {
-			if (!iterateKeys.includes(key)) continue;
-
-			if (key === "ip" && typeof value === "string" && ip_whitelist.includes(value as (typeof ip_whitelist)[number])) {
-				result[key] = ip_whitelist[0];
-				continue;
-			}
-
-			result[key] = serializeValue(value);
-		}
-
-		return result as Record<IterateKey, string>;
-	}
-
-	const processedUA = buildUA(infoUpdated);
-
-	const payload: UserSessionPayload = {
-		nickname,
-		created_at: dayjs().toDate(),
-		...processedUA,
-	};
-
-	creationPipeline.set(newSessionKey, JSON.stringify(payload), "PX", DEFAULT_SESSION_EXPIRE);
-
-	creationPipeline.zadd(userSessionsKey, currentTimestamp, token);
-	creationPipeline.expire(userSessionsKey, DEFAULT_SESSION_EXPIRE);
-
-	await creationPipeline.exec();
-
-	const expires_at = new Date(Date.now() + DEFAULT_SESSION_EXPIRE_MS);
-
-	afterLoginEvents({ nickname });
-
-	return { token, expires_at };
-}
-
-export async function deleteSession(token: string): Promise<boolean> {
-	const redis = getRedis();
-	const sessionKey = getUserKey(token);
-	const nickname = await redis.get(sessionKey);
-
-	if (!nickname) {
-		loginLogger.warn(`Attempted to delete a non-existent session with token: ${token}`);
-		return false;
-	}
-
-	const userSessionsKey = getUserSessionsKey(nickname);
-
-	const pipeline = redis.multi();
-
-	pipeline.del(sessionKey);
-	pipeline.zrem(userSessionsKey, token);
-
-	await pipeline.exec();
-
-	return true;
 }
 
 export async function refreshSession(token: string) {
@@ -287,8 +152,7 @@ async function registerReferrer({
 	return query;
 }
 
-const authLogger = logger.withTag("Auth");
-export const loginLogger = authLogger.withTag("Login");
+export const authLogger = logger.withTag("Auth");
 
 export async function unregisterUser({
 	nickname,
@@ -331,10 +195,6 @@ type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
 };
 
 const registerLogger = authLogger.withTag("Register");
-
-// targets:
-// AUTH, players, bisquite, shared (lobby), reputation, playerpoints, luckperms
-async function deleteAccount({ nickname }: { nickname: string }) {}
 
 export async function registrationEvents({ nickname }: { nickname: string }) {
 	if (!isProduction) {
@@ -554,23 +414,6 @@ export async function getUserUUID(nickname: string) {
 	invariant(uuid, "UUID must be required");
 
 	return uuid;
-}
-
-export async function afterLoginEvents({ nickname }: { nickname: string }) {
-	if (!isProduction) {
-		console.warn("Skipping afterLoginEvents on development");
-		return;
-	}
-
-	const nc = getNats();
-
-	nc.publish(
-		SUBJECTS.EVENTS.AUTHORIZATION.LOGIN,
-		JSON.stringify({
-			created_at: dayjs().toDate(),
-			nickname,
-		}),
-	);
 }
 
 export async function updateSession(token: string | undefined, cookie: Context["cookie"]) {

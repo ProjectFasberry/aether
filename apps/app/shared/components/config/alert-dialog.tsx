@@ -13,37 +13,35 @@ export const AlertDialog = reatomComponent(({ ctx }) => {
   return (
     <Dialog open={ctx.spy(alertDialogIsOpenAtom)} onOpenChange={v => alertDialogIsOpenAtom(ctx, v)}>
       <DialogContent>
-        <DialogTitle className='text-center text-2xl'>
+        <DialogTitle>
           Подтверждение действия
         </DialogTitle>
-        <div className="flex flex-col items-center justify-center gap-4 h-full w-full">
+        <div className="flex flex-col items-center min-w-0 justify-center gap-4 h-full w-full">
           <div className="flex w-full flex-col gap-1 min-w-0">
-            <Typography className="text-wrap font-semibold text-lg truncate">
+            <Typography className="text-wrap text-base sm:text-lg leading-5 truncate">
               {title}
             </Typography>
-            <Typography className="leading-tight text-neutral-300">
+            <Typography className="text-sm sm:text-base leading-5 text-neutral-400">
               {description ?? "Это действие нельзя отменить"}
             </Typography>
           </div>
-          <div className="flex items-center justify-end gap-2 w-full h-full">
+          <div className="flex items-center min-w-0 justify-end gap-2 w-full h-full">
             <DialogClose asChild>
               <Button
+                background="default"
+                className="text-neutral-50 text-xs sm:text-base"
                 onClick={() => alertDialog.close(ctx)}
-                className="border-2 border-neutral-700"
               >
-                <Typography className="text-neutral-50 font-semibold text-lg">
-                  Отмена
-                </Typography>
+                Отмена
               </Button>
             </DialogClose>
             <DialogClose asChild>
               <Button
                 onClick={() => confirmAction(ctx)}
-                className="bg-neutral-50"
+                background="white"
+                className="text-xs sm:text-base text-nowrap truncate min-w-0"
               >
-                <Typography className="text-neutral-950 font-semibold text-lg">
-                  {confirmLabel}
-                </Typography>
+                {confirmLabel}
               </Button>
             </DialogClose>
           </div>

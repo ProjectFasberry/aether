@@ -2,7 +2,6 @@ import {
   AuthError, 
   LoginForm, 
   RegisterForm, 
-  AuthSubmit, 
   Verify, 
   formVariant 
 } from "@/shared/components/app/auth/components/auth";
@@ -12,6 +11,7 @@ import {
   authSearchParamsAtom,
   authTriggerIsDisabledAtom,
   AuthTypeAtom,
+  showResetPasswordAtom,
   typeAtom
 } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
@@ -23,7 +23,8 @@ import { startPageEvents } from "@/shared/lib/events";
 import { pageContextAtom } from "@/shared/models/page-context.model";
 
 const ResetPassword = reatomComponent(({ ctx }) => {
-  if (ctx.spy(typeAtom) !== 'login') return null;
+  const showResetPassword = ctx.spy(showResetPasswordAtom)
+  if (!showResetPassword) return null;
 
   return (
     <Link href="/auth/restore">
@@ -70,7 +71,6 @@ const Auth = reatomComponent(({ ctx }) => {
         <TabsContent value="login">
           <LoginForm />
         </TabsContent>
-        <AuthSubmit />
         <ResetPassword />
         <AuthError />
       </div>

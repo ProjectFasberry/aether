@@ -1,4 +1,4 @@
-import { PORT } from "./shared/env";
+import { isProduction, PORT } from "./shared/env";
 import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysiajs/server-timing";
@@ -31,6 +31,10 @@ export function startApp() {
 		.use(loggerPlugin())
 		.onError((payload) => {
 			const { error, code } = payload;
+			if (!isProduction) {
+				appLogger.error(error, code);
+			}
+
 			let message: string | ValidationError = "Internal Server Error";
 
 			if (code === "VALIDATION") {
@@ -52,6 +56,10 @@ export function startApp() {
 				} else {
 					message = String(response);
 				}
+			}
+
+			if (error instanceof Error) {
+				return { error: error.message };
 			}
 
 			return { error: message };

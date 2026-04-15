@@ -6,6 +6,7 @@ import { Banner } from '@/shared/components/app/widgets/components/banner';
 import { Header } from '@/shared/components/app/layout/components/header';
 import { Widgets } from '@/shared/components/app/widgets/components/widgets';
 import { WrapperChild } from '@/shared/components/app/layout/components/wrapper';
+import { AlertDialog } from '@/shared/components/config/alert-dialog';
 
 export default function Wrapper({ children }: PropsWithChildren) {
   return (
@@ -16,6 +17,7 @@ export default function Wrapper({ children }: PropsWithChildren) {
         {children}
       </div>
       <Widgets />
+      <AlertDialog />
     </WrapperChild>
   );
 }

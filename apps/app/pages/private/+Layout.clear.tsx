@@ -16,7 +16,6 @@ import {
 } from "@repo/ui/sidebar"
 import { Logotype } from "@/shared/components/app/layout/components/logotype";
 import { UserInfo } from "@/shared/components/app/private/components/user-info";
-import { AlertDialog } from "@/shared/components/config/alert-dialog";
 
 const linkVariant = tv({
   base: `flex justify-start items-center group h-10 border-2 border-neutral-800 rounded-lg px-4
@@ -84,7 +83,6 @@ export default function Layout({ children }: PropsWithChildren) {
       <AppSidebar />
       <div className="flex flex-col gap-2 min-h-dvh w-full px-2 sm:px-6">
         <SidebarTrigger />
-        <AlertDialog />
         <div className="flex flex-col overflow-hidden w-full">
           {children}
         </div>

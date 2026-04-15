@@ -1,4 +1,3 @@
-import { pageContextAtom } from '@/shared/models/page-context.model';
 import { useUpdate } from '@reatom/npm-react';
 import { Toaster } from '@/shared/components/config/toaster';
 import { connectLogger, createCtx, Ctx } from '@reatom/framework'
@@ -10,6 +9,7 @@ import { isDevelopment } from '@/shared/env';
 import { Footer } from '@/shared/components/app/layout/components/footer';
 import { Button } from "@repo/ui/button";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import { initApp } from '@/shared/models/app.model';
 
 interface Fn<Args extends any[] = any[], Return = any> {
   (...a: Args): Return
@@ -27,12 +27,8 @@ const useCreateCtx = (extension?: Fn<[Ctx]>) => {
 }
 
 const SyncPageContext = () => {
-  const pageContext = usePageContext()
-  
-  useUpdate((ctx) => {
-    pageContextAtom(ctx, pageContext)
-  }, [pageContext])
-
+  const pageCtx = usePageContext()
+  useUpdate((ctx) => initApp(ctx, pageCtx), [pageCtx])
   return null;
 }
 

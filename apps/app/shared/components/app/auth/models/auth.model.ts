@@ -1,5 +1,5 @@
 import { withHistory } from "@/shared/lib/reatom-helpers";
-import { reatomAsync, withStatusesAtom } from "@reatom/async";
+import { AsyncCtx, reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom, batch, Ctx } from "@reatom/core";
 import { reatomRecord, sleep, withAssign, withReset } from "@reatom/framework";
 import { toast } from "sonner";
@@ -9,6 +9,9 @@ import * as z from "zod/v4";
 import { registerSchema, authSchema as loginSchema } from "@repo/shared/schemas/auth";
 import { withSearchParamsPersist } from "@reatom/url";
 import { pof } from "./pof.model";
+import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import { withSsr } from "@/shared/lib/ssr";
+import { invariant } from "@/shared/lib/invariant";
 
 export type AuthTypeAtom = "register" | "login";
 type ErrorType = "nickname" | "password" | "findout";
@@ -275,3 +278,129 @@ export const authTriggerIsDisabledAtom = atom((ctx) => {
 	const r = ctx.spy(pof.isActive) ? !!ctx.spy(pof.token) : false;
 	return r;
 }, "authTriggerIsDisabled");
+
+export type AuthLoginVariant = "qr" | "game" | "password";
+
+const LOGIN_VARIANTS_EVENTS: Partial<Record<AuthLoginVariant, (ctx: AsyncCtx) => void>> = {
+	qr: (ctx) => authLogin.qr.generate(ctx),
+	game: (ctx) => authLogin.game.generate(ctx),
+};
+
+export const authLoginState = atom(null, "authLoginState").pipe(
+	withAssign((_, name) => ({
+		qr: atom(null, `${name}.qr`).pipe(
+			withAssign(() => ({
+				url: atom<string | null>(null, `${name}.qrUrl`),
+				token: atom<string | null>(null, `${name}.token`).pipe(withSsr("qrToken")),
+			})),
+		),
+		game: atom(null, `${name}.game`).pipe(
+			withAssign((_, name) => ({
+				code: atom<string | null>(null, `${name}.code`),
+			})),
+		),
+	})),
+);
+
+type AuthLoginPayload = { payload: string; type: "url" | "code" | "misc" };
+
+const fpPromise = FingerprintJS.load();
+
+export const authLogin = atom(null, "authLogin").pipe(
+	withAssign((_, name) => ({
+		getVisitorId: action(async (ctx) => {
+			const fp = await fpPromise;
+			const result = await fp.get();
+
+			return result.visitorId;
+		}),
+		qr: atom(null, `${name}.qr`).pipe(
+			withAssign((_, name) => ({
+				generate: reatomAsync(async (ctx) => {
+					const visitorId = await authLogin.getVisitorId(ctx);
+
+					const res = await client
+						.post<AuthLoginPayload>("auth/login/qr/generate", {
+							json: { visitorId },
+						})
+						.exec();
+
+					if (res.type === "url") {
+						authLoginState.qr.url(ctx, res.payload);
+						return;
+					}
+
+					toast.error("Что-то пошло не так");
+				}, `${name}.generate`).pipe(withStatusesAtom(), withErrorAtom()),
+				validateToken: reatomAsync(async (ctx) => {
+					const token = ctx.get(authLoginState.qr.token);
+					invariant(token, "Token is not defined");
+
+					return await ctx.schedule(() =>
+						client<false | ValidateTokenPayload>("auth/login/qr/validate", { searchParams: { token } }).exec(),
+					);
+				}, "validateToken").pipe(withStatusesAtom(), withErrorAtom(), withDataAtom()),
+				confirm: reatomAsync(async (ctx) => {
+					const token = ctx.get(authLoginState.qr.token);
+					invariant(token, "Token is not defined");
+
+					return await ctx.schedule(() => client.post("auth/login/qr/confirm", { searchParams: { token } }).exec());
+				}).pipe(withStatusesAtom(), withErrorAtom()),
+				decline: reatomAsync(async (ctx) => {
+					const token = ctx.get(authLoginState.qr.token);
+					invariant(token, "Token is not defined");
+
+					return await ctx.schedule(() => client.post("auth/login/qr/decline", { searchParams: { token } }).exec());
+				}).pipe(withStatusesAtom(), withErrorAtom()),
+			})),
+		),
+		game: atom(null, `${name}.game`).pipe(
+			withAssign((_, name) => ({
+				generate: reatomAsync(async (ctx) => {
+					const visitorId = await authLogin.getVisitorId(ctx);
+
+					const res = await client
+						.post<AuthLoginPayload>("auth/login/game/generate", {
+							json: { visitorId },
+						})
+						.exec();
+
+					if (res.type === "code") {
+						authLoginState.game.code(ctx, res.payload);
+					}
+
+					toast.error("Что-то пошло не так");
+				}, `${name}.generate`).pipe(withStatusesAtom(), withErrorAtom()),
+			})),
+		),
+	})),
+);
+
+export const authLoginVariantAtom = atom<AuthLoginVariant>("password", "authLoginVariant").pipe(
+	withAssign((target, name) => ({
+		select: reatomAsync(async (ctx, variant: AuthLoginVariant) => {
+			target(ctx, variant);
+			LOGIN_VARIANTS_EVENTS[variant]?.(ctx);
+		}),
+		filterVariants: <T extends { value: AuthLoginVariant }>(variants: T[]) =>
+			atom((ctx) => variants.filter((d) => d.value !== ctx.spy(target)), `${name}.filterVariants`),
+	})),
+);
+
+export const showResetPasswordAtom = atom(
+	(ctx) => ctx.spy(typeAtom) === "login" && ctx.spy(authLoginVariantAtom) === "password",
+	"showResetPassword",
+);
+
+type ValidateTokenPayload = {
+	browser: string;
+	geo: {
+		city: string;
+		country: string;
+	};
+	timestampz: string;
+};
+
+export const authLoginQRIsErrorAtom = atom(
+	(ctx) => ctx.spy(authLogin.qr.confirm.errorAtom) || ctx.spy(authLogin.qr.decline.errorAtom),
+);

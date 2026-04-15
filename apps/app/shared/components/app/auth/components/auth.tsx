@@ -13,6 +13,10 @@ import {
   FINDOUT_OPTIONS,
   findoutSelectedTypeAtom,
   submitIsDisabledAtom,
+  authLoginVariantAtom,
+  AuthLoginVariant,
+  authLogin,
+  authLoginState,
 } from "../models/auth.model";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input"
@@ -24,8 +28,11 @@ import { AtomState } from "@reatom/core";
 import { ReactNode } from "react";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../models/pof.model";
-import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { IconEye, IconEyeOff, IconLoader2 } from "@tabler/icons-react";
 import { Separator } from "@repo/ui/separator";
+import { QRCodeSVG } from "qrcode.react";
+import { spawn } from "@reatom/framework";
+import { Copy } from "@/shared/ui/copy";
 
 export const formVariant = tv({
   base: `rounded-lg border border-neutral-800 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-60`
@@ -252,17 +259,101 @@ export const RegisterForm = () => {
         </div>
       </div>
       <PrivacyTerms />
+      <AuthSubmit />
     </div>
   )
 }
 
-export const LoginForm = () => {
+const LoginVariants = reatomComponent(({ ctx }) => {
+  const variants = ctx.spy(authLoginVariantAtom.filterVariants(LOGIN_VARIANTS))
+
   return (
-    <div className="flex flex-col gap-6 w-full h-full">
+    <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
+      {variants.map((variant) => (
+        <Button
+          key={variant.value}
+          type="button"
+          onClick={() => spawn(ctx, (spawnCtx) => authLoginVariantAtom.select(spawnCtx, variant.value))}
+        >
+          {variant.title}
+        </Button>
+      ))}
+    </div>
+  )
+}, "LoginVariants")
+
+const LoginPassword = () => {
+  return (
+    <div className="flex flex-col gap-4 w-full h-full">
       <div className="flex flex-col gap-2 w-full">
         <NicknameInput />
         <PasswordInput />
       </div>
+      <AuthSubmit />
+    </div>
+  )
+}
+
+const LoginQR = reatomComponent(({ ctx }) => {
+  const isPending = ctx.spy(authLogin.qr.generate.statusesAtom).isPending
+  const url = ctx.spy(authLoginState.qr.url)
+
+  const isLoading = isPending || !url
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      <div className="flex bg-neutral-700 items-center justify-center w-46 h-46 rounded-xl">
+        {isLoading ? (
+          <IconLoader2 className="animate-spin text-neutral-50 duration-200" />
+        ) : (
+          <QRCodeSVG value={url} className='w-46 h-46' />
+        )}
+      </div>
+      <div className="flex flex-col items-start gap-2 w-fit">
+        <p>1. Открой Fasberry на телефоне</p>
+        <p>2. Зайди в Настройки {">"} Безопасность {">"} Привязать устройство</p>
+        <p>3. Наведи телефон на QR-код на экране</p>
+      </div>
+    </div>
+  )
+}, "LoginQR")
+
+const LoginGame = reatomComponent(({ ctx }) => {
+  const code = ctx.spy(authLoginState.game.code)
+  const isLoading = ctx.spy(authLogin.game.generate.statusesAtom).isPending || !code
+
+  return (
+    <div className="flex flex-col items-center gap-4 w-full">
+      <div className="w-full text-base">
+        <p>
+          Введи код в <span className="font-semibold">игре</span> с помощью команды ниже!&nbsp;
+        </p>
+        <p className="font-semibold">Никому не сообщай его!</p>
+      </div>
+      {isLoading ? (
+        <IconLoader2 className="animate-spin text-neutral-500 duration-200" />
+      ) : (
+        <Copy code={`/verify ${code}`} />
+      )}
+    </div>
+  )
+}, "LoginGame")
+
+const LOGIN_VARIANTS: { title: string, value: AuthLoginVariant, component: ReactNode }[] = [
+  { title: "Через пароль", value: "password", component: <LoginPassword /> },
+  { title: "Через игру", value: "game", component: <LoginGame /> },
+  { title: "Через QR-code", value: "qr", component: <LoginQR /> }
+]
+
+const LoginFormComponent = reatomComponent(({ ctx }) =>
+  LOGIN_VARIANTS.find(d => d.value === ctx.spy(authLoginVariantAtom))?.component,
+  "LoginFormComponent"
+)
+
+export const LoginForm = () => {
+  return (
+    <div className="flex flex-col gap-6 w-full h-full">
+      <LoginFormComponent />
       <div className="flex flex-col w-full gap-2 items-center justify-center">
         <div className="flex items-center w-full gap-4">
           <Separator className="flex-1" />
@@ -271,14 +362,7 @@ export const LoginForm = () => {
           </span>
           <Separator className="flex-1" />
         </div>
-        <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
-          <Button type="button" onClick={() => { }}>
-            Через игру
-          </Button>
-          <Button type="button" onClick={() => { }}>
-            Через QR-code
-          </Button>
-        </div>
+        <LoginVariants />
       </div>
     </div>
   )

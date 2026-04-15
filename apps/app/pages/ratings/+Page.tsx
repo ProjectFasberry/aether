@@ -34,12 +34,12 @@ const RatingsList = reatomComponent(({ ctx }) => {
               <Link
                 key={child.value}
                 href={`/ratings/${section.key}/${child.value}`}
-                className="group relative flex items-center justify-between p-4 border border-neutral-600 hover:bg-neutral-800
+                className="group relative flex items-center justify-between p-4 border border-neutral-600 bg-neutral-800
                   rounded-xl duration-300"
               >
                 <div className="flex items-center gap-4 min-w-0">
-                  <div className="p-2.5 bg-neutral-800 rounded-xl group-hover:bg-neutral-700 transition-colors">
-                    <IconTrophy size={20} className="text-neutral-400 group-hover:text-yellow-500" />
+                  <div className="p-2.5 bg-neutral-50 rounded-xl transition-colors">
+                    <IconTrophy size={20} className="text-neutral-950 group-hover:text-yellow-500" />
                   </div>
                   <div className="flex flex-col min-w-0">
                     <span className="font-medium text-neutral-200 truncate">

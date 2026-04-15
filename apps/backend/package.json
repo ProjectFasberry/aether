@@ -6,8 +6,8 @@
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"dev": "infisical run --env=dev --path=/backend bun run --watch ./src/index.ts",
-		"start": "infisical run --env=prod --path=/backend bun run ./dist/index.js",
+		"dev": "infisical run --env=dev --path=/backend -- bun run --watch ./src/index.ts",
+		"start": "infisical run --env=prod --path=/backend -- bun run ./dist/index.js",
 		"build": "bun run ./scripts/build.ts",
 		"type-check": "tsc --noEmit",
 		"lint": "bunx biome lint",
