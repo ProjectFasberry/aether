@@ -1,0 +1,67 @@
+name: fasberry-staging
+
+include:
+  - path: ../dev/docker-compose.dev.shared.yml
+
+services:
+  backend:
+    container_name: backend
+    image: ${REGISTRY_HOST}/staging/api-main:latest
+    network_mode: "host"
+    environment:
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    volumes:
+      - ../dev/data/db/backend:/data
+    depends_on:
+      bisquite-db:
+        condition: service_healthy
+      shared-db:
+        condition: service_healthy
+      general-db:
+        condition: service_healthy
+      luckperms-db:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      dragonfly:
+        condition: service_started
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  panel:
+    container_name: panel
+    image: ${REGISTRY_HOST}/staging/api-panel:latest
+    ports:
+      - ${API_PANEL_EXTERNAL_PORT}:4105
+    environment: 
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    depends_on:
+      general-db:
+        condition: service_healthy
+      dragonfly:
+        condition: service_started
+    networks:
+      - fasberry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  app:
+    container_name: app
+    image: ${REGISTRY_HOST}/staging/frontend-main:latest
+    ports:
+      - ${FRONTEND_MAIN_EXTERNAL_PORT}:3003
+    environment:
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    networks:
+      - fasberry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"

@@ -16,7 +16,9 @@
 		"build:prod": "make build",
 		"build:tag": "make tag",
 		"build:push": "make push",
-		"release": "make all"
+		"--------------------": "",
+		"release:prod": "make all STAGE=prod NAME=api-panel",
+		"release:staging": "make all STAGE=staging NAME=api-panel"
 	},
 	"dependencies": {
 		"@elysiajs/bearer": "1.4.1",

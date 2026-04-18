@@ -15,6 +15,6 @@ fi
 
 exec infisical run \
   --projectId "$INFISICAL_PROJECT_ID" \
-  --env prod \
+  --env "$STAGE" \
   --path /panel \
   -- bun run ./dist/index.js

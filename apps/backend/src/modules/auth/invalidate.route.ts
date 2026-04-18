@@ -15,23 +15,19 @@ export const invalidate = new Elysia()
 		if (!session) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
 		return { session };
 	})
-	.post(
-		"/invalidate-session",
-		async ({ cookie, session, status }) => {
-			const result = await deleteSession(session);
+	.post("/invalidate-session", async ({ cookie, session, status }) => {
+		const result = await deleteSession(session);
 
-			if (!result) {
-				throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError("Session is not deleted"));
-			}
+		if (!result) {
+			throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError("Session is not deleted"));
+		}
 
-			unsetCookie({ cookie, key: SESSION_KEY });
+		unsetCookie({ cookie, key: SESSION_KEY });
 
-			return { data: true };
+		return { data: true };
+	}, {
+		response: {
+			200: "invalidate",
+			500: withError,
 		},
-		{
-			response: {
-				200: "invalidate",
-				500: withError,
-			},
-		},
-	);
+	});

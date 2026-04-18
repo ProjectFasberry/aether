@@ -11,7 +11,14 @@ import { force } from "./modules/root";
 import { appGroup } from "./modules/root/app";
 import { validateGroup } from "./modules/root/validate";
 
-export const main = new Elysia().use(shared).use(auth).use(me).use(serverGroup).use(store).use(privated).use(rate);
+export const main = new Elysia()
+	.use(shared)
+	.use(auth)
+	.use(me)
+	.use(serverGroup)
+	.use(store)
+	.use(privated)
+	.use(rate);
 
 export const root = new Elysia()
 	.get("/health", ({ status }) => status(200))

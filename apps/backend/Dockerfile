@@ -28,6 +28,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && update-ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
+ARG STAGE
+ENV STAGE=$STAGE
+
 WORKDIR /
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
@@ -38,4 +41,3 @@ ENV NODE_ENV=production
 USER bun
 
 CMD ["/bin/sh", "/entrypoint.sh"]
-EXPOSE 4104

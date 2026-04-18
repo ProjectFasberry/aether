@@ -21,7 +21,9 @@
 		"build:prod": "make build",
 		"build:tag": "make tag",
 		"build:push": "make push",
-		"release": "make all"
+		"--------------------": "",
+		"release:prod": "make all STAGE=prod NAME=api-main",
+		"release:staging": "make all STAGE=staging NAME=api-main"
 	},
 	"dependencies": {
 		"@bogeychan/elysia-logger": "0.1.10",
@@ -48,6 +50,7 @@
 		"elysia-prometheus": "1.0.0",
 		"elysia-rate-limit": "4.4.0",
 		"gramio": "0.4.9",
+		"@scure/bip39": "2.0.1",
 		"heleket-api-sdk": "3.0.0",
 		"ioredis": "5.6.1",
 		"ky": "1.14.0",

@@ -7,11 +7,14 @@ import { initURLS } from "./shared/constants/urls";
 import { initChats } from "./shared/constants/chats";
 import { initPermissions } from "./shared/constants/permissions";
 import { startMinio } from "./shared/minio/init";
-import { initRedis } from "./shared/redis/init";
+import { config, initRedis } from "./shared/redis/init";
 import { startNats } from "./shared/nats/init";
 import { startJobs } from "./shared/cron/init";
 import { connectToRcon } from "./shared/rcon/init";
 import { isProduction } from "./shared/env";
+import { getNats } from "./shared/nats/client";
+import Redis from "ioredis";
+import { loginQR } from "./modules/auth/login.model";
 
 async function entrypoint() {
 	await checkDatabasesHealth();
@@ -27,10 +30,30 @@ async function services() {
 	await initRedis();
 }
 
+async function startBridge() {
+	const nc = getNats();
+	const redisSub = new Redis(config)
+	
+	await redisSub.psubscribe('__keyevent@0__:expired');
+
+	redisSub.on('pmessage', (pattern, channel, key) => {
+		if (!key) return;
+		console.log(pattern, channel, key)
+
+		if (key.startsWith('auth:qr:')) {
+			const qrToken = key.split(':')[2]
+
+			const subject = loginQR().createAuthQRSubject("expired", qrToken)
+			nc.publish(subject, JSON.stringify({ data: qrToken }));
+		}
+	});
+}
+
 async function startServices() {
 	await entrypoint();
 	await services();
-
+	startBridge()
+	
 	startJobs();
 
 	if (isProduction) {

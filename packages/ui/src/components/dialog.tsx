@@ -57,9 +57,9 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
           <DialogPrimitive.Close
             data-slot="dialog-close"
             className="ring-neutral-700 bg-red-500 focus:ring-neutral-50 data-[state=open]:bg-neutral-800 
-              data-[state=open]:text-neutral-400 text-semibold cursor-pointer flex items-center justify-center h-5 w-5 absolute top-5 right-4 sm:right-6 
+              data-[state=open]:text-neutral-400 text-semibold cursor-pointer flex items-center justify-center h-4 w-4 absolute top-3 right-4
               rounded-sm opacity-80 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden 
-              disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4"
+              disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3"
           >
             <IconX />
             <span className="sr-only">Close</span>
@@ -107,7 +107,7 @@ function DialogTitle({ className, ...props }: React.ComponentProps<typeof Dialog
     <DialogPrimitive.Title
       data-slot="dialog-title"
       className={cn(
-        "cn-font-heading text-base sm:text-lg font-semibold leading-6 text-center tracking-tight",
+        "cn-font-heading text-base sm:text-lg font-semibold leading-2 text-center tracking-tight",
         className
       )}
       {...props}

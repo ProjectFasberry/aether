@@ -3,9 +3,12 @@ import { Button } from "@repo/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
 import { Typography } from "@repo/ui/typography"
 import { SettingsSection } from "./ui"
-import { IconDeviceDesktop, IconQrcode } from "@tabler/icons-react"
+import { IconDeviceDesktop } from "@tabler/icons-react"
 import { appState } from "@/shared/models/app.model"
-import { accountActiveSessionsAction, accountCurrentSessionAction, SessionPayload } from "../models/settings-security.model"
+import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, SessionPayload } from "../models/settings-security.model"
+import { ClientOnly } from "vike-react/ClientOnly"
+import { AccountSessionsConnectNew } from "./settings-main-security-new-session"
+import { Skeleton } from "@repo/ui/skeleton"
 
 const DeleteAccount = reatomComponent(({ ctx }) => {
   return (
@@ -23,31 +26,17 @@ const DeleteAccount = reatomComponent(({ ctx }) => {
   )
 }, "DeleteAccount")
 
-const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      <p>
-        Привяжи устройство к аккаунту, отсканировав QR-код
-      </p>
-      <Button background="white" className="gap-2 font-semibold">
-        <IconQrcode size={16} />
-        Привязать устройство
-      </Button>
-    </div>
-  )
-}, "AccountSessionsConnectNew")
-
 const SessionItem = ({ id, browser, geo }: SessionPayload) => {
   return (
-    <div className="flex items-center h-12 gap-2 w-full">
+    <div className="flex items-center overflow-hidden h-12 gap-2 w-full">
       <div className="flex bg-neutral-700 rounded-full items-center justify-center w-12 h-12">
         <IconDeviceDesktop size={24} />
       </div>
-      <div className="flex flex-col">
-        <p>
+      <div className="flex flex-col justify-center h-full">
+        <p className="text-base font-medium leading-5">
           {browser}
         </p>
-        <p>
+        <p className="text-neutral-400 text-sm leading-4">
           {geo.city}, {geo.country}
         </p>
       </div>
@@ -55,39 +44,60 @@ const SessionItem = ({ id, browser, geo }: SessionPayload) => {
   )
 }
 
-const AccountSessionsList = reatomComponent(({ ctx }) => {
-  useUpdate((ctx) => {
-    accountActiveSessionsAction(ctx)
-    accountCurrentSessionAction(ctx)
-  }, []);
+const AccountSessionsListActive = reatomComponent(({ ctx }) => {
+  if (ctx.spy(accountActiveSessionsAction.statusesAtom).isPending) {
+    return (
+      <>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </>
+    )
+  }
 
   const list = ctx.spy(accountActiveSessionsAction.dataAtom);
+  if (!list || !list.length) return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
+
+  return list?.map((session) => <SessionItem key={session.id} {...session} />)
+}, "AccountSessionsListActive")
+
+const AccountSessionsListCurrent = reatomComponent(({ ctx }) => {
+  if (ctx.spy(accountCurrentSessionAction.statusesAtom).isPending) {
+    return <Skeleton className="h-12 w-full" />
+  }
+
   const current = ctx.spy(accountCurrentSessionAction.dataAtom)
+  if (!current) return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
+
+  return <SessionItem {...current} />
+}, "AccountSessionsListCurrent")
+
+const AccountSessionsList = () => {
+  useUpdate(fetchSessions, []);
 
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-2 w-full">
-        <p>Текущая сессия</p>
-        {current && (
-          <SessionItem {...current} />
-        )}
+        <p className="text-base font-medium leading-5">Текущая сессия</p>
+        <AccountSessionsListCurrent />
       </div>
       <div className="flex flex-col gap-2 w-full">
-        <p>Активные сессии</p>
-        {list?.map((session) => (
-          <SessionItem key={session.id} {...session} />
-        ))}
+        <p className="text-base font-medium leading-5">Активные сессии</p>
+        <AccountSessionsListActive />
       </div>
     </div>
   )
-}, "AccountSessionsList")
+}
 
 const AccountSessions = reatomComponent(({ ctx }) => {
   const isMobile = ctx.spy(appState.isMobile)
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      {isMobile && <AccountSessionsConnectNew />}
+      {isMobile && (
+        <ClientOnly>
+          <AccountSessionsConnectNew />
+        </ClientOnly>
+      )}
       <AccountSessionsList />
     </div>
   )
@@ -97,7 +107,7 @@ const ChangePassword = reatomComponent(({ ctx }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button background="white" className="w-fit">
+        <Button background="white" disabled={true} className="w-fit">
           <Typography className="leading-5 font-semibold">
             Изменить пароль
           </Typography>

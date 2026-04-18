@@ -1,6 +1,6 @@
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { cn } from '../lib/cn';
-import { IconChevronDown, IconChevronUp, IconSquareFilled } from "@tabler/icons-react";
+import { IconCheck, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import type { ComponentProps } from "react";
 
 function Select({ ...props }: ComponentProps<typeof SelectPrimitive.Root>) {
@@ -102,7 +102,7 @@ function SelectItem({ className, children, ...props }: ComponentProps<typeof Sel
     >
       <span className="absolute right-2 flex size-3.5 items-center justify-center">
         <SelectPrimitive.ItemIndicator>
-          <IconSquareFilled className="size-4 text-green-500" />
+          <IconCheck className="size-4 text-green-500" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

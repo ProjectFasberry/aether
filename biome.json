@@ -44,6 +44,9 @@
 			"javascript": {
 				"jsxRuntime": "reactClassic"
 			},
+			"formatter": {
+				"enabled": false
+			},
 			"linter": {
 				"domains": {
 					"react": "recommended"
@@ -99,6 +102,9 @@
 			"includes": ["apps/backend/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"
+			},
+			"formatter": {
+				"enabled": false
 			},
 			"linter": {
 				"enabled": true,

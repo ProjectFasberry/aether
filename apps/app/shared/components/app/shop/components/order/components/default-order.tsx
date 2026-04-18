@@ -4,7 +4,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Dialog, DialogContent, DialogTrigger } from "@repo/ui/dialog";
 import { Typography } from "@repo/ui/typography";
 import { IconCheck, IconCopy, IconEye } from "@tabler/icons-react";
-import { QRCodeSVG } from "qrcode.react";
+import { QRCode } from "react-qrcode-logo";
 import { useEffect, useState } from "react";
 import { Payment } from "../../../models/store.model";
 import { esAtom, orderDataAtom } from "../../../models/store-order.model";
@@ -103,10 +103,10 @@ const OrderQR = ({ url }: { url: string }) => {
         >
           <IconEye size={24} />
         </div>
-        <QRCodeSVG value={url} className='w-full h-full' />
+        <QRCode value={url} style={{ width: "100%", height: "100%" }} />
       </DialogTrigger>
       <DialogContent className="flex p-0 items-center justify-center">
-        <QRCodeSVG value={url} className='w-full h-full' />
+        <QRCode value={url} style={{ width: "100%", height: "100%" }} />
       </DialogContent>
     </Dialog>
   )

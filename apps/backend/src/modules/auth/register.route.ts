@@ -17,10 +17,7 @@ const registerValidator = () => new Elysia()
       .executeTakeFirst()
 
     const isEnabled = Boolean(query?.value)
-
-    if (!isEnabled) {
-      throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "authorization-disabled")
-    }
+    if (!isEnabled) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "authorization-disabled")
   })
   .as("scoped")
 
@@ -28,48 +25,41 @@ const ipValidator = () => new Elysia()
   .use(ipPlugin())
   .onBeforeHandle(async ({ ip, status }) => {
     const isValid = await validateIpRestricts(ip)
-
-    if (isValid) {
-      throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("ip-limit"))
-    }
+    if (isValid) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("ip-limit"))
   })
   .as("scoped")
 
 export const register = new Elysia()
-  .use(botValidator())
-  .use(registerValidator())
-  .use(validateAuthStatus())
-  .use(ipValidator())
-  .model({
-    "register": withData(t.Object({ nickname: t.String() }))
-  })
-  .post("/register", async ({ status, body: { findout, nickname, password: inputPass, findoutType }, ip }) => {
-    const existsUser = await getExistsUser(nickname)
-
-    if (existsUser.result) {
-      throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("exists"))
-    }
-
-    const isPasswordSafe = validatePasswordSafe(inputPass)
-
-    if (!isPasswordSafe) {
-      throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("unsafe"))
-    }
-
-    const hash = Bun.password.hashSync(inputPass, {
-      algorithm: "bcrypt", cost: 10
+  .group("/register", app => app
+    .use(botValidator())
+    .use(registerValidator())
+    .use(validateAuthStatus())
+    .use(ipValidator())
+    .model({
+      "register": withData(t.Object({ nickname: t.String() }))
     })
+    .post("/", async ({ status, body: { findout, mnHex, nickname, password: inputPass, findoutType }, ip }) => {
+      const existsUser = await getExistsUser(nickname)
+      if (existsUser.result) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("exists"))
 
-    const data = await createUser({
-      nickname, findout, findoutType, password: hash, ip
+      const passIsSafe = validatePasswordSafe(inputPass)
+      if (!passIsSafe) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("unsafe"))
+
+      const hash = Bun.password.hashSync(inputPass, {
+        algorithm: "bcrypt", cost: 10
+      })
+
+      const data = await createUser({
+        nickname, findout, findoutType, password: hash, ip, mnHex
+      })
+
+      return { data }
+    }, {
+      body: registerSchema,
+      response: {
+        200: "register",
+        409: withError,
+        400: withError,
+      }
     })
-
-    return { data }
-  }, {
-    body: registerSchema,
-    response: {
-      200: "register",
-      409: withError,
-      400: withError,
-    }
-  })
+  )

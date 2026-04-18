@@ -7,7 +7,7 @@ const redisLogger = logger.withTag("Redis");
 
 let redis: Redis | null = null;
 
-const config: RedisOptions = {
+export const config: RedisOptions = {
 	host: REDIS_HOST,
 	port: REDIS_PORT,
 	password: REDIS_PASSWORD,

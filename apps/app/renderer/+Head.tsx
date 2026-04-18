@@ -3,6 +3,12 @@ import { APAY_TAG, API_PREFIX_URL, isProduction, VOLUME_URL } from "@/shared/env
 export default function HeadDefault() {
   return (
     <>
+      {import.meta.env.DEV && (
+        <script
+          crossOrigin="anonymous"
+          src="//unpkg.com/react-scan/dist/auto.global.js"
+        ></script>
+      )}
       <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="shortcut icon" href="/favicon.ico" />

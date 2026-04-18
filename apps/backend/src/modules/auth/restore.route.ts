@@ -13,7 +13,7 @@ export const restore = new Elysia()
   .resolve(({ headers }) => ({ userAgent: headers["user-agent"] }))
   .post("/restore", async ({ status, userAgent }) => {
 
-      
     
-    return status(HttpStatusEnum.HTTP_200_OK)
+    
+    return { data: null }
   })

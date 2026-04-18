@@ -17,15 +17,14 @@ export const beforeLogoutAction = action((ctx) => {
 	});
 }, "beforeLogoutAction");
 
-export const logoutAction = reatomAsync(
-	async (ctx) => {
-		return await ctx.schedule(() => client.post("auth/invalidate-session").exec());
+export const logoutAction = reatomAsync(async (ctx) => {
+	return await ctx.schedule(() =>
+		client.post("auth/invalidate-session").exec()
+	);
+}, {
+	name: "logoutAction",
+	onFulfill: (ctx) => logout(ctx),
+	onReject: (ctx, e) => {
+		logError(e);
 	},
-	{
-		name: "logoutAction",
-		onFulfill: (ctx) => logout(ctx),
-		onReject: (ctx, e) => {
-			logError(e);
-		},
-	},
-).pipe(withStatusesAtom());
+}).pipe(withStatusesAtom());

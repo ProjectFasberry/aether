@@ -1,10 +1,10 @@
-import type { InputHTMLAttributes } from "react"
+import type { ComponentPropsWithRef } from "react"
 import { tv, type VariantProps } from "tailwind-variants"
 
 const inputVariants = tv({
   base: `
     inline-flex px-4 py-2 text-base rounded-xl placeholder:text-neutral-400
-    focus-within:outline border focus-within:border-2 focus-within:outline-green
+    focus-within:outline border border-transparent focus-within:border-2 focus-within:outline-green
   `,
   variants: {
     variant: {
@@ -17,7 +17,7 @@ const inputVariants = tv({
   }
 })
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & VariantProps<typeof inputVariants>
+type InputProps = ComponentPropsWithRef<"input"> & VariantProps<typeof inputVariants>
 
 export const Input = ({ className, variant, ...props }: InputProps) => {
   return (

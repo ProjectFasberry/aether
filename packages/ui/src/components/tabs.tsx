@@ -24,7 +24,7 @@ function Tabs({
 const tabsListVariants = tv(
   {
     base: `
-      group/tabs-list inline-flex w-fit items-center justify-center rounded-xl p-[3px] 
+      group/tabs-list inline-flex w-fit items-center justify-center rounded-xl
     text-neutral-50 group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit 
       group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none`,
     variants: {

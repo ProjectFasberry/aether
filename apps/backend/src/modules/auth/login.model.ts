@@ -16,6 +16,7 @@ import Bowser from "bowser";
 import { getRedis } from "#/shared/redis/init";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
+import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/schemas/auth/login";
 
 type CreateSession = {
 	nickname: string;
@@ -118,10 +119,8 @@ export async function createSession({
 	};
 
 	creationPipeline.set(newSessionKey, JSON.stringify(payload), "PX", DEFAULT_SESSION_EXPIRE);
-
 	creationPipeline.zadd(userSessionsKey, currentTimestamp, token);
 	creationPipeline.expire(userSessionsKey, DEFAULT_SESSION_EXPIRE);
-
 	await creationPipeline.exec();
 
 	const expires_at = new Date(Date.now() + DEFAULT_SESSION_EXPIRE_MS);
@@ -133,19 +132,18 @@ export async function createSession({
 
 export async function afterLoginEvents({ nickname }: { nickname: string }) {
 	if (!isProduction) {
-		console.warn("Skipping afterLoginEvents on development");
+		loginLogger.warn("Skipping afterLoginEvents on development");
 		return;
 	}
 
 	const nc = getNats();
 
-	nc.publish(
-		SUBJECTS.EVENTS.AUTHORIZATION.LOGIN,
-		JSON.stringify({
-			created_at: dayjs().toDate(),
-			nickname,
-		}),
-	);
+	const payload = {
+		created_at: dayjs().toDate(),
+		nickname,
+	}
+
+	nc.publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
 }
 
 export async function deleteSession(token: string): Promise<boolean> {
@@ -161,10 +159,8 @@ export async function deleteSession(token: string): Promise<boolean> {
 	const userSessionsKey = getUserSessionsKey(nickname);
 
 	const pipeline = redis.multi();
-
 	pipeline.del(sessionKey);
 	pipeline.zrem(userSessionsKey, token);
-
 	await pipeline.exec();
 
 	return true;
@@ -172,86 +168,142 @@ export async function deleteSession(token: string): Promise<boolean> {
 
 // targets:
 // AUTH, players, bisquite, shared (lobby), reputation, playerpoints, luckperms
-async function deleteAccount({ nickname }: { nickname: string }) {}
+async function deleteAccount({ nickname }: { nickname: string }) { }
 
-type QRParams = {
-	visitorId: string;
-	ua: string;
-	ip: string;
-};
+const QR_VERIFY_TIMEOUT_S = 120;
+const QR_CONFIRM_TIMEOUT_S = 60;
 
-const getQRTokenKey = (token: string) => `auth:qr:${token}`;
-
-const QR_CONFIRM_TIMEOUT_S = 120;
-
-const BASE_FRONTEND_URL = "http://127.0.0.1:3006";
 const BASE_API_URL = "http://127.0.0.1:4104";
 
-export type LoginQRKeyPayload = {
+type LoginQRKeyPayload = {
 	ua: string;
 	vId: string;
 	ip: string;
-	status: "pending" | "verified" | "confirmed";
+	status: "pending" | "verified" | "confirmed"
+	verifiedBy?: string
 };
 
 export function loginQR() {
 	const redis = getRedis();
+	const nc = getNats();
+	
+	type QRGenerateParams = {
+		visitorId: string;
+		ua: string;
+		ip: string;
+	};
 
-	async function generate({ visitorId, ip, ua }: QRParams): Promise<{ payload: string; type: "url" }> {
+	const createAuthQRSubject = (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`
+	const getAuthQRSubject = (token: string) => `auth.qr.*.${token}`
+	const getQRTokenKey = (token: string) => `auth:qr:${token}`;
+
+	const notify = (type: QREventsEvent, token: string) => {
+		const subject = createAuthQRSubject(type, token);
+		nc.publish(subject, JSON.stringify({ data: token }));
+	};
+	
+	async function generate({ visitorId, ip, ua }: QRGenerateParams): Promise<QRGeneratePayload> {
 		const token = nanoid(12);
+
 		const key = getQRTokenKey(token);
-		const payload: LoginQRKeyPayload = {
-			ua,
-			vId: visitorId,
-			ip,
+		const pd: LoginQRKeyPayload = {
+			ua, vId: visitorId, ip,
 			status: "pending",
 		};
 
-		await redis.pipeline().hset(key, payload).expire(key, QR_CONFIRM_TIMEOUT_S).exec();
+		await redis
+			.pipeline()
+			.hset(key, pd)
+			.expire(key, QR_VERIFY_TIMEOUT_S)
+			.exec();
 
 		const url = new URL(`${BASE_API_URL}/auth/login/qr/callback`);
-		const params = { e: "verify", token };
-		url.search = new URLSearchParams(params as unknown as Record<string, string>).toString();
+		url.searchParams.set("e", "verify");
+		url.searchParams.set("token", token);
 
-		return { payload: url.href, type: "url" };
+		return { payload: url.href, token };
 	}
 
-	async function deleteToken(token: string) {
+	async function deleteToken(token: string): Promise<void> {
 		const key = getQRTokenKey(token);
-		return redis.del(key);
+		const status = await redis.hget(key, "status") as LoginQRKeyPayload["status"] | null
+
+		if (!status || status !== 'verified') {
+			return void redis.del(key);
+		}
 	}
 
-	async function updateStatus(token: string, userId: string) {
-		const key = getQRTokenKey(token);
-		return redis.hset(key, { status: "verified", confirmedBy: userId });
-	}
-
-	function getConfirmRedirectUrl(token: string) {
-		return `${BASE_FRONTEND_URL}/auth/login/confirm?token=${token}`;
-	}
-
-	async function getQRTokenIsExists(token: string) {
-		const redis = getRedis();
+	async function checkQRTokenExistence(token: string): Promise<number> {
 		const key = getQRTokenKey(token);
 		return redis.exists(key);
 	}
 
-	async function confirm(token: string) {
-		const nats = getNats();
+	async function confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
+		const key = getQRTokenKey(token);
+
+		const currentStatus = await redis.hget(key, "status");
+
+		if (currentStatus !== "pending") {
+			throw new Error("Invalid or expired token state");
+		}
+
+		const updatePd: Partial<LoginQRKeyPayload> = {
+			status: "verified",
+			verifiedBy: nickname
+		}
+
+		await redis.hset(key, updatePd);
+
+		notify("verified", token);
 	}
 
 	async function getData(token: string) {
 		const key = getQRTokenKey(token);
+
 		const data = await redis.hgetall(key);
-		if (!data) throw new Error("Token is expired or not found");
+		if (!data || (Object.keys(data).length === 0)) {
+			throw new Error("Token is expired or not found");
+		}
 
-		const { vId, ua, ip, status } = data as LoginQRKeyPayload;
-		const nickname = "";
-
-		return { vId, ua, ip, status, nickname, timestampz: new Date().toISOString() };
+		return {
+			...(data as unknown as LoginQRKeyPayload),
+			timestampz: new Date().toISOString()
+		};
 	}
 
-	async function decline(token: string) {}
+	async function decline({ token }: { token: string }) {
+		const key = getQRTokenKey(token);
+		await redis.del(key);
 
-	return { generate, deleteToken, confirm, getData, decline, getConfirmRedirectUrl, getQRTokenIsExists, updateStatus };
+		notify("declined", token);
+	}
+
+	async function afterCreateSession({ qrToken }: { qrToken: string }) {
+		const key = getQRTokenKey(qrToken);
+
+		const status = await redis.hget(key, "status");
+		if (status !== "verified") return;
+
+		const updatePd: Partial<LoginQRKeyPayload> = {
+			status: "confirmed"
+		}
+
+		await redis
+			.pipeline()
+			.hset(key, updatePd)
+			.expire(key, QR_CONFIRM_TIMEOUT_S)
+			.exec()
+	}
+
+	return {
+		generate,
+		deleteToken,
+		confirm,
+		getData,
+		decline,
+		checkQRTokenExistence,
+		afterCreateSession,
+		createAuthQRSubject,
+		getAuthQRSubject
+	};
 }

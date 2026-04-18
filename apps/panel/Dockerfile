@@ -18,9 +18,6 @@ RUN chmod +x /entrypoint.sh
 
 RUN bun install
 
-COPY apps/panel ./apps/panel
-COPY packages ./packages
-
 WORKDIR /apps/panel
 RUN bun run build
 
@@ -30,6 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   && update-ca-certificates \
   && rm -rf /var/lib/apt/lists/*
+
+ARG STAGE
+ENV STAGE=$STAGE
 
 WORKDIR /
 
@@ -41,4 +41,3 @@ ENV NODE_ENV=production
 USER bun
 
 CMD ["/bin/sh", "/entrypoint.sh"]
-EXPOSE 4105

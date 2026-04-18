@@ -1,0 +1,156 @@
+import { withHistory } from "@/shared/lib/reatom-helpers";
+import { action, atom, batch, Ctx } from "@reatom/core";
+import { reatomRecord, sleep, withAssign, withReset } from "@reatom/framework";
+import { withSearchParamsPersist } from "@reatom/url";
+import { pof } from "./pof.model";
+
+export type AuthType = "register" | "login";
+export type AuthErrorType = "nickname" | "password" | "findout";
+export type AuthFindoutType = "referrer" | "custom";
+
+export const authState = atom(null, "authState").pipe(
+	withAssign((_, name) => ({
+		type: atom<AuthType>("login", `${name}.type`).pipe(
+			withHistory(),
+			withSearchParamsPersist("type", (type = "login") => type),
+		),
+		searchParams: reatomRecord<Record<string, string>>({}, `${name}.searchParams`),
+		fields: atom(null, `${name}.fields`).pipe(
+			withAssign((_, name) => ({
+				nickname: atom<string>("", `${name}.nickname`).pipe(withReset()),
+				password: atom<string>("", `${name}.password`).pipe(withReset()),
+				// Must be refererr nickname or other findout info
+				findout: atom<Maybe<string>>(undefined, `${name}.findout`).pipe(withReset()),
+				findoutType: atom<AuthFindoutType | null>(null, `${name}.findoutType`).pipe(withReset()),
+				acceptRules: atom(false, `${name}.acceptRules`).pipe(withReset())
+			}))
+		),
+		settings: atom(null, `${name}.settings`).pipe(
+			withAssign((_, name) => ({
+				showPassword: atom(false, `${name}.showPassword`).pipe(withReset())
+			}))
+		),
+		globalError: atom<Nullable<string>>(null, `${name}.globalError`).pipe(withReset()),
+		errorsType: atom<AuthErrorType[]>([], `${name}.errorsType`).pipe(withReset()),
+		isProcessing: atom(false, `${name}.isProcessing`).pipe(withReset())
+	}))
+)
+
+export const FINDOUT_OPTIONS: { title: string; value: AuthFindoutType }[] = [
+	{ title: "От другого игрока", value: "referrer" },
+	{ title: "Другое", value: "custom" },
+];
+
+export const findoutSelectedTypeAtom = atom((ctx) =>
+	FINDOUT_OPTIONS.find((d) => d.value === ctx.spy(authState.fields.findoutType)) ?? null,
+	"findoutSelected",
+);
+
+authState.searchParams.onChange((ctx, state) => {
+	const isReferrer = "referrer" in state;
+
+	if (isReferrer) {
+		authState.fields.findout(ctx, state.referrer);
+		authState.fields.findoutType(ctx, "referrer");
+	}
+});
+
+authState.type.onChange((ctx) => auth.resetErrors(ctx));
+
+pof.token.onChange((ctx, state) => state !== null && pof.showTokenVerifySectionAtom.reset(ctx))
+
+export const isPofActiveAtom = atom((ctx) =>
+	ctx.spy(pof.isActive) ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
+	"isPofActive"
+);
+
+export const authIsDisabledAtom = atom((ctx) =>
+	ctx.spy(isPofActiveAtom) ||
+	ctx.spy(authState.isProcessing),
+	"authIsDisabled"
+);
+
+export const auth = atom(null, "auth").pipe(
+	withAssign((_, name) => ({
+		resetErrors: action((ctx) => {
+			batch(ctx, () => {
+				authState.globalError.reset(ctx);
+				authState.errorsType.reset(ctx);
+			})
+		}),
+		resetError: action((ctx) => {
+			const errors = ctx.get(authState.errorsType);
+
+			for (const target of errors) {
+				authState.errorsType(ctx, (state) => state.filter((error) => error !== target));
+			}
+		}, `${name}.resetError`),
+		solve: action(async (ctx, value: string) => {
+			await ctx.schedule(() => sleep(1200));
+			pof.token(ctx, value);
+		}, `${name}.solve`),
+		resetAuthState: action((ctx) => {
+			batch(ctx, () => {
+				authState.fields.nickname.reset(ctx);
+				authState.fields.password.reset(ctx);
+				authState.fields.findout.reset(ctx);
+				authState.fields.findoutType.reset(ctx);
+				authState.fields.acceptRules.reset(ctx);
+				authState.globalError.reset(ctx);
+				authState.errorsType.reset(ctx);
+				authState.isProcessing.reset(ctx)
+				authState.settings.showPassword.reset(ctx)
+			})
+
+			pof.resetState(ctx)
+		})
+	})),
+);
+
+export const authTriggerIsDisabledAtom = atom((ctx) =>
+	ctx.spy(pof.isActive) ? Boolean(ctx.spy(pof.token)) : false,
+	"authTriggerIsDisabled"
+);
+
+const ERRORS_RECORDS = {
+	auth: {
+		exists: "Такой игрок уже зарегистрирован",
+		"not-exists": "Такой игрок не зарегистрирован",
+		invalid: "Неверный никнейм или пароль",
+	},
+	system: {
+		"authorization-disabled": "Авторизация недоступна",
+		"ip-limit": "Превышен лимит регистраций",
+	},
+	captcha: {
+		"token-not-found": "Нужна проверка",
+		unsafe: "Пароль ненадежный",
+	},
+} as const;
+
+type ScopeName = keyof typeof ERRORS_RECORDS;
+
+export type ErrorKey = {
+	[S in ScopeName]: keyof (typeof ERRORS_RECORDS)[S];
+}[ScopeName] & string;
+
+export function getError(key: ErrorKey): { scope: ScopeName; message: string } | null {
+	for (const [name, errors] of Object.entries(ERRORS_RECORDS)) {
+		if (key in errors) {
+			return { scope: name as ScopeName, message: (errors as Record<string, string>)[key] };
+		}
+	}
+	return null;
+}
+
+export const SCOPE_ACTIONS: Record<ScopeName, (ctx: Ctx) => void> = {
+	auth: (ctx) => {
+		authState.errorsType(ctx, (state) => [...state, "password"]);
+		authState.errorsType(ctx, (state) => [...state, "nickname"]);
+	},
+	captcha: (ctx) => {
+		pof.showTokenVerifySectionAtom(ctx, true);
+		pof.token.reset(ctx);
+	},
+	system: () => { },
+};

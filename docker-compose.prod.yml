@@ -1,0 +1,82 @@
+name: fasberry-prod
+
+include:
+  - path: ./docker-compose.prod.shared.yml
+
+x-logging: &loki-logging
+  driver: fluentd
+  options:
+    fluentd-address: "localhost:24224"
+    tag: "docker.{{.Name}}"
+    mode: non-blocking
+    max-buffer-size: 4m
+
+services:
+  backend:
+    container_name: backend
+    image: ${REGISTRY_HOST}/prod/api-main:latest
+    network_mode: "host"
+    environment:
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    volumes:
+      - ../data/db/backend:/data
+    depends_on:
+      bisquite-db:
+        condition: service_healthy
+      shared-db:
+        condition: service_healthy
+      general-db:
+        condition: service_healthy
+      luckperms-db:
+        condition: service_healthy
+      nats:
+        condition: service_started
+      dragonfly:
+        condition: service_started
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    logging: *loki-logging
+
+  panel:
+    container_name: panel
+    image: ${REGISTRY_HOST}/prod/api-panel:latest
+    ports:
+      - "4105:4105"
+    environment:
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    depends_on:
+      general-db:
+        condition: service_healthy
+      dragonfly:
+        condition: service_started
+    networks:
+      - fasberry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    logging: *loki-logging
+
+  app:
+    container_name: app
+    image: ${REGISTRY_HOST}/prod/frontend-main:latest
+    ports:
+      - "3003:3003"
+    environment:
+      - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
+      - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
+      - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}
+      - INFISICAL_API_URL=${INFISICAL_API_URL}
+    networks:
+      - fasberry
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    logging: *loki-logging
+
+networks:
+  fasberry:
+    name: fasberry

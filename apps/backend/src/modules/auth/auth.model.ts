@@ -227,9 +227,10 @@ export async function registerUser({
 	ip,
 	nickname,
 	password,
+	mnHex
 }: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
 	const dbInstance: Kysely<DB> = trx ?? general;
-
+	
 	const uuid = await getUserUUID(nickname);
 	const regDateMs = Date.now();
 	const lowerCaseNickname = nickname.toLowerCase();
@@ -333,9 +334,10 @@ export async function createUser({
 	password,
 	ip,
 	findoutType,
+	mnHex
 }: Omit<CreateUser, "uuid">): Promise<{ nickname: string }> {
 	const result = await general.transaction().execute(async (trx) => {
-		const registeredUser = await registerUser({ trx, nickname, password, ip });
+		const registeredUser = await registerUser({ trx, mnHex, nickname, password, ip });
 
 		if (findoutType === "referrer") {
 			const referrer = findout;

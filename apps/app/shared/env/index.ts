@@ -6,6 +6,7 @@ export const PORT = import.meta.env.VITE_APP_PORT;
 
 export const API_PREFIX_URL = import.meta.env.VITE_API_URL;
 export const PANEL_API_PREFIX_URL = import.meta.env.VITE_PANEL_API_PREFIX_URL;
+export const API_HOST = import.meta.env.VITE_API_HOST;
 
 export const LANDING_URL = import.meta.env.VITE_LANDING_URL!;
 export const MAIN_DOMAIN = import.meta.env.VITE_MAIN_DOMAIN;

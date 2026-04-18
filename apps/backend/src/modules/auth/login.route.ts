@@ -2,55 +2,53 @@ import Elysia, { t } from "elysia";
 import bcrypt from "bcryptjs";
 import { wrapError } from "#/helpers/wrap-error";
 import { getExistsUser } from "./auth.model";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
 import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
-import { createSession, loginQR as loginQRService, qrLogger } from "./login.model";
+import { createSession, loginQR as loginQRService } from "./login.model";
 import { ipPlugin } from "#/lib/plugins/ip";
 import { defineUser } from "#/lib/middlewares/define";
 import Bowser from "bowser";
+import { getNats } from "#/shared/nats/client";
+import { logger } from "#/utils/config/logger";
+import type { Subscription } from "@nats-io/nats-core";
+import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/schemas/auth/login"
 
 const loginSchema = authSchema;
 
-const passwordRoute = new Elysia()
+const withPassword = new Elysia()
 	.use(botValidator())
 	.use(validateAuthStatus())
 	.model({
 		login: withData(t.Object({ nickname: t.String() })),
 	})
-	.resolve(({ headers }) => ({ userAgent: headers["user-agent"] }))
-	.post(
-		"/",
-		async ({ cookie, status, body: { nickname, password }, ip, userAgent: userAgentStr }) => {
-			const { hash, result: isExist } = await getExistsUser(nickname);
+	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
+	.post("/basic", async ({ cookie, status, body: { nickname, password }, ip, ua }) => {
+		const { hash, result: isExist } = await getExistsUser(nickname);
 
-			if (!isExist) throw status(HttpStatusEnum.HTTP_404_NOT_FOUND, wrapError("not-exists"));
+		if (!isExist) throw status(400, wrapError("not-exists"));
 
-			const passIsValid = bcrypt.compareSync(password, hash);
-			if (!passIsValid) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("invalid"));
+		const passIsValid = bcrypt.compareSync(password, hash);
+		if (!passIsValid) throw status(400, wrapError("invalid"));
 
-			const { expires_at: expires, token } = await createSession({
-				nickname,
-				userAgentStr,
-				ip,
-			});
+		const { expires_at: expires, token } = await createSession({
+			nickname,
+			userAgentStr: ua,
+			ip,
+		});
 
-			setCookie({ cookie, key: SESSION_KEY, expires, value: token });
+		setCookie({ cookie, key: SESSION_KEY, expires, value: token });
 
-			const data = { nickname };
-			return { data };
+		return { data: { nickname } };
+	}, {
+		body: loginSchema,
+		response: {
+			200: "login",
+			400: withError,
+			404: withError,
 		},
-		{
-			body: loginSchema,
-			response: {
-				200: "login",
-				400: withError,
-				404: withError,
-			},
-		},
-	);
+	});
 
 const tokenSchema = t.Object({
 	token: t.String(),
@@ -60,152 +58,200 @@ const visitorSchema = t.Object({
 	visitorId: t.String(),
 });
 
-export const loginQR = new Elysia()
+const timers = new Map<string, ReturnType<typeof setInterval>>();
+const subs = new Map<string, Subscription>()
+
+const ERROR_CODES = {
+	TOKEN_EXPIRED: 1,
+	USER_NOT_FOUND: 2
+};
+
+const TOKEN_MSG_RECORDS = {
+	[ERROR_CODES.TOKEN_EXPIRED]: "Token is expired or not found",
+};
+
+export const withQR = new Elysia()
 	.use(ipPlugin())
-	.resolve(({ headers }) => ({ userAgent: headers["user-agent"] }))
-	.post(
-		"/generate",
-		async ({ ip, userAgent: ua, status, body: { visitorId } }) => {
-			qrLogger.log({ ua, visitorId });
+	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
+	.post("/generate", async ({ ip, ua, status, body: { visitorId } }) => {
+		if (!ua || !ip) throw status(403);
 
-			if (!ua || !ip) throw status(HttpStatusEnum.HTTP_403_FORBIDDEN);
+		const result = await loginQRService().generate({
+			ip, visitorId, ua
+		});
 
-			const result = await loginQRService().generate({ ip, visitorId, ua });
-			return { data: result };
-		},
-		{
-			parse: "json",
-			body: visitorSchema,
-		},
-	)
-	.group("", (app) =>
-		app
-			.use(defineUser())
-			.post(
-				"/confirm",
-				async ({ nickname, query: { token }, session, status }) => {
-					const isExists = await loginQRService().getQRTokenIsExists(token);
-					if (!isExists) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("Token is expired or not found"));
+		return { data: result };
+	}, {
+		parse: "json",
+		body: visitorSchema,
+	})
+	.ws("/events", {
+		query: tokenSchema,
+		async open({ id: wsId, data: { query: { token } }, ...ws }) {
+			const isExists = await loginQRService().checkQRTokenExistence(token);
+			if (!isExists) {
+				return ws.close(1008, TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]);
+			}
 
-					const result = await loginQRService().confirm(token);
+			const intervalId = setInterval(() => ws.ping(), 30000);
+			timers.set(wsId, intervalId);
 
-					return { data: null };
-				},
-				{
-					query: t.Object({
-						token: t.String(),
-					}),
-				},
-			)
-			.post(
-				"/decline",
-				async ({ nickname, query: { token }, session, status }) => {
-					const isExists = await loginQRService().getQRTokenIsExists(token);
-					if (!isExists) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("Token is expired or not found"));
+			const nc = getNats()
+			const subject = loginQRService().getAuthQRSubject(token)
 
-					return { data: null };
-				},
-				{
-					query: tokenSchema,
-				},
-			)
-			.get(
-				"/callback",
-				async ({ nickname, query: { e, token }, status, redirect }) => {
-					qrLogger.log(`QR login with event '${e}' for '${nickname}'`);
-
-					if (e === "verify") {
-						const isExists = await loginQRService().getQRTokenIsExists(token);
-						if (!isExists)
-							throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("Token is expired or not found"));
-
-						const redirectUrl = loginQRService().getConfirmRedirectUrl(token);
-						qrLogger.log(`Redirect to ${redirectUrl} for '${nickname}`);
-						return redirect(redirectUrl);
+			const sub = nc.subscribe(subject, {
+				callback: (err, msg) => {
+					if (err) {
+						logger.error("NATS callback error:", err);
+						return;
 					}
-				},
-				{
-					query: t.Intersect([tokenSchema, t.Object({ e: t.UnionEnum(["verify"]) })]),
-				},
-			)
-			.ws("/events", {
-				message(ws, message) {
-					ws.send(message);
-				},
-			}),
-	)
-	.get(
-		"/create",
-		async ({ cookie, query: { token } }) => {
-			const { vId, ua, ip, nickname } = await loginQRService().getData(token);
-			const { expires_at: expires } = await createSession({ userAgentStr: ua, ip, nickname });
 
-			setCookie({ cookie, key: SESSION_KEY, expires, value: token });
-			return { data: { nickname } };
+					const event = msg.subject.split(".")[2] as QREventsEvent
+					if (!event) return;
+
+					const pd: QREventsPayload = {
+						event
+					}
+
+					ws.send(JSON.stringify(pd))
+
+					if (event !== 'connected') {
+						ws.close(1000)
+					}
+				}
+			})
+
+			subs.set(wsId, sub)
+
+			const pd: QREventsPayload = {
+				event: "connected"
+			}
+
+			ws.send(JSON.stringify(pd))
 		},
-		{
+		async close({ id: wsId, data: { query: { token } }, ...ws }, code, reason) {
+			clearInterval(timers.get(wsId));
+			timers.delete(wsId);
+
+			const sub = subs.get(wsId)
+
+			if (sub) {
+				sub.unsubscribe()
+				subs.delete(wsId)
+			}
+
+			loginQRService().deleteToken(token)
+
+			console.log(`Client closed. Code: ${code}; Reason: ${reason}`)
+		}
+	})
+	.group("", (app) => app
+		.use(defineUser())
+		.post("/confirm", async ({ nickname, query: { token }, status }) => {
+			const isExists = await loginQRService().checkQRTokenExistence(token);
+			if (!isExists) {
+				throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+			}
+
+			await loginQRService().confirm({ token, nickname });
+
+			return { data: "ok" };
+		}, {
 			query: tokenSchema,
-		},
-	)
-	.get(
-		"/validate",
-		async ({ query: { token } }) => {
-			const isExists = await loginQRService().getQRTokenIsExists(token);
-			if (!isExists) return { data: false };
+		})
+		.post("/decline", async ({ query: { token }, status }) => {
+			const isExists = await loginQRService().checkQRTokenExistence(token);
+			if (!isExists) {
+				throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+			}
 
-			type ValidateTokenPayload = {
-				browser: string;
-				geo: {
-					city: string;
-					country: string;
-				};
-				timestampz: string;
-			};
+			await loginQRService().decline({ token })
 
-			const pd = await loginQRService().getData(token);
-			const parsedUA = Bowser.parse(pd.ua);
-
-			const geo = {
-				city: "Unknown",
-				country: "Unknown",
-			};
-
-			const data: ValidateTokenPayload = {
-				browser: parsedUA.browser.name ?? "Unknown",
-				geo: {
-					city: geo.city,
-					country: geo.country,
-				},
-				timestampz: pd.timestampz,
-			};
-
-			return { data };
-		},
-		{
+			return { data: "ok" };
+		}, {
 			query: tokenSchema,
-		},
+		})
+		.get("/callback", async ({ query: { e, token }, status, redirect }) => {
+			if (e === "verify") {
+				const isExists = await loginQRService().checkQRTokenExistence(token);
+				if (!isExists) {
+					throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+				}
+
+				return { data: { token } }
+			}
+		}, {
+			query: t.Intersect([
+				tokenSchema,
+				t.Object({ e: t.UnionEnum(["verify"]) })
+			]),
+		})
+	)
+	.post("/create", async ({ cookie, query: { token: qrToken }, status }) => {
+		const { vId, ua, ip, verifiedBy } = await loginQRService().getData(qrToken)
+
+		if (!verifiedBy) {
+			throw status(400, wrapError("Login is not verified"))
+		}
+
+		const { expires_at: expires, token: sessionToken } = await createSession({
+			userAgentStr: ua, ip, nickname: verifiedBy
+		});
+
+		await loginQRService().afterCreateSession({ qrToken })
+
+		setCookie({ 
+			cookie, key: SESSION_KEY, expires, value: sessionToken 
+		});
+
+		return { data: { nickname: verifiedBy } };
+	}, {
+		query: tokenSchema,
+	})
+	.get("/validate", async ({ query: { token } }) => {
+		const isExists = await loginQRService().checkQRTokenExistence(token);
+		if (!isExists) return { data: false };
+
+		const pd = await loginQRService().getData(token);
+		const parsedUA = Bowser.parse(pd.ua);
+
+		const geo = {
+			city: "Unknown",
+			country: "Unknown",
+		};
+
+		const data: QRValidateTokenPayload = {
+			browser: parsedUA.browser.name ?? "Unknown",
+			geo: {
+				city: geo.city,
+				country: geo.country,
+			},
+			timestampz: pd.timestampz,
+		};
+
+		return { data };
+	}, {
+		query: tokenSchema,
+	});
+
+export const withGame = new Elysia()
+	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
+	.post("/generate", async ({ ua, status, body: { visitorId } }) => {
+		if (!ua) throw status(403);
+
+		return { data: null };
+	}, {
+		parse: "json",
+		body: visitorSchema,
+	});
+
+export const login = new Elysia()
+	.group("/login", (app) => app
+		.use(withPassword)
+		.group("/qr", (app) => app
+			.use(withQR)
+		)
+		.group("/game", (app) => app
+			.use(withGame)
+		),
 	);
-
-export const loginGame = new Elysia()
-	.resolve(({ headers }) => ({ userAgent: headers["user-agent"] }))
-	.post(
-		"/generate",
-		async ({ userAgent: ua, status, body: { visitorId } }) => {
-			console.log(ua, visitorId);
-
-			if (!ua) throw status(HttpStatusEnum.HTTP_403_FORBIDDEN);
-
-			return { data: null };
-		},
-		{
-			parse: "json",
-			body: visitorSchema,
-		},
-	);
-
-export const login = new Elysia().group("/login", (app) =>
-	app
-		.use(passwordRoute)
-		.group("/qr", (app) => app.use(loginQR))
-		.group("/game", (app) => app.use(loginGame)),
-);

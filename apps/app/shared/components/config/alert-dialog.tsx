@@ -17,8 +17,8 @@ export const AlertDialog = reatomComponent(({ ctx }) => {
           Подтверждение действия
         </DialogTitle>
         <div className="flex flex-col items-center min-w-0 justify-center gap-4 h-full w-full">
-          <div className="flex w-full flex-col gap-1 min-w-0">
-            <Typography className="text-wrap text-base sm:text-lg leading-5 truncate">
+          <div className="flex w-full flex-col min-w-0">
+            <Typography className="text-wrap text-sm sm:text-base lg:text-lg leading-5 truncate">
               {title}
             </Typography>
             <Typography className="text-sm sm:text-base leading-5 text-neutral-400">

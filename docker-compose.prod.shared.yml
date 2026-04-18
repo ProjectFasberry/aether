@@ -1,4 +1,10 @@
-name: fasberry
+x-logging: &loki-logging
+  driver: fluentd
+  options:
+    fluentd-address: "localhost:24224"
+    tag: "docker.{{.Name}}"
+    mode: non-blocking
+    max-buffer-size: 4m
 
 services:
   nats:
@@ -6,7 +12,7 @@ services:
     container_name: nats-1
     restart: unless-stopped
     ports:
-      - "4223:4222"
+      - ${NATS_EXTERNAL_PORT}:4222
       - "8223:8222"
     command:
       - "-js"
@@ -25,6 +31,7 @@ services:
       - ./data/nats/jetstream:/nats/jetstream
     networks:
       - fasberry
+    logging: *loki-logging
 
   dragonfly:
     image: 'docker.dragonflydb.io/dragonflydb/dragonfly'
@@ -35,19 +42,20 @@ services:
     ulimits:
       memlock: -1
     ports:
-      - "6379:6379"
+      - ${REDIS_EXTERNAL_PORT}:6379
     # For better performance, consider `host` mode instead `port` to avoid docker NAT.
     # `host` mode is NOT currently supported in Swarm Mode.
     # https://docs.docker.com/compose/compose-file/compose-file-v3/#network_mode
-    # network_mode: "host"
+    network_mode: "host"
     volumes:
       - ./data/dragonfly/data:/data
       - ./scripts/dragonfly/init.sh:/usr/local/bin/init.sh
     command: ["/usr/local/bin/init.sh"]
-      
+    logging: *loki-logging
+
   bisquite-db:
-    image: mariadb:11.8
     container_name: bisquite-db
+    image: mariadb:11.8
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -67,10 +75,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    logging: *loki-logging
 
   luckperms-db:
-    image: postgres:15.1
     container_name: luckperms-db
+    image: postgres:15.1
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${LUCKPERMS_POSTGRES_USER}
@@ -88,10 +97,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      
+    logging: *loki-logging
+
   general-db:
-    image: postgres:18
     container_name: general-db
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${GENERAL_POSTGRES_USER}
@@ -109,10 +119,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    logging: *loki-logging
 
   eco-db:
-    image: mysql:9.2
     container_name: eco-db
+    image: mysql:9.2
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -123,10 +134,11 @@ services:
       - ${ECO_MYSQL_PORT}:3306/tcp
     volumes:
       - ./data/db/minecraft/eco/data:/var/lib/mysql
+    logging: *loki-logging
 
   shared-db:
-    image: mariadb:11.8
     container_name: shared-db
+    image: mariadb:11.8
     restart: unless-stopped
     environment:
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -145,77 +157,4 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-      
-  # backend:
-  #   image: ${REGISTRY_HOST}/fasberry/fasberry-backend:latest
-  #   container_name: backend
-  #   build:
-  #     context: .
-  #     dockerfile: apps/backend/Dockerfile
-  #   ports:
-  #     - "4104:4104"
-  #   environment: 
-  #     ### config
-  #     - NODE_ENV=production
-  #     ### services
-  #     - REDIS_HOST=redis
-  #     - NATS_HOST=nats:4222
-  #     - MINIO_ENDPOINT=minio
-  #     ### databases
-  #     - SQLITE_DATABASE_URL=/app/data/sqlite/sqlite.db
-  #     # global
-  #     - SKINS_MYSQL_HOST=shared-db
-  #     - SKINS_MYSQL_PORT=3306
-  #     - REPUTATION_MYSQL_HOST=shared-db
-  #     - REPUTATION_MYSQL_PORT=3306
-  #     - PLAYERPOINTS_MYSQL_HOST=shared-db
-  #     - PLAYERPOINTS_MYSQL_PORT=3306
-  #     - LOBBY_MYSQL_HOST=shared-db
-  #     - LOBBY_MYSQL_PORT=3306
-  #     # bisquite
-  #     - BISQUITE_MYSQL_HOST=bisquite-db
-  #     - BISQUITE_MYSQL_PORT=3306
-  #     # global 2
-  #     - LUCKPERMS_POSTGRES_HOST=luckperms-db
-  #     - LUCKPERMS_POSTGRES_PORT=5432
-  #     - GENERAL_POSTGRES_HOST=general-db
-  #     - GENERAL_POSTGRES_PORT=5432
-  #   env_file:
-  #     - ./apps/backend/.env
-  #     - ./apps/backend/.env.production
-  #   volumes:
-  #     - ./data/db/sqlite:/app/data/sqlite
-  #   depends_on:
-  #     bisquite-db:
-  #       condition: service_healthy
-  #     shared-db:
-  #       condition: service_healthy
-  #     general-db:
-  #       condition: service_healthy
-  #     luckperms-db:
-  #       condition: service_healthy
-  #     nats:
-  #       condition: service_started
-  #     dragonfly:
-  #       condition: service_started
-  #     minio:
-  #       condition: service_started
-  #   networks:
-  #     - fasberry
-
-  # app:
-  #   container_name: app
-  #   build:
-  #     context: .
-  #     dockerfile: apps/app/Dockerfile
-  #   ports:
-  #     - "3003:3003"
-  #   env_file:
-  #     - ./apps/app/.env
-  #     - ./apps/app/.env.production
-  #   networks:
-  #     - fasberry
-
-networks:
-  fasberry:
-    name: fasberry
+    logging: *loki-logging
