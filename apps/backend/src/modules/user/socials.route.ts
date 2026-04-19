@@ -2,7 +2,6 @@ import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
 import { defineUser } from "#/lib/middlewares/define";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import z from "zod";
 import { getRedis } from "#/shared/redis/init";
 import { getRedisKey } from "#/helpers/redis";
@@ -69,7 +68,7 @@ const playerSocialsAdd = new Elysia().use(defineUser()).post(
 			.executeTakeFirst();
 
 		if (!socialIsExist || !socialIsExist.value) {
-			throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "not-exist-social");
+			throw status(400, "not-exist-social");
 		}
 
 		const query = await general
@@ -80,7 +79,7 @@ const playerSocialsAdd = new Elysia().use(defineUser()).post(
 			.executeTakeFirst();
 
 		if (query && query.social) {
-			throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "exist-target-social");
+			throw status(400, "exist-target-social");
 		}
 
 		const redis = getRedis();
@@ -89,7 +88,7 @@ const playerSocialsAdd = new Elysia().use(defineUser()).post(
 		const existsRequestStr = await redis.get(socialRedisKey);
 
 		if (existsRequestStr) {
-			throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "exist-request");
+			throw status(400, "exist-request");
 		}
 
 		const code = nanoid(4);
@@ -125,7 +124,7 @@ const playerSocialsDelete = new Elysia().use(defineUser()).delete(
 			.executeTakeFirstOrThrow();
 
 		if (!query.numDeletedRows) {
-			throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR);
+			throw status(500);
 		}
 
 		return { data: { social } };

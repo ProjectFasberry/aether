@@ -1,6 +1,5 @@
 import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { bannerSchema } from "../../shared/banner/banner.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/middlewares/validators";
@@ -21,7 +20,7 @@ export const bannerDelete = new Elysia()
   .delete("/:id", async ({ status, params }) => {
     const id = params.id;
     const data = await deleteBanner(id);
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   }, {
     params: bannerSchema,
     afterResponse: ({ nickname: initiator, permission }) => {

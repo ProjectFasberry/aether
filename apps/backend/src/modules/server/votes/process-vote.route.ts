@@ -1,6 +1,5 @@
 import Elysia from "elysia";
 import { sql } from "kysely";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { publishVoteNotify } from "#/lib/publishers/pub-vote-notify";
 import { general } from "#/shared/database/general-db";
@@ -50,12 +49,12 @@ export const processPlayerVote = new Elysia()
     const sign = parsedBody["sign"]
 
     if (!nick || !time || !sign) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return "error"
     }
 
     if (nick.length > 16) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return "nickname limit"
     }
 
@@ -64,7 +63,7 @@ export const processPlayerVote = new Elysia()
       .digest('hex');
 
     if (sign !== expSign) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST)
+      status(400)
       return "error"
     }
 

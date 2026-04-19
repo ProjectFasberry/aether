@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import z from "zod";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import type { CartPayload } from "@repo/shared/types/entities/store";
 import { addItemToBasket, editItemInCart, editItemToBasketSchema, getBasketData, removeItemFromCart, validateInitiatorExists } from "./cart.model";
@@ -26,7 +25,7 @@ const basketAddItem = new Elysia()
     const validateResult = await validateInitiatorExists(recipient)
 
     if (!validateResult) {
-      return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("Recipient not found"))
+      return status(400, wrapError("Recipient not found"))
     }
 
     const data = await addItemToBasket(id, { initiator, recipient });

@@ -8,7 +8,7 @@ export type QREventsEvent =
 export type QREventsPayload = {
 	event: QREventsEvent;
 };
-export type QRGeneratePayload = { payload: string; token: string };
+export type QRGeneratePayload = { token: string };
 
 export type QRValidateTokenPayload = {
 	browser: string;

@@ -1,6 +1,5 @@
 import { general } from "#/shared/database/general-db"
 import Elysia from "elysia"
-import { HttpStatusEnum } from "elysia-http-status-code/status"
 
 export const appDictionaries = new Elysia()
   .get("/dictionaries", async ({ status }) => {
@@ -14,5 +13,5 @@ export const appDictionaries = new Elysia()
       return acc;
     }, {});
 
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   })

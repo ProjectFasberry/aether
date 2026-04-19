@@ -4,8 +4,8 @@ export const safeJsonParse = safeJsonParseImported;
 
 export function wrapMeta(res: Partial<PaginatedMeta>): PaginatedMeta {
 	return {
-		hasNextPage: res.hasNextPage ?? false,
-		hasPrevPage: res.hasPrevPage ?? false,
+		hasNextPage: !!res.hasNextPage,
+		hasPrevPage: !!res.hasPrevPage,
 		endCursor: res.endCursor,
 		startCursor: res.startCursor,
 	};

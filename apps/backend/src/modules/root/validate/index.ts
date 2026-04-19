@@ -2,7 +2,6 @@ import { defineUser } from "#/lib/middlewares/define";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { getBan } from "../app/app-options.route";
 
 const validateNickname = new Elysia()
@@ -22,7 +21,7 @@ const validateNickname = new Elysia()
 
     const data = query?.nickname ?? null
 
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   })
 
 const banStatus = new Elysia()

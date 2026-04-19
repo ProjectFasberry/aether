@@ -2,7 +2,6 @@ import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import z from "zod";
 import { createAdminActivityLog } from "../private.model";
 
@@ -21,7 +20,7 @@ export const modpackDelete = new Elysia()
   .delete("/:id", async ({ nickname, status, params }) => {
     const id = params.id;
     const data = await deleteModpack(id)
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   }, {
     params: z.object({ id: z.coerce.number() }),
     afterResponse: ({ nickname: initiator, permission }) => {

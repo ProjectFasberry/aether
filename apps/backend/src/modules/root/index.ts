@@ -2,7 +2,6 @@ import Elysia from "elysia";
 import { initPlayerSkin, updatePlayersSkins } from "../server/skin/skin.model";
 import z from "zod";
 import bearer from "@elysiajs/bearer";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { general } from "#/shared/database/general-db";
 
 export const forceSkinInit = new Elysia().get(
@@ -31,15 +30,23 @@ export const force = new Elysia()
 	.use(bearer())
 	.derive(async ({ bearer, status }) => {
 		if (!bearer) {
-			throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			throw status(401);
 		}
 
-		const isExist = await general.selectFrom("api_keys").select("key").where("key", "=", bearer).executeTakeFirst();
+		const isExist = await general
+			.selectFrom("api_keys")
+			.select("key")
+			.where("key", "=", bearer)
+			.executeTakeFirst();
 
 		if (!isExist?.key) {
-			throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			throw status(401);
 		}
 
 		return { bearer: isExist.key };
 	})
-	.group("/force", (app) => app.group("/init", (app) => app.use(forceSkinInit)));
+	.group("/force", (app) => app
+		.group("/init", (app) => app
+			.use(forceSkinInit)
+		)
+	);

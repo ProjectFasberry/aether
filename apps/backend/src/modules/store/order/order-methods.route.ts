@@ -3,7 +3,6 @@ import { getStaticUrl } from "#/helpers/volume"
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas"
 import type { MethodsPayload } from "@repo/shared/types/entities/other"
-import { HttpStatusEnum } from "elysia-http-status-code/status"
 
 const methodPayload = t.Object({
   id: t.Number(),
@@ -36,7 +35,7 @@ export const paymentMethods = new Elysia()
   })
   .get("/methods", async ({ status }) => {
     const data: MethodsPayload = await getMethods()
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   }, {
     response: {
       200: "methods"

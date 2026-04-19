@@ -1,5 +1,4 @@
 import Elysia from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineUser } from "#/lib/middlewares/define";
 import { wrapError } from "#/helpers/wrap-error";
@@ -27,13 +26,13 @@ export const createOrder = new Elysia()
       balance.BELKOIN < finalPrice.BELKOIN
       || balance.CHARISM < finalPrice.CHARISM
     ) {
-      return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("insufficient"))
+      return status(400, wrapError("insufficient"))
     }
 
     const items = await getCartSelectedItems(initiator);
 
     if (items.length === 0) {
-      return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("items-not-found"))
+      return status(400, wrapError("items-not-found"))
     }
 
     const itemsMap = new Map(items.map(item => [item.id, item.recipient]));
@@ -65,7 +64,7 @@ export const createOrder = new Elysia()
       const result = await processStoreGamePurchase(initiator, finishPrice, products);
 
       if (result.error) {
-        return status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError(result.error))
+        return status(400, wrapError(result.error))
       }
 
       const { BELKOIN, CHARISM } = finishPrice;
@@ -90,7 +89,7 @@ export const createOrder = new Elysia()
     } catch (e) {
       if (e instanceof Error) {
         const message = ERRORS_MAP[e.message] ?? e.message
-        throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError(message))
+        throw status(500, wrapError(message))
       }
     }
   }, {

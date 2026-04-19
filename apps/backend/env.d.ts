@@ -56,6 +56,8 @@ declare global {
       MINESKIN_AES_SECRET_KEY: string
 
       MAP_URL: string;
+
+      BASE_URL: string;
     }
   }
 }

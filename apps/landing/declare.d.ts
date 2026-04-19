@@ -12,8 +12,8 @@ declare global {
   }
 
   type PaginatedMeta = {
-    hasNextPage: false,
-    hasPrevPage: false,
+    hasNextPage: boolean,
+    hasPrevPage: boolean,
     endCursor?: string,
     startCursor?: string
   }

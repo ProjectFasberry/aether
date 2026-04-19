@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { getPlayerAvatar } from "../server/skin/skin.model";
 import { defineOptionalUser } from "#/lib/middlewares/define";
 import type { Player } from "@repo/shared/types/entities/user";
@@ -38,7 +37,7 @@ export const player = new Elysia()
     ]);
 
     if (!main || !group || !avatar || !rate) {
-      return status(HttpStatusEnum.HTTP_404_NOT_FOUND, { data: null });
+      return status(404, { data: null });
     }
 
     const { meta, ...some } = main

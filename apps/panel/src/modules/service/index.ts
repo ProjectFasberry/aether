@@ -1,6 +1,5 @@
 import Elysia from "elysia";
 import { bearer } from "@elysiajs/bearer";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { general } from "../../shared/database";
 import { getGuardBot } from "../../shared/bot";
 import { getChats } from "../../shared/bot/chats";
@@ -33,11 +32,11 @@ export const service = new Elysia()
 	.use(defineUserRole())
 	.derive(async ({ bearer, status, role }) => {
 		if (!bearer) {
-			if (role.id !== 3) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			if (role.id !== 3) throw status(401);
 		} else {
 			const isExist = await general.selectFrom("api_keys").select("key").where("key", "=", bearer).executeTakeFirst();
 
-			if (!isExist?.key) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			if (!isExist?.key) throw status(401);
 
 			return { bearer: isExist.key };
 		}

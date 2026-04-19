@@ -6,8 +6,8 @@ declare global {
   type WrappedResponse<T> = { data: T } | { error: string }
 
   type PaginatedMeta = {
-    hasNextPage: false,
-    hasPrevPage: false,
+    hasNextPage: boolean,
+    hasPrevPage: boolean,
     endCursor?: string,
     startCursor?: string
   }

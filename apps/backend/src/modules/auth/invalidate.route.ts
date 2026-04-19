@@ -1,10 +1,9 @@
 import Elysia, { t } from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { SESSION_KEY, unsetCookie } from "#/utils/auth/cookie";
 import { defineUser } from "#/lib/middlewares/define";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "#/helpers/wrap-error";
-import { deleteSession } from "./login.model";
+import { session } from "./login.model";
 
 export const invalidate = new Elysia()
 	.use(defineUser())
@@ -12,14 +11,14 @@ export const invalidate = new Elysia()
 		invalidate: withData(t.Boolean()),
 	})
 	.derive(async ({ session, status }) => {
-		if (!session) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+		if (!session) throw status(401);
 		return { session };
 	})
-	.post("/invalidate-session", async ({ cookie, session, status }) => {
-		const result = await deleteSession(session);
+	.post("/invalidate-session", async ({ cookie, session: sessionToken, status }) => {
+		const result = await session.delete(sessionToken);
 
 		if (!result) {
-			throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError("Session is not deleted"));
+			throw status(500, wrapError("Session is not deleted"));
 		}
 
 		unsetCookie({ cookie, key: SESSION_KEY });

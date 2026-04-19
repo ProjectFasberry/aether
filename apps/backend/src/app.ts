@@ -8,7 +8,7 @@ import { ipPlugin } from "./lib/plugins/ip";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { loggerPlugin } from "./lib/plugins/logger";
 import { defineSession } from "./lib/middlewares/define";
-import { updateSession } from "./modules/auth/auth.model";
+import { session } from "./modules/auth/login.model";
 import { appLogger } from "./utils/config/logger";
 import { main, root } from "./routes";
 
@@ -66,7 +66,7 @@ export function startApp() {
 		})
 		.use(root)
 		.use(defineSession())
-		.onBeforeHandle(async ({ cookie, session }) => await updateSession(session, cookie))
+		.onBeforeHandle(async ({ cookie, session: sessionToken }) => await session.updateSession(sessionToken, cookie))
 		.use(main);
 
 	showRoutes(app);

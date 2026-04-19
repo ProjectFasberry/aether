@@ -1,6 +1,5 @@
 import Elysia, { type Context } from "elysia";
-import { getUserNickname } from "#/modules/auth/auth.model";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
+import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { isProduction } from "#/shared/env";
 import { SESSION_KEY } from "#/utils/auth/cookie";
@@ -41,7 +40,7 @@ export const defineOptionalUser = () => new Elysia()
     let nickname: string | null = null;
 
     if (session) {
-      nickname = await getUserNickname(session);
+      nickname = await auth.getUserNickname(session);
     }
 
     return { nickname }
@@ -59,13 +58,13 @@ export const defineUser = () => new Elysia()
     }
 
     if (!session) {
-      throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED)
+      throw status(401)
     }
 
-    const nickname: string | null = await getUserNickname(session);
+    const nickname: string | null = await auth.getUserNickname(session);
 
     if (!nickname) {
-      throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED)
+      throw status(401)
     }
 
     return { nickname }
@@ -105,7 +104,7 @@ export const defineUserRole = () => new Elysia()
       .executeTakeFirstOrThrow();
 
     if (!role) {
-      throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR)
+      throw status(500)
     }
 
     return { role }

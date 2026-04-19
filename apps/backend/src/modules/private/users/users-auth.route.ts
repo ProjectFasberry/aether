@@ -1,6 +1,6 @@
 import { validatePermission } from "#/lib/middlewares/validators";
 import { ipPlugin } from "#/lib/plugins/ip";
-import { registerUser, unregisterUser } from "#/modules/auth/auth.model";
+import { register } from "#/modules/auth/register.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { getNats } from "#/shared/nats/client";
 import { nicknameSchema, passwordSchema } from "@repo/shared/schemas/auth";
@@ -14,8 +14,8 @@ function publishAuth(event: string, { nickname, created_at }: { nickname: string
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())
-  .post("/register", async ({ ip, body: { nickname, password } }) => {
-    const query = await registerUser({ nickname, ip, password });
+  .post("/register", async ({ ip, body: { nickname, password, mnHex } }) => {
+    const query = await register.create({ nickname, ip, password, mnHex });
     return { data: query }
   }, {
     body: z.object({
@@ -30,7 +30,7 @@ const playersAuthReg = new Elysia()
 
 const playersAuthUnreg = new Elysia()
   .post("/unregister", async ({ body: { nickname, strict } }) => {
-    const query = await unregisterUser({ nickname, strict });
+    const query = await register.unregister({ nickname, strict });
     return { data: query }
   }, {
     body: z.object({

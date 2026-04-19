@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import dayjs from 'dayjs';
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { defineOptionalUser } from "#/lib/middlewares/define";
 import type { MePayload } from "@repo/shared/types/entities/user"
 import { validateBannedStatus } from "#/lib/middlewares/validators";
@@ -28,13 +27,13 @@ export const me = new Elysia()
   })
   .get("/me", async ({ nickname, status }) => {
     if (!nickname) {
-      return status(HttpStatusEnum.HTTP_404_NOT_FOUND, { data: null })
+      return status(404, { data: null })
     }
 
     const query = await getMe(nickname)
 
     if (!query) {
-      return status(HttpStatusEnum.HTTP_404_NOT_FOUND, { data: null })
+      return status(404, { data: null })
     }
 
     const { reg_date, login_date, role_id, role_name, ...base } = query;

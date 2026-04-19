@@ -23,7 +23,6 @@
 	"dependencies": {
 		"@elysiajs/bearer": "1.4.1",
 		"@elysiajs/cors": "1.4.0",
-		"elysia-http-status-code": "1.0.9",
 		"elysia-ip": "1.0.10",
 		"consola": "3.4.2",
 		"@repo/shared": "workspace:*",

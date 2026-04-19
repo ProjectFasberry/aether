@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { sql } from "kysely";
 import { withData } from "#/shared/schemas";
 
@@ -19,10 +18,10 @@ export const fact = new Elysia()
       .executeTakeFirst();
 
     if (!fact) {
-      return status(HttpStatusEnum.HTTP_200_OK, { data: null });
+      return { data: null }
     }
 
-    return status(HttpStatusEnum.HTTP_200_OK, { data: fact.fact });
+    return { data: fact.fact }
   }, {
     response: {
       200: withData(t.String())

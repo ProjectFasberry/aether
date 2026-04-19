@@ -1,7 +1,6 @@
 import Elysia from "elysia";
 import { wrapError } from "#/helpers/wrap-error";
 import type { InvoiceType } from "#/shared/types/payment/payment-types";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { createHmac, createHash } from 'node:crypto';
 import { getRedis } from "#/shared/redis/init";
 import { getOrderKey } from "./create-crypto-order";
@@ -40,14 +39,14 @@ export const checkOrderRoute = new Elysia()
     const signature = ctx.headers['crypto-pay-api-signature']
 
     if (!signature || !text) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return wrapError('Signature or body is required')
     }
 
     const isValid = validateSignatureCryptoPay(text, signature);
 
     if (!isValid) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return wrapError('Invalid signature')
     }
 
@@ -56,7 +55,7 @@ export const checkOrderRoute = new Elysia()
     const bodyResult = safeJsonParse<CheckOrderBody>(text)
 
     if (!bodyResult.ok) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return wrapError("Incorrect body")
     }
 
@@ -67,7 +66,7 @@ export const checkOrderRoute = new Elysia()
     const payloadResult = safeJsonParse<OrderSingleDefault>(payload.payload);
 
     if (!payloadResult.ok) {
-      status(HttpStatusEnum.HTTP_400_BAD_REQUEST);
+      status(400);
       return wrapError("Incorrect payload")
     }
 
@@ -94,7 +93,7 @@ export const checkOrderRoute = new Elysia()
       const cachedOrderResult = safeJsonParse<OrderSingleDefault>(cached);
       
       if (!cachedOrderResult.ok) {
-        status(HttpStatusEnum.HTTP_400_BAD_REQUEST)
+        status(400)
         return wrapError("Incorrect order data")
       }
 

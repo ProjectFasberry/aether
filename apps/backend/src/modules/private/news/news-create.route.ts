@@ -2,7 +2,6 @@ import { createNewsSchema } from '@repo/shared/schemas/news';
 import Elysia from "elysia"
 import type z from "zod"
 import { general } from "#/shared/database/general-db"
-import { HttpStatusEnum } from "elysia-http-status-code/status"
 import { getStaticUrl } from "#/helpers/volume"
 import { validatePermission } from '#/lib/middlewares/validators';
 import { Permissions } from '#/shared/constants/permissions';
@@ -28,7 +27,7 @@ export const newsCreateRoute = new Elysia()
   .use(validatePermission(Permissions.get("NEWS.CREATE")))
   .post("/create", async ({ status, body, nickname }) => {
     const data = await createNews(body, nickname);
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   }, {
     body: createNewsSchema,
     afterResponse: ({ nickname: initiator, permission }) => {

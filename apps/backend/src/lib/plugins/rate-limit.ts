@@ -1,5 +1,4 @@
 import Elysia from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { rateLimit, type Options } from "elysia-rate-limit";
 import type { Server } from "bun";
 import type { MaybePromise } from "elysia";
@@ -14,7 +13,7 @@ export class RateLimitError extends Error {
 	constructor(
 		public message: string = "rate-limited",
 		public detail: string = "",
-		public status: number = HttpStatusEnum.HTTP_429_TOO_MANY_REQUESTS,
+		public status: number = 429,
 	) {
 		super(message);
 	}

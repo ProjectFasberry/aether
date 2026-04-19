@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { defineUser } from "#/lib/middlewares/define";
 import { withData } from "#/shared/schemas";
 import { botValidator } from "#/lib/middlewares/validators";

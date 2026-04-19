@@ -1,8 +1,7 @@
 import Elysia from "elysia";
 import { defineOptionalUser, defineSession, defineUserRole, validateLogger } from "./define";
 import { general } from "#/shared/database/general-db";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
-import { getUserNickname } from "#/modules/auth/auth.model";
+import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
 import { isProduction } from "#/shared/env";
 import { ipPlugin } from "../plugins/ip";
@@ -26,7 +25,7 @@ export const validatePermission = (permission: string) => new Elysia()
     const targetIsExist = perms.includes(permission)
 
     if (!targetIsExist) {
-      throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "restricted_by_role")
+      throw status(400, "restricted_by_role")
     }
 
     return { role, permission }
@@ -41,10 +40,10 @@ export const validateAuthStatus = () => new Elysia()
         validateLogger.log("validateAuthStatus");
       }
 
-      const nickname = await getUserNickname(session);
+      const nickname = await auth.getUserNickname(session);
 
       if (nickname) {
-        throw status(HttpStatusEnum.HTTP_406_NOT_ACCEPTABLE, "authorized")
+        throw status(406, "authorized")
       }
     }
   })
@@ -80,7 +79,7 @@ export const validateBannedStatus = () => new Elysia()
         .executeTakeFirst()
 
       if (ban && ban.id) {
-        throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "banned")
+        throw status(400, "banned")
       }
     }
   })
@@ -142,18 +141,18 @@ export const botValidator = () => new Elysia()
     const isEnabled = Boolean(query?.value)
     if (!isEnabled) return;
 
-    if (token.length <= 1) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "Bad Request")
+    if (token.length <= 1) throw status(400, "Bad Request")
 
     try {
-      if (!token) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "Token is not provided")
+      if (!token) throw status(400, "Token is not provided")
 
       const result = await verifyRequest(token);
-      if (!result.ok) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, result.error)
+      if (!result.ok) throw status(400, result.error)
     } catch (e) {
       logErrorMsg(e);
 
       if (e instanceof Error) {
-        throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, e.message)
+        throw status(400, e.message)
       }
     }
   })

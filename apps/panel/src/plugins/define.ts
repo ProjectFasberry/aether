@@ -1,6 +1,5 @@
 import Elysia from "elysia";
 import { isProduction } from "../shared/env";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import type { Context } from "elysia";
 import { general } from "../shared/database";
 import { getRedis } from "../shared/redis";
@@ -93,7 +92,7 @@ export const validatePermission = (permission: string) =>
 			const perms = await getPermissions(nickname, role.id);
 
 			const targetIsExist = perms.includes(permission);
-			if (!targetIsExist) throw status(HttpStatusEnum.HTTP_400_BAD_REQUEST, "restricted_by_role");
+			if (!targetIsExist) throw status(400, "restricted_by_role");
 
 			return { role, permission };
 		})
@@ -110,10 +109,10 @@ export const defineUser = () =>
 				validateLogger.log("defineUser");
 			}
 
-			if (!session) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			if (!session) throw status(401);
 
 			const nickname: string | null = await getUserNickname(session);
-			if (!nickname) throw status(HttpStatusEnum.HTTP_401_UNAUTHORIZED);
+			if (!nickname) throw status(401);
 
 			return { nickname };
 		})
@@ -144,7 +143,7 @@ export const defineUserRole = () =>
 				.where("players.nickname", "=", nickname)
 				.executeTakeFirstOrThrow();
 
-			if (!role) throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR);
+			if (!role) throw status(500);
 			return { role };
 		})
 		.as("scoped");

@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import { defineUser } from "#/lib/middlewares/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData } from "#/shared/schemas";
@@ -41,7 +40,7 @@ const like = new Elysia()
   })
   .post("/:nickname", async ({ nickname: initiator, status, params: { nickname: recipient } }) => {
     if (initiator === recipient) {
-      return status(HttpStatusEnum.HTTP_400_BAD_REQUEST, wrapError("Dont like yourself"))
+      return status(400, wrapError("Dont like yourself"))
     }
 
     const data = await likePlayer({ initiator, recipient })

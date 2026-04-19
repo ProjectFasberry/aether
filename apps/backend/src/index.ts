@@ -38,12 +38,15 @@ async function startBridge() {
 
 	redisSub.on('pmessage', (pattern, channel, key) => {
 		if (!key) return;
-		console.log(pattern, channel, key)
+		
+		if (!isProduction) {
+			console.log(pattern, channel, key)
+		}
 
 		if (key.startsWith('auth:qr:')) {
 			const qrToken = key.split(':')[2]
 
-			const subject = loginQR().createAuthQRSubject("expired", qrToken)
+			const subject = loginQR.createAuthQRSubject("expired", qrToken)
 			nc.publish(subject, JSON.stringify({ data: qrToken }));
 		}
 	});

@@ -2,7 +2,6 @@ import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia from "elysia";
-import { HttpStatusEnum } from "elysia-http-status-code/status";
 import z from "zod";
 import { createAdminActivityLog } from "../private.model";
 
@@ -42,7 +41,7 @@ export const bannerCreate = new Elysia()
   .use(validatePermission(Permissions.get("BANNERS.CREATE")))
   .post("/create", async ({ status, body }) => {
     const data = await createBanner(body);
-    return status(HttpStatusEnum.HTTP_200_OK, { data })
+    return { data }
   }, {
     body: createBannerSchema,
     afterResponse: ({ nickname: initiator, permission }) => {

@@ -4,7 +4,6 @@ import Elysia, { t } from "elysia"
 import { getExchangeRates } from "../order/create-crypto-order"
 import { safeJsonParse } from "#/utils/config/transforms"
 import type { ExchangeRate } from "#/shared/types/payment/payment-types"
-import { HttpStatusEnum } from "elysia-http-status-code/status"
 import { wrapError } from "#/helpers/wrap-error"
 import { withData, withError } from "#/shared/schemas"
 
@@ -81,12 +80,12 @@ export const exchangeRates = new Elysia()
 
     const exchangeRatesStr = await getExchangeRates()
     if (!exchangeRatesStr) {
-      throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError("Exchanges not found"))
+      throw status(500, wrapError("Exchanges not found"))
     }
 
     const parsed = safeJsonParse<ExchangeRate[]>(exchangeRatesStr)
     if (!parsed.ok) {
-      throw status(HttpStatusEnum.HTTP_500_INTERNAL_SERVER_ERROR, wrapError("Parsed exchanges incorrect"))
+      throw status(500, wrapError("Parsed exchanges incorrect"))
     }
 
     const exchangeRates = parsed.value

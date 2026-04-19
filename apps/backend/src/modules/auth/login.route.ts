@@ -1,12 +1,12 @@
 import Elysia, { t } from "elysia";
 import bcrypt from "bcryptjs";
 import { wrapError } from "#/helpers/wrap-error";
-import { getExistsUser } from "./auth.model";
+import { auth } from "./auth.model";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
 import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
-import { createSession, loginQR as loginQRService } from "./login.model";
+import { session, loginQR as loginQRService, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS } from "./login.model";
 import { ipPlugin } from "#/lib/plugins/ip";
 import { defineUser } from "#/lib/middlewares/define";
 import Bowser from "bowser";
@@ -25,14 +25,14 @@ const withPassword = new Elysia()
 	})
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/basic", async ({ cookie, status, body: { nickname, password }, ip, ua }) => {
-		const { hash, result: isExist } = await getExistsUser(nickname);
+		const { hash, result: isExist } = await auth.getExistsUser(nickname);
 
 		if (!isExist) throw status(400, wrapError("not-exists"));
 
 		const passIsValid = bcrypt.compareSync(password, hash);
 		if (!passIsValid) throw status(400, wrapError("invalid"));
 
-		const { expires_at: expires, token } = await createSession({
+		const { expires_at: expires, token } = await session.create({
 			nickname,
 			userAgentStr: ua,
 			ip,
@@ -61,22 +61,13 @@ const visitorSchema = t.Object({
 const timers = new Map<string, ReturnType<typeof setInterval>>();
 const subs = new Map<string, Subscription>()
 
-const ERROR_CODES = {
-	TOKEN_EXPIRED: 1,
-	USER_NOT_FOUND: 2
-};
-
-const TOKEN_MSG_RECORDS = {
-	[ERROR_CODES.TOKEN_EXPIRED]: "Token is expired or not found",
-};
-
 export const withQR = new Elysia()
 	.use(ipPlugin())
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/generate", async ({ ip, ua, status, body: { visitorId } }) => {
 		if (!ua || !ip) throw status(403);
 
-		const result = await loginQRService().generate({
+		const result = await loginQRService.generate({
 			ip, visitorId, ua
 		});
 
@@ -88,16 +79,16 @@ export const withQR = new Elysia()
 	.ws("/events", {
 		query: tokenSchema,
 		async open({ id: wsId, data: { query: { token } }, ...ws }) {
-			const isExists = await loginQRService().checkQRTokenExistence(token);
+			const isExists = await loginQRService.checkQRTokenExistence(token);
 			if (!isExists) {
-				return ws.close(1008, TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]);
+				return ws.close(1008, TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]);
 			}
 
 			const intervalId = setInterval(() => ws.ping(), 30000);
 			timers.set(wsId, intervalId);
 
 			const nc = getNats()
-			const subject = loginQRService().getAuthQRSubject(token)
+			const subject = loginQRService.getAuthQRSubject(token)
 
 			const sub = nc.subscribe(subject, {
 				callback: (err, msg) => {
@@ -140,7 +131,7 @@ export const withQR = new Elysia()
 				subs.delete(wsId)
 			}
 
-			loginQRService().deleteToken(token)
+			loginQRService.deleteToken(token)
 
 			console.log(`Client closed. Code: ${code}; Reason: ${reason}`)
 		}
@@ -148,24 +139,24 @@ export const withQR = new Elysia()
 	.group("", (app) => app
 		.use(defineUser())
 		.post("/confirm", async ({ nickname, query: { token }, status }) => {
-			const isExists = await loginQRService().checkQRTokenExistence(token);
+			const isExists = await loginQRService.checkQRTokenExistence(token);
 			if (!isExists) {
-				throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+				throw status(400, wrapError(TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]));
 			}
 
-			await loginQRService().confirm({ token, nickname });
+			await loginQRService.confirm({ token, nickname });
 
 			return { data: "ok" };
 		}, {
 			query: tokenSchema,
 		})
 		.post("/decline", async ({ query: { token }, status }) => {
-			const isExists = await loginQRService().checkQRTokenExistence(token);
+			const isExists = await loginQRService.checkQRTokenExistence(token);
 			if (!isExists) {
-				throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+				throw status(400, wrapError(TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]));
 			}
 
-			await loginQRService().decline({ token })
+			await loginQRService.decline({ token })
 
 			return { data: "ok" };
 		}, {
@@ -173,9 +164,9 @@ export const withQR = new Elysia()
 		})
 		.get("/callback", async ({ query: { e, token }, status, redirect }) => {
 			if (e === "verify") {
-				const isExists = await loginQRService().checkQRTokenExistence(token);
+				const isExists = await loginQRService.checkQRTokenExistence(token);
 				if (!isExists) {
-					throw status(400, wrapError(TOKEN_MSG_RECORDS[ERROR_CODES.TOKEN_EXPIRED]));
+					throw status(400, wrapError(TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]));
 				}
 
 				return { data: { token } }
@@ -188,17 +179,17 @@ export const withQR = new Elysia()
 		})
 	)
 	.post("/create", async ({ cookie, query: { token: qrToken }, status }) => {
-		const { vId, ua, ip, verifiedBy } = await loginQRService().getData(qrToken)
+		const { vId, ua, ip, verifiedBy } = await loginQRService.getData(qrToken)
 
 		if (!verifiedBy) {
 			throw status(400, wrapError("Login is not verified"))
 		}
 
-		const { expires_at: expires, token: sessionToken } = await createSession({
+		const { expires_at: expires, token: sessionToken } = await session.create({
 			userAgentStr: ua, ip, nickname: verifiedBy
 		});
 
-		await loginQRService().afterCreateSession({ qrToken })
+		await loginQRService.afterCreateSession({ qrToken })
 
 		setCookie({ 
 			cookie, key: SESSION_KEY, expires, value: sessionToken 
@@ -209,10 +200,10 @@ export const withQR = new Elysia()
 		query: tokenSchema,
 	})
 	.get("/validate", async ({ query: { token } }) => {
-		const isExists = await loginQRService().checkQRTokenExistence(token);
+		const isExists = await loginQRService.checkQRTokenExistence(token);
 		if (!isExists) return { data: false };
 
-		const pd = await loginQRService().getData(token);
+		const pd = await loginQRService.getData(token);
 		const parsedUA = Bowser.parse(pd.ua);
 
 		const geo = {
