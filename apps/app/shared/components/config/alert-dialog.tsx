@@ -12,7 +12,7 @@ export const AlertDialog = reatomComponent(({ ctx }) => {
 
   return (
     <Dialog open={ctx.spy(alertDialogIsOpenAtom)} onOpenChange={v => alertDialogIsOpenAtom(ctx, v)}>
-      <DialogContent>
+      <DialogContent className="w-lg">
         <DialogTitle>
           Подтверждение действия
         </DialogTitle>

@@ -13,8 +13,9 @@ const buttonVariants = tv({
       minecraft: "rounded-none button"
     },
     background: {
-      default: "bg-neutral-600 hover:bg-neutral-700 text-neutral-50",
-      white: "bg-neutral-50 hover:bg-neutral-200 text-neutral-950"
+      default: "bg-neutral-700 hover:bg-neutral-600 text-neutral-50",
+      compound: "bg-neutral-800 text-neutral-50",
+      white: "bg-neutral-200 hover:bg-neutral-50 text-neutral-950"
     }
   }
 })

@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { metaSchema } from "#/shared/schemas";
-import z from "zod";
+import * as z from "zod/v4";
 
 export async function bannerExists(nickname: string | null) {
   if (!nickname) return false;

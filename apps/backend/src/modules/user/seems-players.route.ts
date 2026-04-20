@@ -15,15 +15,12 @@ const seemsPlayersPayload = t.Object({
 })
 
 export const seemsPlayers = new Elysia()
-  .model({
-    "seems-players": withData(seemsPlayersPayload)
-  })
   .get("/seems-like/:nickname", async ({ query, params: { nickname } }) => {
     const data: SeemsLikePlayersPayload = await getSeemsLikePlayersByPlayer(nickname, query)
     return { data }
   }, {
     query: seemsPlayersSchema,
     response: {
-      200: "seems-players"
+      200: withData(seemsPlayersPayload)
     }
   })

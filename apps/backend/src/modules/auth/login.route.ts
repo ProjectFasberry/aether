@@ -6,7 +6,7 @@ import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
 import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
-import { session, loginQR as loginQRService, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS } from "./login.model";
+import { session, loginQR as loginQRService, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger } from "./login.model";
 import { ipPlugin } from "#/lib/plugins/ip";
 import { defineUser } from "#/lib/middlewares/define";
 import Bowser from "bowser";
@@ -14,15 +14,13 @@ import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/schemas/auth/login"
+import { isProduction } from "#/shared/env";
 
 const loginSchema = authSchema;
 
 const withPassword = new Elysia()
 	.use(botValidator())
 	.use(validateAuthStatus())
-	.model({
-		login: withData(t.Object({ nickname: t.String() })),
-	})
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/basic", async ({ cookie, status, body: { nickname, password }, ip, ua }) => {
 		const { hash, result: isExist } = await auth.getExistsUser(nickname);
@@ -44,7 +42,11 @@ const withPassword = new Elysia()
 	}, {
 		body: loginSchema,
 		response: {
-			200: "login",
+			200: withData(
+				t.Object({ 
+					nickname: t.String() 
+				})
+			),
 			400: withError,
 			404: withError,
 		},
@@ -65,7 +67,9 @@ export const withQR = new Elysia()
 	.use(ipPlugin())
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/generate", async ({ ip, ua, status, body: { visitorId } }) => {
-		if (!ua || !ip) throw status(403);
+		if (!ua || !ip) {
+			throw status(403, wrapError("Forbidden: Missing UA or IP"));
+		}
 
 		const result = await loginQRService.generate({
 			ip, visitorId, ua
@@ -75,6 +79,14 @@ export const withQR = new Elysia()
 	}, {
 		parse: "json",
 		body: visitorSchema,
+		response: {
+			200: withData(
+				t.Object({
+					token: t.String()
+				})
+			),
+			403: withError
+		}
 	})
 	.ws("/events", {
 		query: tokenSchema,
@@ -120,7 +132,7 @@ export const withQR = new Elysia()
 
 			ws.send(JSON.stringify(pd))
 		},
-		async close({ id: wsId, data: { query: { token } }, ...ws }, code, reason) {
+		async close({ id: wsId, data: { query: { token } } }, code, reason) {
 			clearInterval(timers.get(wsId));
 			timers.delete(wsId);
 
@@ -131,9 +143,11 @@ export const withQR = new Elysia()
 				subs.delete(wsId)
 			}
 
-			loginQRService.deleteToken(token)
+			await loginQRService.deleteToken(token)
 
-			console.log(`Client closed. Code: ${code}; Reason: ${reason}`)
+			if (!isProduction) {
+				qrLogger.log(`Client closed. Code: ${code}; Reason: ${reason}`)
+			}
 		}
 	})
 	.group("", (app) => app
@@ -149,6 +163,12 @@ export const withQR = new Elysia()
 			return { data: "ok" };
 		}, {
 			query: tokenSchema,
+			response: {
+				200: withData(
+					t.Literal("ok")
+				),
+				400: withError
+			}
 		})
 		.post("/decline", async ({ query: { token }, status }) => {
 			const isExists = await loginQRService.checkQRTokenExistence(token);
@@ -161,21 +181,40 @@ export const withQR = new Elysia()
 			return { data: "ok" };
 		}, {
 			query: tokenSchema,
-		})
-		.get("/callback", async ({ query: { e, token }, status, redirect }) => {
-			if (e === "verify") {
-				const isExists = await loginQRService.checkQRTokenExistence(token);
-				if (!isExists) {
-					throw status(400, wrapError(TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]));
-				}
-
-				return { data: { token } }
+			response: {
+				200: withData(
+					t.Literal("ok")
+				),
+				400: withError
 			}
+		})
+		.get("/callback", async ({ query: { e, token }, status }) => {
+			const CALLBACK_EVENTS: Record<typeof e, () => Promise<{ token: string }>> = {
+				"verify": async () => {
+					const isExists = await loginQRService.checkQRTokenExistence(token);
+					if (!isExists) {
+						throw status(400, wrapError(TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]));
+					}
+
+					return { token }
+				}
+			}
+
+			const event = CALLBACK_EVENTS[e]
+			const data = await event?.()
+
+			return { data }
 		}, {
 			query: t.Intersect([
 				tokenSchema,
-				t.Object({ e: t.UnionEnum(["verify"]) })
+				t.Object({
+					e: t.UnionEnum(["verify"])
+				})
 			]),
+			response: {
+				200: withData(t.Literal("ok")),
+				400: withError
+			}
 		})
 	)
 	.post("/create", async ({ cookie, query: { token: qrToken }, status }) => {
@@ -191,13 +230,22 @@ export const withQR = new Elysia()
 
 		await loginQRService.afterCreateSession({ qrToken })
 
-		setCookie({ 
-			cookie, key: SESSION_KEY, expires, value: sessionToken 
+		setCookie({
+			cookie, key: SESSION_KEY, expires, value: sessionToken
 		});
 
-		return { data: { nickname: verifiedBy } };
+		const data = { nickname: verifiedBy }
+		return { data };
 	}, {
 		query: tokenSchema,
+		response: {
+			200: withData(
+				t.Object({
+					nickname: t.String()
+				})
+			),
+			400: withError
+		}
 	})
 	.get("/validate", async ({ query: { token } }) => {
 		const isExists = await loginQRService.checkQRTokenExistence(token);
@@ -223,6 +271,24 @@ export const withQR = new Elysia()
 		return { data };
 	}, {
 		query: tokenSchema,
+		response: {
+			200: withData(
+				t.Union([
+					t.Object({
+						browser: t.String(),
+						geo: t.Object({
+							city: t.String(),
+							country: t.String()
+						}),
+						timestampz: t.Union([
+							t.String(), t.Date()
+						])
+					}),
+					t.Boolean()
+				])
+			),
+			500: withError
+		}
 	});
 
 export const withGame = new Elysia()

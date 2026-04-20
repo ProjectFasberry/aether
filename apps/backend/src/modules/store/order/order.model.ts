@@ -4,7 +4,7 @@ import { GAME_CURRENCIES, type GameCurrency } from "@repo/shared/schemas/payment
 import { getOrderKey } from "./create-crypto-order";
 import { processDonatePayment } from "#/utils/payment/process-donate-payment";
 import { getRedis } from "#/shared/redis/init";
-import type z from "zod";
+import type * as z from "zod/v4";
 import { safeJsonParse } from "#/utils/config/transforms";
 import type { StoreCurrency } from "@repo/shared/types/db/general-database-types";
 import type {

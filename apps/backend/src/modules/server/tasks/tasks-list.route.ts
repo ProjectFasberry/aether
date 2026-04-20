@@ -5,7 +5,7 @@ import { wrapMeta } from "#/utils/config/transforms"
 import type { TasksPayload } from "@repo/shared/types/entities/other"
 import Elysia, { t } from "elysia"
 import { executeWithCursorPagination } from "kysely-paginate"
-import type z from "zod"
+import type * as z from "zod/v4"
 import { taskPayload } from "./tasks.model"
 
 const tasksListSchema = metaSchema.pick({ asc: true, endCursor: true })

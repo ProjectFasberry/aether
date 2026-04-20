@@ -8,7 +8,7 @@ import { wrapMeta } from "#/utils/config/transforms";
 import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types";
 import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import z from "zod";
+import * as z from "zod/v4";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation-database-types";
 
 export const ratingSchema = z.intersection(

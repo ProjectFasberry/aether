@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import type { z } from "zod"
+import type * as z from "zod/v4"
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";

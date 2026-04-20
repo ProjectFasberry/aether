@@ -211,24 +211,29 @@ export const session = {
 
 		return { token, expires_at };
 	},
-	async delete(token: string): Promise<boolean> {
+	async delete(token: string): Promise<void> {
 		const redis = getRedis();
 		const sessionKey = auth.getUserKey(token);
 
 		const nickname = await redis.get(sessionKey);
-		if (!nickname) return false;
+		if (!nickname) throw new Error("User is not defined")
 
 		const userSessionsKey = this.getUserSessionsKey(nickname);
 
-		const pp = redis
+		const results = await redis
 			.multi()
 			.del(sessionKey)
 			.zrem(userSessionsKey, token)
+			.exec()
 
-		const results = await pp.exec();
 		console.log("deleteSessionResults", results);
+		if (!results) {
+			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
+		}
 
-		return true;
+		for (const [err] of results) {
+			if (err) throw err;
+		}
 	}
 }
 
@@ -281,11 +286,20 @@ export const loginQR = {
 			status: "pending",
 		};
 
-		await redis
+		const results = await redis
 			.pipeline()
 			.hset(key, pd)
 			.expire(key, this.QR_VERIFY_TIMEOUT_S)
 			.exec();
+		
+		console.log("generateTokenQRResults", results);
+		if (!results) {
+			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
+		}
+
+		for (const [err] of results) {
+			if (err) throw err;
+		}
 
 		return { token };
 	},
@@ -305,8 +319,9 @@ export const loginQR = {
 		return redis.exists(key);
 	},
 	async confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
-		const key = this.getQRTokenKey(token);
 		const redis = getRedis();
+		
+		const key = this.getQRTokenKey(token);
 		const currStatus = await redis.hget(key, "status");
 
 		if (currStatus !== "pending") {

@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db"
-import z from "zod"
+import * as z from "zod/v4"
 import { getRcon } from "#/shared/rcon/init";
 import { invariant } from "#/helpers/invariant";
 

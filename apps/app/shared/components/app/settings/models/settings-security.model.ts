@@ -2,8 +2,9 @@ import { isEmptyArray } from "@/shared/lib/array";
 import { client } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom } from "@reatom/core";
-import { withAssign } from "@reatom/framework";
+import { withAssign, withReset } from "@reatom/framework";
 import { login } from "../../auth/models/login.model";
+import { listenBackOnce } from "@/shared/lib/events";
 
 export type SessionPayload = {
 	id: string;
@@ -41,28 +42,10 @@ export const accountActiveSessionsAction = reatomAsync(async (ctx) => {
 export const scanState = atom(null, "scanState").pipe(
 	withAssign((_, name) => ({
 		isStarted: atom(false, `${name}.isStarted`),
-		cleanup: atom<{ cb: (() => void) | null }>({ cb: null }, `${name}.cleanup`),
+		cleanup: atom<{ cb: (() => void) | null }>({ cb: null }, `${name}.cleanup`).pipe(withReset()),
 		confirmDialogIsOpen: atom(false, `${name}.confirmDialogIsOpen`)
 	}))
 )
-
-const listenBackOnce = (cb: () => void) => {
-	window.history.pushState({ active: true }, '');
-
-	const handler = () => {
-		cb();
-		window.removeEventListener('popstate', handler);
-	};
-
-	window.addEventListener('popstate', handler);
-
-	return () => {
-		window.removeEventListener('popstate', handler);
-		if (window.history.state?.active) {
-			window.history.back();
-		}
-	};
-};
 
 export const scan = atom(null, "scan").pipe(
 	withAssign((_, name) => ({
@@ -73,7 +56,6 @@ export const scan = atom(null, "scan").pipe(
 			existsCleanup?.()
 
 			const cleanup = listenBackOnce(() => scan.stop(ctx));
-
 			scanState.cleanup(ctx, { cb: cleanup });
 		}, `${name}.start`),
 		stop: action((ctx) => {
@@ -83,7 +65,7 @@ export const scan = atom(null, "scan").pipe(
 			if (!cleanup) return;
 
 			cleanup();
-			scanState.cleanup(ctx, { cb: null });
+			scanState.cleanup.reset(ctx)
 		}, `${name}.stop`),
 		verify: action((ctx, value: string) => {
 			scan.stop(ctx);

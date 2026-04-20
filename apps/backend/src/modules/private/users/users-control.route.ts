@@ -10,7 +10,7 @@ import {
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
-import z from "zod";
+import * as z from "zod/v4";
 import { getNats } from "#/shared/nats/client";
 
 function publish(event: string, data: { initiator: string, payload: string }) {

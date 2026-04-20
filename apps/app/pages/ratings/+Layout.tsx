@@ -2,8 +2,22 @@ import { Typography } from "@repo/ui/typography";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { PropsWithChildren } from "react";
 import { PageHeaderImage } from "@/shared/ui/header-image";
+import { BackButton } from "@/shared/ui/back-button";
+import { usePageContext } from "vike-react/usePageContext";
 
 const ratingsImage = getStaticImage("arts/sand-camel.jpg")
+
+const RatingsHeader = () => {
+  const pageCtx = usePageContext();
+  const isValid = pageCtx.urlPathname !== '/ratings'
+
+  return (
+    <div className="flex items-center gap-2">
+      {isValid && <BackButton href="/ratings" />}
+      <Typography className="font-semibold text-3xl">Рейтинги сервера</Typography>
+    </div>
+  )
+}
 
 export default function Layout({ children }: PropsWithChildren) {
   return (
@@ -13,7 +27,7 @@ export default function Layout({ children }: PropsWithChildren) {
         imgAlign="center"
       />
       <div className="flex flex-col gap-4 h-full w-full">
-        <Typography className="font-semibold text-3xl">Рейтинги сервера</Typography>
+        <RatingsHeader />
         {children}
       </div>
     </div>

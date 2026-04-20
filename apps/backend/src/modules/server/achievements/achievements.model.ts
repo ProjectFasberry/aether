@@ -1,6 +1,6 @@
 import { luckperms } from "#/shared/database/luckperms-db"
 import { VOLUME_URL } from "#/shared/env"
-import z from "zod"
+import * as z from "zod/v4"
 
 export async function getAchievementsMeta() {
   return {

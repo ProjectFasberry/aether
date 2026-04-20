@@ -1,5 +1,5 @@
 import Elysia, { sse } from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import { orderEventPayloadSchema } from "@repo/shared/schemas/payment";

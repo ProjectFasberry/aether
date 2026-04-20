@@ -8,7 +8,8 @@ type AlertDialogConfig = {
   confirmAction: Action
   confirmLabel: string
   cancelAction?: Action
-  autoClose?: boolean
+  autoClose?: boolean,
+  withDelay?: boolean
 }
 
 export const alertDialogIsOpenAtom = atom(false, "alertDialogIsOpen").pipe(withReset())
@@ -16,9 +17,13 @@ export const alertDialogConfigAtom = atom<AlertDialogConfig | null>(null, "alert
 
 export const alertDialog = atom(null).pipe(
   withAssign((ctx, name) => ({
-    open: action(async (ctx, config: AlertDialogConfig) => {
-      alertDialogConfigAtom(ctx, config);
-      await ctx.schedule(() => sleep(DIALOG_DELAY))
+    open: action(async (ctx, { withDelay = true, ...config }: AlertDialogConfig) => {
+      alertDialogConfigAtom(ctx, { withDelay, ...config });
+      
+      if (withDelay) {
+        await ctx.schedule(() => sleep(DIALOG_DELAY))
+      }
+
       alertDialogIsOpenAtom(ctx, true);
     }, `${name}.open`),
     confirm: action(async (ctx) => {

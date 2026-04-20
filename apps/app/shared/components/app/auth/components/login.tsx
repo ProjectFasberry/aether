@@ -6,7 +6,7 @@ import { Copy } from "@/shared/ui/copy"
 import { Button } from "@repo/ui/button"
 import { spawn } from "@reatom/framework"
 import { Separator } from "@repo/ui/separator"
-import { buttonVariant, NicknameInput, PasswordInput } from "./auth"
+import { NicknameInput, PasswordInput } from "./auth"
 import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { authState } from "../models/auth.model"
@@ -35,7 +35,7 @@ const LoginPasswordSubmit = reatomComponent(({ ctx }) => {
 
   return (
     <Button
-      className={buttonVariant()}
+      className="w-full bg-green-600 h-10 font-semibold"
       disabled={isDisabled}
       type="submit"
     >

@@ -4,7 +4,7 @@ import type { ExchangeRate } from "#/shared/types/payment/payment-types";
 import { logger } from "#/utils/config/logger";
 import type { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema";
 import { PaymentStatus } from "@repo/shared/types/db/payments-database-types";
-import type { z } from "zod";
+import type * as z from "zod/v4";
 import { FRONTEND_URL } from "#/shared/env";
 import { CreateOrderTopUpSchema } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";

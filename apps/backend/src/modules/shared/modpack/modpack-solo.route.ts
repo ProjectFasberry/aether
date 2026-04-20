@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { modpackPayload, processModpack } from "./modpack.model";

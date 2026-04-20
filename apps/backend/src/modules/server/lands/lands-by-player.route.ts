@@ -1,7 +1,7 @@
 import { withData } from "#/shared/schemas"
 import type { PlayerLands } from "@repo/shared/types/entities/land"
 import Elysia, { t } from "elysia"
-import z from "zod"
+import * as z from "zod/v4"
 import { getLandsByNickname } from "./lands.model"
 
 const landsByPlayerPayload = t.Object({

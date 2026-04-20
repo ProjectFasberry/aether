@@ -4,7 +4,7 @@ import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-t
 import { DB as playerpointsDB } from "@repo/shared/types/db/player-points-database-types"
 import type { CartFinalPrice } from "@repo/shared/types/entities/store"
 import type { Kysely } from "kysely"
-import z from "zod"
+import * as z from "zod/v4"
 
 const charismInstanceDb: Record<Server, Kysely<bisquiteDB> | null> = {
   bisquite: bisquite,

@@ -35,15 +35,16 @@ export const register = new Elysia()
     .use(registerValidator())
     .use(validateAuthStatus())
     .use(ipValidator())
-    .model({
-      "register": withData(t.Object({ nickname: t.String() }))
-    })
     .post("/", async ({ status, body: { findout, mnHex, nickname, password: inputPass, findoutType }, ip }) => {
       const existsUser = await auth.getExistsUser(nickname)
-      if (existsUser.result) throw status(400, wrapError("exists"))
+      if (existsUser.result) {
+        throw status(400, wrapError("exists"))
+      }
 
       const passIsSafe = auth.validatePasswordSafe(inputPass)
-      if (!passIsSafe) throw status(400, wrapError("unsafe"))
+      if (!passIsSafe) {
+        throw status(400, wrapError("unsafe"))
+      }
 
       const hash = Bun.password.hashSync(inputPass, {
         algorithm: "bcrypt", cost: 10
@@ -57,7 +58,11 @@ export const register = new Elysia()
     }, {
       body: registerSchema,
       response: {
-        200: "register",
+        200: withData(
+          t.Object({
+            nickname: t.String()
+          })
+        ),
         409: withError,
         400: withError,
       }

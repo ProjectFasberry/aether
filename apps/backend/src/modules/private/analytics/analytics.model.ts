@@ -1,6 +1,6 @@
 import { invariant } from "#/helpers/invariant";
 import dayjs from "dayjs";
-import z from "zod";
+import * as z from "zod/v4";
 
 export const registrationsSchema = z.object({
   period: z.enum(["day", "month", "hour"]).optional().default("month"),

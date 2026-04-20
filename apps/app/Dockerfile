@@ -24,6 +24,7 @@ RUN bun install
 WORKDIR /apps/app
 
 ARG STAGE
+ARG CACHEBUST=1
 
 ENV NODE_ENV=production
 

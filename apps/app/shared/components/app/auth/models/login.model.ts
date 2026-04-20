@@ -13,7 +13,7 @@ import type {
   QRValidateTokenPayload 
 } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
-import { API_HOST } from "@/shared/env";
+import { API_HOST, API_PREFIX_URL } from "@/shared/env";
 import { pof } from "./pof.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod/v4";
@@ -145,7 +145,10 @@ export const login = atom(null, "login").pipe(
             .post<QRGeneratePayload>("auth/login/qr/generate", { json: { visitorId } })
             .exec();
 
-          loginState.qr.url(ctx, res.payload);
+          const pdUrl = new URL(`${API_PREFIX_URL}/auth/login/qr/verify`)
+          pdUrl.searchParams.append("token", res.token)
+
+          loginState.qr.url(ctx, pdUrl.href);
           loginState.qr.token(ctx, res.token)
           
           login.qr.events(ctx, res.token)

@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { general } from "#/shared/database/general-db";
 import type { StoreItems } from "@repo/shared/types/db/general-database-types";
 import { validatePermission } from "#/lib/middlewares/validators";

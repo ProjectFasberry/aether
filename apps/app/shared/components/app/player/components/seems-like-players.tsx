@@ -5,13 +5,13 @@ import { reatomComponent } from "@reatom/npm-react";
 import { createLink, Link } from "@/shared/components/config/link";
 import { atom, onConnect } from "@reatom/framework";
 import { isClientAtom } from "@/shared/models/page-context.model";
-import { playerSeemsLikeAction, playerSeemsLikePlayersIsShowAtom, toggleShowAction } from "../models/player-seems-like.model";
+import { playerSLP, playerSLPState } from "../models/player-seems-like.model";
 import { IconX } from "@tabler/icons-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/ui/tooltip"
 import { scrollableVariant } from "@/shared/consts/style-variants";
 
-const playerSeemsLikePlayersCountAtom = atom(
-  (ctx) => ctx.spy(playerSeemsLikeAction.dataAtom)?.meta.count ?? 0, 
+const playerSeemsLikePlayersCountAtom = atom((ctx) => 
+  ctx.spy(playerSLP.fetch.dataAtom)?.meta.count ?? 0, 
   "playerLandsCount"
 )
 
@@ -22,7 +22,7 @@ const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
         <TooltipTrigger
           id="hide-section-seems-like"
           aria-label="Не показывать секцию"
-          onClick={() => toggleShowAction(ctx)}
+          onClick={() => playerSLPState.settings.isShow.toggle(ctx)}
           className="cursor-pointer"
         >
           <IconX size={22} className="text-neutral-400" />
@@ -37,7 +37,7 @@ const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
   )
 }, "PlayerSeemsLikeShowToggle")
 
-onConnect(playerSeemsLikeAction.dataAtom, playerSeemsLikeAction)
+onConnect(playerSLP.fetch.dataAtom, playerSLP.fetch)
 
 const PlayerSeemsLikePlayersCount = reatomComponent(({ ctx }) => {
   const data = ctx.spy(playerSeemsLikePlayersCountAtom)
@@ -52,7 +52,7 @@ const PlayerSeemsLikePlayersCount = reatomComponent(({ ctx }) => {
 }, "PlayerSeemsLikePlayersCount")
 
 export const PlayerSeemsLikePlayers = reatomComponent(({ ctx }) => {
-  const isShow = ctx.spy(playerSeemsLikePlayersIsShowAtom);
+  const isShow = ctx.spy(playerSLPState.settings.isShow);
   if (!isShow) return null;
 
   return (
@@ -99,9 +99,9 @@ const PlayerSeemsLikePlayersList = reatomComponent(({ ctx }) => {
     return <PlayerSeemsLikePlayersListSkeleton />
   }
 
-  const data = ctx.spy(playerSeemsLikeAction.dataAtom)?.data;
+  const data = ctx.spy(playerSLP.fetch.dataAtom)?.data;
 
-  if (ctx.spy(playerSeemsLikeAction.statusesAtom).isPending) {
+  if (ctx.spy(playerSLP.fetch.statusesAtom).isPending) {
     return <PlayerSeemsLikePlayersListSkeleton />
   }
 

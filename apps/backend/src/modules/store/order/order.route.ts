@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { getOrder } from "./order.model";
-import z from "zod";
+import * as z from "zod/v4";
 import type { OrderSinglePayload } from "@repo/shared/types/entities/store";
 
 export const orderRoute = new Elysia()

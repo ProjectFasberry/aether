@@ -9,20 +9,13 @@ import { pof } from "../models/pof.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 
 export const authInput = tv({
-  base: `h-12 w-full`,
+  base: `w-full`,
   variants: {
     variant: {
-      default: "border-neutral-800",
+      default: "",
       danger: "border-red-500"
     }
-  },
-  defaultVariants: {
-    variant: "default"
   }
-})
-
-export const buttonVariant = tv({
-  base: `w-full bg-green-600 font-semibold`
 })
 
 export const NicknameInput = reatomComponent(({ ctx }) => {
@@ -36,7 +29,6 @@ export const NicknameInput = reatomComponent(({ ctx }) => {
       autoCapitalize="off"
       spellCheck="false"
       className={authInput({ variant })}
-      variant="ghost"
       value={value}
       autoComplete="nickname"
       onClick={() => auth.resetError(ctx)}
@@ -53,7 +45,7 @@ const PasswordVisibility = reatomComponent(({ ctx }) => {
 
   return (
     <div
-      className="flex *:m-auto text-neutral-400 bg-neutral-800 rounded-lg absolute p-1 right-0 top-1/2 -translate-1/2"
+      className="flex *:m-auto text-neutral-400 absolute p-1 right-0 top-1/2 -translate-1/2"
       onClick={() => authState.settings.showPassword(ctx, (state) => !state)}
     >
       {show ? <IconEye size={18} /> : <IconEyeOff size={18} />}
@@ -70,7 +62,6 @@ export const PasswordInput = reatomComponent(({ ctx }) => {
     <div className="flex relative items-center justify-between w-full">
       <Input
         id="passw"
-        variant="ghost"
         className={authInput({ variant })}
         value={value}
         autoComplete="password"

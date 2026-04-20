@@ -12,7 +12,7 @@ import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } f
 import { logger } from "#/utils/config/logger";
 import { getGuardBot } from "#/shared/bot";
 import { getChats } from "#/shared/constants/chats";
-import z, { ZodError } from "zod";
+import * as z from "zod/v4";
 import {
   createCipheriv,
   createDecipheriv,
@@ -348,11 +348,10 @@ export async function setSkin(nickname: string, identifier: string) {
   })
 
   if (!result.numUpdatedRows) {
-    throw new Error("Not updated")
+    return false;
   }
 
   const up = await initPlayerSkin(nickname)
-
   return up
 }
 
@@ -492,7 +491,7 @@ async function fetchMineSkinJob(
   } catch (error) {
     logMineSkinParsingError("MineSkin job response", data, error);
 
-    if (error instanceof ZodError) {
+    if (error instanceof z.ZodError) {
       const details = error.issues
         .map((issue) => {
           const path = issue.path.join(".");

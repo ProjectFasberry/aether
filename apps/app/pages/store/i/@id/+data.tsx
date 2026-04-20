@@ -6,8 +6,9 @@ import { StoreItem } from "@repo/shared/types/entities/store";
 import { defineCartData } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
 import { getStoreItem } from "@/shared/components/app/shop/models/store-item.model";
-
-export type Data = Awaited<ReturnType<typeof data>>;
+import { createCtx } from "@reatom/core";
+import { selectedItemAtom } from "./+Page";
+import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 function metadata(
   item: StoreItem,
@@ -44,19 +45,21 @@ async function loadItem(id: string, headers?: Record<string, string>): Promise<S
   }
 }
 
-export async function data(pageContext: PageContextServer) {
-  logRouting(pageContext.urlPathname, "data")
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data")
 
   const config = useConfig()
-  const headers = pageContext.headers ?? undefined
-  const id = pageContext.routeParams.id;
+  const headers = pageCtx.headers ?? undefined
+  const id = pageCtx.routeParams.id;
 
   const item = await loadItem(id, headers)
   if (!item) throw render("/not-exist?type=store-item")
 
-  config(metadata(item, pageContext))
+  config(metadata(item, pageCtx))
 
-  await defineCartData(pageContext)
+  await defineCartData(pageCtx)
 
-  return { data: item }
+  const ctx = createCtx()
+  selectedItemAtom(ctx, item)
+  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
 }

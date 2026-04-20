@@ -9,28 +9,26 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@repo/ui/skeleton";
 import {
   getSocialStatusAtom,
-  profileSocialsAction,
-  socialAdd,
-  socialAddAction,
-  socialAddIsProcessingAtom,
-  socialRemoveWrapperAction,
-  socialsAvailableAction
+  profileSocials,
+  socialForAdd,
+  socialForAddState,
 } from "../models/settings-profile.socials.model";
 import { PlayerSocialsPayload, SOCIAL_ICONS } from "../../player/models/socials.model";
+import { SettingsContentWrapper } from "./ui";
 
 const profileSocialsListItemVariant = tv({
-  base: `flex items-center justify-between gap-2 border rounded-lg border-neutral-800 p-4 w-full`
+  base: `flex items-center justify-between gap-2 border rounded-lg border-neutral-700 p-4 w-full`
 })
 
 const ProfileSocialAdd = reatomComponent(({ ctx }) => {
   const [open, setOpen] = useState(false);
 
-  const isProcessing = ctx.spy(socialAddIsProcessingAtom);
-  const data = ctx.spy(socialsAvailableAction.dataAtom)
+  const isProcessing = ctx.spy(socialForAddState.isProcessing);
+  const data = ctx.spy(profileSocials.fetchAvailable.dataAtom)
 
   useEffect(() => {
     return () => {
-      socialAddIsProcessingAtom.reset(ctx)
+      socialForAddState.isProcessing.reset(ctx)
     }
   }, [])
 
@@ -51,8 +49,8 @@ const ProfileSocialAdd = reatomComponent(({ ctx }) => {
           </DialogTitle>
           <div className="flex">
             <Button
-              disabled={ctx.spy(socialAddAction.statusesAtom).isPending}
-              onClick={() => socialAddAction(ctx)}
+              disabled={ctx.spy(profileSocials.add.statusesAtom).isPending}
+              onClick={() => profileSocials.add(ctx)}
             >
               Начать
             </Button>
@@ -60,8 +58,10 @@ const ProfileSocialAdd = reatomComponent(({ ctx }) => {
         </DialogContent>
       </Dialog>
       <DropdownMenu>
-        <DropdownMenuTrigger className={profileSocialsListItemVariant({ className: "cursor-pointer hover:bg-neutral-800 justify-center" })}>
-          <IconPlus size={20} />
+        <DropdownMenuTrigger asChild className={profileSocialsListItemVariant()}>
+          <Button background="white">
+            <IconPlus size={20} />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           <div className="flex flex-col p-2 gap-4 w-full h-full">
@@ -72,7 +72,7 @@ const ProfileSocialAdd = reatomComponent(({ ctx }) => {
               {data.map(({ title, social }) => (
                 <DropdownMenuItem
                   key={social}
-                  onClick={() => socialAdd.selectSocial(ctx, social)}
+                  onClick={() => socialForAdd.selectSocial(ctx, social)}
                   className="flex items-center gap-2 w-full h-full"
                 >
                   {title}
@@ -99,7 +99,7 @@ const ProfileSocialsListItem = reatomComponent<PlayerSocialsPayload>(({ ctx, typ
       </div>
       <Button
         className="h-6 w-6 p-0 aspect-square"
-        onClick={() => socialRemoveWrapperAction(ctx, type)}
+        onClick={() => profileSocials.removeWrapper(ctx, type)}
       >
         {isLoading
           ? <IconCircleDotted className="animate-spin" size={18} />
@@ -120,41 +120,28 @@ const ProfileSocialsListSkeleton = () => {
 }
 
 const ProfileSocialsList = reatomComponent(({ ctx }) => {
-  useUpdate(profileSocialsAction, []);
+  useUpdate(profileSocials.fetch, []);
 
-  const data = ctx.spy(profileSocialsAction.dataAtom)
-
-  if (ctx.spy(profileSocialsAction.statusesAtom).isPending) {
+  if (ctx.spy(profileSocials.fetch.statusesAtom).isPending || ctx.spy(profileSocials.fetchAvailable.statusesAtom).isPending) {
     return <ProfileSocialsListSkeleton />
   }
 
-  if (!data) return null;
+  const data = ctx.spy(profileSocials.fetch.dataAtom)
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-auto gap-2">
-      {data.map((social) => <ProfileSocialsListItem key={social.type} {...social} />)}
+      {data?.map((social) => <ProfileSocialsListItem key={social.type} {...social} />)}
       <ProfileSocialAdd />
     </div>
   )
 }, "ProfileSocialsList")
 
-const ProfileSocials = () => {
-  useUpdate(socialsAvailableAction, []);
+export const SettingsMainConnections = () => {
+  useUpdate(profileSocials.fetchAvailable, []);
 
   return (
-    <div className="flex flex-col gap-2 w-full">
-      <Typography className="text-xl font-semibold">
-        Социальные сети
-      </Typography>
+    <SettingsContentWrapper title="Подключения">
       <ProfileSocialsList />
-    </div>
-  )
-}
-
-export const SettingsMainProfile = () => {
-  return (
-    <div className="flex flex-col gap-8 w-full h-full">
-      <ProfileSocials />
-    </div>
+    </SettingsContentWrapper>
   )
 }

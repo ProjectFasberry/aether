@@ -2,14 +2,26 @@ import { Button } from "@repo/ui/button"
 import { IconArrowLeft } from "@tabler/icons-react"
 import { navigate } from "vike/client/router"
 
-export const BackButton = ({ href }: { href?: string }) => {
+type BackButtonProps = {
+  event?: "history" | "custom",
+  href?: string, 
+  onClick?: () => void
+}
+
+export const BackButton = ({ href, onClick, event = "history" }: BackButtonProps) => {
   return (
     <Button
       background="default"
-      onClick={() => href ? navigate(href) : window.history.back()}
-      className="h-10 p-0 aspect-square rounded-xl w-fit"
+      onClick={() => {
+        if (event === 'history') {
+          return href ? navigate(href) : window.history.back()
+        }
+
+        return onClick?.()
+      }}
+      className="h-6 sm:h-10 p-0 aspect-square w-fit text-neutral-400"
     >
-      <IconArrowLeft size={22} className='text-neutral-400' />
+      <IconArrowLeft className="size-[16px] sm:size-[20px]" />
     </Button>
   )
 }

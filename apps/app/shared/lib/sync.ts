@@ -1,7 +1,7 @@
 import { Ctx } from "@reatom/core";
 import { PageContextServer } from "vike/types";
 import { parseCookie } from "./cookie";
-import { playerSeemsLikePlayersIsShowAtom, playerSeemsLikePlayersIsShowKey } from "../components/app/player/models/player-seems-like.model";
+import { playerSLPState, playerSeemsLikePlayersIsShowKey } from "../components/app/player/models/player-seems-like.model";
 import { parseBoolean } from "./validate-primitives";
 import { devLog } from "./log";
 
@@ -12,7 +12,7 @@ type Target<T = any> = Record<string, {
 
 const COOKIE_TARGETS: Target = {
   [playerSeemsLikePlayersIsShowKey]: {
-    atom: playerSeemsLikePlayersIsShowAtom,
+    atom: playerSLPState.settings.isShow,
     validator: (v) => typeof v === "string" ? parseBoolean(v) : v
   }
 };

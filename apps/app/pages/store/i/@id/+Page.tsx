@@ -1,50 +1,69 @@
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { reatomComponent, } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { Data } from "./+data";
 import { ItemPrice, ItemSelectToCart } from "@/shared/components/app/shop/components/items/store-list";
 import { atom } from "@reatom/core";
-import { useData } from "vike-react/useData"
 import { renderToHTMLString } from "@tiptap/static-renderer";
 import { editorExtensions } from "@/shared/components/config/editor";
 import type { JSONContent } from "@tiptap/react";
 import { StoreItem } from "@repo/shared/types/entities/store";
+import { withSsr } from "@/shared/lib/ssr";
+import { tv } from "tailwind-variants";
 
-const selectedItemAtom = atom<StoreItem | null>(null, "selectedItem")
+export const selectedItemAtom = atom<StoreItem | null>(null, "selectedItem").pipe(withSsr("selectedItem"))
+
+const sectionVariant = tv({
+  base: `border border-neutral-800 p-2! sm:p-4! rounded-lg w-full`
+})
 
 const SelectedDonate = reatomComponent(({ ctx }) => {
   const data = ctx.spy(selectedItemAtom)
   if (!data) return null;
 
-  const html = renderToHTMLString({ 
-    extensions: editorExtensions, 
-    content: data.content as JSONContent 
+  const html = renderToHTMLString({
+    extensions: editorExtensions,
+    content: data.content as JSONContent
   })
 
   return (
-    <div className="flex flex-col sm:flex-row items-start gap-8 w-full justify-center h-full">
+    <div className="flex flex-col sm:flex-row items-start gap-6 w-full justify-center h-full">
       <div className="flex w-full items-center justify-center sm:w-1/4 bg-neutral-800/40 p-4 rounded-3xl">
-        <img src={data.imageUrl} width={256} draggable={false} height={256} alt={data.title} />
+        <img
+          src={data.imageUrl}
+          width={256}
+          draggable={false}
+          height={256}
+          alt={data.title}
+        />
       </div>
-      <div className="flex flex-col gap-4 w-full sm:w-3/4 h-full">
+      <div className="flex flex-col gap-4 w-full sm:w-2/4 h-full">
         <div id="header" className="flex flex-col w-full gap-1">
-          <Typography className="text-lg font-semibold md:text-xl lg:text-2xl">
+          <Typography className="text-lg font-semibold leading-5 sm:text-xl lg:text-2xl">
             {data.title}
           </Typography>
-          <Typography color="gray" className="text-sm md:text-base">
+          <Typography className="text-sm text-neutral-400 leading-5 md:text-base">
             {data.description}
           </Typography>
         </div>
-        <div
-          id="content"
-          dangerouslySetInnerHTML={{ __html: html }}
-          className="tiptap whitespace-pre-wrap p-0!"
-        />
-        <div
-          id="purchase"
-          className="flex items-center border border-neutral-800 px-4 py-2 rounded-xl gap-6 justify-between w-full sm:w-fit"
-        >
-          <ItemPrice currency={data.currency} price={data.price} />
-          <div>
+        <div id="desc" className="flex flex-col gap-1 w-full">
+          <Typography className="text-lg font-semibold sm:text-xl">
+            Описание
+          </Typography>
+          <div
+            id="content"
+            dangerouslySetInnerHTML={{ __html: html }}
+            className={sectionVariant({ className: "tiptap whitespace-pre-wrap" })}
+          />
+        </div>
+      </div>
+      <div id="purchase" className="flex flex-col gap-1 w-full sm:w-1/4">
+        <Typography className="text-lg font-semibold sm:text-xl">
+          Стоимость и покупка
+        </Typography>
+        <div className={sectionVariant({ className: "flex flex-col items-center gap-4" })}>
+          <div className="flex bg-neutral-800 rounded-lg p-2 w-full">
+            <ItemPrice currency={data.currency} price={data.price} />
+          </div>
+          <div className="flex items-center gap-1 w-full">
             <ItemSelectToCart id={data.id} />
           </div>
         </div>
@@ -54,9 +73,5 @@ const SelectedDonate = reatomComponent(({ ctx }) => {
 }, "SelectedDonate")
 
 export default function Page() {
-  const { data } = useData<Data>();
-
-  useUpdate((ctx) => selectedItemAtom(ctx, data), [data]);
-
   return <SelectedDonate />
 }

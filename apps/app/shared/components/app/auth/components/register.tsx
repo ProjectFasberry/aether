@@ -1,4 +1,4 @@
-import { authInput, buttonVariant, NicknameInput, PasswordInput } from "./auth"
+import { authInput, NicknameInput, PasswordInput } from "./auth"
 import { reatomComponent } from "@reatom/npm-react"
 import { auth, type AuthFindoutType, authState, FINDOUT_OPTIONS, findoutSelectedTypeAtom } from "../models/auth.model"
 import { Typography } from "@repo/ui/typography"
@@ -22,7 +22,6 @@ const FindoutReferrerInput = reatomComponent(({ ctx }) => {
       autoCorrect="off"
       autoCapitalize="off"
       spellCheck="false"
-      variant="ghost"
       autoComplete="new-referrer"
       placeholder="Никнейм"
       className={authInput({ variant })}
@@ -44,7 +43,6 @@ const FindoutOtherInput = reatomComponent(({ ctx }) => {
       spellCheck="false"
       autoComplete="new-other"
       placeholder="Например: Telegram-канал"
-      variant="ghost"
       className={authInput({ variant })}
       value={ctx.spy(authState.fields.findout) ?? ""}
       onClick={() => auth.resetError(ctx)}
@@ -67,7 +65,7 @@ const FindoutOptions = reatomComponent(({ ctx }) => {
       value={currentItem?.value}
       onValueChange={v => authState.fields.findoutType(ctx, v as AuthFindoutType)}
     >
-      <SelectTrigger className="min-h-12">
+      <SelectTrigger className="min-h-10">
         {currentItem ? (
           <span className="text-neutral-50">{currentItem.title}</span>
         ) : (
@@ -264,7 +262,7 @@ const RegisterContinue = reatomComponent(({ ctx }) => {
   return (
     <Button
       type="button"
-      className={buttonVariant({ className: "transition-none" })}
+      className="w-full bg-green-600 font-semibold transition-none"
       disabled={!canGoNext}
       onClick={() => spawn(ctx, (spawnCtx) => register.nav.continue(spawnCtx))}
     >

@@ -2,7 +2,7 @@ import { getRedisKey } from "#/helpers/redis"
 import { getRedis } from "#/shared/redis/init"
 import type { EventPayload } from "@repo/shared/types/entities/other"
 import { nanoid } from "nanoid"
-import z from "zod"
+import * as z from "zod/v4"
 
 export const EVENTS_ALL_KEY = getRedisKey("internal", "events:all:data")
 export const EVENTS_TARGET_KEY = (id: string) => getRedisKey("internal", `events:event:${id}`)

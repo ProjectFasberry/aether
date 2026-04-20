@@ -1,13 +1,17 @@
-import { reatomComponent } from "@reatom/npm-react";
+import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { login, authLoginQRIsErrorAtom, loginState } from "../../auth/models/login.model";
-import { IconArrowLeft, IconCheck, IconQrcode, IconX } from "@tabler/icons-react";
+import { IconArrowLeft, IconCheck, IconDeviceDesktop, IconQrcode, IconX } from "@tabler/icons-react";
 import { ReactNode } from "react";
 import { Button } from "@repo/ui/button";
 import { spawn } from "@reatom/framework";
 import { IconLoader } from "@/shared/ui/icon-loader";
-import { scan, scanState } from "../models/settings-security.model";
+import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, SessionPayload } from "../models/settings-security.model";
 import { IDetectedBarcode, Scanner, TrackFunction } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
+import { appState } from "@/shared/models/app.model";
+import { Skeleton } from "@repo/ui/skeleton.js";
+import { SettingsContentWrapper, SettingsSection } from "./ui";
+import { SettingsSectionItem } from "../models/settings.model";
 
 const VerifyExpiredOrNotfound = () => {
   return (
@@ -234,3 +238,99 @@ export const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
     </div>
   )
 }, "AccountSessionsConnectNew")
+
+const SessionItem = ({ id, browser, geo }: SessionPayload) => {
+  return (
+    <div className="flex items-center overflow-hidden h-12 gap-2 w-full">
+      <div className="flex bg-neutral-700 rounded-full items-center justify-center w-12 h-12">
+        <IconDeviceDesktop size={24} />
+      </div>
+      <div className="flex flex-col justify-center h-full">
+        <p className="text-base font-medium leading-5">
+          {browser}
+        </p>
+        <p className="text-neutral-400 text-sm leading-4">
+          {geo.city}, {geo.country}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+const AccountSessionsListActive = reatomComponent(({ ctx }) => {
+  if (ctx.spy(accountActiveSessionsAction.statusesAtom).isPending) {
+    return (
+      <>
+        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </>
+    )
+  }
+
+  const data = ctx.spy(accountActiveSessionsAction.dataAtom);
+
+  if (!data || !data.length) {
+    return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
+  }
+
+  return data?.map((session) => <SessionItem key={session.id} {...session} />)
+}, "AccountSessionsListActive")
+
+const AccountSessionsListCurrent = reatomComponent(({ ctx }) => {
+  if (ctx.spy(accountCurrentSessionAction.statusesAtom).isPending) {
+    return <Skeleton className="h-12 w-full" />
+  }
+
+  const current = ctx.spy(accountCurrentSessionAction.dataAtom)
+  if (!current) return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
+
+  return <SessionItem {...current} />
+}, "AccountSessionsListCurrent")
+
+const AccountSessionsList = () => {
+  useUpdate(fetchSessions, []);
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      <div className="flex flex-col gap-2 w-full">
+        <p className="text-sm font-medium leading-4">Текущая сессия</p>
+        <AccountSessionsListCurrent />
+      </div>
+      <div className="flex flex-col gap-2 w-full">
+        <p className="text-sm font-medium leading-4">Активные сессии</p>
+        <AccountSessionsListActive />
+      </div>
+    </div>
+  )
+}
+
+const SettingsMainAccountSessions = reatomComponent(({ ctx }) => {
+  const isMobile = ctx.spy(appState.initState.isMobile)
+
+  return (
+    <div className="flex flex-col gap-4 w-full">
+      {isMobile && (
+        <AccountSessionsConnectNew />
+      )}
+      <AccountSessionsList />
+    </div>
+  )
+}, "AccountSessions")
+
+const DEVICES_SECTIONS: SettingsSectionItem[] = [
+  {
+    title: "Сессии",
+    description: "Активные сессии вашего аккаунта",
+    component: <SettingsMainAccountSessions />
+  },
+]
+
+export const SettingsMainDevices = () => {
+  return (
+    <SettingsContentWrapper title="Девайсы">
+      <div className="flex flex-col gap-8 w-full h-full">
+        {DEVICES_SECTIONS.map((section, idx) => <SettingsSection key={idx} {...section} />)}
+      </div>
+    </SettingsContentWrapper>
+  )
+}

@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { getNewsSingle } from "./news.model";
 
 export const newsSingle = new Elysia()

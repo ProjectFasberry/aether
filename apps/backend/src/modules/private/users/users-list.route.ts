@@ -5,7 +5,7 @@ import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { wrapMeta } from "#/utils/config/transforms";
-import z from "zod";
+import * as z from "zod/v4";
 import { metaSchema, searchQuerySchema } from "#/shared/schemas";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";

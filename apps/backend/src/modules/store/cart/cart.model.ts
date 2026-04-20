@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db"
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers"
 import type { CartItem } from "@repo/shared/types/entities/store"
-import z from "zod"
+import * as z from "zod/v4"
 
 export async function getBasketData(initiator: string): Promise<CartItem[]> {
   const query = await general

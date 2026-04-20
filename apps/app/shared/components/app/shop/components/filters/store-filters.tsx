@@ -1,17 +1,17 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { Checkbox, CheckboxProps } from "@repo/ui/checkbox"
-import { AtomState, Ctx } from "@reatom/core";
+import { AtomMut, AtomState, Ctx } from "@reatom/core";
 import { onChange, storeCategoryAtom, storeItemsSearchQueryAtom, storeWalletFilterAtom } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
-import { Sheet, SheetTrigger, SheetContent, SheetTitle } from "@repo/ui/sheet"
-import { LabelHTMLAttributes } from "react";
+import { LabelHTMLAttributes, useState } from "react";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { tv } from "tailwind-variants";
 import { Input } from "@repo/ui/input";
+import { Vaul, VaulContent, VaulHeader, VaulTrigger } from "@/shared/ui/vaul";
 
 export const storeSectionWrapper = tv({
-  base: `bg-neutral-900 rounded-xl`,
+  base: ``,
   variants: {
     variant: {
       default: "p-2 sm:p-3 lg:p-4",
@@ -24,16 +24,18 @@ export const storeSectionWrapper = tv({
 })
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
-  const isClient = ctx.spy(isClientAtom);
-  const searchQuery = isClient ? ctx.spy(storeItemsSearchQueryAtom) : ""
+  const searchQuery = ctx.spy(isClientAtom) ? ctx.spy(storeItemsSearchQueryAtom) : ""
 
   return (
-    <div className={storeSectionWrapper({ className: "flex h-10 items-center justify-start w-full relative", variant: "reset" })}>
-      <IconSearch size={18} className="text-neutral-400 absolute left-2 sm:left-4" />
+    <div className="flex h-10 items-center justify-start w-full relative">
+      <IconSearch
+        size={18}
+        className="text-neutral-400 absolute left-2 sm:left-4"
+      />
       <Input
         value={searchQuery}
         placeholder="Найти..."
-        className='bg-transparent w-full pl-8 sm:pl-12'
+        className='w-full pl-8 sm:pl-12'
         onChange={e => onChange(ctx, e)}
         maxLength={1024}
       />
@@ -41,12 +43,23 @@ export const StoreSearch = reatomComponent(({ ctx }) => {
   )
 }, "StoreSearch")
 
-const FILTERS = [
+type Filter = {
+  title: string,
+  origin: string,
+  atom: AtomMut<any>,
+  updater: (ctx: Ctx, val: string) => void,
+  filters: Array<{
+    name: string, value: string,
+  }>
+}
+
+const FILTERS: Filter[] = [
   {
     title: "Тип товара",
     origin: "category",
     atom: storeCategoryAtom,
-    updater: (ctx: Ctx, value: string) => storeCategoryAtom(ctx, value as AtomState<typeof storeCategoryAtom>),
+    updater: (ctx: Ctx, value: string) =>
+      storeCategoryAtom(ctx, value as AtomState<typeof storeCategoryAtom>),
     filters: [
       { name: "Все", value: "all" },
       { name: "Привилегии", value: "donate", },
@@ -67,21 +80,19 @@ const FILTERS = [
   }
 ]
 
-type FilterItem = {
+type FilterItemProps = {
   label?: LabelHTMLAttributes<HTMLLabelElement>,
   checkbox?: CheckboxProps,
   filterName: string
 }
 
-const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: FilterItem) => {
+const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: FilterItemProps) => {
   return (
     <label
       {...labelProps}
-      className="flex items-center gap-2 bg-neutral-800 rounded-md p-2"
+      className="flex items-center gap-2 bg-neutral-700 rounded-lg p-2"
     >
-      <Checkbox
-        {...checkboxProps}
-      />
+      <Checkbox {...checkboxProps} />
       <Typography color="white" className="text-base">
         {filterName}
       </Typography>
@@ -89,7 +100,9 @@ const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: 
   )
 }
 
-export const StoreFilterList = reatomComponent(({ ctx }) => {
+const StoreFilterItem = reatomComponent<Filter>(({
+  ctx, title, filters, atom, updater
+}) => {
   const isClient = ctx.spy(isClientAtom)
 
   const handle = (
@@ -105,52 +118,54 @@ export const StoreFilterList = reatomComponent(({ ctx }) => {
   const getUniqueFilterId = (v1: string, v2: string) => `${v1}${v2}`
 
   return (
-    <>
-      {FILTERS.map((item) => (
-        <div key={item.origin} className="flex flex-col gap-2">
-          <Typography color="gray" className="text-lg">
-            {item.title}
-          </Typography>
-          <div className='flex flex-col gap-2 w-full'>
-            {item.filters.map((filter, idx) => (
-              <FilterItem
-                key={idx}
-                label={{
-                  htmlFor: getUniqueFilterId(item.origin, filter.value)
-                }}
-                checkbox={{
-                  id: getUniqueFilterId(item.origin, filter.value),
-                  checked: isClient ? ctx.spy(item.atom) === filter.value : false,
-                  onCheckedChange: e => handle(item.updater, e, filter.value)
-                }}
-                filterName={filter.name}
-              />
-            ))}
-          </div>
-        </div>
-      ))}
-    </>
+    <div className="flex flex-col gap-2">
+      <Typography className="text-neutral-400 text-lg">
+        {title}
+      </Typography>
+      <div className='flex flex-col gap-2 w-full'>
+        {filters.map((filter, idx) => (
+          <FilterItem
+            key={idx}
+            label={{
+              htmlFor: getUniqueFilterId(origin, filter.value)
+            }}
+            checkbox={{
+              id: getUniqueFilterId(origin, filter.value),
+              checked: isClient ? ctx.spy(atom) === filter.value : false,
+              onCheckedChange: e => handle(updater, e, filter.value)
+            }}
+            filterName={filter.name}
+          />
+        ))}
+      </div>
+    </div>
   )
-}, "StoreFilterList")
+}, "StoreFilterItem")
+
+export const StoreFilterList = reatomComponent(({ ctx }) =>
+  FILTERS.map((item) => <StoreFilterItem key={item.origin} {...item} />),
+  "StoreFilterList"
+)
 
 export const StoreFiltersSheet = () => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
-      <SheetTrigger className={storeSectionWrapper({ className: "flex w-full cursor-pointer h-full gap-2 items-center justify-center" })}>
-        <IconFilter size={20} className="text-neutral-400" />
-        <Typography color="gray" className="text-lg font-semibold">
-          Изменить фильтры
-        </Typography>
-      </SheetTrigger>
-      <SheetContent
-        side="bottom"
-        className='flex flex-col px-4 py-2 items-center justify-start max-h-[60vh] overflow-y-auto gap-4 rounded-t-xl'
-      >
-        <SheetTitle>Фильтры</SheetTitle>
-        <div className='flex flex-col gap-2 w-full'>
+    <Vaul open={open} onOpenChange={setOpen}>
+      <VaulTrigger>
+        <div className={storeSectionWrapper({ className: "flex w-full cursor-pointer h-full gap-2 items-center justify-center" })}>
+          <IconFilter size={20} className="text-neutral-400" />
+          <Typography color="gray" className="text-lg font-semibold">
+            Изменить фильтры
+          </Typography>
+        </div>
+      </VaulTrigger>
+      <VaulContent>
+        <VaulHeader title="Фильтр" />
+        <div className='flex flex-col gap-6 w-full'>
           <StoreFilterList />
         </div>
-      </SheetContent>
-    </Sheet>
+      </VaulContent>
+    </Vaul>
   )
 }

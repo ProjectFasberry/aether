@@ -4,6 +4,7 @@
 @source "../../../../packages/ui/**/*.{ts,tsx}";
 
 @import "./editor.css";
+@import "../../../../packages/ui/src/styles/index.css";
 
 @plugin 'tailwind-scrollbar' {
   nocompatible: true;
@@ -108,74 +109,74 @@
       color: inherit;
     }
   }
-}
 
-@keyframes fadeInBackground {
-  from {
-    background-color: rgba(0, 0, 0, 0);
+  @keyframes fadeInBackground {
+    from {
+      background-color: rgba(0, 0, 0, 0);
+    }
+
+    to {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
   }
 
-  to {
-    background-color: rgba(0, 0, 0, 0.6);
-  }
-}
+  @keyframes fadeOutBackground {
+    from {
+      background-color: rgba(0, 0, 0, 0.6);
+    }
 
-@keyframes fadeOutBackground {
-  from {
-    background-color: rgba(0, 0, 0, 0.6);
-  }
-
-  to {
-    background-color: rgba(0, 0, 0, 0);
-  }
-}
-
-@keyframes fadeInAndScaleIcon {
-  0% {
-    opacity: 0;
-    transform: scale(1);
+    to {
+      background-color: rgba(0, 0, 0, 0);
+    }
   }
 
-  70% {
-    opacity: 1;
-    transform: scale(1.5);
+  @keyframes fadeInAndScaleIcon {
+    0% {
+      opacity: 0;
+      transform: scale(1);
+    }
+
+    70% {
+      opacity: 1;
+      transform: scale(1.5);
+    }
+
+    100% {
+      opacity: 0;
+      transform: scale(2);
+    }
   }
 
-  100% {
-    opacity: 0;
-    transform: scale(2);
+  @keyframes fadeOutIcon {
+    from {
+      opacity: 1;
+      transform: scale(1.5);
+    }
+
+    to {
+      opacity: 0;
+      transform: scale(2);
+    }
   }
-}
 
-@keyframes fadeOutIcon {
-  from {
-    opacity: 1;
-    transform: scale(1.5);
+  .fade-in-background {
+    animation: fadeInBackground 1.5s forwards;
   }
 
-  to {
-    opacity: 0;
-    transform: scale(2);
+  .fade-out-background {
+    animation: fadeOutBackground 1s forwards;
   }
-}
 
-.fade-in-background {
-  animation: fadeInBackground 1.5s forwards;
-}
+  .fade-in-and-scale-icon {
+    animation: fadeInAndScaleIcon 1s forwards;
+    animation-delay: 0.3s;
+    display: inline-block;
+  }
 
-.fade-out-background {
-  animation: fadeOutBackground 1s forwards;
-}
-
-.fade-in-and-scale-icon {
-  animation: fadeInAndScaleIcon 1s forwards;
-  animation-delay: 0.3s;
-  display: inline-block;
-}
-
-.fade-out-icon {
-  animation: fadeOutIcon 1s forwards;
-  display: inline-block;
+  .fade-out-icon {
+    animation: fadeOutIcon 1s forwards;
+    display: inline-block;
+  }
 }
 
 @theme {

@@ -1,7 +1,7 @@
 import { validatePermission } from "#/lib/middlewares/validators"
 import { Permissions } from "#/shared/constants/permissions"
 import Elysia from "elysia"
-import z from "zod"
+import * as z from "zod/v4"
 import { createAdminActivityLog } from "../private.model"
 
 async function createModpack({ }: z.infer<typeof modpackCreateSchema>) {

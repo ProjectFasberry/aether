@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db";
-import Elysia from "elysia";
-import z from "zod";
+import { withData } from "#/shared/schemas";
+import Elysia, { t } from "elysia";
+import * as z from "zod/v4";
 
 type Payload = {
   [key: string]: {
@@ -25,7 +26,7 @@ const wikiCategories = new Elysia()
 
     const payload: Payload = categories.reduce((acc, part) => {
       const { group_name, group_title, ...rest } = part;
-            
+
       acc[group_name] = {
         title: group_title,
         nodes: [...acc[group_name]?.nodes ?? [], rest]
@@ -45,6 +46,23 @@ const wikiCategories = new Elysia()
     };
 
     return { data }
+  }, {
+    response: {
+      200: withData(
+        t.Record(
+          t.String(),
+          t.Object({
+            title: t.String(),
+            nodes: t.Array(
+              t.Object({
+                title: t.String(),
+                value: t.String(),
+              })
+            )
+          })
+        )
+      )
+    }
   })
 
 const wikiCategory = new Elysia()
@@ -63,7 +81,20 @@ const wikiCategory = new Elysia()
   }, {
     params: z.object({
       name: z.string().min(1)
-    })
+    }),
+    response: {
+      200: withData(
+        t.Nullable(
+          t.Object({
+            category: t.String(),
+            content: t.Any(),
+            id: t.Number(),
+            updated_at: t.Nullable(t.Date()),
+            title: t.String()
+          })
+        )
+      )
+    }
   })
 
 export const wiki = new Elysia()

@@ -1,42 +1,50 @@
-import { z } from "zod";
+import * as z from "zod/v4";
 import { editorFieldSchema } from "../payment";
 
 export const getNewsSchema = z.object({
-  limit: z.string().transform(Number).optional(),
-  cursor: z.string().optional(),
-  ascending: z.string().transform((val) => val === "true").optional(),
-  searchQuery: z.string().optional(),
-})
+	limit: z.string().transform(Number).optional(),
+	cursor: z.string().optional(),
+	ascending: z
+		.string()
+		.transform((val) => val === "true")
+		.optional(),
+	searchQuery: z.string().optional(),
+});
 
-const DEFAULT_IMAGE = `news/art-bzzvanet.webp`
+const DEFAULT_IMAGE = `news/art-bzzvanet.webp`;
 
 export const createNewsSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  imageUrl: z.string().trim().nullable().optional().transform((v) => v?.trim() || DEFAULT_IMAGE),
-  content: editorFieldSchema
-})
+	title: z.string().min(1),
+	description: z.string().min(1),
+	imageUrl: z
+		.string()
+		.trim()
+		.nullable()
+		.optional()
+		.transform((v) => v?.trim() || DEFAULT_IMAGE),
+	content: editorFieldSchema,
+});
 
 export const newsSchema = z.object({
-  title: z.string(),
-  description: z.string(),
-  content: editorFieldSchema,
-  imageUrl: z.string().nullable(),
-  created_at: z.date()
-})
+	title: z.string(),
+	description: z.string(),
+	content: editorFieldSchema,
+	imageUrl: z.string().nullable(),
+	created_at: z.date(),
+});
 
 const fields = newsSchema.pick({
-  title: true,
-  description: true,
-  content: true,
-  imageUrl: true
-})
+	title: true,
+	description: true,
+	content: true,
+	imageUrl: true,
+});
 
-const EDITABLE_FIELDS = Object.keys(fields.shape) as (keyof typeof fields.shape)[]
+const EDITABLE_FIELDS = Object.keys(fields.shape) as (keyof typeof fields.shape)[];
 
 export const newsUpdateSchema = z.array(
-  z.object({
-    field: z.enum(EDITABLE_FIELDS),
-    value: z.union([z.string(), editorFieldSchema])
-  })
-)
+	z.object({
+		field: z.enum(EDITABLE_FIELDS),
+		value: z.union([z.string(), editorFieldSchema]),
+	}),
+);

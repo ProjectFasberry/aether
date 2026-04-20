@@ -26,3 +26,18 @@ export function startPageEvents(
   if (isDevelopment) console.log(`[${key}] Triggering page events`);
   events(ctx);
 }
+
+export const listenBackOnce = (cb: () => void) => {
+  window.history.pushState({ active: true }, '');
+
+  const handler = () => {
+    cb();
+    window.removeEventListener('popstate', handler);
+  };
+
+  window.addEventListener('popstate', handler);
+
+  return () => {
+    window.removeEventListener('popstate', handler);
+  };
+};

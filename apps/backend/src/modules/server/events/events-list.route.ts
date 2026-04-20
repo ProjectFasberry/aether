@@ -1,7 +1,7 @@
 import { getRedis } from "#/shared/redis/init";
 import type { EventPayload } from "@repo/shared/types/entities/other";
 import Elysia, { t } from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
 

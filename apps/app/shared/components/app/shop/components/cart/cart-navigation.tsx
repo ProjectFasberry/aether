@@ -3,6 +3,7 @@ import { scrollableVariant } from "@/shared/consts/style-variants"
 import { BackButton } from "@/shared/ui/back-button"
 import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
+import { usePageContext } from "vike-react/usePageContext"
 
 const badge = (title: string, value: string) => ({ title, value });
 
@@ -10,10 +11,12 @@ const STORE_BADGES = [
   badge("Корзина", ""),
   badge("Заказы", "/orders"),
   badge("Пополнить баланс", "/topup"),
-  badge("Настройки", "/settings"),
 ] as const;
 
 export const CartNavigation = () => {
+  const pageCtx = usePageContext()
+  const isActive = (path: string) => pageCtx.urlPathname === path;
+
   return (
     <div
       className={scrollableVariant({
@@ -28,8 +31,8 @@ export const CartNavigation = () => {
           className="group"
         >
           <Button
-            className="group-data-[state=active]:text-neutral-950 group-data-[state=inactive]:text-neutral-50
-             h-10 group-data-[state=active]:bg-neutral-50 rounded-xl group-data-[state=inactive]:bg-neutral-800 text-nowrap"
+            background={isActive(`/store/cart${badge.value}`) ? "white" : "default"}
+            className="h-10 text-nowrap"
           >
             <Typography className="font-semibold">
               {badge.title}

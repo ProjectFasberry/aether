@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { StoreItem } from "@repo/shared/types/entities/store";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers";
-import z from "zod";
+import * as z from "zod/v4";
 
 async function getItem(id: number): Promise<StoreItem | null> {
   const query = await general

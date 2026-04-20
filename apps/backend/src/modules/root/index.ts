@@ -1,12 +1,11 @@
 import Elysia from "elysia";
 import { initPlayerSkin, updatePlayersSkins } from "../server/skin/skin.model";
-import z from "zod";
+import * as z from "zod/v4";
 import bearer from "@elysiajs/bearer";
 import { general } from "#/shared/database/general-db";
 
-export const forceSkinInit = new Elysia().get(
-	"/skin/:nickname",
-	async ({ params: { nickname }, query }) => {
+export const forceSkinInit = new Elysia()
+	.get("/skin/:nickname", async ({ params: { nickname }, query }) => {
 		if (query.type === "single") {
 			const ok = await initPlayerSkin(nickname);
 			if (!ok) return { data: "error" };
@@ -18,13 +17,11 @@ export const forceSkinInit = new Elysia().get(
 		}
 
 		return { data: "started" };
-	},
-	{
+	}, {
 		query: z.object({
 			type: z.enum(["single", "all"]).optional().default("single"),
 		}),
-	},
-);
+	});
 
 export const force = new Elysia()
 	.use(bearer())

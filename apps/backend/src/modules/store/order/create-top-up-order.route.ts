@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { processStoreCryptoPurchaseCryptobot } from "./cryptobot/cryptobot.model";
-import { processStoreCryptoPurchaseHeleket } from "./heleket/heleket.model";
+// import { processStoreCryptoPurchaseHeleket } from "./heleket/heleket.model";
 import { createOrderTopUpSchema, type MethodType, type OrderInputPayload, type OutputPayload } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
@@ -23,7 +23,8 @@ const targets: Record<MethodType, (pd: OrderInputPayload) => Promise<OutputPaylo
     return processStoreCryptoPurchaseCryptobot(payload)
   },
   "heleket": async (payload) => {
-    return processStoreCryptoPurchaseHeleket(payload)
+    invariant(false, "Некорректный способ оплаты. Heleket пока не доступен")
+    // return processStoreCryptoPurchaseHeleket(payload)
   },
   "sbp": async (payload) => {
     invariant(false, "Некорректный способ оплаты. SBP пока не доступен")

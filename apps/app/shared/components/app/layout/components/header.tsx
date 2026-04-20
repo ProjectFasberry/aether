@@ -1,49 +1,29 @@
-import { IconBasket, IconBuildingStore, IconCategory, IconChevronUp, IconMap, IconStars, TablerIcon } from "@tabler/icons-react";
+import { IconBuildingStore, IconChevronUp } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
-import { CONFIG_PANEL_READ_PERMISSION, currentUserAtom, currentUserPermsAtom } from "@/shared/models/current-user.model";
+import { currentUserAtom } from "@/shared/models/current-user.model";
 import { Avatar } from "@/shared/components/app/avatar/components/avatar";
 import { Typography } from "@repo/ui/typography";
 import { usePageContext } from "vike-react/usePageContext";
 import { Separator } from "@repo/ui/separator";
-import { atom } from "@reatom/framework";
 import { Fragment } from "react/jsx-runtime";
 import { isAuthedAtom } from "@/shared/models/page-context.model";
-import { beforeLogoutAction, logoutAction } from "../../auth/models/logout.model";
+import { logout } from "../../auth/models/logout.model";
 import { cartDataSelectedItemsLengthAtom, cartIsTriggeredAtom } from "../../shop/models/store-cart.model";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
-
-const makeMenuLink = (title: string, href: string, permission: string | null, type: "default" | "privated") =>
-  ({ title, href, permission, type })
-
-const MENU_LINKS = [
-  makeMenuLink("Корзина", "/store/cart", null, "default"),
-  makeMenuLink("Покупки", "/store/cart/orders", null, "default"),
-  makeMenuLink("Задания", "/tasks", null, "default"),
-  makeMenuLink("Рефералы", "/referrals", null, "default"),
-  makeMenuLink("Системная панель", "/private", CONFIG_PANEL_READ_PERMISSION, "privated")
-];
-
-const validatedLinksAtom = atom((ctx) => {
-  const opts = ctx.get(currentUserPermsAtom)
-
-  const validatedLinks = MENU_LINKS.filter(s => {
-    if (s.type === 'privated' && s.permission) return opts.includes(s.permission)
-
-    return true
-  }) as typeof MENU_LINKS[number][]
-
-  return validatedLinks
-}, "validatedLinks")
+import { HEADERS_LINKS, validatedLinksAtom } from "./navigation.model";
+import { settingsState } from "../../settings/models/settings.model";
+import { MobileBottomBar } from "./mobile-navigation";
+import { appState } from "@/shared/models/app.model";
 
 const HeaderMenuActions = reatomComponent(({ ctx }) => {
   return (
     <>
       <DropdownMenuItem
         className="gap-2 hover:bg-neutral-800 w-full"
-        onClick={() => navigate("/settings/main/profile")}
+        onClick={() => settingsState.dialogIsOpen.toggle(ctx, true)}
       >
         <Typography className="font-semibold">
           Настройки
@@ -51,8 +31,8 @@ const HeaderMenuActions = reatomComponent(({ ctx }) => {
       </DropdownMenuItem>
       <DropdownMenuItem
         className="gap-2 hover:bg-neutral-800 w-full"
-        disabled={ctx.spy(logoutAction.statusesAtom).isPending}
-        onClick={() => beforeLogoutAction(ctx)}
+        disabled={ctx.spy(logout.exec.statusesAtom).isPending}
+        onClick={() => logout.withConfirm(ctx)}
       >
         <Typography className="font-semibold text-red-500">
           Выйти из аккаунта
@@ -118,9 +98,9 @@ const AuthorizeButton = () => {
     <Link
       href="/auth"
       aria-label="Вход"
-      className="inline-flex items-center justify-center gap-1 h-9 min-w-10 p-0 sm:px-4 sm:py-2 bg-green-600 rounded-xl"
+      className="flex items-center justify-center gap-1 h-9 min-w-10 px-4 py-2 bg-green-600 rounded-xl"
     >
-      <Typography className="hidden sm:inline font-semibold select-none text-neutral-50 text-sm">
+      <Typography className="leading-5 font-semibold select-none text-neutral-50 text-sm">
         Вход
       </Typography>
     </Link>
@@ -146,40 +126,6 @@ const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
   )
 }, "HeaderUserCurrentTrigger")
 
-const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
-  ({ title, icon, label, href })
-
-const HEADERS_LINKS = [
-  makeHeaderLink("Главная", IconCategory, "Перейти на главную", "/"),
-  makeHeaderLink("Рейтинг", IconStars, "Перейти к рейтингу", "/ratings"),
-  makeHeaderLink("Магазин", IconBasket, "Перейти к магазину", "/store"),
-  makeHeaderLink("Карта", IconMap, "Перейти к карте мира", "/map"),
-]
-
-const MobileBottomBar = () => {
-  return (
-    <div
-      className="lg:hidden z-[50] fixed flex items-center
-        rounded-t-xl justify-center bottom-0 px-4 border-t border-neutral-700 bg-neutral-800 h-20 w-full"
-    >
-      <div className="flex items-center justify-between w-full
-        gap-1 *:data-[state=inactive]:text-neutral-50 *:data-[state=active]:text-green-500"
-      >
-        {HEADERS_LINKS.map(link => (
-          <Link key={link.title} aria-label={link.label} href={link.href} className="truncate min-w-0">
-            <div className="flex items-center justify-center">
-              <link.icon size={30} />
-            </div>
-            <span className="font-semibold text-sm">
-              {link.title}
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 const HeaderCartTrigger = reatomComponent(({ ctx }) => {
   const isTriggered = ctx.spy(cartIsTriggeredAtom);
   const cartLength = ctx.spy(cartDataSelectedItemsLengthAtom)
@@ -189,8 +135,10 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
       aria-label="Перейти в корзину"
       href="/store/cart"
       data-trigger={isTriggered}
-      className="flex items-center justify-center group duration-100 max-h-8 w-8 max-w-8 h-8 
-        data-[trigger=true]:scale-[1.15] data-[trigger=false]:scale-100"
+      className="
+        flex items-center justify-center group duration-150 max-h-8 w-8 max-w-8 h-8 
+        data-[trigger=true]:scale-[1.15] data-[trigger=false]:scale-100
+      "
     >
       <IconBuildingStore
         size={28}
@@ -245,37 +193,53 @@ const HeaderUserBar = reatomComponent(({ ctx }) => {
   )
 }, "HeaderUserBar")
 
-export const Header = ({ withBar = true }: { withBar?: boolean }) => {
+const HeaderLinks = () => {
   return (
-    <>
-      <MobileBottomBar />
-      <div className="flex items-center justify-start w-full border-b rounded-xl border-neutral-800 relative z-20 h-20 max-h-20 top-0">
-        <div className="flex items-center justify-between px-2 gap-2 sm:px-6 h-full w-full">
-          <div className="w-1/5 bg-transparent h-14 relative">
-            <Logotype />
-          </div>
-          <div className="hidden lg:flex w-3/5 justify-center items-center h-full text-neutral-400">
-            {HEADERS_LINKS.map(link => (
-              <Link
-                key={link.title}
-                aria-label={link.label}
-                href={link.href}
-                className="inline-flex justify-center items-center border-b h-full px-10 hover:bg-neutral-800
+    <div className="flex w-3/5 justify-center items-center h-full text-neutral-400">
+      {HEADERS_LINKS.map(link => (
+        <Link
+          key={link.title}
+          aria-label={link.label}
+          href={link.href}
+          className="inline-flex justify-center items-center border-b h-full px-10 hover:bg-neutral-800
                 data-[state=inactive]:border-transparent data-[state=active]:border-green-500"
-              >
-                <p className="font-semibold text-[14px]">{link.title}</p>
-              </Link>
-            ))}
-          </div>
-          <div className="w-full md:w-1/5">
-            {withBar ? (
-              <HeaderUserBar />
-            ) : (
-              <div></div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
+        >
+          <p className="font-semibold text-[14px]">{link.title}</p>
+        </Link>
+      ))}
+    </div>
   )
 }
+
+export const Header = reatomComponent<{ withBar?: boolean }>(({ ctx, withBar = true }) => {
+  const isMobile = ctx.spy(appState.isMobile)
+
+  return (
+    <div className="flex items-center justify-start w-full border-b rounded-b-xl border-neutral-800 relative z-20 h-20 max-h-20 top-0">
+      <div className="flex items-center justify-between px-2 gap-2 sm:px-6 h-full w-full">
+        <div className="w-1/5 bg-transparent h-14 relative">
+          <Logotype />
+        </div>
+        {!isMobile && <HeaderLinks />}
+        <div className="w-full md:w-1/5">
+          {withBar ? (
+            <HeaderUserBar />
+          ) : (
+            <div></div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}, "Header")
+
+export const Navigation = reatomComponent(({ ctx }) => {
+  const isMobile = ctx.spy(appState.isMobile)
+
+  return (
+    <>
+      {isMobile && <MobileBottomBar />}
+      <Header />
+    </>
+  )
+}, "Navigation")

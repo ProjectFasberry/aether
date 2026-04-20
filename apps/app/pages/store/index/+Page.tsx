@@ -18,11 +18,11 @@ export default function Page() {
             <div className="xl:hidden block">
               <StoreFiltersSheet />
             </div>
-            <div className={storeSectionWrapper({ className: "hidden xl:flex flex-col gap-6 w-full h-full" })}>
+            <div className={storeSectionWrapper({ className: "bg-neutral-800 rounded-xl hidden xl:flex flex-col gap-6 w-full h-full" })}>
               <StoreFilterList />
             </div>
           </div>
-          <div className={storeSectionWrapper({ className: "flex flex-col items-start w-full h-fit gap-4 xl:w-4/5 min-h-dvh" })}>
+          <div className={storeSectionWrapper({ variant: "reset", className: "flex flex-col items-start w-full h-fit gap-4 xl:w-4/5 min-h-dvh" })}>
             <StoreList />
           </div>
         </div>

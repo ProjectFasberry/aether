@@ -1,6 +1,6 @@
 import { createNewsSchema } from '@repo/shared/schemas/news';
 import Elysia from "elysia"
-import type z from "zod"
+import type * as z from "zod/v4"
 import { general } from "#/shared/database/general-db"
 import { getStaticUrl } from "#/helpers/volume"
 import { validatePermission } from '#/lib/middlewares/validators';

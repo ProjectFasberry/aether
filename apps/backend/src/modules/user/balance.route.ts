@@ -10,15 +10,12 @@ const balancePayload = t.Object({
 
 export const balance = new Elysia()
   .use(defineUser())
-  .model({
-    "balance": withData(balancePayload)
-  })
   .get("/balance", async ({ nickname, query }) => {
     const data = await getBalance(nickname, query)
     return { data }
   }, {
     response: {
-      200: "balance"
+      200: withData(balancePayload)
     },
     query: balanceSchema
   })

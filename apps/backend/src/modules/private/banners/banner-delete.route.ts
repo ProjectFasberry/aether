@@ -1,25 +1,14 @@
 import Elysia from "elysia";
-import { general } from "#/shared/database/general-db";
 import { bannerSchema } from "../../shared/banner/banner.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { createAdminActivityLog } from "../private.model";
-
-async function deleteBanner(id: number) {
-  const query = await general
-    .deleteFrom("banners")
-    .where("id", "=", id)
-    .returning(["id"])
-    .executeTakeFirst()
-
-  return query;
-}
+import { banner } from "./banner.model";
 
 export const bannerDelete = new Elysia()
   .use(validatePermission(Permissions.get("BANNERS.DELETE")))
-  .delete("/:id", async ({ status, params }) => {
-    const id = params.id;
-    const data = await deleteBanner(id);
+  .delete("/:id", async ({ params: { id } }) => {
+    const data = await banner.delete(id);
     return { data }
   }, {
     params: bannerSchema,

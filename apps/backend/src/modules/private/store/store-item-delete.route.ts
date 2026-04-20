@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
-import { z } from "zod"
+import * as z from "zod/v4"
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";

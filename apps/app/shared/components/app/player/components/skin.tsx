@@ -55,14 +55,13 @@ const SkinRender = reatomComponent(({ ctx }) => {
   return (
     <div className="flex items-center h-[390px] justify-center overflow-hidden w-full">
       {ctx.spy(hardwareAccIsEnabledAtom) ? (
-        <ClientOnly>
+        <ClientOnly fallback={<SkinRenderSkeleton />}>
           <ReactSkinview3d
             skinUrl={skin.skin_url!}
             height="390"
             width="300"
             options={{ zoom: 0.8 }}
             onReady={({ viewer }) => skinViewerAtom(ctx, viewer)}
-            fallback={<SkinRenderSkeleton />}
           />
         </ClientOnly>
       ) : (

@@ -1,5 +1,5 @@
 import type { CreateOrderTopUpSchema, STORE_TYPES, storeItemSchema } from "../../schemas/payment";
-import type { z } from "zod";
+import type * as z from "zod/v4";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
 import type { PaymentStatus } from "../db/payments-database-types";
 import type { ordersRouteSchema } from "../../schemas/store";

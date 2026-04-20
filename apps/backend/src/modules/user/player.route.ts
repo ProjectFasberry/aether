@@ -5,7 +5,7 @@ import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";
 
-const PlayerPayload = t.Object({
+const playerPayload = t.Object({
   nickname: t.String(),
   lower_case_nickname: t.String(),
   uuid: t.String(),
@@ -23,9 +23,6 @@ const PlayerPayload = t.Object({
 
 export const player = new Elysia()
   .use(defineOptionalUser())
-  .model({
-    "player": withData(PlayerPayload)
-  })
   .get("/player/:nickname", async ({ status, nickname: initiator, params }) => {
     const recipient = params.nickname;
 
@@ -53,7 +50,7 @@ export const player = new Elysia()
     return { data }
   }, {
     response: {
-      200: "player",
+      200: withData(playerPayload),
       404: t.Object({ data: t.Null() })
     }
   })

@@ -11,7 +11,7 @@
 		"build": "bun build ./src/index.ts --target=bun --outdir=./dist --metafile=./dist/meta.json",
 		"start": "infisical run --env=prod --path=/panel -- bun run ./dist/index.js",
 		"lint": "bunx biome lint",
-		"type-check": "tsc --noEmit",
+		"type-check": "tsc --build",
 		"------------------": "",
 		"build:prod": "make build",
 		"build:tag": "make tag",

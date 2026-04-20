@@ -1,11 +1,7 @@
 import { isProduction } from "#/shared/env";
-import { logger } from "@bogeychan/elysia-logger";
-import Elysia from "elysia";
+import { logger as niceLogger } from "@tqman/nice-logger";
+import { logger as bogeyLogger } from "@bogeychan/elysia-logger";
 
-export const loggerPlugin = async () => {
-	if (!isProduction) {
-		const { logger } = await import("@tqman/nice-logger");
-		return new Elysia().use(logger());
-	}
-	return new Elysia().use(logger());
-};
+export const logger = isProduction ? bogeyLogger() : niceLogger();
+
+export const loggerPlugin = () => logger

@@ -23,7 +23,7 @@ const rulesPayload = t.Array(
 )
 
 const rulesTags = new Elysia()
-  .get("/tags", async (ctx) => {
+  .get("/tags", async () => {
     const data = [
       { title: "Правила", value: "rules" },
       { title: "База", value: "main" },
@@ -32,12 +32,20 @@ const rulesTags = new Elysia()
     ]
 
     return { data }
+  }, {
+    response: {
+      200: withData(
+        t.Array(
+          t.Object({
+            title: t.String(),
+            value: t.String()
+          })
+        )
+      )
+    }
   })
 
 export const rulesList = new Elysia()
-  .model({
-    "rules": withData(rulesPayload)
-  })
   .get("/list", async ({ set }) => {
     const data = await getRules()
 
@@ -47,7 +55,7 @@ export const rulesList = new Elysia()
     return { data }
   }, {
     response: {
-      200: "rules"
+      200: withData(rulesPayload)
     }
   })
 

@@ -60,6 +60,9 @@ export const storeItemVariant = tv({
 export const ItemPrice = ({ currency, price }: { currency: string, price: string | number }) => {
   return (
     <div className="flex items-center gap-1 text-base select-none text-nowrap font-semibold">
+      <Typography>
+        {price}
+      </Typography>
       {CURRENCIES[currency].img ? (
         <img
           src={CURRENCIES[currency].img}
@@ -71,9 +74,6 @@ export const ItemPrice = ({ currency, price }: { currency: string, price: string
       ) : (
         <span>{CURRENCIES[currency].symbol}</span>
       )}
-      <Typography>
-        {price}
-      </Typography>
     </div>
   )
 }

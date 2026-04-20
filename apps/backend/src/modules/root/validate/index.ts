@@ -5,14 +5,7 @@ import Elysia, { t } from "elysia";
 import { getBan } from "../app/app-options.route";
 
 const validateNickname = new Elysia()
-  .model({
-    "exists": withData(
-      t.Nullable(
-        t.String()
-      )
-    )
-  })
-  .get("/nickname/:nickname", async ({ status, params: { nickname } }) => {
+  .get("/nickname/:nickname", async ({ params: { nickname } }) => {
     const query = await general
       .selectFrom("players")
       .select("nickname")
@@ -22,27 +15,30 @@ const validateNickname = new Elysia()
     const data = query?.nickname ?? null
 
     return { data }
+  }, {
+    response: {
+      200: withData(
+        t.Nullable(t.String())
+      )
+    }
   })
 
 const banStatus = new Elysia()
   .use(defineUser())
-  .model({
-    "ban": withData(
-      t.Nullable(
-        t.Object({
-          created_at: t.Date(),
-          nickname: t.String(),
-          reason: t.Nullable(t.String())
-        })
-      )
-    )
-  })
-  .get("/ban", async ({ nickname, status }) => {
+  .get("/ban", async ({ nickname }) => {
     const data = await getBan(nickname)
-    return status(200, { data })
+    return { data }
   }, {
     response: {
-      200: "ban"
+      200: withData(
+        t.Nullable(
+          t.Object({
+            created_at: t.Date(),
+            nickname: t.String(),
+            reason: t.Nullable(t.String())
+          })
+        )
+      )
     }
   })
 

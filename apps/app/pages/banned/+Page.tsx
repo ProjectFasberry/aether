@@ -5,7 +5,7 @@ import { action } from "@reatom/core"
 import dayjs from "@/shared/lib/create-dayjs"
 import { startPageEvents } from "@/shared/lib/events"
 import { pageContextAtom } from "@/shared/models/page-context.model"
-import { logoutAction } from "@/shared/components/app/auth/models/logout.model"
+import { logout } from "@/shared/components/app/auth/models/logout.model"
 import { bannedAction } from "@/shared/components/app/auth/models/banned.model"
 
 type Banned = {
@@ -15,11 +15,11 @@ type Banned = {
 }
 
 const BannedActionButton = reatomComponent(({ ctx }) => {
-  const isDisabled = ctx.spy(logoutAction.statusesAtom).isPending || ctx.spy(logoutAction.statusesAtom).isFulfilled;
+  const isDisabled = ctx.spy(logout.exec.statusesAtom).isPending || ctx.spy(logout.exec.statusesAtom).isFulfilled;
 
   return (
     <Button
-      onClick={() => logoutAction(ctx)}
+      onClick={() => logout.withConfirm(ctx)}
       disabled={isDisabled}
       className='bg-neutral-50 text-red-500 font-semibold text-lg'
     >

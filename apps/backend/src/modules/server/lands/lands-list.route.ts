@@ -1,5 +1,5 @@
 import Elysia, {  t } from "elysia"
-import z from "zod"
+import * as z from "zod/v4"
 import { bisquite } from "#/shared/database/bisquite-db"
 import { getDirection } from "#/utils/config/paginate"
 import type { Lands, LandsPayload } from "@repo/shared/types/entities/land"

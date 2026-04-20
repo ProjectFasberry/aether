@@ -16,6 +16,8 @@ export const validate = new Elysia()
     return { data }
   }, {
     response: {
-      200: withData(t.Boolean())
+      200: withData(
+        t.Boolean()
+      )
     }
   })

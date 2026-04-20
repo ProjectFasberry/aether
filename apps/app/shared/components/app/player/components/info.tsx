@@ -4,7 +4,7 @@ import { playerAtom, playerParamAtom } from "../models/player.model";
 import { DONATE_COLORS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { Player } from "@repo/shared/types/entities/user";
 import { atom } from "@reatom/core";
-import { playerRateAtom } from "../models/rate.model";
+import { playerRateState } from "../models/rate.model";
 
 const PlayerTag = ({ group }: { group: Player["group"] }) => {
   return (
@@ -34,7 +34,7 @@ const playerTagsAtom = atom<Player["group"][]>((ctx) => {
 
 const PlayerRate = reatomComponent(({ ctx }) => {
   const nickname = ctx.spy(playerParamAtom);
-  const rateData = ctx.spy(playerRateAtom);
+  const rateData = ctx.spy(playerRateState.data);
 
   if (!rateData || !nickname) return null;
 

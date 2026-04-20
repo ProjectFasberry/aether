@@ -4,30 +4,14 @@ import { defineOptionalUser } from "#/lib/middlewares/define";
 import type { MePayload } from "@repo/shared/types/entities/user"
 import { validateBannedStatus } from "#/lib/middlewares/validators";
 import { getPermissions, getMe } from "./me.model";
+import { withData } from "#/shared/schemas";
 
 export const me = new Elysia()
   .use(validateBannedStatus())
   .use(defineOptionalUser())
-  .model({
-    me: t.Object({
-      data: t.Object({
-        nickname: t.String(),
-        uuid: t.String(),
-        meta: t.Object({
-          login_date: t.Date(),
-          reg_date: t.Date(),
-          role: t.Object({
-            id: t.Number(),
-            name: t.String()
-          }),
-          permissions: t.Array(t.String())
-        }),
-      })
-    })
-  })
   .get("/me", async ({ nickname, status }) => {
     if (!nickname) {
-      return status(404, { data: null })
+      throw status(404, { data: null })
     }
 
     const query = await getMe(nickname)
@@ -61,7 +45,21 @@ export const me = new Elysia()
     return { data }
   }, {
     response: {
-      200: "me",
+      200: withData(
+        t.Object({
+          nickname: t.String(),
+          uuid: t.String(),
+          meta: t.Object({
+            login_date: t.Date(),
+            reg_date: t.Date(),
+            role: t.Object({
+              id: t.Number(),
+              name: t.String()
+            }),
+            permissions: t.Array(t.String())
+          }),
+        })
+      ),
       404: t.Object({ data: t.Null() })
     }
   })

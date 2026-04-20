@@ -7,7 +7,7 @@ import { GAME_CURRENCIES } from "@repo/shared/schemas/payment";
 import type { StoreItemsPayload } from "@repo/shared/types/entities/store";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import z from "zod";
+import * as z from "zod/v4";
 
 const STORE_LIST_TYPE = ["all", "donate", "event"] as const;
 

@@ -43,7 +43,7 @@ const ServersList = reatomComponent(({ ctx }) => {
       {data.map((i) => (
         <div
           key={i.value}
-          className="flex flex-col gap-4 w-full border border-neutral-600 rounded-xl p-4"
+          className="flex flex-col gap-4 w-full bg-neutral-800 rounded-xl p-4"
         >
           <Typography className='font-semibold text-base'>
             {i.name}
@@ -64,7 +64,7 @@ const ServersList = reatomComponent(({ ctx }) => {
 
 export default function Page() {
   return (
-    <div className="flex flex-col w-full gap-6">
+    <div className="flex flex-col w-full h-full gap-6">
       <PageHeaderImage img={mapImage} />
       <div className="flex flex-col gap-4 h-full w-full">
         <Typography className="text-3xl font-semibold">

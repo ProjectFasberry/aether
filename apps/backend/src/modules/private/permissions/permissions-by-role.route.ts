@@ -2,7 +2,7 @@ import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 
 const permissionsSchema = z.object({
   type: z.enum(["accessed", "restricted", "all"]).optional().default("all")

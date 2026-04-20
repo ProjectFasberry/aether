@@ -1,5 +1,5 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { playerActivityAction, playerLocationAction } from "../models/activity.model";
+import { playerActivity } from "../models/activity.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import { isClientAtom } from "@/shared/models/page-context.model";
@@ -10,14 +10,13 @@ import { onConnect, sleep } from "@reatom/framework";
 import { playerParamAtom } from "../models/player.model";
 
 const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
-  useUpdate((ctx) => playerLocationAction(ctx, nickname), [nickname]);
+  useUpdate((ctx) => playerActivity.location.fetch(ctx, nickname), [nickname]);
 
-  const data = ctx.spy(playerLocationAction.dataAtom);
-
-  if (ctx.spy(playerLocationAction.statusesAtom).isPending) {
+  if (ctx.spy(playerActivity.location.fetch.statusesAtom).isPending) {
     return <Skeleton className="h-6 w-48" />
   }
 
+  const data = ctx.spy(playerActivity.location.fetch.dataAtom);
   if (!data) return null;
 
   return (
@@ -38,7 +37,7 @@ const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname })
 }, "PlayerLocation")
 
 const PlayerServer = reatomComponent(({ ctx }) => {
-  const { server, nickname } = ctx.get(playerActivityAction.dataAtom) as Extract<PlayerActivityPayload, { type: "online" }>
+  const { server, nickname } = ctx.get(playerActivity.online.fetch.dataAtom) as Extract<PlayerActivityPayload, { type: "online" }>
 
   return (
     <Dialog>
@@ -65,37 +64,36 @@ const PlayerServer = reatomComponent(({ ctx }) => {
   )
 }, "PlayerLocation")
 
-onConnect(playerActivityAction.dataAtom, (ctx) => {
+onConnect(playerActivity.online.fetch.dataAtom, (ctx) => {
   const nickname = ctx.get(playerParamAtom)
-  playerActivityAction(ctx, nickname!)
+  playerActivity.online.fetch(ctx, nickname!)
 })
 
-onConnect(playerActivityAction.dataAtom, async (ctx) => {
+onConnect(playerActivity.online.fetch.dataAtom, async (ctx) => {
   while (ctx.isConnected()) {
-    await playerActivityAction.retry(ctx).catch(() => { })
+    await playerActivity.online.fetch.retry(ctx).catch(() => { })
     await ctx.schedule(() => sleep(60000))
   }
 })
 
+const PlayerActivitySkeleton = () => {
+  return (
+    <div className="flex flex-col gap-1 items-start justify-start w-full bg-neutral-800 rounded-xl p-4">
+      <Skeleton className="h-8 w-24" />
+      <Skeleton className="h-6 w-36" />
+    </div>
+  )
+}
+
 export const PlayerActivity = reatomComponent(({ ctx }) => {
   if (!ctx.spy(isClientAtom)) {
-    return (
-      <div className="flex flex-col gap-1 items-start justify-start w-full border border-neutral-600 rounded-xl p-4">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-6 w-36" />
-      </div>
-    )
+    return <PlayerActivitySkeleton />
   }
 
-  const data = ctx.spy(playerActivityAction.dataAtom);
+  const data = ctx.spy(playerActivity.online.fetch.dataAtom);
 
-  if (ctx.spy(playerActivityAction.statusesAtom).isPending) {
-    return (
-      <div className="flex flex-col gap-1 items-start justify-start w-full border border-neutral-600 rounded-xl p-4">
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-6 w-36" />
-      </div>
-    )
+  if (ctx.spy(playerActivity.online.fetch.statusesAtom).isPending) {
+    return <PlayerActivitySkeleton />
   }
 
   if (!data) return null;
@@ -103,7 +101,7 @@ export const PlayerActivity = reatomComponent(({ ctx }) => {
   const isOnline = data.type === 'online'
 
   return (
-    <div className="flex flex-col gap-2 w-full border border-neutral-600 rounded-xl p-4">
+    <div className="flex flex-col gap-2 w-full bg-neutral-800 rounded-xl p-4">
       <div className="flex items-center gap-2">
         {isOnline && <img src={expImage} alt="" width={22} height={22} />}
         <Typography className="font-semibold text-lg">

@@ -5,7 +5,7 @@ import { Permissions } from "#/shared/constants/permissions";
 import { getNats } from "#/shared/nats/client";
 import { nicknameSchema, passwordSchema } from "@repo/shared/schemas/auth";
 import Elysia from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 
 function publishAuth(event: string, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = getNats()
@@ -14,6 +14,7 @@ function publishAuth(event: string, { nickname, created_at }: { nickname: string
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())
+  // @ts-expect-error
   .post("/register", async ({ ip, body: { nickname, password, mnHex } }) => {
     const query = await register.create({ nickname, ip, password, mnHex });
     return { data: query }
@@ -23,7 +24,7 @@ const playersAuthReg = new Elysia()
       password: passwordSchema
     }),
     afterResponse: ({ responseValue }) => {
-      const res = responseValue as { data: { nickname: string, created_at: Date }}
+      const res = responseValue as { data: { nickname: string, created_at: Date } }
       publishAuth("register", res.data);
     }
   })

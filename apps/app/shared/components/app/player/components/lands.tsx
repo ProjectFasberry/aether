@@ -3,15 +3,14 @@ import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
 import { Land } from "@repo/shared/types/entities/land"
 import { createLink, Link } from "../../../config/link"
-import { playerLandsAction, playerLandsAtom } from "../models/player-lands.model"
+import { playerLands, playerLandsState } from "../models/player-lands.model"
 import { atom } from "@reatom/core"
 
 const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land) => {
   return (
     <Link
       href={createLink("land", ulid)}
-      className="flex p-2 lg:p-4 border 
-        hover:bg-neutral-800 duration-300 ease-in-out border-neutral-600 cursor-pointer rounded-xl"
+      className="flex p-2 lg:p-4 duration-300 ease-in-out bg-neutral-800 cursor-pointer rounded-xl"
     >
       <div className="flex items-center gap-3 w-full lg:w-3/4">
         {details?.banner ? (
@@ -35,9 +34,9 @@ const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land
 }
 
 const PlayerLandsList = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(playerLandsAtom)?.data
+  const data = ctx.spy(playerLandsState.data)?.data
 
-  if (ctx.spy(playerLandsAction.statusesAtom).isPending) {
+  if (ctx.spy(playerLands.fetch.statusesAtom).isPending) {
     return <Skeleton className="h-24 w-full" />
   }
 
@@ -50,7 +49,7 @@ const PlayerLandsList = reatomComponent(({ ctx }) => {
 }, "PlayerLandsList")
 
 const playerLandsCountAtom = atom(
-  (ctx) => ctx.spy(playerLandsAtom)?.meta.count ?? 0, 
+  (ctx) => ctx.spy(playerLandsState.data)?.meta.count ?? 0, 
   "playerLandsCount"
 )
 

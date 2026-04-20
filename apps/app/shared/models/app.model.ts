@@ -36,14 +36,45 @@ export async function getAppDictionaries(init: RequestInit) {
 	return client<Record<string, string>>("app/dictionaries", init).exec();
 }
 
+const MOBILE_BREAKPOINT = 768
+
 export const appState = atom(null, "appState").pipe(
 	withAssign((_, name) => ({
+		updateReactiveIsMobile: action((ctx) => {
+			const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
+
+			const onChange = () => {
+				appState.isMobile(ctx, mql.matches)
+			}
+
+			mql.addEventListener("change", onChange)
+
+			return {
+				unsub: () => {
+					mql.removeEventListener("change", onChange)
+				},
+				onChange
+			}
+		}),
 		isMobile: atom(false, `${name}.isMobile`),
+		initState: atom(null, `${name}.initState`).pipe(
+			withAssign((_, name) => ({
+				isMobile: atom(false, `${name}.isMobile`)
+			}))
+		),
 	})),
 );
 
 export const initApp = action((ctx, pageCtx: PageContext) => {
 	pageContextAtom(ctx, pageCtx);
+	appState.initState.isMobile(ctx, isMobile());
 
-	appState.isMobile(ctx, isMobile());
+	const screen = appState.updateReactiveIsMobile(ctx)
+	screen.onChange();
+	
+	const unsubs = [
+		screen.unsub
+	]
+
+	return () => unsubs.forEach(t => { t() })
 }, "initApp");

@@ -124,14 +124,13 @@ const SeedPhraseBody = () => {
                   onUpdateWord?.(idx, e.target.value);
                 }
               }}
-
               onBlur={() => {
                 if (isEditable) {
                   onValidateWord?.(idx);
                 }
               }}
               placeholder="---"
-              className="w-full pl-0 border-none bg-transparent outline-none"
+              className="w-full pl-0 focus-within:ring-transparent bg-transparent outline-none"
             />
           </div>
           {errors[idx] && (

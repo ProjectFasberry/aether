@@ -28,7 +28,7 @@ const useColumnCount = (
 
       for (const breakpoint of sortedBreakpoints) {
         if (window.innerWidth >= breakpoint) {
-          newColumnCount = config[breakpoint.toString()];
+          newColumnCount = config[breakpoint.toString()]!;
           break;
         }
       }
@@ -54,7 +54,7 @@ export function MasonryGrid<T>({
 
     items.forEach((item, index) => {
       const columnIndex = index % numColumns;
-      newColumns[columnIndex].push(item);
+      newColumns[columnIndex]?.push(item);
     });
 
     return newColumns;

@@ -44,10 +44,10 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
-          `fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-16px)] -translate-x-1/2 -translate-y-1/2 
+          `fixed top-1/2 left-1/2 z-50 grid w-full max-w-[min(var(--spacing-container-lg),calc(100vw-1rem))] -translate-x-1/2 -translate-y-1/2
           gap-4 rounded-xl bg-neutral-800 px-4 py-4 sm:px-6 sm:py-4 text-sm ring-1 ring-neutral-600/10 duration-300 
           outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out 
-          data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 sm:max-w-lg`,
+          data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95`,
           className
         )}
         {...props}

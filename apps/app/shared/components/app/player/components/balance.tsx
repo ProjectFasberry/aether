@@ -5,7 +5,7 @@ import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { IconPencil, IconPlus, IconSettings } from "@tabler/icons-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
 import { Switch } from "@repo/ui/switch";
-import { belkoinBalanceAtom, charismBalanceAtom, balanceAction, animateBalanceAtom, balanceTargetServerAtom } from "../models/balance.model";
+import { balance, balanceState } from "../models/balance.model";
 import { AnimatedNumber } from "@repo/ui/animated-number"
 import { navigate } from "vike/client/router";
 import { appDictionariesAtom } from "@/shared/models/app.model";
@@ -29,7 +29,7 @@ type BalanceCardProps = {
 }
 
 const CardValue = reatomComponent<{ balance: number }>(({ ctx, balance }) => {
-  const animate = ctx.spy(animateBalanceAtom);
+  const animate = ctx.spy(balanceState.settings.animateBalance);
 
   return (
     <div className="inline-flex items-center text-neutral-50 text-2xl font-light">
@@ -48,7 +48,7 @@ const SERVERS = [
 ]
 
 const BalanceServerSelect = reatomComponent(({ ctx }) => {
-  const current = ctx.spy(balanceTargetServerAtom);
+  const current = ctx.spy(balanceState.targetServer);
 
   return (
     <DropdownMenu>
@@ -77,8 +77,8 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
               >
                 <Button
                   className="py-1"
-                  onClick={() => balanceTargetServerAtom(ctx, server.value)}
-                  disabled={ctx.spy(balanceAction.statusesAtom).isPending}
+                  onClick={() => balanceState.targetServer(ctx, server.value)}
+                  disabled={ctx.spy(balance.fetch.statusesAtom).isPending}
                 >
                   <Typography
                     className="capitalize 
@@ -145,15 +145,21 @@ const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, im
   )
 }, "BalanceCard")
 
-const BelkoinCard = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(belkoinBalanceAtom);
-  return <BalanceCard balance={data} value="BELKOIN" image={belkoinImage} />
-}, "BelkoinCard")
+const BelkoinCard = reatomComponent(({ ctx }) => (
+  <BalanceCard
+    balance={ctx.spy(balanceState.belkoinBalance)}
+    value="BELKOIN"
+    image={belkoinImage}
+  />
+), "BelkoinCard")
 
-const CharismCard = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(charismBalanceAtom);
-  return <BalanceCard balance={data} value="CHARISM" image={charismImage} />
-}, "CharismCard")
+const CharismCard = reatomComponent(({ ctx }) => (
+  <BalanceCard
+    balance={ctx.spy(balanceState.charismBalance)}
+    value="CHARISM"
+    image={charismImage}
+  />
+), "CharismCard")
 
 const BalanceSettingsDesign = reatomComponent(({ ctx }) => {
   return (
@@ -194,8 +200,8 @@ const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
                 Показывать анимацию
               </Typography>
               <Switch
-                checked={ctx.spy(animateBalanceAtom)}
-                onCheckedChange={v => animateBalanceAtom(ctx, v)}
+                checked={ctx.spy(balanceState.settings.animateBalance)}
+                onCheckedChange={v => balanceState.settings.animateBalance(ctx, v)}
               />
             </div>
           </div>
@@ -215,7 +221,7 @@ const BalanceSettings = () => {
 }
 
 export const Balance = () => {
-  useUpdate(balanceAction, [])
+  useUpdate(balance.fetch, [])
 
   return (
     <div className="flex flex-col gap-2 w-full">

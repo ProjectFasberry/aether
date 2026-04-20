@@ -3,44 +3,45 @@ import { Link } from "../../../config/link"
 import { Typography } from "@repo/ui/typography"
 import { CONTACTS } from "../../../../consts/contacts"
 import { LANDING_URL } from "@/shared/env"
+import { Logotype } from "./logotype"
 
 const telegramHref = CONTACTS.find(t => t.value === 'tg')?.href as string
 const discordHref = CONTACTS.find(t => t.value === 'ds')?.href as string
 
+const createLandingUrl = (path: string) => `${LANDING_URL}${path}`
+
 export const Footer = () => {
   return (
-    <div className="flex items-center justify-center w-full bg-gradient-to-br pb-8
-          from-green-700/40 via-green-800/50 to-green-900/40 h-full sm:h-40 sm:min-h-40 border-t p-3 sm:p-4 border-green-500/20 sm:backdrop-blur-md">
+    <div
+      className="
+        flex items-center justify-center w-full pb-24 h-full lg:h-40 lg:min-h-40 p-3 lg:p-4 
+        bg-gradient-to-br from-green-700/40 via-green-800/50 to-green-900/40 border-t border-green-500/20 
+        lg:backdrop-blur-md
+      "
+    >
       <div className="flex flex-col items-center justify-center responsive h-full gap-4">
-        <div
-          className="flex flex-col sm:flex-row justify-between gap-2 sm:items-start w-full h-full"
-        >
-          <div className="flex flex-col gap-4 items-start h-full w-full sm:w-1/3">
-            <Link href="/" aria-label="Перейти на главную" className="flex select-none items-end gap-2">
-              <img src="/favicon.ico" draggable={false} width={36} height={36} alt="" />
-              <Typography className="text-2xl font-semibold">
-                Fasberry
-              </Typography>
-            </Link>
-            <div className="flex items-center *:duration-150 gap-2">
-              <Link
-                href={discordHref}
-                aria-label="Дискорд"
-                className="flex items-center justify-center p-2 hover:bg-white/20 rounded-full"
-              >
+        <div className="flex flex-col lg:flex-row justify-between gap-4 lg:items-start w-full h-full">
+          <div className="flex flex-col gap-4 items-start h-full w-full lg:w-1/3">
+            <div className="h-14 w-full">
+              <Logotype />
+            </div>
+            <div
+              className="
+                flex items-center gap-2 
+                *:bg-neutral-600/40 *:hover:bg-neutral-600/60 *:duration-150
+                *:flex *:items-center *:justify-center *:p-2 *:rounded-full
+              "
+            >
+              <Link href={discordHref} aria-label="Дискорд">
                 <IconBrandDiscordFilled size={18} />
               </Link>
-              <Link
-                href={telegramHref}
-                aria-label="Телеграм"
-                className="flex items-center justify-center p-2 hover:bg-white/20 rounded-full"
-              >
+              <Link href={telegramHref} aria-label="Телеграм">
                 <IconBrandTelegram size={18} />
               </Link>
             </div>
           </div>
-          <div className="grid grid-rows-3 grid-cols-1 sm:grid-rows-none sm:grid-cols-3 gap-2 w-full sm:w-2/3">
-            <div className="flex flex-col min-w-0 gap-2 *:w-fit">
+          <div className="grid auto-rows-auto grid-cols-1 lg:grid-rows-none lg:grid-cols-3 gap-4 w-full lg:w-2/3">
+            <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
                 О проекте
               </Typography>
@@ -50,28 +51,28 @@ export const Footer = () => {
                 </Link>
               </div>
             </div>
-            <div className="flex flex-col min-w-0 gap-2 *:w-fit">
+            <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
                 Информация
               </Typography>
               <div className="flex flex-col gap-1 min-w-0 *:truncate">
-                <Link href={`${LANDING_URL}/info/contacts`}>
+                <Link href={createLandingUrl("/info/contacts")}>
                   Контакты
                 </Link>
-                <Link href={`${LANDING_URL}/info/privacy`}>
+                <Link href={createLandingUrl("/info/privacy")}>
                   Конфиденциальность
                 </Link>
               </div>
             </div>
-            <div className="flex flex-col min-w-0 gap-2 *:w-fit">
+            <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
                 Ресурсы
               </Typography>
               <div className="flex flex-col gap-1 min-w-0 *:truncate">
-                <Link href={`${LANDING_URL}/status`}>
+                <Link href={createLandingUrl("/status")}>
                   Статус
                 </Link>
-                <Link href={`${LANDING_URL}/wiki`}>
+                <Link href={createLandingUrl("/wiki")}>
                   FAQ
                 </Link>
               </div>

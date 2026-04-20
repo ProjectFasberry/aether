@@ -7,10 +7,10 @@ const landsImage = getStaticImage("arts/clan-preview.jpg");
 
 export default function Page() {
   return (
-    <div className="flex flex-col gap-4 w-full h-full">
+    <div className="flex flex-col gap-6 w-full h-full">
       <PageHeaderImage img={landsImage} />
       <div className="flex flex-col gap-4 h-full w-full">
-        <Typography color="white" className="font-semibold text-2xl">
+        <Typography className="font-semibold text-3xl">
           Территории сервера
         </Typography>
         <LandsList />

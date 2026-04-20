@@ -10,15 +10,27 @@
 		"noEmit": true,
 		"moduleResolution": "Bundler",
 		"jsx": "react-jsx",
+		"composite": false,
 		"jsxImportSource": "react",
 		"target": "ES2022",
 		"lib": ["DOM", "DOM.Iterable", "ESNext"],
 		"types": ["vite/client", "vike-react"],
 		"paths": {
 			"@/*": ["./*"],
-			"@repo/ui/*": ["../../packages/ui/src/components/*"]
+			"@repo/ui/*": ["../../packages/ui/src/components/*"],
+			"@ui-styles/*": ["../../packages/ui/src/styles/*"]
 		}
 	},
-	"include": ["./vite.config.ts", "./declare.d.ts", "./env.d.ts", "./**/*.ts", "./**/*.tsx"],
-	"exclude": ["dist", "node_modules"]
+	"include": [
+		"./vite.config.ts", "./declare.d.ts", "./env.d.ts", "./**/*.ts", "./**/*.tsx"
+	],
+	"exclude": ["dist", "node_modules"],
+	"references": [
+		{ 
+			"path": "../../packages/shared" 
+		},
+		{
+			"path": "../../packages/ui"
+		}
+	]
 }

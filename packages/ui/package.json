@@ -6,7 +6,7 @@
 	"type": "module",
 	"scripts": {
 		"lint": "bunx biome lint",
-		"type-check": "tsc --noEmit"
+		"type-check": "tsc --build"
 	},
 	"exports": {
 		"./*": "./src/components/*"
@@ -28,7 +28,7 @@
 		"@repo/config-typescript": "workspace:*",
 		"@types/react": "19.1.8",
 		"@types/react-dom": "19.1.6",
-		"typescript": "5.8.3",
+		"typescript": "~5.8.3",
 		"tailwindcss": "4.1.8",
 		"tw-animate-css": "1.3.4"
 	}

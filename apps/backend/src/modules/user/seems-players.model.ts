@@ -7,7 +7,7 @@ import type { SeemsLikePlayer, SeemsLikePlayersPayload } from "@repo/shared/type
 import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
-import z from "zod";
+import * as z from "zod/v4";
 
 export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) =>
 	getRedisKey("internal", `seems-like:last-update:${nickname}:data`);

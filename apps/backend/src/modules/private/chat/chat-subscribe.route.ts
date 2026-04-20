@@ -10,11 +10,8 @@ import {
   type ChatEvent,
   type ChatEventVariant,
   type ChatItem,
-  createMessage,
-  deleteMessage,
-  editMessage
+  chat,
 } from "./chat.model";
-import { isProduction } from "#/shared/env";
 
 type ExecEvent = {
   data: unknown,
@@ -24,19 +21,19 @@ type ExecEvent = {
 
 async function createEvent({ data, nickname, publish }: ExecEvent) {
   const body = chatCreateMessageSchema.parse(data);
-  const created = await createMessage(nickname, body.message);
+  const created = await chat.createMsg(nickname, body.message);
   publish("create", created);
 }
 
 async function deleteEvent({ data, nickname, publish }: ExecEvent) {
   const body = chatDeleteMessageSchema.parse(data);
-  await deleteMessage(nickname, body.id);
+  await chat.deleteMsg(nickname, body.id);
   publish("delete", { id: body.id });
 }
 
 async function editEvent({ data, nickname, publish }: ExecEvent) {
   const body = chatEditMessageSchema.parse(data);
-  const edited = await editMessage(nickname, body.id, body.message);
+  const edited = await chat.editMsg(nickname, body.id, body.message);
   publish("edit", edited);
 }
 

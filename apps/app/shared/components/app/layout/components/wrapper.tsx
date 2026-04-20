@@ -28,7 +28,12 @@ const useCreateCtx = (extension?: Fn<[Ctx]>) => {
 
 const SyncPageContext = () => {
   const pageCtx = usePageContext()
-  useUpdate((ctx) => initApp(ctx, pageCtx), [pageCtx])
+
+  useUpdate((ctx) => {
+    const un = initApp(ctx, pageCtx)
+    return un
+  }, [pageCtx])
+
   return null;
 }
 
@@ -81,7 +86,7 @@ export const WrapperChild = ({ children }: PropsWithChildren) => {
     >
       <ReatomProvider>
         <Toaster />
-        <div id="page-container" className="pb-16 sm:pb-0">
+        <div id="page-container">
           {children}
           <Footer />
         </div>

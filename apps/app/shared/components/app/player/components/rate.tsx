@@ -2,7 +2,7 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { IconHeart } from "@tabler/icons-react"
 import { tv } from "tailwind-variants"
-import { rateListAction, RateUser, rateUserAction } from "../models/rate.model"
+import { playerRate, RateUser } from "../models/rate.model"
 import { isIdentityAtom } from "../models/player.model"
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-card"
 import { Typography } from "@repo/ui/typography"
@@ -70,9 +70,9 @@ const ListCard = ({ initiator, created_at }: RateUser) => {
 }
 
 const List = reatomComponent(({ ctx }) => {
-  useUpdate(rateListAction, []);
+  useUpdate(playerRate.fetchList, []);
 
-  const data = ctx.spy(rateListAction.dataAtom)?.data;
+  const data = ctx.spy(playerRate.fetchList.dataAtom)?.data;
 
   if (data && data.length === 0) {
     return <Typography color="gray">пусто</Typography>
@@ -94,13 +94,12 @@ const List = reatomComponent(({ ctx }) => {
 }, "List")
 
 const RateList = reatomComponent<Pick<RateProps, "count">>(({ ctx, count }) => {
-  if (ctx.spy(rateListAction.statusesAtom).isPending && !ctx.spy(rateListAction.cacheAtom)) {
+  if (ctx.spy(playerRate.fetchList.statusesAtom).isPending && !ctx.spy(playerRate.fetchList.cacheAtom)) {
     return <Skeleton className="h-36 w-full" />
   }
 
   const currentUser = ctx.get(currentUserAtom)
-
-  const isDisabled = !currentUser || ctx.spy(rateUserAction.statusesAtom).isPending
+  const isDisabled = !currentUser || ctx.spy(playerRate.rate.statusesAtom).isPending
 
   return (
     <>
@@ -128,7 +127,7 @@ const RateList = reatomComponent<Pick<RateProps, "count">>(({ ctx, count }) => {
           <SheetTrigger asChild>
             <Button
               data-state="filled"
-              disabled={ctx.spy(rateUserAction.statusesAtom).isPending}
+              disabled={ctx.spy(playerRate.rate.statusesAtom).isPending}
               className={likeButtonVariants({ variant: "filled" })}
             >
               <IconHeart className={rateButtonChildVariants({ variant: "filled" })} />
@@ -159,8 +158,8 @@ export const Rate = reatomComponent<RateProps>(({
   return (
     <Button
       data-state={isRated ? "rated" : "unrated"}
-      disabled={ctx.spy(rateUserAction.statusesAtom).isPending}
-      onClick={() => rateUserAction(ctx, nickname)}
+      disabled={ctx.spy(playerRate.rate.statusesAtom).isPending}
+      onClick={() => playerRate.rate(ctx, nickname)}
       className={likeButtonVariants({ variant: parentVariant })}
     >
       <IconHeart className={rateButtonChildVariants({ variant: childVariant })} />

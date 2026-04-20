@@ -6,13 +6,13 @@ import { wrapTitle } from "@/shared/lib/wrap-title";
 import { DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { logRouting } from "@/shared/lib/log";
 import { createCtx, Ctx } from "@reatom/core";
-import { getLands, playerLandsAtom } from "@/shared/components/app/player/models/player-lands.model";
+import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
 import { getPlayer, playerAtom } from "@/shared/components/app/player/models/player.model";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import dayjs from "@/shared/lib/create-dayjs"
 import { PlayerLandsPayload } from "@repo/shared/types/entities/land";
 import { isEmptyArray } from "@/shared/lib/array";
-import { playerRateAtom } from "@/shared/components/app/player/models/rate.model";
+import { playerRateState } from "@/shared/components/app/player/models/rate.model";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
@@ -71,8 +71,8 @@ async function fillSnapshot(ctx: Ctx, player: Player, lands: PlayerLandsPayload 
   const { rate, ...base } = player;
 
   playerAtom(ctx, base);
-  playerRateAtom(ctx, rate);
-  playerLandsAtom(ctx, lands);
+  playerRateState.data(ctx, rate);
+  playerLandsState.data(ctx, lands);
 }
 
 export async function data(pageCtx: PageContextServer) {

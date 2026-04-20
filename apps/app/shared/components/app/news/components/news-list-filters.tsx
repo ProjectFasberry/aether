@@ -1,6 +1,6 @@
 import { Button } from "@repo/ui/button"
-import { newsAllAction, newsAscAtom, newsSearchQueryAtom, onChange } from "../models/news-list.model"
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
+import { news, newsState } from "../models/news-list.model"
+import { reatomComponent } from "@reatom/npm-react"
 import { Input } from "@repo/ui/input"
 import { IconArrowDown, IconArrowUp, IconSearch } from "@tabler/icons-react"
 
@@ -11,27 +11,23 @@ const NewsFilterSearch = reatomComponent(({ ctx }) => {
       <Input
         className="w-full h-10 pl-12"
         placeholder="Название"
-        onChange={e => onChange(ctx, e)}
-        value={ctx.spy(newsSearchQueryAtom)}
+        onChange={e => newsState.searchQuery.onChangeEvent(ctx, e)}
+        value={ctx.spy(newsState.searchQuery)}
         maxLength={1024}
       />
     </div>
   )
 }, "TasksFilterSearch")
 
-const NewsFilterAsc = reatomComponent(({ ctx }) => {
-  const asc = ctx.spy(newsAscAtom);
-
-  const handle = () => newsAscAtom(ctx, (state) => !state)
-
+const NewsFilterAsc = reatomComponent(({ ctx }) => {  
   return (
     <Button
-      background="default"
-      className="text-neutral-50 flex aspect-square h-10 w-10 p-0 items-center justify-center"
-      onClick={handle}
-      disabled={ctx.spy(newsAllAction.statusesAtom).isPending}
+      background="compound"
+      className="aspect-square rounded-xl text-neutral-400 h-10 w-10 p-0"
+      onClick={() => newsState.asc(ctx, (state) => !state)}
+      disabled={ctx.spy(news.fetch.statusesAtom).isPending}
     >
-      {asc ? <IconArrowUp size={20} /> : <IconArrowDown size={20} />}
+      {ctx.spy(newsState.asc) ? <IconArrowUp size={20} /> : <IconArrowDown size={20} />}
     </Button>
   )
 }, "TasksFilterAsc")

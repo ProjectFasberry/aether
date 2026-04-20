@@ -82,7 +82,7 @@ export const Land = reatomComponent(({ ctx }) => {
   const { area, members, balance, stats, level, created_at } = land
 
   return (
-    <div className="flex flex-col lg:flex-row items-start gap-8 w-full h-full relative">
+    <div className="flex flex-col lg:flex-row items-start gap-6 w-full h-full relative">
       <div className="flex flex-col gap-6 w-full h-full">
         <div className="flex items-start gap-6 w-full h-full">
           <LandBanner />
@@ -139,7 +139,7 @@ export const Land = reatomComponent(({ ctx }) => {
                 <Typography className="text-xl">
                   Баннер
                 </Typography>
-                <IconLink size={26} />
+                <IconLink size={24} />
               </a>
             </div>
           </div>
@@ -149,8 +149,8 @@ export const Land = reatomComponent(({ ctx }) => {
             <Typography className="text-2xl xl:text-3xl font-semibold">
               Участники
             </Typography>
-            <div className="flex items-center justify-center bg-neutral-800 h-8 w-10 rounded-xl p-1">
-              <span className="font-semibold text-lg">{members.length}</span>
+            <div className="flex items-center justify-center aspect-square bg-neutral-800 h-8 rounded-lg">
+              <span className="font-semibold text-base">{members.length}</span>
             </div>
           </div>
           <div className="flex flex-col gap-1 w-full">
@@ -158,20 +158,27 @@ export const Land = reatomComponent(({ ctx }) => {
               <Link
                 href={createLink("player", member.nickname)}
                 key={member.nickname}
-                className="flex items-center gap-2 w-full"
+                className="flex border hover:bg-neutral-800 justify-between border-neutral-800 py-2 px-4 rounded-lg items-center gap-2 w-full"
               >
-                <Avatar nickname={member.nickname} className="min-h-[40px] min-w-[40px]" propHeight={40} propWidth={40} />
+                <div className="flex items-center gap-2">
+                  <Avatar
+                    nickname={member.nickname}
+                    className="min-h-[34px] min-w-[34px]"
+                    propHeight={34}
+                    propWidth={34}
+                  />
+                  <Typography className="text-lg">
+                    {member.nickname}
+                  </Typography>
+                </div>
                 {idx === 0 && (
-                  <IconCrown size={28} className='text-gold' />
+                  <IconCrown size={24} className='text-gold' />
                 )}
-                <Typography className="text-lg">
-                  {member.nickname}
-                </Typography>
               </Link>
             ))}
           </div>
         </div>
-        {ctx.spy(landIsOwnerAtom) && <LandToggleMode />}
+        {/* {ctx.spy(landIsOwnerAtom) && <LandToggleMode />} */}
       </div>
     </div>
   )

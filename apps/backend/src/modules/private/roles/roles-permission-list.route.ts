@@ -3,7 +3,7 @@ import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import type { RolesRolePermissionListPayload } from "@repo/shared/types/entities/role";
 import Elysia from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 
 export const rolesRolePermissionList = new Elysia()
   .use(validatePermission(Permissions.get("ROLES.READ")))

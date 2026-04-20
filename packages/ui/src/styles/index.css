@@ -1,0 +1,3 @@
+@theme {
+  --spacing-container-lg: calc(var(--breakpoint-lg) - 1rem);
+}

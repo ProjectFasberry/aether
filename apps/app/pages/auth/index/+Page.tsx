@@ -2,7 +2,6 @@ import { AuthError, Verify } from "@/shared/components/app/auth/components/auth"
 import { type AuthType, auth, authIsDisabledAtom, authState, authTriggerIsDisabledAtom } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { Typography } from "@repo/ui/typography";
 import { action } from "@reatom/core";
 import { Link } from "@/shared/components/config/link";
 import { startPageEvents } from "@/shared/lib/events";
@@ -10,7 +9,6 @@ import { pageContextAtom } from "@/shared/models/page-context.model";
 import { showResetPasswordAtom } from "@/shared/components/app/auth/models/login.model";
 import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
-import { tv } from "tailwind-variants";
 import { useEffect } from "react";
 import { register } from "@/shared/components/app/auth/models/register.model";
 
@@ -19,26 +17,14 @@ const ResetPassword = reatomComponent(({ ctx }) => {
   if (!showResetPassword) return null;
 
   return (
-    <Link href="/auth/restore">
-      <Typography className='text-center text-sm text-neutral-400'>
-        Я забыл пароль
-      </Typography>
+    <Link
+      href="/auth/restore"
+      className='flex items-center justify-center w-full text-sm text-neutral-400'
+    >
+      Я забыл пароль
     </Link>
   )
 }, "ResetPassword")
-
-const formVariant = tv({
-  base: `rounded-lg border border-neutral-800`,
-  variants: {
-    status: {
-      active: "",
-      inactive: "pointer-events-none opacity-60"
-    }
-  },
-  defaultVariants: {
-    status: "active"
-  }
-})
 
 const Auth = reatomComponent(({ ctx }) => {
   const type = ctx.spy(authState.type)
@@ -50,25 +36,15 @@ const Auth = reatomComponent(({ ctx }) => {
     <Tabs
       onValueChange={value => authState.type(ctx, value as AuthType)}
       value={type}
-      className={formVariant({
-        status: isDisabled ? "inactive" : "active",
-        className: `flex flex-col gap-4 w-full p-3 sm:p-4 lg:p-6 max-w-xl`
-      })}
+      inert={isDisabled}
+      className="flex flex-col gap-4 w-full p-3 sm:p-4 lg:p-6 max-w-lg rounded-lg bg-neutral-900 inert:opacity-70 inert:pointer-events-none"
     >
       <TabsList
-        data-disabled={triggerIsDisabled.toString()}
-        className="flex flex-col sm:flex-row w-full gap-2 *:h-10 *:w-full"
+        data-disabled={triggerIsDisabled}
+        className="flex flex-col sm:flex-row min-h-24 h-24 sm:min-h-fit sm:h-fit w-full gap-2 *:h-10 *:w-full"
       >
-        <TabsTrigger value="login">
-          <Typography>
-            Вход
-          </Typography>
-        </TabsTrigger>
-        <TabsTrigger value="register">
-          <Typography>
-            Регистрация
-          </Typography>
-        </TabsTrigger>
+        <TabsTrigger value="login">Вход</TabsTrigger>
+        <TabsTrigger value="register">Регистрация</TabsTrigger>
       </TabsList>
       <div className="flex flex-col gap-6 min-w-0 w-full h-full">
         <TabsContent value="register">
@@ -84,11 +60,9 @@ const Auth = reatomComponent(({ ctx }) => {
 }, "Auth")
 
 const events = action((ctx) => {
-  const pageContext = ctx.get(pageContextAtom);
-  if (!pageContext) return;
-
-  const search = pageContext.urlParsed.search
-  authState.searchParams(ctx, search)
+  const pageCtx = ctx.get(pageContextAtom);
+  if (!pageCtx) return;
+  authState.searchParams(ctx, pageCtx.urlParsed.search)
 })
 
 const SyncData = reatomComponent(({ ctx }) => {
@@ -106,12 +80,10 @@ export default function Page() {
   useUpdate((ctx) => startPageEvents(ctx, events), [])
 
   return (
-    <div className="flex flex-col gap-4 h-[90vh] items-center justify-center w-full">
+    <div className="flex flex-col gap-4 items-center py-30 min-h-dvh w-full">
       <SyncData />
-      <div className="flex flex-col gap-4 items-center justify-center flex-1 w-full">
-        <Auth />
-        <AuthError />
-      </div>
+      <Auth />
+      <AuthError />
       <div className="flex items-start justify-center h-48 w-full">
         <Verify />
       </div>

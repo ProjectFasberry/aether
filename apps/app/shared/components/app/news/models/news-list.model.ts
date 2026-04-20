@@ -1,95 +1,96 @@
 import { logError } from "@/shared/lib/log"
 import {
-  action,
-  AsyncCtx,
-  atom,
-  batch,
-  Ctx,
-  reatomAsync,
-  reatomMap,
-  sleep,
-  withCache,
-  withConcurrency,
-  withDataAtom,
-  withStatusesAtom
+  action, atom, batch, reatomAsync, reatomMap, sleep,
+  withAssign, withCache, withConcurrency, withDataAtom, withStatusesAtom
 } from "@reatom/framework"
 import { NewsPayload } from "@repo/shared/types/entities/news"
 import { getNews } from "./news.model"
 
-export const newsAllOldDataAtom = reatomMap<number, NewsPayload["data"][number]>(new Map(), "newsAllOldData")
-export const newsAllDataAtom = reatomMap<number, NewsPayload["data"][number]>(new Map(), "newsAllData")
-export const newsAllMetaAtom = atom<Nullable<NewsPayload["meta"]>>(null, "newsAllMeta")
-export const newsAllDataArrAtom = atom((ctx) => Array.from(ctx.spy(newsAllDataAtom).values()), "newsAllDataArr")
+export const newsAllDataArrAtom = atom((ctx) =>
+  Array.from(ctx.spy(newsState.allData).values()),
+  "newsAllDataArr"
+)
 
-export const newsSearchQueryAtom = atom("", "newsSearchQuery")
-export const newsAscAtom = atom(false, "newsAsc")
-export const newsIsViewAtom = atom(false, "newsIsView")
-export const newsEndCursorAtom = atom<Maybe<string>>(undefined, "newsEndCursor")
+export const newsState = atom(null, "newsState").pipe(
+  withAssign((_, name) => ({
+    allOldData: reatomMap<number, NewsPayload["data"][number]>(new Map(), `${name}.allOldData`),
+    allData: reatomMap<number, NewsPayload["data"][number]>(new Map(), `${name}.allData`),
+    allMeta: atom<Nullable<NewsPayload["meta"]>>(null, `${name}.allMeta`),
+    asc: atom(false, `${name}.asc`),
+    isView: atom(false, `${name}.isView`).pipe(
+      withAssign((_, name) => ({
+        onIsViewEvent: action((ctx) => {
+          const meta = ctx.get(newsState.allMeta)
+          if (!meta) return;
 
-newsAscAtom.onChange((ctx) => refetchNewsAll(ctx))
+          const hasNextPage = meta?.hasNextPage
+          if (!hasNextPage) return;
 
-export const onChange = action(async (ctx, e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value
-  newsSearchQueryAtom(ctx, value);
+          batch(ctx, () => {
+            newsState.allOldData(ctx, ctx.get(newsState.allData))
+            newsState.endCursor(ctx, meta.endCursor ?? null)
+          })
 
-  await ctx.schedule(() => sleep(300))
+          news.refetchAll(ctx)
+        }, `${name}.onIsViewEvent`)
+      }))
+    ),
+    searchQuery: atom("", `${name}.seachQuery`).pipe(
+      withAssign((_, name) => ({
+        onChangeEvent: action(async (ctx, e: React.ChangeEvent<HTMLInputElement>) => {
+          newsState.searchQuery(ctx, e.target.value);
 
-  refetchNewsAll(ctx)
-}, "onChange").pipe(withConcurrency())
+          await ctx.schedule(() => sleep(300))
 
-function refetchNewsAll(ctx: Ctx) {
-  newsAllAction.cacheAtom.reset(ctx)
-  newsAllAction(ctx)
-}
+          news.refetchAll(ctx)
+        }, `${name}.onChangeEvent`).pipe(
+          withConcurrency()
+        )
+      }))
+    ),
+    endCursor: atom<Nullable<string>>(null, `${name}.endCursor`)
+  }))
+)
 
-newsIsViewAtom.onChange((ctx, state) => {
-  if (!state) return;
+export const news = atom(null, "news").pipe(
+  withAssign((_, name) => ({
+    refetchAll: action((ctx) => {
+      news.fetch.cacheAtom.reset(ctx)
+      news.fetch(ctx)
+    }),
+    fetch: reatomAsync(async (ctx) => {
+      const opts = {
+        asc: ctx.get(newsState.asc),
+        searchQuery: ctx.get(newsState.searchQuery),
+        endCursor: ctx.get(newsState.endCursor)
+      }
 
-  const meta = ctx.get(newsAllMetaAtom)
-  if (!meta) return;
+      return await ctx.schedule(() =>
+        getNews(ctx, opts)
+      )
+    }, {
+      name: `${name}.fetch`,
+      onFulfill: (ctx, res) => {
+        if (!res) return;
 
-  const hasNextPage = meta?.hasNextPage
-  if (!hasNextPage) return;
+        const fresh = res.data.map(d => [d.id, d] as const);
+        const old = ctx.get(newsState.allOldData)
 
-  batch(ctx, () => {
-    newsAllOldDataAtom(ctx, ctx.get(newsAllDataAtom))
-    newsEndCursorAtom(ctx, meta.endCursor)
-  })
+        batch(ctx, () => {
+          newsState.allData(ctx, new Map([...old, ...fresh]))
+          newsState.allMeta(ctx, res.meta)
+        })
+      },
+      onReject: (_, e) => {
+        logError(e)
+      }
+    }).pipe(
+      withDataAtom(null),
+      withStatusesAtom(),
+      withCache({ swr: false })
+    )
+  }))
+)
 
-  refetchNewsAll(ctx)
-})
-
-function getParams(ctx: Ctx) {
-  const opts = {
-    asc: ctx.get(newsAscAtom),
-    searchQuery: ctx.get(newsSearchQueryAtom),
-    endCursor: ctx.get(newsEndCursorAtom)
-  }
-
-  return opts
-}
-
-async function getAllNews(ctx: AsyncCtx) {
-  const opts = getParams(ctx);
-  return getNews(ctx, opts)
-}
-
-export const newsAllAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() => getAllNews(ctx))
-}, {
-  name: "newsAllAction",
-  onFulfill: (ctx, res) => {
-    if (!res) return;
-
-    const fresh = res.data.map(d => [d.id, d] as const);
-    const old = ctx.get(newsAllOldDataAtom)
-
-    batch(ctx, () => {
-      newsAllDataAtom(ctx, new Map([...old, ...fresh]))
-      newsAllMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => {
-    logError(e)
-  }
-}).pipe(withDataAtom(null), withStatusesAtom(), withCache({ swr: false }))
+newsState.asc.onChange((ctx) => news.refetchAll(ctx))
+newsState.isView.onChange((ctx, state) => state && newsState.isView.onIsViewEvent(ctx))

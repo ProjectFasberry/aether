@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import type { CartPayload } from "@repo/shared/types/entities/store";
 import { addItemToBasket, editItemInCart, editItemToBasketSchema, getBasketData, removeItemFromCart, validateInitiatorExists } from "./cart.model";

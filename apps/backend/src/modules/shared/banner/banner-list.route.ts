@@ -5,7 +5,7 @@ import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import type { BannersPayload } from "@repo/shared/types/entities/banner";
 import { executeWithCursorPagination } from "kysely-paginate";
-import z from "zod";
+import * as z from "zod/v4";
 
 const bannersListSchema = z.intersection(
   metaSchema.pick({ asc: true, endCursor: true }),

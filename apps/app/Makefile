@@ -26,6 +26,8 @@ FULL_IMAGE_NAME := $(REGISTRY)/$(STAGE)/$(NAME):$(TAG)
 
 .PHONY: build tag push all
 
+CACHEBUST := $(shell bun -e "console.log(Date.now())")
+
 build:
 	docker build \
 	--platform linux/amd64 \
@@ -34,6 +36,7 @@ build:
 	--secret id=INFISICAL_PROJECT_ID,env=INFISICAL_PROJECT_ID \
 	--secret id=INFISICAL_API_URL,env=INFISICAL_API_URL \
 	--build-arg STAGE=$(STAGE) \
+	--build-arg CACHEBUST=$(CACHEBUST) \
 	-t $(NAME):$(TAG) -f $(abspath Dockerfile) $(abspath ../..)
 
 tag: build

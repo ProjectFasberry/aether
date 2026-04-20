@@ -25,7 +25,7 @@ const tabsListVariants = tv(
   {
     base: `
       group/tabs-list inline-flex w-fit items-center justify-center rounded-xl
-    text-neutral-50 group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit 
+    text-neutral-50 group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit
       group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none`,
     variants: {
       variant: {
@@ -64,8 +64,8 @@ function TabsTrigger({
       data-slot="tabs-trigger"
       className={cn(
         `relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-xl border 
-        border-neutral-800 px-2 py-0.5 text-base font-medium whitespace-nowrap transition-all group-data-vertical/tabs:w-full 
-        group-data-vertical/tabs:justify-start focus-visible:border-green-600 focus-visible:ring-[3px] focus-visible:ring-ring/50 
+        border-neutral-700 px-2 py-0.5 text-base font-medium whitespace-nowrap transition-all group-data-vertical/tabs:w-full 
+        group-data-vertical/tabs:justify-start focus-visible:border-green focus-visible:ring-[3px] focus-visible:ring-ring/50 
         focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 
         has-data-[icon=inline-end]:pr-1
         has-data-[icon=inline-start]:pl-1 group-data-[variant=default]/tabs-list:data-[state=active]:shadow-sm 

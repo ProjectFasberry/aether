@@ -1,4 +1,4 @@
-import { reatomAsync, withErrorAtom, withStatusesAtom } from "@reatom/async";
+import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { atom, batch, Ctx } from "@reatom/core";
 import { withReset } from "@reatom/framework";
 import { withHistory } from "@/shared/lib/reatom-helpers";
@@ -123,3 +123,18 @@ ratingIsViewAtom.onChange((ctx, state) => {
 	}
 });
 //#endregion
+
+export type RatingItem = Pick<{ title: string; childs: string[] }, "title"> & {
+	childs: { title: string, value: string }[],
+	key: string
+};
+
+export const ratingList = reatomAsync(async (ctx) => {
+	return await ctx.schedule(() =>
+		client<RatingItem[]>("server/rating/list").exec()
+	)
+}, "ratingsList").pipe(
+	withDataAtom(), 
+	withCache({ swr: false }),
+	withStatusesAtom()
+)

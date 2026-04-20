@@ -1,7 +1,7 @@
 import { getNats } from "#/shared/nats/client"
 import { SUBJECTS } from "#/shared/nats/subjects"
 import type { paymentFiatMethodSchema } from "@repo/shared/schemas/payment"
-import type { z } from "zod"
+import type * as z from "zod/v4"
 
 type CreateFiatOrder = { 
   nickname: string, 

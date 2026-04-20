@@ -1,5 +1,5 @@
 import { t, type TSchema } from "elysia";
-import z from "zod";
+import * as z from "zod/v4";
 
 export const metaSchema = z.object({
   asc: z.stringbool().or(z.boolean()).optional().default(true),
