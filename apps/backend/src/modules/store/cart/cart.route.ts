@@ -75,14 +75,6 @@ const cartPricePayload = t.Object({
 
 const basketList = new Elysia()
   .use(defineUser())
-  .model({
-    "cart-list": withData(
-      t.Object({
-        products: t.Array(cartListPayload),
-        price: cartPricePayload
-      })
-    )
-  })
   .get("/list", async ({ nickname: initiator }) => {
     const [products, price] = await Promise.all([
       getBasketData(initiator),
@@ -94,7 +86,12 @@ const basketList = new Elysia()
     return { data }
   }, {
     response: {
-      200: "cart-list"
+      200: withData(
+        t.Object({
+          products: t.Array(cartListPayload),
+          price: cartPricePayload
+        })
+      )
     }
   })
 

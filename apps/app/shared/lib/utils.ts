@@ -1,3 +1,6 @@
+import { PageContextServer } from "vike/types";
+import { APP_OPTIONS_KEY, AppOptionsPayloadExtend } from "../models/app.model";
+
 type WsConfig = {
   host: string;
   port?: number | string;
@@ -13,3 +16,96 @@ export const createWsUrl = (config: WsConfig): string => {
   const cleanHost = host.replace(/\/+$/, '');
   return `${protocol}://${cleanHost}${portSuffix}${cleanPath}`;
 };
+
+export const isMobile = (): boolean => {
+  const ua = navigator.userAgent.toLowerCase();
+
+  const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
+  if (!isMobileUA) return false;
+
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (gl) {
+      const debugInfo = (gl as any).getExtension("WEBGL_debug_renderer_info");
+      // @ts-expect-error
+      const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_ID).toLowerCase();
+
+      const isDesktopGPU = /nvidia|intel|amd|swiftshader|microsoft/i.test(renderer);
+      if (isDesktopGPU) return false;
+    }
+  } catch (e) { }
+
+  const platform = (navigator as any).platform?.toLowerCase() || "";
+  if (/win32|macintel/i.test(platform)) return false;
+
+  return true;
+};
+
+export function getIsAuth(snapshot: PageContextServer["snapshot"]) {
+  const actualSnapshot = snapshot[APP_OPTIONS_KEY].data as AppOptionsPayloadExtend;
+  const isAuth = actualSnapshot.isAuth
+  return isAuth
+}
+
+export function parseCookie(header?: string): Record<string, string> {
+  if (!header) return {};
+
+  return header
+    .split(';')
+    .map(v => v.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((acc, pair) => {
+      const eqIndex = pair.indexOf('=');
+      if (eqIndex === -1) return acc;
+
+      const key = pair.slice(0, eqIndex).trim();
+      const value = pair.slice(eqIndex + 1).trim();
+
+      if (key) acc[key] = decodeURIComponent(value);
+      return acc;
+    }, {});
+}
+
+export function setCookie(
+  name: string,
+  value: string,
+  options: {
+    maxAgeMs?: number;
+    path?: string;
+    domain?: string;
+    secure?: boolean;
+    sameSite?: 'Strict' | 'Lax' | 'None';
+  } = {
+    sameSite: "Lax",
+    path: "/"
+  }
+) {
+  const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`];
+
+  if (options.maxAgeMs) {
+    const expires = new Date(Date.now() + options.maxAgeMs);
+    parts.push(`Expires=${expires.toUTCString()}`);
+  }
+
+  if (options.path) parts.push(`Path=${options.path}`);
+  if (options.domain) parts.push(`Domain=${options.domain}`);
+  if (options.secure) parts.push(`Secure`);
+  if (options.sameSite) parts.push(`SameSite=${options.sameSite}`);
+
+  document.cookie = parts.join('; ');
+}
+
+export function isEmptyArray(data: unknown): boolean {
+  return !Array.isArray(data) || data.length === 0;
+}
+
+export function validateNumber(input: string): number | null {
+  const num = Number(input);
+  return Number.isFinite(num) ? num : null;
+};
+
+export function parseBoolean(str: string | undefined | null): boolean {
+  return String(str).toLowerCase() === "true";
+}

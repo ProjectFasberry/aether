@@ -3,24 +3,19 @@ import { Button } from "@repo/ui/button"
 import { IconCheck, IconGift, IconTrash } from "@tabler/icons-react"
 import { Typography } from "@repo/ui/typography"
 import { createLink } from "@/shared/components/config/link"
-import {
-  removeItemFromCartAction,
-  updateItemSelectedStatus
-} from "../../models/store-item.model"
-import {
-  changeRecipientOpenDialogAction
-} from "../../models/store-recipient.model"
+import { storeItem } from "../../models/store-item.model"
+import { changeRecipientOpenDialogAction } from "../../models/store-recipient.model"
 import { CartPayload } from "@repo/shared/types/entities/store"
 import { CURRENCIES } from "./cart-price"
-import { cartDataItemIsSelectAtom } from "../../models/store-cart.model"
+import { cart, cartDataItemIsSelectAtom } from "../../models/store-cart.model"
 
 const CartItemRemoveFromCart = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (
     <Button
       title="Удалить"
       className="flex cursor-pointer items-center justify-center h-8 p-1 rounded-lg bg-neutral-800"
-      onClick={() => removeItemFromCartAction(ctx, id)}
-      disabled={ctx.spy(removeItemFromCartAction.statusesAtom).isPending}
+      onClick={() => cart.removeItem(ctx, id)}
+      disabled={ctx.spy(cart.removeItem.statusesAtom).isPending}
     >
       <IconTrash size={22} />
     </Button>
@@ -33,8 +28,8 @@ const CartItemUpdateSelectStatus = reatomComponent<{ id: number }>(({ ctx, id })
   return (
     <Button
       className="absolute top-3 left-3 flex items-center justify-center !p-0 w-6 h-6 bg-green-600/80"
-      onClick={() => updateItemSelectedStatus(ctx, id)}
-      disabled={ctx.spy(updateItemSelectedStatus.statusesAtom).isPending}
+      onClick={() => storeItem.updateSelectedStatus(ctx, id)}
+      disabled={ctx.spy(storeItem.updateSelectedStatus.statusesAtom).isPending}
     >
       {selected ? <IconCheck size={22} /> : null}
     </Button>

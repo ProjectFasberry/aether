@@ -1,123 +1,93 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/async";
-import { action, atom, batch } from "@reatom/core";
-import { addItemToCartAction, updateCart } from "./store-cart.model";
+import { action, atom } from "@reatom/core";
+import { cart, cartState } from "./store-cart.model";
 import { logError } from "@/shared/lib/log";
 import type { StoreItem } from "@repo/shared/types/entities/store"
-import { client, withJsonBody, withLogging } from "@/shared/lib/client-wrapper";
-import { itemStatusesAtom, SelectItemToCartOptions, simulate } from "./store-item-status.model";
-import { cartDataAtom } from "./store-cart.model.atoms";
+import { client, withJsonBody } from "@/shared/lib/client-wrapper";
+import { withSsr } from "@/shared/lib/reatom-helpers";
+import { withAssign } from "@reatom/framework";
+import { SelectItemToCartOptions, storeItemsState } from "./store.model";
+import { invariant } from "@/shared/lib/invariant";
 
 export async function getStoreItem(id: string, init: RequestInit) {
-  return client<StoreItem>(`store/item/${id}`, { ...init, throwHttpErrors: false, })
-    .pipe(withLogging())
+  return client
+    .get<StoreItem>(`store/item/${id}`, { ...init, throwHttpErrors: false, })
     .exec()
 }
-
-export const updateItemSelectedStatus = reatomAsync(async (ctx, id: number) => {
-  const current = ctx.get(cartDataAtom).find(target => target.id === id);
-  if (!current) throw new Error("Current is not defined")
-
-  const json = { id, key: "selected", value: !current.selected };
-
-  const result = await ctx.schedule(() =>
-    client
-      .post<boolean>("store/cart/edit")
-      .pipe(withJsonBody(json), withLogging())
-      .exec()
-  )
-
-  return { id, result }
-}, {
-  name: "updateItemSelectedStatus",
-  onFulfill: (ctx, { result, id }) => {
-    updateCart(ctx)
-  },
-  onReject: (_, e) => {
-    logError(e, { type: "combined" })
-  }
-}).pipe(withStatusesAtom())
-
 
 type UpdateItemStatusOptions =
   | { patch: Partial<SelectItemToCartOptions> }
   | { remove: true }
   | { set: { isSelected: boolean; isLoading: boolean } }
 
-export const updateItemStatus = action((ctx, id: number, options: UpdateItemStatusOptions) => {
-  itemStatusesAtom(ctx, (state) => {
-    if (!state) return state;
+export const storeItemState = atom(null, "storeItemState").pipe(
+  withAssign(() => ({
+    data: atom<StoreItem | null>(null, "selectedItem").pipe(withSsr("selectedItem"))
+  }))
+)
 
-    const next = { ...state };
+export const storeItem = atom(null, "storeItem").pipe(
+  withAssign((_, name) => ({
+    add: action((ctx, id: number) => {
+      const isSelected = ctx.get(getItemStatus(id))?.isSelected ?? false;
 
-    if ('remove' in options && options.remove) {
-      delete next[id];
-    }
+      if (isSelected) {
+        cart.removeItem(ctx, id)
+        return;
+      }
 
-    if ('set' in options) {
-      next[id] = options.set;
-    }
+      cart.addItem(ctx, id)
+    }, `${name}.add`),
+    updateStatus: action((ctx, id: number, options: UpdateItemStatusOptions) => {
+      storeItemsState.statuses(ctx, (state) => {
+        if (!state) return state;
 
-    if ('patch' in options) {
-      if (!next[id]) return state;
-      next[id] = { ...next[id], ...options.patch };
-    }
+        const next = { ...state };
 
-    return next;
-  });
-}, 'updateItemStatus');
+        if ('remove' in options && options.remove) {
+          delete next[id];
+        }
+
+        if ('set' in options) {
+          next[id] = options.set;
+        }
+
+        if ('patch' in options) {
+          if (!next[id]) return state;
+          next[id] = { ...next[id], ...options.patch };
+        }
+
+        return next;
+      });
+    }, `${name}.updateStatus`),
+    updateSelectedStatus: reatomAsync(async (ctx, id: number) => {
+      const current = ctx.get(cartState.data).find(target => target.id === id);
+      invariant(current, "Current is not defined")
+
+      const result = await client
+        .post<boolean>("store/cart/edit")
+        .pipe(
+          withJsonBody({
+            id,
+            key: "selected",
+            value: !current.selected
+          })
+        )
+        .exec()
+
+      return { id, result }
+    }, {
+      name: `${name}.updateSelectedStatus`,
+      onFulfill: (ctx, { result, id }) => cart.update(ctx),
+      onReject: (_, e) => logError(e, { type: "combined" })
+    }).pipe(
+      withStatusesAtom()
+    )
+  }))
+)
 
 export const getItemStatus = (id: number) => atom((ctx) => {
-  const data = ctx.spy(itemStatusesAtom)
+  const data = ctx.spy(storeItemsState.statuses)
   if (!data) return null;
   return data[id];
 }, `getItemStatus.${id}`)
-
-export const handleItemToCart = action((ctx, id: number) => {
-  const isSelected = ctx.get(getItemStatus(id))?.isSelected ?? false;
-
-  if (isSelected) {
-    removeItemFromCartAction(ctx, id)
-  } else {
-    addItemToCartAction(ctx, id)
-  }
-}, "handleItemToCart")
-
-export const removeItemFromCartAction = reatomAsync(async (ctx, id: number) => {
-  simulate(ctx, id, "load")
-
-  try {
-    const result = await ctx.schedule(() =>
-      client
-        .delete<boolean>("store/cart/remove")
-        .pipe(withJsonBody({ id }), withLogging())
-        .exec()
-    )
-
-    return { id, result }
-  } catch (e) {
-    simulate(ctx, id, "unload");
-    throw e
-  }
-}, {
-  name: "removeItemFromCartAction",
-  onFulfill: (ctx, { id, result }) => {
-    if (!id) {
-      console.warn("Store target id is not defined")
-      throw new Error("Store target id is not defined")
-    }
-
-    batch(ctx, () => {
-      simulate(ctx, id, "select")
-      simulate(ctx, id, "unload");
-    })
-
-    batch(ctx, () => {
-      updateCart(ctx)
-      updateItemStatus(ctx, id, { remove: true })
-    });
-  },
-  onReject: (ctx, e) => {
-    logError(e, { type: "combined" })
-  },
-}).pipe(withStatusesAtom())
-

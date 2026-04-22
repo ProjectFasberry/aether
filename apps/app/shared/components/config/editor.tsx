@@ -10,7 +10,7 @@ import { withAssign } from "@reatom/framework"
 import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import Image from '@tiptap/extension-image'
-import { isDevelopment, MAIN_DOMAIN } from "@/shared/env"
+import { MAIN_DOMAIN } from "@/shared/env"
 
 export const editorExtensions = [
   TextStyleKit,
@@ -530,7 +530,7 @@ export const EditorTest = reatomComponent(({ ctx }) => {
     onUpdate: ({ editor }) => {
       let value = editor.getHTML();
 
-      if (isDevelopment) {
+      if (import.meta.env.DEV) {
         value = value.replaceAll("https://volume.fasberry.fun", "http://127.0.0.1:9000")
       }
 

@@ -1,4 +1,4 @@
-import { defineCartData } from "@/shared/components/app/shop/models/store-cart.model";
+import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
@@ -17,5 +17,5 @@ export const data = async (pageContext: PageContextServer) => {
 
   config(metadata())
 
-  await defineCartData(pageContext)
+  await cart.init(pageContext)
 }

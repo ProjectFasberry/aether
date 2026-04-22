@@ -1,4 +1,4 @@
-import { API_PREFIX_URL, isDevelopment } from "@/shared/env";
+import { API_PREFIX_URL } from "@/shared/env";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/async";
@@ -76,13 +76,13 @@ chatWsAtom.onChange((ctx, state) => {
   if (!state) return;
 
   state.onopen = () => {
-    if (isDevelopment) {
+    if (import.meta.env.DEV) {
       toast.info("Connected to chat ws")
     }
   }
 
   state.onclose = () => {
-    if (isDevelopment) {
+    if (import.meta.env.DEV) {
       toast.info("Disconnected from chat ws")
     }
   }

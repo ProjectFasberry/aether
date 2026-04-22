@@ -27,11 +27,6 @@ const modpackPayload = t.Object({
 })
 
 export const modpackList = new Elysia()
-  .model({
-    "modpack-list": withData(
-      t.Array(modpackPayload)
-    )
-  })
   .get('/list', async ({ set }) => {
     const data = await getModpacks()
 
@@ -41,6 +36,8 @@ export const modpackList = new Elysia()
     return { data }
   }, {
     response: {
-      200: "modpack-list"
+      200: withData(
+        t.Array(modpackPayload)
+      )
     }
   })

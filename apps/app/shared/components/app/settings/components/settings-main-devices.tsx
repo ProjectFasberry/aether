@@ -97,7 +97,7 @@ const VerifyContent = reatomComponent(({ ctx }) =>
 const VerifyError = () => {
   return (
     <div className="flex flex-col gap-4 w-full items-center justify-center">
-      <IconX className="text-red-500" size={22} />
+      <IconX className="text-red" size={22} />
       <VerifyExpiredOrNotfound />
     </div>
   )

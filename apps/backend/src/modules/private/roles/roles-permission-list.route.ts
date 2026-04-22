@@ -28,5 +28,7 @@ export const rolesRolePermissionList = new Elysia()
 
     return { data }
   }, {
-    params: z.object({ id: z.coerce.number() })
+    params: z.object({ 
+      id: z.coerce.number() 
+    })
   })

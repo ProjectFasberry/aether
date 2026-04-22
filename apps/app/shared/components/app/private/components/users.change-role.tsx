@@ -1,4 +1,4 @@
-import { appDictionariesAtom } from "@/shared/models/app.model"
+import { appState } from "@/shared/models/app.model"
 import { reatomComponent } from "@reatom/npm-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import { Typography } from "@repo/ui/typography"
@@ -46,7 +46,7 @@ const UserActionsChangeRoleSubmit = reatomComponent<{ nickname: string }>(({ ctx
 }, "UserActionsChangeRoleSubmit")
 
 const Role = reatomComponent<RoleProps>(({ ctx, name, id, selectedId, onClick }) => {
-  const title = appDictionariesAtom.get(ctx, name);
+  const title = appState.dict.get(ctx, name);
 
   const isSelected = selectedId === id;
 
@@ -122,7 +122,7 @@ export const UserActionsChangeRoleLocal = reatomComponent<{
 }>(({
   ctx, nickname, role_id, role_name
 }) => {
-  const roleTitle = appDictionariesAtom.get(ctx, role_name)
+  const roleTitle = appState.dict.get(ctx, role_name)
 
   return (
     <DropdownMenu

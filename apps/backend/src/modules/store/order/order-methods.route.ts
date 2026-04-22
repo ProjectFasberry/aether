@@ -28,16 +28,13 @@ async function getMethods() {
 }
 
 export const paymentMethods = new Elysia()
-  .model({
-    "methods": withData(
-      t.Array(methodPayload)
-    )
-  })
   .get("/methods", async ({ status }) => {
     const data: MethodsPayload = await getMethods()
     return { data }
   }, {
     response: {
-      200: "methods"
+      200: withData(
+        t.Array(methodPayload)
+      )
     }
   })

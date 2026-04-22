@@ -119,7 +119,7 @@ export const withJsonBody =
 	});
 
 export const withQueryParams =
-	(params: Record<string, string | number | boolean | undefined>): FetchPipe =>
+	(params: Record<string, string | number | boolean | undefined | null>): FetchPipe =>
 	({ options, path }) => {
 		if (!params || Object.keys(params).length === 0) return { options, path };
 

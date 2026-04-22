@@ -1,6 +1,5 @@
 import { Action, Ctx } from "@reatom/core";
 import { pageContextAtom } from "../models/page-context.model";
-import { isDevelopment } from "../env";
 
 export function startPageEvents(
   ctx: Ctx,
@@ -16,14 +15,14 @@ export function startPageEvents(
     const urlPathname = pageContext.urlPathname ?? '';
     
     if (!urlPathname.includes(`/${opts.urlTarget}`)) {
-      if (isDevelopment) console.log(`[${key}] Skip: URL not matching target`);
+      if (import.meta.env.DEV) console.log(`[${key}] Skip: URL not matching target`);
       return;
     }
 
-    if (isDevelopment) console.log(`[${key}] URL match confirmed`);
+    if (import.meta.env.DEV) console.log(`[${key}] URL match confirmed`);
   }
 
-  if (isDevelopment) console.log(`[${key}] Triggering page events`);
+  if (import.meta.env.DEV) console.log(`[${key}] Triggering page events`);
   events(ctx);
 }
 

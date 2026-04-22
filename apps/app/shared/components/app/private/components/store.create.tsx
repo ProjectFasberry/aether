@@ -1,5 +1,5 @@
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor";
-import { appDictionariesAtom } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app.model";
 import { AtomState, Ctx } from "@reatom/core";
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
@@ -22,7 +22,7 @@ import { IconCheck } from "@tabler/icons-react";
 
 const currencyValues = ["CHARISM", "BELKOIN"];
 
-const getCurrencyTitle = (ctx: Ctx, value: string) => appDictionariesAtom.get(ctx, value)
+const getCurrencyTitle = (ctx: Ctx, value: string) => appState.dict.get(ctx, value)
 
 const CURRENCY_ITEMS = (ctx: Ctx) => currencyValues.map((value) => ({
   value,

@@ -1,6 +1,5 @@
 import { toast } from "sonner";
 import { createConsola } from "consola";
-import { isDevelopment } from "../env";
 
 export const logger = createConsola();
 export const routingLogger = logger.withTag('Routing');
@@ -14,14 +13,12 @@ export function logError(
 
   switch (type) {
     case 'console':
-      console.error(msg);
       break;
     case 'toast':
       toast(msg);
       break;
     case 'combined':
       toast(msg);
-      console.error(msg);
       break;
     default:
       console.warn('Skipped logging: invalid log type');
@@ -33,7 +30,7 @@ export function logRouting(pathname: string, hook: string) {
 }
 
 export function devLog(...args: Parameters<typeof logger.log>) {
-  if (isDevelopment) {
+  if (import.meta.env.DEV) {
     logger.withTag("dev").log(...args)
   }
 }

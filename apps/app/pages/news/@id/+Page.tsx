@@ -78,8 +78,8 @@ const News = reatomComponent(({ ctx }) => {
           >
             <Avatar
               nickname={data.creator}
-              propWidth={22}
-              propHeight={22}
+              propWidth={18}
+              propHeight={18}
             />
             <Typography>
               {data.creator}
@@ -90,15 +90,15 @@ const News = reatomComponent(({ ctx }) => {
           title={dayjs(data.created_at).format("DD.MM.YYYY")}
           className="flex items-center"
         >
-          <Typography color="gray">
+          <Typography className="text-neutral-50 text-sm leading-4">
             {dayjs(data.created_at).format('D MMM YYYY')}
           </Typography>
         </div>
         <div className="flex items-center gap-1">
-          <Typography color="gray">
+          <Typography className="text-neutral-50 text-sm leading-4">
             {data.views}
           </Typography>
-          <IconEye size={20} />
+          <IconEye size={16} className="text-neutral-400" />
         </div>
         {allowEdit && <NewsEdit id={data.id} />}
       </div>

@@ -1,11 +1,11 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { appOptionsAtom } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { atom } from "@reatom/core";
 import { BannerPayload } from "@repo/shared/types/entities/banner";
 
-export const bannerIsExistsAtom = atom((ctx) => ctx.spy(appOptionsAtom).bannerIsExists, "bannerIsExists")
+export const bannerIsExistsAtom = atom((ctx) => ctx.spy(appState.options).bannerIsExists, "bannerIsExists")
 
 bannerIsExistsAtom.onChange((ctx, state) => {
   if (!state) return;
@@ -26,7 +26,7 @@ export const viewBannerAction = reatomAsync(async (ctx, id: number) => {
 }, {
   name: "viewBannerAction",
   onFulfill: (ctx, res) => {
-    appOptionsAtom(ctx, (state) => ({ ...state, bannerIsExists: false }))
+    appState.options(ctx, (state) => ({ ...state, bannerIsExists: false }))
     bannerAction.cacheAtom.reset(ctx)
     bannerAction.dataAtom.reset(ctx);
   },

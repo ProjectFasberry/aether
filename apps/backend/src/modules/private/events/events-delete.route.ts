@@ -6,8 +6,7 @@ import { deleteEvent } from "./events.model";
 
 export const eventsDelete = new Elysia()
   .use(validatePermission(Permissions.get("EVENTS.DELETE")))
-  .delete("/:id", async ({ params }) => {
-    const id = params.id;
+  .delete("/:id", async ({ params: { id } }) => {
     const data = await deleteEvent(id)
     return { data }
   }, {

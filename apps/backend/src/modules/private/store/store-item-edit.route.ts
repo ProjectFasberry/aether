@@ -26,23 +26,25 @@ async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSch
 	return query;
 }
 
-const storeItemEdit = new Elysia().use(validatePermission(PERMISSION)).post(
-	"/:id/edit",
-	async ({ params: { id }, body }) => {
+const storeItemEdit = new Elysia()
+	.use(validatePermission(PERMISSION))
+	.post("/:id/edit", async ({ params: { id }, body }) => {
 		const data = await editStoreItem(id, body);
 		return { data };
-	},
-	{
+	}, {
 		params: z.object({ id: z.coerce.number() }),
 		body: storeItemEditSchema,
 		afterResponse: ({ permission, nickname: initiator }) => {
 			createAdminActivityLog({ initiator, event: permission });
 		},
-	},
-);
+	});
 
 const storeItemEditFields = new Elysia()
 	.use(validatePermission(Permissions.get("STORE.ITEM.UPDATE")))
 	.get("/editable-fields", async () => ({ data: EDITABLE_FIELDS }));
 
-export const storeItemEditGroup = new Elysia().group("", (app) => app.use(storeItemEditFields).use(storeItemEdit));
+export const storeItemEditGroup = new Elysia()
+	.group("", (app) => app
+		.use(storeItemEditFields)
+		.use(storeItemEdit)
+	);

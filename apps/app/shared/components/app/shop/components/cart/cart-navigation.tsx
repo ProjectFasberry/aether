@@ -5,12 +5,10 @@ import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
 import { usePageContext } from "vike-react/usePageContext"
 
-const badge = (title: string, value: string) => ({ title, value });
-
 const STORE_BADGES = [
-  badge("Корзина", ""),
-  badge("Заказы", "/orders"),
-  badge("Пополнить баланс", "/topup"),
+  { title: "Корзина", value: "" },
+  { title: "Заказы", value: "/orders" },
+  { title: "Пополнить счет", value: "/topup", variant: "active" },
 ] as const;
 
 export const CartNavigation = () => {
@@ -32,11 +30,9 @@ export const CartNavigation = () => {
         >
           <Button
             background={isActive(`/store/cart${badge.value}`) ? "white" : "default"}
-            className="h-10 text-nowrap"
+            className="h-8 sm:h-10 text-nowrap font-semibold"
           >
-            <Typography className="font-semibold">
-              {badge.title}
-            </Typography>
+            {badge.title}
           </Button>
         </Link>
       ))}

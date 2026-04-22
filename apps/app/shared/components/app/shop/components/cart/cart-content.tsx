@@ -1,22 +1,21 @@
 import { atom } from "@reatom/core";
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { cartIsValidAtom, cartDataSelectedAtom } from "../../models/store-cart.model";
+import { cartIsValidAtom, cartDataSelectedAtom, cartState } from "../../models/store-cart.model";
 import { CartPrice } from "./cart-price";
 import { Link } from "@/shared/components/config/link";
 import { Button } from "@repo/ui/button";
 import { spawn } from "@reatom/framework";
-import { createOrderAction } from "../../models/store.model";
+import { order } from "../../models/store.model";
 import { CartItem } from "./cart-item";
 import { ChangeRecipientDialog } from "../recipient/change-recipient";
 import { IconCreditCardPay } from "@tabler/icons-react";
 import { expImage } from "@/shared/consts/images";
-import { cartDataAtom } from "../../models/store-cart.model.atoms";
 import { WithLoader } from "../../../layout/components/with-loader";
 import { navigate } from "vike/client/router";
 
 const CartContentData = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(cartDataAtom);
+  const data = ctx.spy(cartState.data);
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -27,17 +26,15 @@ const CartContentData = reatomComponent(({ ctx }) => {
 }, "CartContentData")
 
 const CartSummerySelected = reatomComponent(({ ctx }) => ctx.spy(cartDataSelectedAtom).length, "CartSummerySelected")
-const CartSummeryTotal = reatomComponent(({ ctx }) => ctx.spy(cartDataAtom).length, "CartSummery")
+const CartSummeryTotal = reatomComponent(({ ctx }) => ctx.spy(cartState.data).length, "CartSummery")
 
 const CartActionsSubmit = reatomComponent(({ ctx }) => {
-  const isValid = ctx.spy(cartIsValidAtom) || ctx.spy(createOrderAction.statusesAtom).isPending;
-
-  const handle = () => void spawn(ctx, async (spawnCtx) => createOrderAction(spawnCtx))
+  const isValid = ctx.spy(cartIsValidAtom) || ctx.spy(order.create.statusesAtom).isPending;
 
   return (
     <Button
       disabled={!isValid}
-      onClick={handle}
+      onClick={() => spawn(ctx, async (spawnCtx) => order.create(spawnCtx))}
       className="w-full h-10 bg-gradient-to-br
         from-green-600/90 via-green-600/80 to-green-600/80 border border-green-700"
     >
@@ -50,38 +47,29 @@ const CartActionsSubmit = reatomComponent(({ ctx }) => {
 
 const CartContentEmpty = () => {
   return (
-    <div className="flex flex-col gap-2 lg:w-2/3">
+    <div className="flex flex-col bg-neutral-900 rounded-lg p-4 sm:p-3 lg:p-4 lg:w-2/3">
       <Typography className='text-2xl font-semibold'>
         Пусто
       </Typography>
-      <Typography color="gray">
+      <Typography className="text-neutral-400 text-base leading-5">
         Перейдите в магазин, чтобы найти всё, что нужно.
       </Typography>
-      <Link href="/store" className="w-fit">
-        <Button background="default" className="font-semibold">
-          В магазин
-        </Button>
+      <Link href="/store" className="mt-4 text-lg w-fit text-green-400">
+        В магазин
       </Link>
     </div>
   )
 }
 
-const cartDataIsEmptyAtom = atom(
-  (ctx) => ctx.spy(cartDataAtom).length === 0,
-  "cartDataIsEmpty"
-)
-
-const loaderIsActiveAtom = atom(
-  (ctx) => ctx.spy(createOrderAction.statusesAtom).isPending,
-  "loaderIsActive"
-)
+const cartDataIsEmptyAtom = atom((ctx) => ctx.spy(cartState.data).length === 0)
+const loaderIsActiveAtom = atom((ctx) => ctx.spy(order.create.statusesAtom).isPending)
 
 const CartListContent = reatomComponent(({ ctx }) => {
   const isEmpty = ctx.spy(cartDataIsEmptyAtom);
   if (isEmpty) return <CartContentEmpty />;
 
   return (
-    <div className="flex flex-col gap-4 lg:w-2/3 bg-neutral-900/60 p-3 lg:p-4 rounded-xl">
+    <div className="flex flex-col gap-4 lg:w-2/3 bg-neutral-900 p-2 sm:p-3 lg:p-4 rounded-xl">
       <div className="flex flex-col gap-1">
         <Typography className="text-xl font-semibold">
           Содержимое
@@ -109,7 +97,7 @@ export const CartContent = () => {
         </Typography>
         <div className="flex flex-col lg:flex-row items-start w-full gap-6 h-fit">
           <CartListContent />
-          <div className="flex flex-col lg:w-1/3 bg-neutral-900/60 gap-4 p-3 lg:p-4 rounded-xl w-full">
+          <div className="flex flex-col lg:w-1/3 bg-neutral-900 gap-4 p-2 sm:p-3 lg:p-4 rounded-xl w-full">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center w-full gap-2">
                 <div className="flex-1 flex w-full">

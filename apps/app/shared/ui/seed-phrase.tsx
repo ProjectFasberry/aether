@@ -134,7 +134,7 @@ const SeedPhraseBody = () => {
             />
           </div>
           {errors[idx] && (
-            <span className="absolute left-0 text-[10px] text-red-500">
+            <span className="absolute left-0 text-[10px] text-red">
               {errors[idx]}
             </span>
           )}

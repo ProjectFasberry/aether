@@ -1,22 +1,18 @@
 import { reatomComponent, } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { ItemPrice, ItemSelectToCart } from "@/shared/components/app/shop/components/items/store-list";
-import { atom } from "@reatom/core";
 import { renderToHTMLString } from "@tiptap/static-renderer";
 import { editorExtensions } from "@/shared/components/config/editor";
 import type { JSONContent } from "@tiptap/react";
-import { StoreItem } from "@repo/shared/types/entities/store";
-import { withSsr } from "@/shared/lib/ssr";
 import { tv } from "tailwind-variants";
-
-export const selectedItemAtom = atom<StoreItem | null>(null, "selectedItem").pipe(withSsr("selectedItem"))
+import { storeItemState } from "@/shared/components/app/shop/models/store-item.model";
+import { ItemPrice, ItemSelectToCart } from "@/shared/components/app/shop/components/items/store-item";
 
 const sectionVariant = tv({
   base: `border border-neutral-800 p-2! sm:p-4! rounded-lg w-full`
 })
 
 const SelectedDonate = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(selectedItemAtom)
+  const data = ctx.spy(storeItemState.data)
   if (!data) return null;
 
   const html = renderToHTMLString({

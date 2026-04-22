@@ -25,15 +25,12 @@ const bannerViewPayload = t.Object({
 
 export const bannerView = new Elysia()
   .use(defineUser())
-  .model({
-    "banner-view": withData(bannerViewPayload)
-  })
   .post("/view/:id", async ({ status, nickname, params: { id } }) => {
     const data = await viewBanner(id, nickname);
     return { data }
   }, {
     params: bannerSchema,
     response: {
-      200: "banner-view"
+      200: withData(bannerViewPayload)
     }
   })

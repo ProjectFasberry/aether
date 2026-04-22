@@ -47,7 +47,7 @@ const GlobalRecipient = reatomComponent(({ ctx }) => {
             <IconDeviceFloppy />
           </Button>
           {error && (
-            <span className="text-red-500 text-sm">{error}</span>
+            <span className="text-red text-sm">{error}</span>
           )}
         </div>
       }

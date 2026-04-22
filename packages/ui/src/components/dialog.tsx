@@ -25,9 +25,13 @@ function DialogOverlay({ className, ...props }: ComponentProps<typeof DialogPrim
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        `fixed inset-0 isolate z-50 bg-black/60 duration-100 
+        `fixed inset-0 isolate z-50 bg-black/60 duration-300 
         supports-backdrop-filter:backdrop-blur-xs 
-        data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0`,
+        data-[state=open]:animate-in 
+        data-[state=open]:fade-in-0 
+        data-[state=closed]:animate-out 
+        data-[state=closed]:fade-out-0
+        `,
         className
       )}
       {...props}
@@ -45,9 +49,14 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
         data-slot="dialog-content"
         className={cn(
           `fixed top-1/2 left-1/2 z-50 grid w-full max-w-[min(var(--spacing-container-lg),calc(100vw-1rem))] -translate-x-1/2 -translate-y-1/2
-          gap-4 rounded-xl bg-neutral-800 px-4 py-4 sm:px-6 sm:py-4 text-sm ring-1 ring-neutral-600/10 duration-300 
-          outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out 
-          data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95`,
+          gap-4 rounded-xl bg-neutral-900 px-4 py-4 sm:px-6 sm:py-4 text-sm ring-1 ring-neutral-600/10 duration-300 outline-none
+          data-[state=open]:animate-in 
+          data-[state=open]:fade-in-0 
+          data-[state=open]:zoom-in-95 
+          data-[state=closed]:animate-out 
+          data-[state=closed]:fade-out-0 
+          data-[state=closed]:zoom-out-95
+          `,
           className
         )}
         {...props}
@@ -56,7 +65,7 @@ function DialogContent({ className, children, showCloseButton = true, ...props }
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-neutral-700 bg-red-500 focus:ring-neutral-50 data-[state=open]:bg-neutral-800 
+            className="ring-neutral-700 bg-red focus:ring-neutral-50 data-[state=open]:bg-neutral-800 
               data-[state=open]:text-neutral-400 text-semibold cursor-pointer flex items-center justify-center h-4 w-4 absolute top-3 right-4
               rounded-sm opacity-80 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden 
               disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3"

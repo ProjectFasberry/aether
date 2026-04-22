@@ -31,16 +31,13 @@ export const itemPayload = t.Object({
 })
 
 export const minecraftItems = new Elysia()
-  .model({
-    "item": withData(
-      t.Array(itemPayload)
-    )
-  })
   .get("/minecraft-items", async (ctx) => {
     const data = await getMinecraftItems();
     return { data }
   }, {
     response: {
-      200: "item"
+      200: withData(
+        t.Array(itemPayload)
+      )
     }
   })

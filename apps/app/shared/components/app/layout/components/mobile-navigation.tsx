@@ -22,7 +22,7 @@ export const MobileBottomBar = reatomComponent(({ ctx }) => {
             href={link.href}
             className="
               flex flex-col items-center gap-0.5 justify-center truncate min-w-0 
-              data-[state=inactive]:text-neutral-50 data-[state=active]:text-green
+              data-[state=inactive]:text-neutral-50 data-[state=active]:text-green-400
             "
           >
             <link.icon size={26} />

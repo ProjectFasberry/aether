@@ -37,7 +37,7 @@ export const ConfigEditor = reatomComponent(({ ctx }) => {
           )}
         </Button>
         {fetchStatus.isPending && <span className="text-white">Загрузка...</span>}
-        {error && <span className="text-red-500">{error.message}</span>}
+        {error && <span className="text-red">{error.message}</span>}
       </div>
       <div className="flex w-full h-dvh">
         <Editor

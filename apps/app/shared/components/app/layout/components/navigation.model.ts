@@ -1,4 +1,4 @@
-import { CONFIG_PANEL_READ_PERMISSION, currentUserPermsAtom } from "@/shared/models/current-user.model";
+import { CONFIG_PANEL_READ_PERMISSION, currentUserState } from "@/shared/models/current-user.model";
 import { atom } from "@reatom/core";
 import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, TablerIcon } from "@tabler/icons-react"
 
@@ -25,7 +25,7 @@ const MENU_LINKS = [
 ];
 
 export const validatedLinksAtom = atom((ctx) => {
-  const opts = ctx.get(currentUserPermsAtom)
+  const opts = ctx.get(currentUserState.perms)
 
   const validatedLinks = MENU_LINKS.filter(s => {
     if (s.type === 'privated' && s.permission) return opts.includes(s.permission)

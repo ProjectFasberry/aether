@@ -18,7 +18,7 @@ import { scrollableVariant } from "@/shared/consts/style-variants"
 type LandCard = Lands
 
 const landCardVariants = tv({
-  base: `flex items-start justify-between gap-6 duration-150 relative w-full rounded-xl p-3 sm:p-4 lg:p-6 bg-neutral-800`,
+  base: `flex items-start justify-between gap-6 duration-150 relative w-full rounded-xl p-3 sm:p-4 lg:p-6 bg-neutral-900`,
   slots: {
     child: "flex flex-col gap-3 overflow-hidden",
     stat: "inline-flex items-center gap-2 text-base"

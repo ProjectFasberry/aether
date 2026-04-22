@@ -1,15 +1,14 @@
 import type { PageContextServer } from 'vike/types';
 import { createCtx } from '@reatom/core';
-import { currentUserAtom, getMe } from "@/shared/models/current-user.model";
-import { snapshotAtom } from '@/shared/lib/ssr';
+import { currentUserState, getMe } from "@/shared/models/current-user.model";
 import { devLog, logRouting } from '@/shared/lib/log';
 import { isBotRequest } from '@/shared/lib/bot-guard';
-import { initCookieOpts } from '@/shared/lib/sync';
 import { redirect } from 'vike/abort';
-import { appDictionariesAtom, appOptionsAtom, appOptionsInit, getAppDictionaries, getAppOptions } from '@/shared/models/app.model';
+import { appState, appOptionsInit, getAppDictionaries, getAppOptions, app } from '@/shared/models/app.model';
 import { AppOptionsPayload } from '@repo/shared/types/entities/other';
 import { setupUrlAtomSettings } from '@reatom/url';
 import { MePayload } from '@repo/shared/types/entities/user';
+import { snapshotAtom } from '@/shared/lib/reatom-helpers';
 
 function getTopCountry(acceptLanguage?: string): string | null {
   if (!acceptLanguage) return null
@@ -30,12 +29,16 @@ function getTopCountry(acceptLanguage?: string): string | null {
   return best?.country ?? null
 }
 
-export const onCreatePageContext = async (pageContext: PageContextServer) => {
-  if (pageContext.urlOriginal.startsWith("http://localhost")) throw redirect("http://127.0.0.1:3006")
+export const onCreatePageContext = async (pageCtx: PageContextServer) => {
+  if (import.meta.env.DEV) {
+    if (pageCtx.urlOriginal.startsWith("http://localhost")) {
+      throw redirect("http://127.0.0.1:3006")
+    }
+  }
 
-  logRouting(pageContext.urlPathname, "onCreatePageContext");
+  logRouting(pageCtx.urlPathname, "onCreatePageContext");
 
-  const { headers, urlPathname, locale } = pageContext;
+  const { headers, urlPathname, locale } = pageCtx;
   if (!headers) return;
 
   const ctx = createCtx();
@@ -43,21 +46,20 @@ export const onCreatePageContext = async (pageContext: PageContextServer) => {
   function updateSnapshot() {
     const result = ctx.get(snapshotAtom)
     devLog("updateSnapshot.result", result)
-    pageContext.snapshot = result
+    pageCtx.snapshot = result
   };
 
   function setupApp(options: AppOptionsPayload, dictionaries: Record<string, string>) {
     if (!headers) return;
-    devLog("setupApp.start")
 
     const country = getTopCountry(headers["accept-language"])
 
     const dictionary = new Map(Object.entries(dictionaries));
     const optionsExtend = { ...options, locale, country }
 
-    appDictionariesAtom(ctx, dictionary);
-    appOptionsAtom(ctx, optionsExtend);
-    initCookieOpts(ctx, pageContext);
+    appState.dict(ctx, dictionary);
+    appState.options(ctx, optionsExtend);
+    app.initCookie(ctx, pageCtx);
   };
 
   if (isBotRequest(headers, urlPathname)) {
@@ -67,7 +69,7 @@ export const onCreatePageContext = async (pageContext: PageContextServer) => {
     return;
   }
 
-  const url = new URL(pageContext.urlPathname, `http://${headers["host"]}`);
+  const url = new URL(pageCtx.urlPathname, `http://${headers["host"]}`);
   setupUrlAtomSettings(ctx, () => url)
 
   const options: AppOptionsPayload = await getAppOptions({ headers })
@@ -94,10 +96,8 @@ export const onCreatePageContext = async (pageContext: PageContextServer) => {
   const me: MePayload | null = await getMe({ headers })
     .then(r => r)
     .catch((reason) => {
-      console.log(reason);
-
       if (reason instanceof Error && reason.message === 'banned') {
-        if (!pageContext.urlParsed.pathname.includes('/banned')) {
+        if (!pageCtx.urlParsed.pathname.includes('/banned')) {
           throw redirect("/banned");
         }
       }
@@ -106,7 +106,7 @@ export const onCreatePageContext = async (pageContext: PageContextServer) => {
     })
 
   if (me) {
-    currentUserAtom(ctx, me);
+    currentUserState(ctx, me);
   }
 
   updateSnapshot();

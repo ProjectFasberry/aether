@@ -20,7 +20,7 @@ COPY packages/config-biome ./packages/config-biome
 COPY apps/app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN bun install
+RUN bun install --no-cache
 WORKDIR /apps/app
 
 ARG STAGE

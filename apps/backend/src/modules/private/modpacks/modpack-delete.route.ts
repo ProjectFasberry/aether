@@ -17,8 +17,7 @@ async function deleteModpack(id: number) {
 
 export const modpackDelete = new Elysia()
   .use(validatePermission(Permissions.get("MODPACKS.DELETE")))
-  .delete("/:id", async ({ nickname, status, params }) => {
-    const id = params.id;
+  .delete("/:id", async ({ nickname, status, params: { id } }) => {
     const data = await deleteModpack(id)
     return { data }
   }, {

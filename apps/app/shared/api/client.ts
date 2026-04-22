@@ -1,10 +1,10 @@
 import ky, { Options } from "ky";
-import { API_PREFIX_URL, isDevelopment, PANEL_API_PREFIX_URL } from "../env";
+import { API_PREFIX_URL, PANEL_API_PREFIX_URL } from "../env";
 
 const baseConfig: Options = {
 	credentials: "include",
 	timeout: 4000,
-	headers: isDevelopment ? { "x-forwarded-for": import.meta.env.VITE_FORWARDED_FOR } : {},
+	headers: import.meta.env.DEV ? { "x-forwarded-for": import.meta.env.VITE_FORWARDED_FOR } : {},
 };
 
 export const SKIP_HOOK_HEADER = "X-Skip-Error-Handling";

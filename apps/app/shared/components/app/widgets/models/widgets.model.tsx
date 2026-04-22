@@ -1,4 +1,4 @@
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { action, atom } from "@reatom/core";
 import { withReset } from "@reatom/framework";
 import { withCookie } from "@reatom/persist-web-storage";
@@ -24,7 +24,7 @@ export const isAuthedAtom = atom<boolean>((ctx) => {
   const isShow = ctx.spy(isShowAuthWidgetAtom);
   if (!isShow) return true;
 
-  return !!ctx.spy(currentUserAtom)
+  return !!ctx.spy(currentUserState)
 }, "isAuthedAtom")
 
 export const allWidgetSources = [isAuthedAtom];

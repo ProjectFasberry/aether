@@ -20,7 +20,7 @@ const RatingItem = ({
           <Link
             key={child.value}
             href={`/ratings/${parentValue}/${child.value}`}
-            className="group relative flex duration-150 items-center justify-between p-4 bg-neutral-800 rounded-xl"
+            className="group relative flex duration-150 items-center justify-between p-4 bg-neutral-900 rounded-xl"
           >
             <div className="flex items-center gap-4 min-w-0">
               <div className="p-2.5 bg-neutral-50 rounded-xl transition-colors">

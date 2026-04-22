@@ -12,7 +12,7 @@ import {
 import { Skeleton } from "@repo/ui/skeleton";
 import { PrivatedUser } from "@repo/shared/types/entities/other";
 import { tv } from "tailwind-variants";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { action, Atom, atom, reatomMap, withAssign } from "@reatom/framework";
 import { Checkbox } from "@repo/ui/checkbox";
 import { createLink, Link } from "@/shared/components/config/link";
@@ -80,7 +80,7 @@ type UserActionsProps = {
 }
 
 const User = reatomComponent<PrivatedUser>(({ ctx, id, nickname, role_name, role_id }) => {
-  const currentUser = ctx.get(currentUserAtom)
+  const currentUser = ctx.get(currentUserState)
 
   const isChecked = ctx.spy(getIsCheckedAtom(nickname));
   const isExpanded = ctx.spy(getIsExpandedAtom(nickname));

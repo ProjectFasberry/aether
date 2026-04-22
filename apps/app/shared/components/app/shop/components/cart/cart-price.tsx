@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { cartPriceAtom } from "../../models/store-cart.model"
+import { cartState } from "../../models/store-cart.model"
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 
 export const TARGET_TITLE = {
@@ -14,7 +14,7 @@ export const CURRENCIES: Record<string, { img: string, symbol: string }> = {
 }
 
 export const CartPrice = reatomComponent(({ ctx }) => {
-  const prices = ctx.spy(cartPriceAtom)
+  const prices = ctx.spy(cartState.price)
 
   return (
     <div className="space-y-1">

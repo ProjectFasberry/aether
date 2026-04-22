@@ -78,7 +78,7 @@ onConnect(playerActivity.online.fetch.dataAtom, async (ctx) => {
 
 const PlayerActivitySkeleton = () => {
   return (
-    <div className="flex flex-col gap-1 items-start justify-start w-full bg-neutral-800 rounded-xl p-4">
+    <div className="flex flex-col gap-1 items-start justify-start w-full bg-neutral-900 rounded-xl p-4">
       <Skeleton className="h-8 w-24" />
       <Skeleton className="h-6 w-36" />
     </div>
@@ -101,7 +101,7 @@ export const PlayerActivity = reatomComponent(({ ctx }) => {
   const isOnline = data.type === 'online'
 
   return (
-    <div className="flex flex-col gap-2 w-full bg-neutral-800 rounded-xl p-4">
+    <div className="flex flex-col gap-2 w-full bg-neutral-900 rounded-xl p-4">
       <div className="flex items-center gap-2">
         {isOnline && <img src={expImage} alt="" width={22} height={22} />}
         <Typography className="font-semibold text-lg">

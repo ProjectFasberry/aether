@@ -3,7 +3,7 @@ import { news, newsAllDataArrAtom, newsState } from "../models/news-list.model"
 import { NotFound } from "@/shared/ui/not-found"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { PageLoader } from "@/shared/ui/page-loader"
-import { isEmptyArray } from "@/shared/lib/array"
+import { isEmptyArray } from "@/shared/lib/utils"
 import { Typography } from "@repo/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
 import { useInView } from "react-intersection-observer"
@@ -34,7 +34,7 @@ const NewsList = reatomComponent(({ ctx }) => {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 auto-rows-auto gap-2 sm:gap-4 w-full h-full">
       {data.map((news) => (
-        <div key={news.id} className="flex flex-col gap-4 bg-neutral-800 w-full rounded-xl p-3 sm:p-4">
+        <div key={news.id} className="flex flex-col gap-4 bg-neutral-900 w-full rounded-xl p-3 sm:p-4">
           <div className="h-20 sm:h-36 w-full overflow-hidden rounded-lg">
             <img src={news.imageUrl} loading="lazy" alt="" className="h-full w-full object-cover" />
           </div>

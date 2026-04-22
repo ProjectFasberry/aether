@@ -26,7 +26,7 @@ type EventCardProps = NonNullable<AtomState<typeof eventsAction.dataAtom>>[numbe
 const eventCardVariant = tv({
   base: `
     flex flex-col md:flex-[0_0_calc((100%/3)-0.666rem)] flex-shrink-0 w-full
-    h-48 p-2 sm:p-4 bg-neutral-800 rounded-xl overflow-hidden justify-between
+    h-48 p-2 sm:p-4 bg-neutral-900 rounded-xl overflow-hidden justify-between
   `,
   slots: {
     firstGroup: "flex items-center justify-start bg-neutral-50 rounded-md p-2 w-full truncate",

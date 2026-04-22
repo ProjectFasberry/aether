@@ -1,5 +1,5 @@
 import { logRouting } from "@/shared/lib/log";
-import { getIsAuth } from "@/shared/lib/validators";
+import { getIsAuth } from "@/shared/lib/utils";
 import { redirect } from "vike/abort";
 import { PageContext } from "vike/types";
 

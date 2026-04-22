@@ -2,7 +2,7 @@ import { getRedis } from "#/shared/redis/init";
 import type { EventPayload } from "@repo/shared/types/entities/other";
 import Elysia, { t } from "elysia";
 import * as z from "zod/v4";
-import { EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
+import { eventPayload, EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
 
 const eventsListSchema = z.intersection(
@@ -40,31 +40,17 @@ async function getEvents(
   return getObjects(keys);
 }
 
-export const eventPayload = t.Object({
-  id: t.String(),
-  type: t.String(),
-  title: t.String(),
-  content: t.Object({
-    created_at: t.Union([t.String(), t.Date()]),
-    description: t.Nullable(t.String()),
-    initiator: t.String(),
-  })
-})
-
 export const eventsList = new Elysia()
-  .model({
-    "events-list": withData(
-      t.Array(
-        eventPayload
-      )
-    )
-  })
   .get("/list", async ({ query }) => {
     const data = await getEvents(query);
     return { data }
   }, {
     query: eventsListSchema,
     response: {
-      200: "events-list"
+      200: withData(
+        t.Array(
+          eventPayload
+        )
+      )
     }
   })

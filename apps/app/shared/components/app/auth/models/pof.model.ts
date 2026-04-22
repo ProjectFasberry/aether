@@ -1,5 +1,5 @@
 import { POF_IS_ACTIVE } from "@/shared/env";
-import { appOptionsAtom } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app.model";
 import { action, atom } from "@reatom/core";
 import { withAssign, withInit, withReset } from "@reatom/framework";
 
@@ -9,7 +9,7 @@ export const pof = atom(null, "pof").pipe(
 			withInit((ctx, target) => {
 				let res = POF_IS_ACTIVE;
 
-				const isWl = ctx.get(appOptionsAtom).isWl;
+				const isWl = ctx.get(appState.options).isWl;
 
 				if (isWl) {
 					res = false;

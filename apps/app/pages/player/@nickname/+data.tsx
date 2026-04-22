@@ -11,8 +11,8 @@ import { getPlayer, playerAtom } from "@/shared/components/app/player/models/pla
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import dayjs from "@/shared/lib/create-dayjs"
 import { PlayerLandsPayload } from "@repo/shared/types/entities/land";
-import { isEmptyArray } from "@/shared/lib/array";
 import { playerRateState } from "@/shared/components/app/player/models/rate.model";
+import { isEmptyArray } from "@/shared/lib/utils";
 
 export type Data = Awaited<ReturnType<typeof data>>;
 

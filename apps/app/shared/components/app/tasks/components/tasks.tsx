@@ -1,5 +1,5 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { onChange, tasksAction, tasksAscendingAtom, tasksSearchQueryAtom } from "../models/tasks.model"
+import { tasks, tasksFilter, TasksFilterSortBy } from "../models/tasks.model"
 import { IconArrowDown, IconArrowUp, IconSearch } from "@tabler/icons-react"
 import { Button } from "@repo/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
@@ -12,6 +12,7 @@ import { ReactNode } from "react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { TaskItem as TaskItemProps } from "@repo/shared/types/entities/other"
+import { PageLoader } from "@/shared/ui/page-loader"
 
 const eventImage = getStaticImage("arts/looking.jpg")
 
@@ -40,15 +41,12 @@ const Currency = ({ type, value }: { type: string, value: number }) => {
 const ACTION: Record<string, (value: string) => ReactNode> = {
   "link": (value: string) => (
     <a href={value} target="_blank" rel="noreferrer">
-      <Button className="w-full lg:w-fit h-10 bg-neutral-50">
-        <Typography className="text-neutral-950 font-semibold">
-          Выполнить
-        </Typography>
+      <Button background="white" className="w-full lg:w-fit h-10 font-semibold">
+        Выполнить
       </Button>
     </a>
   )
 }
-
 
 const taskItemVariant = tv({
   base: `flex flex-col items-center justify-between gap-4 h-48 w-full rounded-lg p-4 border border-neutral-800`,
@@ -91,14 +89,14 @@ const TaskItem = (
       <div className={taskItemVariant().secondGroup()}>
         <Dialog>
           <DialogTrigger asChild>
-            <Button className="w-full lg:w-fit h-10 bg-neutral-800">
+            <Button background="default" className="w-full lg:w-fit h-10">
               <Typography className="text-base">
                 Награда
               </Typography>
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogTitle className="text-center text-2xl">Ивент: {title}</DialogTitle>
+          <DialogContent className="max-w-lg">
+            <DialogTitle>Ивент: {title}</DialogTitle>
             <div className="flex flex-col gap-4 p-2 items-center justify-center w-full">
               <div className="flex flex-col gap-2 w-full">
                 <Typography className="text-lg font-semibold">
@@ -117,13 +115,19 @@ const TaskItem = (
 
 const TasksFilterSearch = reatomComponent(({ ctx }) => {
   return (
-    <div className="flex items-center w-full lg:w-2/3 h-10 relative">
-      <IconSearch size={20} className="text-neutral-400 absolute z-1 left-4" />
+    <div
+      className="flex items-center w-full lg:w-2/3 h-10 relative inert:pointer-events-none inert:opacity-70"
+      inert={ctx.spy(tasks.fetch.statusesAtom).isPending}
+    >
+      <IconSearch
+        size={20}
+        className="text-neutral-400 absolute z-1 left-4"
+      />
       <Input
         className="w-full h-10 pl-12"
         placeholder="Название"
-        onChange={e => onChange(ctx, e)}
-        value={ctx.spy(tasksSearchQueryAtom)}
+        onChange={e => tasks.onChangeEvent(ctx, e)}
+        value={ctx.spy(tasksFilter.searchQuery)}
         maxLength={1024}
       />
     </div>
@@ -134,32 +138,40 @@ const TasksFilterType = reatomComponent(({ ctx }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button background="default" className="w-full min-w-0">
-          <Typography className="font-semibold text-nowrap truncate">
-            Сортировать по: <span className="text-neutral-400">Дате создания</span>
-          </Typography>
+        <Button
+          background="default"
+          className="
+            w-full min-w-0 px-0 text-sm sm:text-base font-semibold text-nowrap truncate
+          "
+          disabled={ctx.spy(tasks.fetch.statusesAtom).isPending}
+        >
+          Сортировать по:&nbsp;<span className="text-neutral-400">Актуальности</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" className="w-full min-w-56 bg-neutral-800">
-        <DropdownMenuItem className="font-semibold w-full">
-          Дате создания
-        </DropdownMenuItem>
+      <DropdownMenuContent side="bottom" className="w-full min-w-56">
+        {tasksFilter.FILTERS.map((filter) => (
+          <DropdownMenuItem
+            key={filter.value}
+            onClick={() => tasksFilter.sortBy(ctx, filter.value as TasksFilterSortBy)}
+            className="font-semibold w-full text-sm sm:text-base"
+          >
+            {filter.title}
+          </DropdownMenuItem>
+        ))}
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }, "TasksFilterType")
 
 const TasksFilterAsc = reatomComponent(({ ctx }) => {
-  const asc = ctx.spy(tasksAscendingAtom);
-
-  const handle = () => tasksAscendingAtom(ctx, (state) => !state)
+  const asc = ctx.spy(tasksFilter.asc);
 
   return (
     <Button
       background="default"
-      className="text-neutral-50 flex aspect-square h-10 w-10 p-0 items-center justify-center"
-      onClick={handle}
-      disabled={ctx.spy(tasksAction.statusesAtom).isPending}
+      className="aspect-square h-10 w-10 p-0 text-neutral-400"
+      onClick={() => tasksFilter.asc(ctx, (state) => !state)}
+      disabled={ctx.spy(tasks.fetch.statusesAtom).isPending}
     >
       {asc ? <IconArrowUp size={20} /> : <IconArrowDown size={20} />}
     </Button>
@@ -170,7 +182,7 @@ export const TasksFilter = () => {
   return (
     <div className="flex lg:flex-nowrap flex-wrap items-center gap-2 w-full">
       <TasksFilterSearch />
-      <div className="flex lg:flex-nowrap flex-wrap items-center gap-2 w-full lg:w-1/3">
+      <div className="flex items-center gap-2 w-full lg:w-1/3">
         <TasksFilterType />
         <TasksFilterAsc />
       </div>
@@ -178,30 +190,16 @@ export const TasksFilter = () => {
   )
 }
 
-const TasksSkeleton = () => {
-  return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-3 auto-rows-auto gap-4 w-full">
-      <TaskItemSkeleton />
-      <TaskItemSkeleton />
-      <TaskItemSkeleton />
-      <TaskItemSkeleton />
-    </div>
-  )
-}
-
 export const Tasks = reatomComponent(({ ctx }) => {
-  useUpdate(tasksAction, [])
+  useUpdate(tasks.fetch, [])
 
-  if (ctx.spy(tasksAction.statusesAtom).isPending) {
-    return <TasksSkeleton />
-  }
+  if (ctx.spy(tasks.fetch.statusesAtom).isPending) return <PageLoader />
 
-  const data = ctx.spy(tasksAction.dataAtom)?.data;
-
-  const error = ctx.spy(tasksAction.errorAtom)
+  const data = ctx.spy(tasks.fetch.dataAtom)?.data;
+  const error = ctx.spy(tasks.fetch.errorAtom)
 
   if (error) {
-    return <span className="text-red-500">{error.message}</span>
+    return <span className="text-red">{error.message}</span>
   }
 
   if (!data) return <EventsNotFound />

@@ -4,12 +4,11 @@ import { connectLogger, createCtx, Ctx } from '@reatom/framework'
 import { reatomContext } from '@reatom/npm-react'
 import { PropsWithChildren, useRef } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
-import { snapshotAtom } from '@/shared/lib/ssr';
-import { isDevelopment } from '@/shared/env';
 import { Footer } from '@/shared/components/app/layout/components/footer';
 import { Button } from "@repo/ui/button";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
-import { initApp } from '@/shared/models/app.model';
+import { app } from '@/shared/models/app.model';
+import { snapshotAtom } from '@/shared/lib/reatom-helpers';
 
 interface Fn<Args extends any[] = any[], Return = any> {
   (...a: Args): Return
@@ -30,7 +29,7 @@ const SyncPageContext = () => {
   const pageCtx = usePageContext()
 
   useUpdate((ctx) => {
-    const un = initApp(ctx, pageCtx)
+    const un = app.init(ctx, pageCtx)
     return un
   }, [pageCtx])
 
@@ -43,7 +42,7 @@ const ReatomProvider = ({ children }: PropsWithChildren) => {
   const ctx = useCreateCtx((ctx) => {
     snapshotAtom(ctx, snapshot)
 
-    if (typeof window !== 'undefined' && isDevelopment) {
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
       connectLogger(ctx)
     }
   })
@@ -69,7 +68,7 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
       >
         Обновить
       </Button>
-      {isDevelopment && <pre style={{ color: "red" }}>{error.message}</pre>}
+      {import.meta.env.DEV && <pre style={{ color: "red" }}>{error.message}</pre>}
     </div>
   );
 }

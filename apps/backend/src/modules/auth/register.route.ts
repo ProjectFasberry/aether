@@ -35,7 +35,7 @@ export const register = new Elysia()
     .use(registerValidator())
     .use(validateAuthStatus())
     .use(ipValidator())
-    .post("/", async ({ status, body: { findout, mnHex, nickname, password: inputPass, findoutType }, ip }) => {
+    .post("/", async ({ status, body: { findout, hash, nickname, password: inputPass, findoutType }, ip }) => {
       const existsUser = await auth.getExistsUser(nickname)
       if (existsUser.result) {
         throw status(400, wrapError("exists"))
@@ -46,12 +46,12 @@ export const register = new Elysia()
         throw status(400, wrapError("unsafe"))
       }
 
-      const hash = Bun.password.hashSync(inputPass, {
+      const passHash = Bun.password.hashSync(inputPass, {
         algorithm: "bcrypt", cost: 10
       })
 
       const data = await registerService.createUser({
-        nickname, findout, findoutType, password: hash, ip, mnHex
+        nickname, findout, findoutType, password: passHash, ip, hash
       })
 
       return { data }

@@ -64,20 +64,17 @@ export const bannerPayload = t.Object({
 })
 
 export const bannerList = new Elysia()
-  .model({
-    "banners-list": withData(
-      t.Object({  
-        data: t.Array(bannerPayload),
-        meta: withMeta
-      })
-    )
-  })
   .get("/list", async ({ query }) => {
     const data: BannersPayload = await getBanners(query);
     return { data }
   }, {
     query: bannersListSchema,
     response: {
-      200: "banners-list"
+      200: withData(
+        t.Object({
+          data: t.Array(bannerPayload),
+          meta: withMeta
+        })
+      )
     }
   })

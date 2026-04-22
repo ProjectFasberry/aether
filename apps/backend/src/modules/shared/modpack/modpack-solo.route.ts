@@ -28,11 +28,6 @@ async function getModpack(id: number) {
 }
 
 export const modpackSingle = new Elysia()
-  .model({
-    "modpack": withData(
-      t.Nullable(modpackPayload)
-    )
-  })
   .get("/id", async ({ params }) => {
     const id = params.id;
     const data = await getModpack(id)
@@ -40,6 +35,8 @@ export const modpackSingle = new Elysia()
   }, {
     params: z.object({ id: z.coerce.number() }),
     response: {
-      200: "modpack"
+      200: withData(
+        t.Nullable(modpackPayload)
+      )
     }
   })

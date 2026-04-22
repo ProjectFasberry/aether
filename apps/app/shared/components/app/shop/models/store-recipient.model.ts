@@ -6,7 +6,7 @@ import { logError } from "@/shared/lib/log";
 import { toast } from "sonner";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { CartItem } from "@repo/shared/types/entities/store";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 
 export function makeChangeValidator<T>(
   oldAtom: Atom<T>,
@@ -27,7 +27,7 @@ export function getRecipient(ctx: Ctx): string {
   const custom = ctx.get(storeGlobalRecipientAtom)
 
   if (!custom) {
-    const current = ctx.get(currentUserAtom)?.nickname;
+    const current = ctx.get(currentUserState)?.nickname;
     if (!current) throw new Error("Global recipient is not defined")
     return current;
   }
@@ -167,7 +167,7 @@ export const changeGlobalRecipientAction = reatomAsync(async (ctx) => {
   const newRecipient = ctx.get(changeGlobalRecipientNewAtom)
 
   if (!newRecipient || newRecipient === "") {
-    const current = ctx.get(currentUserAtom)?.nickname
+    const current = ctx.get(currentUserState)?.nickname
     if (!current) throw new Error('Current nickname is not defined')
     return current;
   }

@@ -32,7 +32,7 @@ export const client = ky.create({
         const duration = start ? Date.now() - start : 0
         logger.withTag("ResponseError").log(
           req
-            ? `[${req.method}] ${req.url} — failed after ${duration}ms`
+            ? `${req.method} ${req.url} - failed after ${duration}ms`
             : `Request failed — ${duration}ms`
         )
         if (id) timings.delete(Number(id))

@@ -10,26 +10,20 @@ import { validateBannedStatus } from "#/lib/middlewares/validators";
 import { skinGroup } from "./skin";
 import { referrals } from "./referals";
 
-const publicServerGroup = new Elysia()
-	.group("", (app) => app
-		.use(rating)
-		.use(lands)
-		.use(status)
-		.use(events)
-		.use(minecraftItems)
-		.use(tasks)
-		.use(skinGroup)
-		.use(referrals)
-	);
-
-const privatedServerGroup = new Elysia()
-	.use(validateBannedStatus())
-	.group("", (app) => app
-		.use(playerGroup)
-	);
-
 export const serverGroup = new Elysia()
 	.group("/server", (app) => app
-		.use(publicServerGroup)
-		.use(privatedServerGroup)
+		.group("", (app) => app
+			.use(rating)
+			.use(lands)
+			.use(status)
+			.use(events)
+			.use(minecraftItems)
+			.use(tasks)
+			.use(skinGroup)
+			.use(referrals)
+		)
+		.group("", app => app
+			.use(validateBannedStatus())
+			.use(playerGroup)
+		)
 	);

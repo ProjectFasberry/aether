@@ -10,7 +10,7 @@ import { createLink, Link } from "@/shared/components/config/link"
 import { Avatar } from "../../avatar/components/avatar"
 import dayjs from "@/shared/lib/create-dayjs"
 import { Skeleton } from "@repo/ui/skeleton"
-import { currentUserAtom } from "@/shared/models/current-user.model"
+import { currentUserState } from "@/shared/models/current-user.model"
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@repo/ui/sheet"
 
 const likeButtonVariants = tv({
@@ -18,7 +18,7 @@ const likeButtonVariants = tv({
   variants: {
     variant: {
       inactive: "border-neutral-700",
-      active: "border-red-600/90 bg-red-500/70 backdrop-blur-md",
+      active: "border-red-600/90 bg-red/70 backdrop-blur-md",
       filled: "bg-neutral-50 active:scale-100"
     }
   },
@@ -98,7 +98,7 @@ const RateList = reatomComponent<Pick<RateProps, "count">>(({ ctx, count }) => {
     return <Skeleton className="h-36 w-full" />
   }
 
-  const currentUser = ctx.get(currentUserAtom)
+  const currentUser = ctx.get(currentUserState)
   const isDisabled = !currentUser || ctx.spy(playerRate.rate.statusesAtom).isPending
 
   return (

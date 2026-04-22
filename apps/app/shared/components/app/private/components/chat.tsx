@@ -27,7 +27,7 @@ import {
   IconX
 } from "@tabler/icons-react";
 import { Input } from "@repo/ui/input";
-import { isEmptyArray } from "@/shared/lib/array";
+import { isEmptyArray } from "@/shared/lib/utils";
 import { Avatar } from "../../avatar/components/avatar";
 import { Typography } from "@repo/ui/typography";
 import { createLink, Link } from "@/shared/components/config/link";
@@ -35,7 +35,7 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { ActionButton, DeleteButton } from "./ui";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {
   return (
@@ -56,7 +56,7 @@ const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id
                 onClick={() => chatDeleteMessageAction(ctx, id)}
               >
                 <IconX size={16} />
-                <Typography className="text-red-500">
+                <Typography className="text-red">
                   Удалить
                 </Typography>
               </Button>
@@ -176,7 +176,7 @@ const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({
 const ChatMessagesItem = reatomComponent<ChatItem>(({
   ctx, id, nickname, created_at, message, edited, edited_at, views
 }) => {
-  const isOwner = nickname === ctx.get(currentUserAtom)?.nickname
+  const isOwner = nickname === ctx.get(currentUserState)?.nickname
 
   return (
     <div
@@ -239,7 +239,7 @@ export const ChatMessages = reatomComponent(({ ctx }) => {
   }
 
   if (error) {
-    return <span className="text-red-500">Произошла ошибка. {error.message}</span>
+    return <span className="text-red">Произошла ошибка. {error.message}</span>
   }
 
   if (!data || isEmptyArray(data)) return <span>пусто</span>

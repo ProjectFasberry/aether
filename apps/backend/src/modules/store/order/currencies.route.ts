@@ -27,16 +27,13 @@ const currencyPayload = t.Object({
 })
 
 export const currencies = new Elysia()
-  .model({
-    "currencies-list": withData(
-      t.Array(currencyPayload)
-    )
-  })
   .get("/currencies", async (ctx) => {
     const data = await getCurrencies()
     return { data }
   }, {
     response: {
-      200: "currencies-list"
+      200: withData(
+        t.Array(currencyPayload)
+      )
     }
   })

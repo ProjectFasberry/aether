@@ -48,32 +48,26 @@ async function getBanner(
 }
 
 export const bannerSolo = new Elysia()
-  .model({
-    "banner": withData(
-      t.Nullable(bannerPayload)
-    )
-  })
   .get("/:id", async ({ status, params: { id } }) => {
     const data = await getBanner(id);
     return { data }
   }, {
     params: bannerSchema,
     response: {
-      200: "banner"
+      200: withData(
+        t.Nullable(bannerPayload)
+      )
     }
   })
 
 export const bannerLatest = new Elysia()
-  .model({
-    "banner": withData(
-      t.Nullable(bannerPayload)
-    )
-  })
   .get("/latest", async ({ status }) => {
     const data = await getLatestBanner();
     return { data }
   }, {
     response: {
-      200: "banner"
+      200: withData(
+        t.Nullable(bannerPayload)
+      )
     }
   })

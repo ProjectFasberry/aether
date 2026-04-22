@@ -1,10 +1,11 @@
-import { defineCartData } from "@/shared/components/app/shop/models/store-cart.model";
-import { defineStoreItemsData } from "@/shared/components/app/shop/models/store.model";
+import { cart } from "@/shared/components/app/shop/models/store-cart.model";
+import { storeItems } from "@/shared/components/app/shop/models/store.model";
 import { APP_URL } from "@/shared/env";
 import { isBotRequest } from "@/shared/lib/bot-guard";
 import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { wrapTitle } from "@/shared/lib/wrap-title";
+import { APP_OPTIONS_KEY, AppOptionsPayloadExtend } from "@/shared/models/app.model";
 import { useConfig } from "vike-react/useConfig";
 import { PageContextServer } from "vike/types";
 
@@ -41,22 +42,43 @@ function metadata() {
   }
 }
 
-export const data = async (pageContext: PageContextServer) => {
-  logRouting(pageContext.urlPathname, "data")
+function assertDefined<T>(val: T, name: string): asserts val is NonNullable<T> {
+  if (val === undefined || val === null) {
+    const message = `${name} is undefined or null`;
+    console.warn(message);
+  }
+}
 
-  const headers = pageContext.headers ?? undefined;
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, "data")
+
+  const headers = pageCtx.headers ?? undefined;
   if (!headers) return;
 
   const config = useConfig()
-
   config(metadata())
 
-  if (isBotRequest(headers, pageContext.urlPathname)) {
+  if (isBotRequest(headers, pageCtx.urlPathname)) {
     return;
   }
 
+  async function cartInitWrap() {
+    const opts = pageCtx.snapshot[APP_OPTIONS_KEY]["data"] as AppOptionsPayloadExtend
+    const isAuthed = opts["isAuth"] as Maybe<boolean>
+    assertDefined(isAuthed, "isAuthed")
+
+    if (!isAuthed) {
+      if (import.meta.env.DEV) {
+        console.log("Skipping fetch cart list")
+      }
+      return;
+    }
+
+    return cart.init(pageCtx)
+  }
+
   await Promise.all([
-    defineStoreItemsData(pageContext),
-    defineCartData(pageContext)
+    storeItems.init(pageCtx),
+    cartInitWrap()
   ])
 }

@@ -30,7 +30,7 @@ export const registerSchema = z.object({
 		.object({
 			findout: z.string().min(1).max(128),
 			findoutType: z.enum(["custom", "referrer"]),
-			mnHex: z.string(),
+			hash: z.string(),
 		})
 		.superRefine((data, ctx) => {
 			if (data.findoutType === "referrer") {

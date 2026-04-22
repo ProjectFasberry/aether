@@ -21,7 +21,7 @@ const BannedActionButton = reatomComponent(({ ctx }) => {
     <Button
       onClick={() => logout.withConfirm(ctx)}
       disabled={isDisabled}
-      className='bg-neutral-50 text-red-500 font-semibold text-lg'
+      className='bg-neutral-50 text-red font-semibold text-lg'
     >
       Выйти из аккаунта
     </Button>
@@ -44,18 +44,18 @@ const Banned = reatomComponent(({ ctx }) => {
       </Typography>
       <div className="flex flex-col items-center gap-y-4">
         <Typography
-          className="text-xl font-semibold text-red-500"
+          className="text-xl font-semibold text-red"
         >
           Вы были заблокированы
         </Typography>
         <div className="flex flex-col items-center">
           <Typography
-            className="text-lg font-semibold text-red-500"
+            className="text-lg font-semibold text-red"
           >
             Причина: <span className="text-neutral-50">{data?.reason ?? "не указана"}</span>
           </Typography>
           <Typography
-            className="text-lg font-semibold text-red-500"
+            className="text-lg font-semibold text-red"
           >
             Разбан:{' '}
             <span className="text-neutral-50">

@@ -1,5 +1,4 @@
 import { Link } from "@/shared/components/config/link";
-import { isDevelopment } from "@/shared/env";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { Button } from "@repo/ui/button";
 import { Typography } from "@repo/ui/typography";
@@ -40,8 +39,8 @@ const ErrorPage = () => {
       <Typography className="text-xl lg:text-2xl text-center font-semibold">
         Произошла ошибка
       </Typography>
-      {isDevelopment && (
-        <span className="text-red-500">{message}</span>
+      {import.meta.env.DEV && (
+        <span className="text-red">{message}</span>
       )}
     </>
   )

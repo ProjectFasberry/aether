@@ -1,9 +1,9 @@
 import { atom } from "@reatom/core";
 import { PageContext } from "vike/types";
-import { snapshotAtom } from "../lib/ssr";
 import { localeDefault } from "../locales";
-import { appOptionsAtom } from "./app.model";
+import { appState } from "./app.model";
 import { urlAtom } from "@reatom/url";
+import { snapshotAtom } from "../lib/reatom-helpers";
 
 export const pageContextAtom = atom<PageContext | null>(null, "pageContext");
 
@@ -12,10 +12,10 @@ export const isClientAtom = atom<boolean>((ctx) => {
 	return pageContext ? !!pageContext.Page : false;
 }, "isClient");
 
-export const isAuthedAtom = atom<boolean>((ctx) => ctx.spy(appOptionsAtom)?.isAuth ?? false, "isAuthed");
+export const isAuthedAtom = atom<boolean>((ctx) => ctx.spy(appState.options)?.isAuth ?? false, "isAuthed");
 
-export const localeAtom = atom((ctx) => ctx.spy(appOptionsAtom).locale ?? localeDefault, "locale");
-export const countryAtom = atom((ctx) => ctx.spy(appOptionsAtom).country, "country");
+export const localeAtom = atom((ctx) => ctx.spy(appState.options).locale ?? localeDefault, "locale");
+export const countryAtom = atom((ctx) => ctx.spy(appState.options).country, "country");
 
 pageContextAtom.onChange((ctx, state) => {
 	if (!state) return;
@@ -25,7 +25,4 @@ pageContextAtom.onChange((ctx, state) => {
 });
 
 // sync snapshot
-pageContextAtom.onChange((ctx, state) => {
-	if (!state) return;
-	snapshotAtom(ctx, state.snapshot);
-});
+pageContextAtom.onChange((ctx, state) => state && snapshotAtom(ctx, state.snapshot));

@@ -1,38 +1,62 @@
 import { DEFAULT_SOFT_TIMEOUT } from "@/shared/consts/delays";
-import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
+import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
-import { action, atom, sleep, withConcurrency } from "@reatom/framework";
+import { action, atom, sleep, withAssign, withConcurrency } from "@reatom/framework";
 import { TasksPayload } from "@repo/shared/types/entities/other";
 
-export const tasksAscendingAtom = atom(false, "tasksAscending")
-export const tasksCursorAtom = atom<Maybe<string>>(undefined, "tasksCursor")
-export const tasksSearchQueryAtom = atom<string>("", "tasksSearchQuery")
+export type TasksFilterSortBy = "relevance"
 
-export const onChange = action(async (ctx, e) => {
-  const { value } = e.target;
-  tasksSearchQueryAtom(ctx, value)
-
-  await ctx.schedule(() => sleep(DEFAULT_SOFT_TIMEOUT))
-
-  tasksAction(ctx)
-}, "onChange").pipe(withConcurrency())
-
-tasksAscendingAtom.onChange((ctx) => tasksAction(ctx))
-
-export const tasksAction = reatomAsync(async (ctx) => {
-  const params = {
-    asc: ctx.get(tasksAscendingAtom),
-    endCursor: ctx.get(tasksCursorAtom),
-    searchQuery: ctx.get(tasksSearchQueryAtom)
+const FILTERS = [
+  {
+    title: "Актуальности", value: "relevance"
   }
+]
 
-  return await ctx.schedule(() =>
-    client<TasksPayload>("server/task/list")
-      .pipe(withAbort(ctx.controller.signal), withQueryParams(params))
-      .exec()
-  )
-}, "tasksAction").pipe(
-  withDataAtom(null, (_, data) => data.data.length === 0 ? null : data), 
-  withStatusesAtom(), 
-  withErrorAtom()
+export const tasksFilter = atom(null, "tasksFilter").pipe(
+  withAssign(() => ({
+    sortBy: atom<TasksFilterSortBy>("relevance", ``),
+    searchQuery: atom<string>("", "tasksSearchQuery"),
+    endCursor: atom<Nullable<string>>(null, "tasksCursor"),
+    asc: atom(false, "tasksAscending"),
+    FILTERS
+  }))
 )
+
+export const tasks = atom(null, "tasks").pipe(
+  withAssign((_, name) => ({
+    fetch: reatomAsync(async (ctx) => {
+      const params = {
+        asc: ctx.get(tasksFilter.asc),
+        endCursor: ctx.get(tasksFilter.endCursor),
+        searchQuery: ctx.get(tasksFilter.searchQuery)
+      }
+
+      return await ctx.schedule(() =>
+        client
+          .get<TasksPayload>("server/task/list", {
+            signal: ctx.controller.signal
+          })
+          .pipe(
+            withQueryParams(params)
+          )
+          .exec()
+      )
+    }, `${name}.fetch`).pipe(
+      withDataAtom(null, (_, data) => data.data.length === 0 ? null : data),
+      withStatusesAtom(),
+      withErrorAtom()
+    ),
+    onChangeEvent: action(async (ctx, e) => {
+      const { value } = e.target;
+      tasksFilter.searchQuery(ctx, value)
+
+      await ctx.schedule(() => sleep(DEFAULT_SOFT_TIMEOUT))
+
+      tasks.fetch(ctx)
+    }).pipe(
+      withConcurrency()
+    )
+  }))
+)
+
+tasksFilter.asc.onChange((ctx) => tasks.fetch(ctx))

@@ -3,23 +3,8 @@ import { defineUser } from "#/lib/middlewares/define"
 import { getCustomLocation, getLocation, parseWorldName, type UserLocation } from "./location.model"
 import { withData } from "#/shared/schemas"
 
-const userLocationPayload = t.Object({
-  world: t.String(),
-  x: t.Number(),
-  y: t.Number(),
-  z: t.Number(),
-  pitch: t.Number(),
-  yaw: t.Number(),
-  customLocation: t.Nullable(t.String())
-})
-
 export const playerLocation = new Elysia()
   .use(defineUser())  
-  .model({
-    "location": withData(
-      t.Nullable(userLocationPayload)
-    )
-  })
   .get("/location/:nickname", async ({ params: { nickname } }) => {
     const rawLocation = await getLocation(nickname);
     if (!rawLocation) {
@@ -41,6 +26,18 @@ export const playerLocation = new Elysia()
     return { data: location }
   }, {
     response: {
-      200: "location"
+      200: withData(
+        t.Nullable(
+          t.Object({
+            world: t.String(),
+            x: t.Number(),
+            y: t.Number(),
+            z: t.Number(),
+            pitch: t.Number(),
+            yaw: t.Number(),
+            customLocation: t.Nullable(t.String())
+          })
+        )
+      )
     }
   })

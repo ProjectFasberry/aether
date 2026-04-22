@@ -3,11 +3,10 @@ import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { render } from "vike/abort";
 import { StoreItem } from "@repo/shared/types/entities/store";
-import { defineCartData } from "@/shared/components/app/shop/models/store-cart.model";
+import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
-import { getStoreItem } from "@/shared/components/app/shop/models/store-item.model";
+import { getStoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
 import { createCtx } from "@reatom/core";
-import { selectedItemAtom } from "./+Page";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 function metadata(
@@ -57,9 +56,9 @@ export async function data(pageCtx: PageContextServer) {
 
   config(metadata(item, pageCtx))
 
-  await defineCartData(pageCtx)
+  await cart.init(pageCtx)
 
   const ctx = createCtx()
-  selectedItemAtom(ctx, item)
+  storeItemState.data(ctx, item)
   pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
 }

@@ -33,16 +33,6 @@ export async function getBan(nickname: string | null) {
 
 export const appOptionsList = new Elysia()
   .use(defineOptionalUser())
-  .model({
-    "options": withData(
-      t.Object({
-        bannerIsExists: t.Boolean(),
-        isBanned: t.Boolean(),
-        isWl: t.Boolean(),
-        isAuth: t.Boolean()
-      })
-    )
-  })
   .use(ipPlugin())
   .get("/options", async ({ nickname, ip }) => {
     const bannerIsExists = await bannerExists(nickname)
@@ -59,6 +49,13 @@ export const appOptionsList = new Elysia()
     return { data }
   }, {
     response: {
-      200: "options"
+      200: withData(
+        t.Object({
+          bannerIsExists: t.Boolean(),
+          isBanned: t.Boolean(),
+          isWl: t.Boolean(),
+          isAuth: t.Boolean()
+        })
+      )
     }
   })

@@ -1,4 +1,4 @@
-import { isEmptyArray } from "@/shared/lib/array";
+import { isEmptyArray } from "@/shared/lib/utils";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { pageContextAtom } from "@/shared/models/page-context.model";

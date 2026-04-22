@@ -145,7 +145,7 @@ export const Land = reatomComponent(({ ctx }) => {
           </div>
         )}
         <div id="members" className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 w-full">
+          <div className="flex items-end gap-2 w-full">
             <Typography className="text-2xl xl:text-3xl font-semibold">
               Участники
             </Typography>

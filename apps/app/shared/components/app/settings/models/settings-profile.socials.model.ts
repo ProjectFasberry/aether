@@ -1,6 +1,6 @@
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { action, atom, reatomAsync, reatomMap, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
-import { isEmptyArray } from "@/shared/lib/array";
+import { isEmptyArray } from "@/shared/lib/utils";
 import { client } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { getPlayerSocials, PlayerSocialsPayload } from "../../player/models/socials.model";
@@ -9,7 +9,7 @@ import { logError } from "@/shared/lib/log";
 export const profileSocials = atom(null, "profileSocials").pipe(
   withAssign((_, name) => ({
     fetch: reatomAsync(async (ctx) => {
-      const nickname = ctx.get(currentUserAtom)!.nickname;
+      const nickname = ctx.get(currentUserState)!.nickname;
 
       return await ctx.schedule(() =>
         getPlayerSocials(nickname, { signal: ctx.controller.signal })

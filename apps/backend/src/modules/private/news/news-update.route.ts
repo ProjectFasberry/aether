@@ -23,17 +23,15 @@ async function updateNews(id: number, values: z.infer<typeof newsUpdateSchema>) 
 	return query;
 }
 
-export const newsUpdateRoute = new Elysia().use(validatePermission(Permissions.get("NEWS.UPDATE"))).post(
-	"/:id/edit",
-	async ({ params: { id }, status, body }) => {
+export const newsUpdateRoute = new Elysia()
+	.use(validatePermission(Permissions.get("NEWS.UPDATE")))
+	.post("/:id/edit", async ({ params: { id }, status, body }) => {
 		const data = await updateNews(id, body);
 		return { data }
-	},
-	{
+	}, {
 		params: z.object({ id: z.coerce.number() }),
 		body: newsUpdateSchema,
 		afterResponse: ({ nickname: initiator, permission }) => {
 			createAdminActivityLog({ initiator, event: permission });
 		},
-	},
-);
+	});

@@ -5,12 +5,12 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/table"
 import { action, atom } from "@reatom/core"
-import { API_PREFIX_URL, isDevelopment } from "@/shared/env"
+import { API_PREFIX_URL } from "@/shared/env"
 import { startPageEvents } from "@/shared/lib/events"
 import { toast } from "sonner"
 import { onDisconnect, reatomMap, sleep, withReset } from "@reatom/framework"
 import { tv } from "tailwind-variants"
-import { appDictionariesAtom } from "@/shared/models/app.model"
+import { appState } from "@/shared/models/app.model"
 
 type HistoryPayload = {
   event: string;
@@ -44,7 +44,7 @@ esAtom.onChange((ctx, state) => {
   if (!state) return;
 
   state.onopen = () => {
-    if (isDevelopment) {
+    if (import.meta.env.DEV) {
       toast.success("Connected to history events")
     }
   }
@@ -115,7 +115,7 @@ const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({
   const isLoaded = ctx.spy(getHistoryItemStatusAtom(id));
 
   const variant = isLoaded ? "selected" : "default"
-  const eventTitle = appDictionariesAtom.get(ctx, event) ?? event
+  const eventTitle = appState.dict.get(ctx, event) ?? event
 
   return (
     <TableRow className={historyListItemVariant({ variant })}>

@@ -1,12 +1,11 @@
 import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { atom } from "@reatom/core";
 import { withReset } from "@reatom/framework";
-import { currentUserAtom } from "@/shared/models/current-user.model";
-import { withHistory } from "@/shared/lib/reatom-helpers";
+import { currentUserState } from "@/shared/models/current-user.model";
+import { withHistory, withSsr } from "@/shared/lib/reatom-helpers";
 import type { Land } from "@repo/shared/types/entities/land";
 import { logError } from "@/shared/lib/log";
 import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
-import { withSsr } from "@/shared/lib/ssr";
 
 export const landAtom = atom<Land | null>(null, "land").pipe(withReset(), withSsr("land"));
 
@@ -24,14 +23,14 @@ export const landOwnerAtom = atom<string>((ctx) => {
 
 export const landIsMemberAtom = atom<boolean>((ctx) => {
 	const state = ctx.spy(landAtom);
-	const currentUser = ctx.get(currentUserAtom);
+	const currentUser = ctx.get(currentUserState);
 	if (!currentUser || !state) return false;
 
 	return state.members.some((exist) => exist.nickname === currentUser.nickname);
 }, "landIsMemberAtom").pipe(withReset());
 
 export const landIsOwnerAtom = atom((ctx) => {
-	const currentUser = ctx.get(currentUserAtom);
+	const currentUser = ctx.get(currentUserState);
 	if (!currentUser) return false;
 
 	const state = ctx.spy(landAtom);

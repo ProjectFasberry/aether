@@ -1,5 +1,5 @@
 import { logRouting } from "@/shared/lib/log";
-import { getIsAuth } from "@/shared/lib/validators";
+import { getIsAuth } from "@/shared/lib/utils";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { redirect } from "vike/abort";

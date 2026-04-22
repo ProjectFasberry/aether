@@ -48,7 +48,7 @@ const SETTINGS_NAVIGATION_ICONS: Partial<Record<SettingsParent, Record<string, S
   },
   account: {
     logout: {
-      className: "text-red-500",
+      className: "text-red",
       icon: IconLogout2
     }
   }

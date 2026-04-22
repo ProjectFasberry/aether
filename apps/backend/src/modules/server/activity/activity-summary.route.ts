@@ -80,11 +80,6 @@ const activitySummaryPayload = t.Record(
 )
 
 export const activitySummary = new Elysia()
-  .model({
-    "activity-summary": withData(
-      t.Nullable(activitySummaryPayload)
-    )
-  })
   .get("/summary/:nickname", async ({ params: { nickname } }) => {
     const payload = await getPlayerHeatmap(nickname);
 
@@ -102,6 +97,8 @@ export const activitySummary = new Elysia()
     return { data }
   }, {
     response: {
-      200: "activity-summary"
+      200: withData(
+        t.Nullable(activitySummaryPayload)
+      )
     }
   })

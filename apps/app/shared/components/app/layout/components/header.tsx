@@ -1,7 +1,7 @@
 import { IconBuildingStore, IconChevronUp } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { Avatar } from "@/shared/components/app/avatar/components/avatar";
 import { Typography } from "@repo/ui/typography";
 import { usePageContext } from "vike-react/usePageContext";
@@ -9,7 +9,7 @@ import { Separator } from "@repo/ui/separator";
 import { Fragment } from "react/jsx-runtime";
 import { isAuthedAtom } from "@/shared/models/page-context.model";
 import { logout } from "../../auth/models/logout.model";
-import { cartDataSelectedItemsLengthAtom, cartIsTriggeredAtom } from "../../shop/models/store-cart.model";
+import { cartDataSelectedItemsLengthAtom, cartState } from "../../shop/models/store-cart.model";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
@@ -34,7 +34,7 @@ const HeaderMenuActions = reatomComponent(({ ctx }) => {
         disabled={ctx.spy(logout.exec.statusesAtom).isPending}
         onClick={() => logout.withConfirm(ctx)}
       >
-        <Typography className="font-semibold text-red-500">
+        <Typography className="font-semibold text-red">
           Выйти из аккаунта
         </Typography>
       </DropdownMenuItem>
@@ -43,7 +43,7 @@ const HeaderMenuActions = reatomComponent(({ ctx }) => {
 }, "HeaderMenuActions")
 
 const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
-  const currentUser = ctx.spy(currentUserAtom);
+  const currentUser = ctx.spy(currentUserState);
   if (!currentUser) return null;
 
   return (
@@ -108,7 +108,7 @@ const AuthorizeButton = () => {
 }
 
 const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
-  const currentUser = ctx.spy(currentUserAtom);
+  const currentUser = ctx.spy(currentUserState);
   if (!currentUser) return null;
 
   return (
@@ -127,7 +127,7 @@ const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
 }, "HeaderUserCurrentTrigger")
 
 const HeaderCartTrigger = reatomComponent(({ ctx }) => {
-  const isTriggered = ctx.spy(cartIsTriggeredAtom);
+  const isTriggered = ctx.spy(cartState.isTriggered);
   const cartLength = ctx.spy(cartDataSelectedItemsLengthAtom)
 
   return (
@@ -177,9 +177,9 @@ const HeaderUserBar = reatomComponent(({ ctx }) => {
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
-              <div className="flex flex-col gap-2 w-full">
+              <div className="flex flex-col gap-1 w-full">
                 <HeaderMenuCurrentUser />
-                <Separator />
+                <Separator className="my-2" />
                 <HeaderMenuLinks />
                 <HeaderMenuActions />
               </div>

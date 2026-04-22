@@ -34,7 +34,7 @@ const NewsSkeleton = () => {
 const newsItemVariant = tv({
   base: `
     flex flex-col flex-shrink-0 md:flex-[0_0_calc((100%/2)-0.5rem)] w-full lg:flex-1 
-    h-56 sm:h-72 bg-neutral-800 rounded-xl overflow-hidden
+    h-56 sm:h-72 bg-neutral-900 rounded-xl overflow-hidden
   `,
   slots: {
     img: `object-cover h-[148px] sm:h-[200px]`,

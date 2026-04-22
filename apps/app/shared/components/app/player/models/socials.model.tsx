@@ -1,6 +1,6 @@
 import { client } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
-import { isEmptyArray } from "@/shared/lib/array"
+import { isEmptyArray } from "@/shared/lib/utils"
 import { ReactNode } from "react"
 import { toast } from "sonner"
 import { Icon } from "@/shared/ui/icon"

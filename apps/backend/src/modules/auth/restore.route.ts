@@ -1,18 +1,26 @@
-import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/middlewares/define";
-import { withData } from "#/shared/schemas";
-import { botValidator } from "#/lib/middlewares/validators";
+import Elysia, { t } from "elysia"
 
 export const restore = new Elysia()
-  .use(botValidator())
-  .use(defineUser())
-  .model({
-    "login": withData(t.Object({ code: t.String() }))
-  })
   .resolve(({ headers }) => ({ userAgent: headers["user-agent"] }))
-  .post("/restore", async ({ status, userAgent }) => {
+  .group("/restore", app => app
+    .post("/validate", async ({ status, body, userAgent }) => {
+      console.log(body)
 
-    
-    
-    return { data: null }
-  })
+
+      return { data: null }
+    }, {
+      parse: "json",
+      body: t.Object({
+        nickname: t.String(),
+        hash: t.String()
+      })
+    })
+    .post("/set-new-password", async (ctx) => {
+      return { data: null }
+    }, {
+      parse: "json",
+      body: t.Object({
+        newPassword: t.String({ minLength: 6, maxLength: 64 })
+      })
+    })
+  )

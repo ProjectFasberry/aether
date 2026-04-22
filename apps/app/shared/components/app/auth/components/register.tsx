@@ -1,4 +1,4 @@
-import { authInput, NicknameInput, PasswordInput } from "./auth"
+import { NicknameInput, PasswordInput } from "./auth"
 import { reatomComponent } from "@reatom/npm-react"
 import { auth, type AuthFindoutType, authState, FINDOUT_OPTIONS, findoutSelectedTypeAtom } from "../models/auth.model"
 import { Typography } from "@repo/ui/typography"
@@ -10,7 +10,7 @@ import { Checkbox } from "@repo/ui/checkbox"
 import { Button } from "@repo/ui/button"
 import { SeedPhrase, SeedPhraseFooter, SeedPhraseHeader, SeedPhraseBody } from "@/shared/ui/seed-phrase"
 import { IconCheck, IconDownload, IconX } from "@tabler/icons-react"
-import { type AuthRegisterType, canGoBackAtom, canGoNextAtom, isLastStepAtom, register, registerState } from "../models/register.model"
+import { type AuthRegisterType, registerNavigationModel, register, registerSeedPhraseModel, registerState } from "../models/register.model"
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { spawn } from "@reatom/framework"
 
@@ -24,7 +24,8 @@ const FindoutReferrerInput = reatomComponent(({ ctx }) => {
       spellCheck="false"
       autoComplete="new-referrer"
       placeholder="Никнейм"
-      className={authInput({ variant })}
+      variant={variant}
+      className="w-full"
       value={ctx.spy(authState.fields.findout) ?? ""}
       onClick={() => auth.resetError(ctx)}
       onChange={e => authState.fields.findout(ctx, e.target.value)}
@@ -43,7 +44,8 @@ const FindoutOtherInput = reatomComponent(({ ctx }) => {
       spellCheck="false"
       autoComplete="new-other"
       placeholder="Например: Telegram-канал"
-      className={authInput({ variant })}
+      className="w-full"
+      variant={variant}
       value={ctx.spy(authState.fields.findout) ?? ""}
       onClick={() => auth.resetError(ctx)}
       onChange={e => authState.fields.findout(ctx, e.target.value)}
@@ -135,7 +137,7 @@ const RegisterStartInput = () => {
 }
 
 const RegisterSeedPhraseConfirm = reatomComponent(({ ctx }) => {
-  const words = ctx.spy(registerState.repeatWords)
+  const words = ctx.spy(registerSeedPhraseModel.state.repeatWords)
   const [isHidden, setIsHidden] = useState(true);
 
   return (
@@ -144,10 +146,7 @@ const RegisterSeedPhraseConfirm = reatomComponent(({ ctx }) => {
       isEditable={true}
       isHidden={isHidden}
       className="gap-6"
-      onUpdateWord={(vIdx, value) => {
-        const updatedWords = words.map((d, idx) => idx === vIdx ? value.trim().toLowerCase() : d)
-        registerState.repeatWords(ctx, updatedWords)
-      }}
+      onUpdateWord={(idx, value) => registerSeedPhraseModel.events.updateRepeatWords(ctx, value, idx)}
     >
       <SeedPhraseHeader onChangeVisibilityStatus={v => setIsHidden(v)}>
         <p className="text-neutral-400">
@@ -160,7 +159,7 @@ const RegisterSeedPhraseConfirm = reatomComponent(({ ctx }) => {
 }, "RegisterSeedPhraseConfirm")
 
 const RegisterSeedPhraseSave = reatomComponent(({ ctx }) => {
-  const words = ctx.spy(registerState.words)
+  const words = ctx.spy(registerSeedPhraseModel.state.words)
   const [isHidden, setIsHidden] = useState(true);
 
   return (
@@ -241,13 +240,13 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
 }, "RegisterConfirm")
 
 const RegisterBack = reatomComponent(({ ctx }) => {
-  const canGoBack = ctx.spy(canGoBackAtom)
+  const canGoBack = ctx.spy(registerNavigationModel.canGoBackAtom)
 
   return (
     <Button
       type="button"
       disabled={!canGoBack}
-      onClick={() => spawn(ctx, (spawnCtx) => register.nav.back(spawnCtx))}
+      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.events.back(spawnCtx))}
       background="default"
       className="transition-none"
     >
@@ -257,14 +256,14 @@ const RegisterBack = reatomComponent(({ ctx }) => {
 }, "RegisterBack")
 
 const RegisterContinue = reatomComponent(({ ctx }) => {
-  const canGoNext = ctx.spy(canGoNextAtom);
+  const canGoNext = ctx.spy(registerNavigationModel.canGoNextAtom);
 
   return (
     <Button
       type="button"
       className="w-full bg-green-600 font-semibold transition-none"
       disabled={!canGoNext}
-      onClick={() => spawn(ctx, (spawnCtx) => register.nav.continue(spawnCtx))}
+      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.events.continue(spawnCtx))}
     >
       Продолжить
     </Button>
@@ -272,7 +271,7 @@ const RegisterContinue = reatomComponent(({ ctx }) => {
 }, "RegisterContinue")
 
 const RegisterNavigation = reatomComponent(({ ctx }) => {
-  const isLast = ctx.spy(isLastStepAtom)
+  const isLast = ctx.spy(registerNavigationModel.isLastStepAtom)
   if (isLast) return null;
 
   return (
@@ -295,11 +294,16 @@ const RegisterContent = reatomComponent(({ ctx }) =>
   "RegisterContent"
 )
 
-export const RegisterForm = () => {
+export const RegisterForm = reatomComponent(({ ctx }) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    spawn(ctx, (spawnCtx) => registerNavigationModel.events.continue(spawnCtx))
+  }
+
   return (
-    <div className="flex flex-col gap-4 w-full h-full">
+    <form className="flex flex-col gap-4 w-full h-full" onSubmit={handleSubmit}>
       <RegisterContent />
       <RegisterNavigation />
-    </div>
+    </form>
   )
-}
+}, 'RegisterForm')

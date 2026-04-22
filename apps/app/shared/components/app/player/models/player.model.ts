@@ -1,9 +1,8 @@
-import { currentUserAtom } from "@/shared/models/current-user.model"
-import { withHistory } from "@/shared/lib/reatom-helpers"
+import { currentUserState } from "@/shared/models/current-user.model"
+import { withHistory, withSsr } from "@/shared/lib/reatom-helpers"
 import { atom } from "@reatom/core"
 import { withReset } from "@reatom/framework"
 import { Player } from "@repo/shared/types/entities/user"
-import { withSsr } from "@/shared/lib/ssr"
 import { client } from "@/shared/lib/client-wrapper"
 
 export type PlayerOmitted = Omit<Player, "rate">
@@ -25,7 +24,7 @@ playerAtom.onChange((ctx, state) => {
 })
 
 export const isIdentityAtom = atom<boolean>((ctx) => {
-  const currentUser = ctx.spy(currentUserAtom)
+  const currentUser = ctx.spy(currentUserState)
   if (!currentUser) return false;
 
   const targetPlayer = ctx.spy(playerAtom)

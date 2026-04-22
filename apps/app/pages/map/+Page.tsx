@@ -43,7 +43,7 @@ const ServersList = reatomComponent(({ ctx }) => {
       {data.map((i) => (
         <div
           key={i.value}
-          className="flex flex-col gap-4 w-full bg-neutral-800 rounded-xl p-4"
+          className="flex flex-col gap-4 w-full bg-neutral-900 rounded-xl p-4"
         >
           <Typography className='font-semibold text-base'>
             {i.name}

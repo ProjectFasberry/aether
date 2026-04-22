@@ -6,11 +6,33 @@ import { analyzer } from 'vite-bundle-analyzer';
 import svg from '@neodx/svg/vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
 
-export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd()) as ImportMetaEnv;
+type Stage = "dev" | "prod" | "staging"
+const STAGES: Partial<Record<Stage, { sourcemap: boolean }>> = {
+  "dev": {
+    sourcemap: true
+  },
+  "staging": {
+    sourcemap: true
+  }
+}
 
+export default defineConfig(({ mode }) => {
+  const stage = process.env.STAGE as Stage | undefined
+  console.log(`Build for stage: ${stage}`)
+
+  const env = loadEnv(mode, process.cwd()) as ImportMetaEnv;
   const host = env.VITE_APP_HOST
   const port = Number(env.VITE_APP_PORT)
+
+  let sourcemap = false;
+
+  if (stage) {
+    const target = STAGES[stage];
+    
+    if (target) {
+      sourcemap = target.sourcemap;
+    }
+  }
 
   return {
     plugins: [
@@ -18,7 +40,11 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       tsconfigPaths(),
-      analyzer({ enabled: false, analyzerMode: "static", openAnalyzer: false, }),
+      analyzer({ 
+        enabled: false, 
+        analyzerMode: "static", 
+        openAnalyzer: false, 
+      }),
       svg({
         inputRoot: 'assets/svg',
         output: 'public/sprites',
@@ -32,6 +58,7 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       target: "esnext",
+      sourcemap
     },
     resolve: {
       dedupe: ['react', 'react-dom'],
@@ -41,11 +68,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     preview: {
-      host, port,
+      host, 
+      port,
       allowedHosts: true
     },
     server: {
-      host, port,
+      host, 
+      port,
       allowedHosts: true
     },
   }

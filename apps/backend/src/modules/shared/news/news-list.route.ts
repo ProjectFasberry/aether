@@ -17,14 +17,6 @@ const newsPayload = t.Object({
 
 export const newsList = new Elysia()
   .use(ipPlugin())
-  .model({
-    "news-list": withData(
-      t.Object({
-        data: t.Array(newsPayload),
-        meta: withMeta
-      })
-    )
-  })
   .get("/list", async ({ query, set }) => {
     const data = await getNewsList(query)
 
@@ -35,7 +27,12 @@ export const newsList = new Elysia()
   }, {
     query: newsSchema,
     response: {
-      200: "news-list"
+      200: withData(
+        t.Object({
+          data: t.Array(newsPayload),
+          meta: withMeta
+        })
+      )
     },
     afterResponse: ({ responseValue, ip }) => {
       if (!responseValue) return;

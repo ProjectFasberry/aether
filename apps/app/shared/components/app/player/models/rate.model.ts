@@ -1,14 +1,14 @@
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { isIdentityAtom } from "./player.model";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { isAuthedAtom } from "@/shared/models/page-context.model";
 import { navigate } from "vike/client/router";
 import { atom } from "@reatom/core";
 import { Player } from "@repo/shared/types/entities/user";
-import { withSsr } from "@/shared/lib/ssr";
 import { withAssign } from "@reatom/framework";
+import { withSsr } from "@/shared/lib/reatom-helpers";
 
 type RateUserPayload = "rated" | "unrated";
 type RateList = {
@@ -63,7 +63,7 @@ export const playerRate = atom(null, "playerRate").pipe(
 			const isIdentity = ctx.get(isIdentityAtom);
 			if (!isIdentity) return;
 
-			const currentUser = ctx.get(currentUserAtom);
+			const currentUser = ctx.get(currentUserState);
 			if (!currentUser) return;
 
 			return await ctx.schedule(() =>

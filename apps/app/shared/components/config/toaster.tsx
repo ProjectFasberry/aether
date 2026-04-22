@@ -18,7 +18,7 @@ export const Toaster = () => {
           classNames: {
             success: "text-green-500!",
             info: "text-neutral-950!",
-            error: "text-red-500!",
+            error: "text-red!",
             warning: "text-yellow-500!",
           },
         }}

@@ -62,16 +62,6 @@ export async function getExchangeRatesStore(
 }
 
 export const exchangeRates = new Elysia()
-  .model({
-    "exchange-rates": withData(
-      t.Record(
-        t.String(), 
-        t.Record(
-          t.String(), t.Number()
-        )
-      )
-    )
-  })
   .get("/exchange-rates", async ({ status }) => {
     const query = await general
       .selectFrom("store_economy")
@@ -95,7 +85,14 @@ export const exchangeRates = new Elysia()
     return { data }
   }, {
     response: {
-      200: "exchange-rates",
+      200: withData(
+        t.Record(
+          t.String(),
+          t.Record(
+            t.String(), t.Number()
+          )
+        )
+      ),
       500: withError
     }
   })

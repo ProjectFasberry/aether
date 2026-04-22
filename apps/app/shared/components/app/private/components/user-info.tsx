@@ -1,5 +1,5 @@
-import { appDictionariesAtom } from "@/shared/models/app.model";
-import { currentUserAtom, currentUserPermsAtom, currentUserRoleAtom } from "@/shared/models/current-user.model";
+import { appState } from "@/shared/models/app.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { action, atom } from "@reatom/core";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
@@ -24,7 +24,7 @@ const permsAtom = atom<Perms>({
 });
 
 const transformPermissionsByNamespaceAction = action((ctx) => {
-  const targets = ctx.get(currentUserPermsAtom);
+  const targets = ctx.get(currentUserState.perms);
   if (!targets) return null;
 
   permsAtom(ctx, {
@@ -41,7 +41,7 @@ const transformPermissionsByNamespaceAction = action((ctx) => {
 export const UserInfo = reatomComponent(({ ctx }) => {
   useUpdate(transformPermissionsByNamespaceAction, []);
 
-  const currentUser = ctx.spy(currentUserAtom);
+  const currentUser = ctx.spy(currentUserState);
   if (!currentUser) return null;
 
   const perms = ctx.spy(permsAtom)
@@ -54,10 +54,10 @@ export const UserInfo = reatomComponent(({ ctx }) => {
     { title: "Unknown", data: perms.unknown },
   ].filter(g => g.data && g.data.length > 0);
 
-  const role = ctx.spy(currentUserRoleAtom)
+  const role = ctx.spy(currentUserState.role)
   if (!role) return null;
 
-  const roleTitle = appDictionariesAtom.get(ctx, role.name)
+  const roleTitle = appState.dict.get(ctx, role.name)
 
   return (
     <Dialog>

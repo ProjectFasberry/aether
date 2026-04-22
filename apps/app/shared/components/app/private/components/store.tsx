@@ -21,7 +21,7 @@ import { PropsWithChildren, ReactNode } from "react"
 import { navigate } from "vike/client/router"
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
-import { appDictionariesAtom } from "@/shared/models/app.model"
+import { appState } from "@/shared/models/app.model"
 import { CreateItem } from "./store.create"
 
 const titles: Record<AtomState<typeof searchParamTargetAtom>, string> = {
@@ -146,7 +146,7 @@ const EditItem = reatomComponent(({ ctx }) => {
 
   if (!content) throw new Error("Content is not defined")
 
-  const currencyTitle = appDictionariesAtom.get(ctx, currency)
+  const currencyTitle = appState.dict.get(ctx, currency)
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">

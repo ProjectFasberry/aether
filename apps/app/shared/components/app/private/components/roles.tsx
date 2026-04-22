@@ -22,7 +22,7 @@ import {
   saveChangesIsValidAtom,
   toggleRoleEditAction
 } from "../models/roles.model"
-import { appDictionariesAtom } from "@/shared/models/app.model"
+import { appState } from "@/shared/models/app.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 
 const rolesListPermItemVariant = tv({
@@ -30,7 +30,7 @@ const rolesListPermItemVariant = tv({
     flex items-center group
     data-[state=active]:bg-green-500/60 
     data-[state=inactive]:bg-transparent
-    data-[state=deleted]:bg-red-500/60
+    data-[state=deleted]:bg-red/60
     border border-neutral-800 px-2 py-1 rounded-lg justify-between w-full gap-2
   `,
   slots: {
@@ -219,7 +219,7 @@ const RolesListItemSkeleton = () => {
 const RolesListItem = reatomComponent<RolePayload>(({ ctx, id, name }) => {
   const isSelected = ctx.spy(getRoleIsSelectedRoleAtom(id));
 
-  const title = appDictionariesAtom.get(ctx, name)
+  const title = appState.dict.get(ctx, name)
 
   return (
     <div className={rolesListItemVariant().base()}>
@@ -299,7 +299,7 @@ const RolesEditablePermHeader = reatomComponent(({ ctx }) => {
         <Typography className="text-green-500">
           +: {ctx.spy(roleNewPermsAtom).length},&nbsp;
         </Typography>
-        <Typography className="text-red-500">
+        <Typography className="text-red">
           -: {ctx.spy(roleDeletedPermsAtom).length}{")"}
         </Typography>
       </div>

@@ -49,20 +49,17 @@ async function getTasks({ asc, endCursor }: z.infer<typeof tasksListSchema>) {
 }
 
 export const tasksList = new Elysia()
-  .model({
-    "tasks-list": withData(
-      t.Object({
-        data: t.Array(taskPayload),
-        meta: withMeta
-      })
-    )
-  })
   .get("/list", async ({ query }) => {
     const data: TasksPayload = await getTasks(query)
     return { data }
   }, {
     query: tasksListSchema,
     response: {
-      200: "tasks-list"
+      200: withData(
+        t.Object({
+          data: t.Array(taskPayload),
+          meta: withMeta
+        })
+      )
     }
   })

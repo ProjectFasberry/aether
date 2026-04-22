@@ -1,6 +1,7 @@
 import { getRedisKey } from "#/helpers/redis"
 import { getRedis } from "#/shared/redis/init"
 import type { EventPayload } from "@repo/shared/types/entities/other"
+import { t } from "elysia"
 import { nanoid } from "nanoid"
 import * as z from "zod/v4"
 
@@ -9,6 +10,17 @@ export const EVENTS_TARGET_KEY = (id: string) => getRedisKey("internal", `events
 export const EVENTS_TYPE_KEY = (type: string) => getRedisKey("internal", `events:type:${type}`)
 
 export const eventTypeSchema = z.enum(["game", "log", "system"])
+
+export const eventPayload = t.Object({
+  id: t.String(),
+  type: t.String(),
+  title: t.String(),
+  content: t.Object({
+    created_at: t.Union([t.String(), t.Date()]),
+    description: t.Nullable(t.String()),
+    initiator: t.String(),
+  })
+})
 
 export const createEventSchema = z.object({
   type: eventTypeSchema,

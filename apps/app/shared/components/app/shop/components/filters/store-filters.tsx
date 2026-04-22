@@ -2,7 +2,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { Checkbox, CheckboxProps } from "@repo/ui/checkbox"
 import { AtomMut, AtomState, Ctx } from "@reatom/core";
-import { onChange, storeCategoryAtom, storeItemsSearchQueryAtom, storeWalletFilterAtom } from "../../models/store.model";
+import { storeItems, storeItemsState } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
 import { LabelHTMLAttributes, useState } from "react";
 import { isClientAtom } from "@/shared/models/page-context.model";
@@ -24,7 +24,7 @@ export const storeSectionWrapper = tv({
 })
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
-  const searchQuery = ctx.spy(isClientAtom) ? ctx.spy(storeItemsSearchQueryAtom) : ""
+  const searchQuery = ctx.spy(isClientAtom) ? ctx.spy(storeItemsState.filters.searchQuery) : ""
 
   return (
     <div className="flex h-10 items-center justify-start w-full relative">
@@ -36,7 +36,7 @@ export const StoreSearch = reatomComponent(({ ctx }) => {
         value={searchQuery}
         placeholder="Найти..."
         className='w-full pl-8 sm:pl-12'
-        onChange={e => onChange(ctx, e)}
+        onChange={e => storeItems.onChangeEvent(ctx, e)}
         maxLength={1024}
       />
     </div>
@@ -57,9 +57,9 @@ const FILTERS: Filter[] = [
   {
     title: "Тип товара",
     origin: "category",
-    atom: storeCategoryAtom,
+    atom: storeItemsState.filters.category,
     updater: (ctx: Ctx, value: string) =>
-      storeCategoryAtom(ctx, value as AtomState<typeof storeCategoryAtom>),
+      storeItemsState.filters.category(ctx, value as AtomState<typeof storeItemsState.filters.category>),
     filters: [
       { name: "Все", value: "all" },
       { name: "Привилегии", value: "donate", },
@@ -69,9 +69,9 @@ const FILTERS: Filter[] = [
   {
     title: "Валюта",
     origin: "wallet",
-    atom: storeWalletFilterAtom,
+    atom: storeItemsState.filters.wallet,
     updater: (ctx: Ctx, value: string) =>
-      storeWalletFilterAtom(ctx, value as AtomState<typeof storeWalletFilterAtom>),
+      storeItemsState.filters.wallet(ctx, value as AtomState<typeof storeItemsState.filters.wallet>),
     filters: [
       { name: "Все", value: "ALL", },
       { name: "Харизма", value: "CHARISM" },
@@ -90,7 +90,7 @@ const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: 
   return (
     <label
       {...labelProps}
-      className="flex items-center gap-2 bg-neutral-700 rounded-lg p-2"
+      className="flex items-center gap-2 bg-neutral-800 rounded-lg p-2"
     >
       <Checkbox {...checkboxProps} />
       <Typography color="white" className="text-base">
@@ -101,7 +101,7 @@ const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: 
 }
 
 const StoreFilterItem = reatomComponent<Filter>(({
-  ctx, title, filters, atom, updater
+  ctx, title, filters, atom, updater, origin
 }) => {
   const isClient = ctx.spy(isClientAtom)
 

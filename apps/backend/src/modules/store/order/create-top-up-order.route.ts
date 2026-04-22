@@ -33,17 +33,6 @@ const targets: Record<MethodType, (pd: OrderInputPayload) => Promise<OutputPaylo
 
 export const createOrderTopUp = new Elysia()
   .use(defineUser())
-  .model({
-    "top-up": withData(
-      t.Object({
-        url: t.String(),
-        orderId: t.String(),
-        invoiceId: t.Number(),
-        totalPrice: t.Number(),
-        uniqueId: t.String(),
-      })
-    )
-  })
   .post("/top-up", async ({ nickname: initiator, body }) => {
     const { target, method, comment, value, recipient } = body;
 
@@ -60,6 +49,14 @@ export const createOrderTopUp = new Elysia()
   }, {
     body: createOrderTopUpSchema,
     response: {
-      200: "top-up"
+      200: withData(
+        t.Object({
+          url: t.String(),
+          orderId: t.String(),
+          invoiceId: t.Number(),
+          totalPrice: t.Number(),
+          uniqueId: t.String(),
+        })
+      )
     }
   })

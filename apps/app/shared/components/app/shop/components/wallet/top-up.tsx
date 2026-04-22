@@ -1,4 +1,3 @@
-import { validateNumber } from "@/shared/lib/validate-primitives";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
@@ -26,6 +25,7 @@ import { TARGET_TITLE } from "../cart/cart-price";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
 import { IconExchange } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
+import { validateNumber } from "@/shared/lib/utils";
 
 // import { storePrivacyAtom } from '../../models/store.model';
 
@@ -153,7 +153,7 @@ const TopUpError = reatomComponent(({ ctx }) => {
   if (!message) return null;
 
   return (
-    <span className="text-red-500 text-base text-nowrap truncate">
+    <span className="text-red text-base text-nowrap truncate">
       {message}
     </span>
   )

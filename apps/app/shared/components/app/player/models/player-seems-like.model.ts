@@ -1,12 +1,12 @@
 import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { SeemsLikePlayersPayload } from "@repo/shared/types/entities/other";
 import { playerParamAtom } from "./player.model";
-import { action, atom, Ctx, take, withAssign } from "@reatom/framework";
-import { withSsr } from "@/shared/lib/ssr";
+import { action, atom, take, withAssign } from "@reatom/framework";
 import { toast } from "sonner";
-import { setCookie } from "@/shared/lib/cookie";
 import dayjs from "@/shared/lib/create-dayjs";
 import { client } from "@/shared/lib/client-wrapper";
+import { withSsr } from "@/shared/lib/reatom-helpers";
+import { setCookie } from "@/shared/lib/utils";
 
 export const playerSeemsLikePlayersIsShowKey = "playerSeemsLikeShow"
 

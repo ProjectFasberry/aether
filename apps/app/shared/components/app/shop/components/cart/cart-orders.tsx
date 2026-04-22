@@ -1,20 +1,11 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
-import { storeOrdersListAction, storeOrdersStatusAtom, storeOrdersTypeAtom } from "../../models/store-cart.model"
+import { OrdersFilterOption, storeOrders, storeOrdersState, StoreOrdersStateStatus, StoreOrdersStateType } from "../../models/store-cart.model"
 import { Link } from "@/shared/components/config/link"
 import { Button } from "@repo/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
-
-const CartOrdersSkeleton = () => {
-  return (
-    <div className='flex flex-col gap-2 w-full h-full'>
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-    </div>
-  )
-}
+import { PageLoader } from "@/shared/ui/page-loader"
+import { AtomMut, Ctx } from "@reatom/core"
 
 const STATUSES: Record<string, string> = {
   "pending": "Ждёт оплаты",
@@ -23,125 +14,81 @@ const STATUSES: Record<string, string> = {
 
 const CartOrdersEmpty = () => {
   return (
-    <div className="flex gap-2 *:w-fit flex-col w-full bg-neutral-900 sm:p-3 lg:p-4 rounded-lg" >
-      <Typography className='text-2xl font-semibold'>
-        Пусто
-      </Typography>
-      <Typography color="gray">
+    <div className="flex flex-col w-full bg-neutral-900 p-2 sm:p-3 lg:p-4 rounded-lg">
+      <Typography className='text-2xl font-semibold'>Пусто</Typography>
+      <Typography className="text-neutral-400 text-base leading-5">
         Заказ появится сразу после оформления
       </Typography>
-      <Link href="/store/cart">
-        <Button className="bg-neutral-800 font-semibold">
-          В корзину
-        </Button>
+      <Link href="/store/cart" className="w-fit mt-4 leading-5 text-base text-green-400">
+        В корзину
       </Link>
     </div>
   )
 }
 
-const CartOrdersFilterStatus = reatomComponent(({ ctx }) => {
-  const current = ctx.spy(storeOrdersStatusAtom)
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="bg-neutral-800 py-1">
-          Статус
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col">
-          <DropdownMenuItem data-state={current === 'all' ? "active" : "inactive"} className="group" onClick={() => storeOrdersStatusAtom(ctx, "all")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              Все
-            </Typography>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-state={current === 'pending' ? "active" : "inactive"} className="group" onClick={() => storeOrdersStatusAtom(ctx, "pending")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              В ожидании
-            </Typography>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-state={current === 'succeeded' ? "active" : "inactive"} className="group" onClick={() => storeOrdersStatusAtom(ctx, "succeeded")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              Завершенные
-            </Typography>
-          </DropdownMenuItem>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-})
-
-const CartOrdersFilterType = reatomComponent(({ ctx }) => {
-  const current = ctx.spy(storeOrdersTypeAtom)
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="bg-neutral-800 py-1">
-          Тип
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col">
-          <DropdownMenuItem data-state={current === 'all' ? "active" : "inactive"} className="group" onClick={() => storeOrdersTypeAtom(ctx, "all")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              Все
-            </Typography>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-state={current === 'game' ? "active" : "inactive"} className="group" onClick={() => storeOrdersTypeAtom(ctx, "game")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              Игровые
-            </Typography>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-state={current === 'default' ? "active" : "inactive"} className="group" onClick={() => storeOrdersTypeAtom(ctx, "default")}>
-            <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-              Пополнение
-            </Typography>
-          </DropdownMenuItem>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
-})
-
-const CartOrdersFilter = () => {
-  return (
-    <div className="flex items-center gap-2 w-full">
-      <CartOrdersFilterStatus />
-      <CartOrdersFilterType />
-    </div>
-  )
+type OrdersFilterDropdownProps = {
+  label: string;
+  options: OrdersFilterOption[];
+  currentValue: AtomMut<any>;
+  onSelect: (ctx: Ctx, value: string) => void;
 }
 
+const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, label, options, currentValue }) => {
+  const current = ctx.spy(currentValue);
+  const activeOption = options.find(o => o.value === current);
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button background="default" className="truncate min-w-0 py-1">
+          {label}: &nbsp;<span className="text-neutral-400">{activeOption?.title}</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <div className="flex flex-col gap-1 w-full">
+          {options.map((item) => (
+            <DropdownMenuItem
+              key={item.value}
+              data-state={current === item.value ? "active" : "inactive"}
+              className="group"
+              onClick={() => currentValue(ctx, item.value as StoreOrdersStateStatus | StoreOrdersStateType)}
+            >
+              <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
+                {item.title}
+              </Typography>
+            </DropdownMenuItem>
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}, "OrdersFilterDropdown");
+
 const CartOrdersList = reatomComponent(({ ctx }) => {
-  useUpdate(storeOrdersListAction, [])
+  useUpdate(storeOrders.fetch, [])
 
-  if (ctx.spy(storeOrdersListAction.statusesAtom).isPending) {
-    return <CartOrdersSkeleton />
-  }
+  if (ctx.spy(storeOrders.fetch.statusesAtom).isPending) return <PageLoader />
 
-  const data = ctx.spy(storeOrdersListAction.dataAtom)
+  const data = ctx.spy(storeOrders.fetch.dataAtom)
   if (!data) return <CartOrdersEmpty />
 
   return (
-    <div className='flex flex-col gap-2 w-full h-full'>
+    <div id="content" className='flex flex-col gap-2 rounded-xl bg-neutral-900 p-2 sm:p-3 lg:p-4 w-full h-full'>
       {data.map((order) => (
-        <div key={order.unique_id} className="flex items-center justify-between w-full p-4 rounded-lg bg-neutral-800">
-          <div className="flex items-center gap-4">
-            <Typography className="font-semibold text-lg">
+        <Link
+          key={order.unique_id}
+          href={`/store/order/${order.unique_id}?type=${order.type}`}
+          className="flex items-center justify-between w-full p-4 rounded-lg border border-neutral-800"
+        >
+          <div className="flex flex-col gap-1 min-w-0">
+            <Typography className="font-semibold truncate text-lg leading-5">
               Заказ #{order.unique_id}
             </Typography>
-            <Typography color="gray">
+            <Typography className="text-neutral-400 truncate text-sm leading-4">
               {STATUSES[order.status]}
             </Typography>
           </div>
-          <Link href={`/store/order/${order.unique_id}?type=${order.type}`}>
-            <Button className="bg-neutral-50 text-neutral-950 font-semibold">
-              Перейти к заказу
-            </Button>
-          </Link>
-        </div>
+        </Link>
       ))}
     </div>
   )
@@ -154,7 +101,20 @@ export const CartOrders = () => {
         Заказы
       </Typography>
       <div className="flex flex-col gap-4 h-full w-full">
-        <CartOrdersFilter />
+        <div id="filters" className="flex items-center gap-2 w-full">
+          <OrdersFilterDropdown
+            label="Статус"
+            options={storeOrdersState.STATUS_OPTIONS}
+            currentValue={storeOrdersState.status}
+            onSelect={(ctx, val) => storeOrdersState.status(ctx, val as StoreOrdersStateStatus)}
+          />
+          <OrdersFilterDropdown
+            label="Тип"
+            options={storeOrdersState.TYPE_OPTIONS}
+            currentValue={storeOrdersState.type}
+            onSelect={(ctx, val) => storeOrdersState.type(ctx, val as StoreOrdersStateType)}
+          />
+        </div>
         <CartOrdersList />
       </div>
     </div>

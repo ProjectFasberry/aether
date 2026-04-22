@@ -25,9 +25,6 @@ async function getTask(id: number) {
 }
 
 export const tasksSolo = new Elysia()
-  .model({
-    "task": withData(taskPayload)
-  })
   .get("/:id", async ({ params: { id } }) => {
     const data = await getTask(id);
     return { data }
@@ -36,6 +33,6 @@ export const tasksSolo = new Elysia()
       id: z.coerce.number()
     }),
     response: {
-      200: "task"
+      200: withData(taskPayload)
     }
   })

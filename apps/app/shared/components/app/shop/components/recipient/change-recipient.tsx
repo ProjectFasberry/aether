@@ -13,14 +13,14 @@ import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog"
 import { Typography } from "@repo/ui/typography"
 import { Input } from "@repo/ui/input"
 import { Button } from "@repo/ui/button"
-import { updateCart } from "../../models/store-cart.model"
+import { cart } from "../../models/store-cart.model"
 
 const ChangeRecipientError = reatomComponent(({ ctx }) => {
   const error = ctx.spy(changeRecipientErrorAtom);
   if (!error) return null;
 
   return (
-    <span className="text-red-500 text-sm">{error}</span>
+    <span className="text-red text-sm">{error}</span>
   )
 }, "ChangeRecipientError")
 
@@ -34,7 +34,7 @@ const ChangeRecipientField = reatomComponent(({ ctx }) => {
       maxLength={32}
       value={newRecipient ?? oldRecipient}
       onChange={e => changeRecipientNewRecipientAtom(ctx, e.target.value)}
-      className="[&[aria-invalid=true]]:border-red-500 peer border-transparent border-2"
+      className="[&[aria-invalid=true]]:border-red peer border-transparent border-2"
       onClick={() => {
         changeRecipientErrorAtom.reset(ctx)
       }}
@@ -51,7 +51,7 @@ const ChangeRecipientSave = reatomComponent<{ id: number }>(({ ctx, id }) => {
       background="white"
       className="px-4 w-fit self-end font-semibold"
       disabled={isDisabled}
-      onClick={() => changeRecipientAction(ctx, id, updateCart)}
+      onClick={() => changeRecipientAction(ctx, id, cart.update)}
     >
       Применить
     </Button>

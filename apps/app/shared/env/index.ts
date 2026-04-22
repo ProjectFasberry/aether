@@ -1,6 +1,3 @@
-export const isProduction = import.meta.env.PROD;
-export const isDevelopment = import.meta.env.DEV;
-
 export const HOST = import.meta.env.VITE_APP_HOST;
 export const PORT = import.meta.env.VITE_APP_PORT;
 

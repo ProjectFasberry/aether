@@ -93,7 +93,7 @@ export const register = {
     registerLogger.log(eventsExec, nickname);
   },
   async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
-    const { trx, ip, nickname, password, mnHex } = args;
+    const { trx, ip, nickname, password, hash } = args;
     const dbInstance: Kysely<DB> = trx ?? general;
 
     const uuid = await this.getUserUUID(nickname);
@@ -180,13 +180,13 @@ export const register = {
     }
   },
   async createUser(args: Omit<CreateUser, "uuid">): Promise<{ nickname: string }> {
-    const { nickname, findout, password, ip, findoutType, mnHex } = args;
+    const { nickname, findout, password, ip, findoutType, hash } = args;
 
     const result = await general
       .transaction()
       .execute(async (trx) => {
         const registeredUser = await this.create({
-          trx, mnHex, nickname, password, ip
+          trx, hash, nickname, password, ip
         });
 
         if (findoutType === "referrer") {

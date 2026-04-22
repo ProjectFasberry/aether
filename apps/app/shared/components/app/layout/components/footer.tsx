@@ -15,7 +15,7 @@ export const Footer = () => {
     <div
       className="
         flex items-center justify-center w-full pb-24 h-full lg:h-40 lg:min-h-40 p-3 lg:p-4 
-        bg-gradient-to-br from-green-700/40 via-green-800/50 to-green-900/40 border-t border-green-500/20 
+        bg-gradient-to-br from-green-800/40 via-green-800/50 to-green-800/40 border-t border-green-700/20 
         lg:backdrop-blur-md
       "
     >

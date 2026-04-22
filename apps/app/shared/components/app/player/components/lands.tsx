@@ -10,7 +10,7 @@ const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land
   return (
     <Link
       href={createLink("land", ulid)}
-      className="flex p-2 lg:p-4 duration-300 ease-in-out bg-neutral-800 cursor-pointer rounded-xl"
+      className="flex p-2 lg:p-4 duration-300 ease-in-out bg-neutral-900 cursor-pointer rounded-xl"
     >
       <div className="flex items-center gap-3 w-full lg:w-3/4">
         {details?.banner ? (
@@ -57,10 +57,8 @@ const PlayerLandsCount = reatomComponent(({ ctx }) => {
   const data = ctx.spy(playerLandsCountAtom)
 
   return (
-    <div className="w-6 flex items-center justify-center bg-neutral-800 h-6 rounded-full">
-      <span className="font-semibold text-sm">
-        {data}
-      </span>
+    <div className="flex items-center justify-center bg-neutral-800 aspect-square h-8 rounded-lg">
+      <span className="font-semibold text-base">{data}</span>
     </div>
   )
 }, "PlayerLandsCount")
@@ -68,7 +66,7 @@ const PlayerLandsCount = reatomComponent(({ ctx }) => {
 export const PlayerLands = () => {
   return (
     <div className="flex flex-col gap-2 w-full">
-      <div className="flex items-center gap-1">
+      <div className="flex items-end gap-2">
         <h3 className="text-white font-semibold text-2xl">Территории</h3>
         <PlayerLandsCount />
       </div>

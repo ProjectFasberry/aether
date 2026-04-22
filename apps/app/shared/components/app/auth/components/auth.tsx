@@ -1,22 +1,11 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { auth, authState } from "../models/auth.model";
 import { Input } from "@repo/ui/input"
-import { tv } from "tailwind-variants";
 import { Typography } from "@repo/ui/typography";
 import { CAP_INSTANCE_URL, CAP_SITEKEY } from "@/shared/env";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../models/pof.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
-
-export const authInput = tv({
-  base: `w-full`,
-  variants: {
-    variant: {
-      default: "",
-      danger: "border-red-500"
-    }
-  }
-})
 
 export const NicknameInput = reatomComponent(({ ctx }) => {
   const variant = ctx.spy(authState.errorsType).includes("nickname") ? "danger" : "default"
@@ -28,14 +17,14 @@ export const NicknameInput = reatomComponent(({ ctx }) => {
       autoCorrect="off"
       autoCapitalize="off"
       spellCheck="false"
-      className={authInput({ variant })}
+      className="w-full"
+      variant={variant}
       value={value}
       autoComplete="nickname"
       onClick={() => auth.resetError(ctx)}
       onChange={e => authState.fields.nickname(ctx, e.target.value)}
       placeholder="Никнейм"
       maxLength={32}
-      type="text"
     />
   )
 }, "Nickname")
@@ -62,7 +51,8 @@ export const PasswordInput = reatomComponent(({ ctx }) => {
     <div className="flex relative items-center justify-between w-full">
       <Input
         id="passw"
-        className={authInput({ variant })}
+        className="w-full"
+        variant={variant}
         value={value}
         autoComplete="password"
         onClick={() => auth.resetError(ctx)}
@@ -81,7 +71,7 @@ export const AuthError = reatomComponent(({ ctx }) => {
   if (!error) return null;
 
   return (
-    <div id="error" className="flex bg-red-700/60 max-w-2xl rounded-lg px-4 py-2 items-center justify-start">
+    <div id="error" className="flex bg-red/80 max-w-2xl rounded-lg px-4 py-2 items-center justify-start">
       <Typography className='text-base font-semibold'>
         {error}
       </Typography>

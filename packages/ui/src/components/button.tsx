@@ -1,10 +1,10 @@
-import { IconCircleDotted } from "@tabler/icons-react"
+import { IconLoader2 } from "@tabler/icons-react"
 import type { ButtonHTMLAttributes } from "react"
 import { tv, type VariantProps } from "tailwind-variants"
 
 const buttonVariants = tv({
-  base: `inline-flex px-4 py-2 rounded-lg duration-300 ease-in-out cursor-pointer items-center justify-center
-    disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 
+  base: `inline-flex px-4 py-2 rounded-xl duration-300 ease-in-out cursor-pointer items-center justify-center
+    disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 
   `,
   variants: {
     variant: {
@@ -13,7 +13,7 @@ const buttonVariants = tv({
       minecraft: "rounded-none button"
     },
     background: {
-      default: "bg-neutral-700 hover:bg-neutral-600 text-neutral-50",
+      default: "bg-neutral-800 hover:bg-neutral-700 text-neutral-50",
       compound: "bg-neutral-800 text-neutral-50",
       white: "bg-neutral-200 hover:bg-neutral-50 text-neutral-950"
     }
@@ -36,7 +36,7 @@ export const Button = ({ className, isLoading, withSpinner, background, children
       {...props}
     >
       {(withSpinner && isLoading) && (
-        <IconCircleDotted className="animate-spin duration-300 mr-2" size={20} />
+        <IconLoader2 className="animate-spin duration-300 mr-1" size={14} />
       )}
       {children}
     </button>

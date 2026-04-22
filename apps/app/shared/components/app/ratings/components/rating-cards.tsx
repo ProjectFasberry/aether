@@ -3,7 +3,7 @@ import { HTMLAttributes } from "react";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Avatar } from "@/shared/components/app/avatar/components/avatar";
 import { tv, VariantProps } from "tailwind-variants";
-import { currentUserAtom } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user.model";
 import { RatingBelkoin, RatingCharism, RatingLands, RatingParkour, RatingPlaytime, RatingReputation } from "@repo/shared/types/entities/rating";
 import "dayjs/locale/ru";
 import { Typography } from "@repo/ui/typography";
@@ -69,7 +69,7 @@ const CardIndex = ({ idx }: RatingInitial) => {
 }
 
 const isOwnerAtom = (target: string) => atom((ctx) => {
-  const currentUser = ctx.spy(currentUserAtom)
+  const currentUser = ctx.spy(currentUserState)
   return target === currentUser?.nickname
 }, `isOwnerAtom`)
 

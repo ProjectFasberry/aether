@@ -57,7 +57,7 @@ const Navigation = () => {
 const AppSidebar = () => {
   return (
     <Sidebar>
-      <SidebarHeader className="h-20 px-2 sm:px-6">
+      <SidebarHeader className="h-14">
         <Logotype />
       </SidebarHeader>
       <SidebarContent>
@@ -81,7 +81,7 @@ export default function Layout({ children }: PropsWithChildren) {
   return (
     <SidebarProvider >
       <AppSidebar />
-      <div className="flex flex-col gap-2 min-h-dvh w-full px-2 sm:px-6">
+      <div className="flex flex-col gap-2 min-h-dvh w-full p-2 sm:p-6">
         <SidebarTrigger />
         <div className="flex flex-col overflow-hidden w-full">
           {children}

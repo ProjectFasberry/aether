@@ -8,7 +8,7 @@ import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { AnimatedNumber } from "@repo/ui/animated-number"
 import { navigate } from "vike/client/router";
-import { appDictionariesAtom } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app.model";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { Skeleton } from "@repo/ui/skeleton";
@@ -97,7 +97,7 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
 }, "BalanceServerSelect")
 
 const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, image }) => {
-  const title = appDictionariesAtom.get(ctx, value)
+  const title = appState.dict.get(ctx, value)
   const isLoading = !ctx.spy(isClientAtom)
 
   return (

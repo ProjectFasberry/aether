@@ -2,12 +2,11 @@ import { reatomAsync } from "@reatom/async";
 import { atom, Ctx } from "@reatom/core";
 import { OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
-import { Payment } from "./store.model";
-import { withReset } from "@reatom/framework";
-import { API_PREFIX_URL, isDevelopment } from "@/shared/env";
+import { withAssign, withReset } from "@reatom/framework";
+import { API_PREFIX_URL } from "@/shared/env";
 import { logError } from "@/shared/lib/log";
-import { client, withAbort } from "@/shared/lib/client-wrapper";
-import { OrderSingle, OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
+import { client } from "@/shared/lib/client-wrapper";
+import { OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
 
 export const msgAtom = atom<OrderEventPayload | null>(null, "msg")
 export const connectIsSuccessAtom = atom(false, "isSuccess")
@@ -46,7 +45,7 @@ esAtom.onChange((ctx, target) => {
   if (!target) return;
 
   target.onopen = () => {
-    if (isDevelopment) {
+    if (import.meta.env.DEV) {
       toast.success("Connected to order events")
     }
   }
@@ -84,7 +83,12 @@ export const connectToOrderEventsAction = reatomAsync(async (ctx, orderId: strin
 })
 
 export async function getOrder(id: string, init: RequestInit, type: string = "default") {
-  return client<OrderSinglePayload>(`store/order/${id}`, { ...init, searchParams: { type } })
-    .pipe(withAbort(init.signal))
+  return client
+    .get<OrderSinglePayload>(`store/order/${id}`, { 
+      ...init, 
+      searchParams: { 
+        type 
+      }
+    })
     .exec()
 }

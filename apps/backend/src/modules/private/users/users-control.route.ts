@@ -21,7 +21,6 @@ function publish(event: string, data: { initiator: string, payload: string }) {
 const playersControlRestrictCreate = new Elysia()
   .use(validatePermission(Permissions.get("PLAYERS.RESTRICT.CREATE")))
   .post("/create", async ({ body: { args, ...rest } }) => {
-    console.log(args, rest)
     const data = await controlRestrictUsers({ args, ...rest })
     return { data }
   }, {
@@ -69,8 +68,7 @@ const playersControlRestrict = new Elysia()
 
 const playersControlRoles = new Elysia()
   .use(validatePermission(Permissions.get("PLAYERS.ROLE.UPDATE")))
-  .post("/roles", async ({ body }) => {
-    const { nicknames, ...base } = body;
+  .post("/roles", async ({ body: { nicknames, ...base } }) => {
     const data = await changeRoleUsers(nicknames, base)
     return { data }
   }, {
@@ -83,8 +81,7 @@ const playersControlRoles = new Elysia()
 
 const playersControlPermissions = new Elysia()
   .use(validatePermission(Permissions.get("PLAYERS.PERMISSION.UPDATE")))
-  .post("/permission", async ({ body }) => {
-    const { nicknames, ...base } = body;
+  .post("/permission", async ({ body: { nicknames, ...base } }) => {
     const data = await editPlayerRole(nicknames, base)
     return { data }
   }, {

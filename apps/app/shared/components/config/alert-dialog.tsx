@@ -29,7 +29,7 @@ export const AlertDialog = reatomComponent(({ ctx }) => {
             <DialogClose asChild>
               <Button
                 background="default"
-                className="text-neutral-50 text-xs sm:text-base"
+                className="text-xs sm:text-base"
                 onClick={() => alertDialog.close(ctx)}
               >
                 Отмена

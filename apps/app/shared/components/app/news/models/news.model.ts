@@ -3,7 +3,7 @@ import { logError } from "@/shared/lib/log"
 import { News, NewsPayload } from "@repo/shared/types/entities/news"
 import { client, withQueryParams } from "@/shared/lib/client-wrapper"
 import { atom } from "@reatom/core";
-import { withSsr } from "@/shared/lib/ssr";
+import { withSsr } from "@/shared/lib/reatom-helpers";
 
 export const getNews = reatomAsync(async (
   ctx, params: Partial<{ content?: boolean, limit: number, asc: boolean }>
@@ -30,4 +30,4 @@ export const newsAction = reatomAsync(async (ctx) => {
   withCache({ swr: false })
 )
 
-export const newsItemAtom = atom<News | null>(null, "newsItem").pipe(withSsr("news-item"))
+export const newsItemAtom = atom<News | null>(null, "newsItem").pipe(withSsr("news.item"))

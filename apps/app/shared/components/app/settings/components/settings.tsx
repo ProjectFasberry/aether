@@ -68,7 +68,7 @@ export const SettingsDialog = reatomComponent(({ ctx }) => {
       <DialogContent className="p-0! overflow-hidden h-2/3">
         <DialogTitle className="hidden"></DialogTitle>
         <div className="flex items-start w-full min-h-0 h-full">
-          <div className="flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-900 h-full w-[clamp(120px,30%,400px)]">
+          <div className="flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-950 h-full w-[clamp(120px,30%,400px)]">
             <SettingsNavigationDesktop />
           </div>
           <div className="flex-1 flex flex-col pb-[clamp(0.5rem,3vw,1rem)] px-[clamp(0.5rem,3vw,1rem)] pt-10 overflow-y-auto overflow-x-hidden h-full">
