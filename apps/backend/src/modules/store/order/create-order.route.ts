@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineUser } from "#/lib/middlewares/define";
 import { wrapError } from "#/helpers/wrap-error";
-import { getCartSelectedItems } from "../cart/cart.model";
+import { cartItem } from "../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order.model";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import type { GameCurrency } from "@repo/shared/schemas/payment";
@@ -29,7 +29,7 @@ export const createOrder = new Elysia()
       return status(400, wrapError("insufficient"))
     }
 
-    const items = await getCartSelectedItems(initiator);
+    const items = await cartItem.getList(initiator);
 
     if (items.length === 0) {
       return status(400, wrapError("items-not-found"))

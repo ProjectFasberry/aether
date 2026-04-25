@@ -12,7 +12,7 @@ import {
 	RatingReputation,
 	RatingsPayload,
 } from "@repo/shared/types/entities/rating";
-import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
+import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 
 type RatingMap = {
 	playtime: RatingPlaytime[];
@@ -59,55 +59,48 @@ export async function getRatings(
 ) {
 	const opts = { limit, endCursor, asc, server };
 
-	return client<RatingsPayload>(`server/rating/${by}`, { ...init, retry: 1, throwHttpErrors: false })
-		.pipe(withQueryParams(opts), withAbort(init.signal))
+	return client
+		.get<RatingsPayload>(`server/rating/${by}`, { ...init, retry: 1, throwHttpErrors: false })
+		.pipe(withQueryParams(opts))
 		.exec();
 }
 
 export const ratingDataAtom = atom<RatingsPayload["data"] | null>(null, "ratingData").pipe(withReset());
 export const ratingMetaAtom = atom<RatingsPayload["meta"] | null>(null, "ratingMeta").pipe(withReset());
 
-export const ratingsAction = reatomAsync(
-	async (ctx) => {
-		const { opts, by } = getParams(ctx);
+export const ratingsAction = reatomAsync(async (ctx) => {
+	const { opts, by } = getParams(ctx);
 
-		return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+	return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+}, {
+	name: "ratingsAction",
+	onFulfill: (ctx, res) => {
+		batch(ctx, () => {
+			ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
+			ratingMetaAtom(ctx, res.meta);
+		});
 	},
-	{
-		name: "ratingsAction",
-		onFulfill: (ctx, res) => {
-			batch(ctx, () => {
-				ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
-				ratingMetaAtom(ctx, res.meta);
-			});
-		},
-		onReject: (_, e) => {
-			logError(e);
-		},
-	},
-).pipe(withStatusesAtom(), withErrorAtom());
+	onReject: (_, e) => logError(e)
+}).pipe(withStatusesAtom(), withErrorAtom());
 //#endregion
 
 //#region
-export const updateRatingAction = reatomAsync(
-	async (ctx) => {
-		const { by, opts } = getParams(ctx);
+export const updateRatingAction = reatomAsync(async (ctx) => {
+	const { by, opts } = getParams(ctx);
 
-		return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+	return await ctx.schedule(() => getRatings(by, opts, { signal: ctx.controller.signal }));
+}, {
+	name: "updateRatingAction",
+	onFulfill: (ctx, res) => {
+		batch(ctx, () => {
+			ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
+			ratingMetaAtom(ctx, res.meta);
+		});
 	},
-	{
-		name: "updateRatingAction",
-		onFulfill: (ctx, res) => {
-			batch(ctx, () => {
-				ratingDataAtom(ctx, res.data.length === 0 ? null : res.data);
-				ratingMetaAtom(ctx, res.meta);
-			});
-		},
-		onReject: (_, e) => {
-			logError(e);
-		},
+	onReject: (_, e) => {
+		logError(e);
 	},
-).pipe(withStatusesAtom());
+}).pipe(withStatusesAtom());
 
 export const ratingIsViewAtom = atom(false, "ratingIsView");
 
@@ -130,11 +123,9 @@ export type RatingItem = Pick<{ title: string; childs: string[] }, "title"> & {
 };
 
 export const ratingList = reatomAsync(async (ctx) => {
-	return await ctx.schedule(() =>
-		client<RatingItem[]>("server/rating/list").exec()
-	)
+	return await ctx.schedule(() => client<RatingItem[]>("server/rating/list").exec())
 }, "ratingsList").pipe(
-	withDataAtom(), 
+	withDataAtom(),
 	withCache({ swr: false }),
 	withStatusesAtom()
 )

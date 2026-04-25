@@ -126,8 +126,7 @@ const ChatMessagesItemViewsItem = reatomComponent<ChatItemViews>(({
       className="flex border border-neutral-800 gap-2 rounded-lg px-2 py-1 items-center"
     >
       <Avatar
-        propWidth={32}
-        propHeight={32}
+        className="w-8 h-8"
         nickname={nickname}
       />
       <div className="flex flex-col">

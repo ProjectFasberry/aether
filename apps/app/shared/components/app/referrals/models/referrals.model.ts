@@ -3,7 +3,7 @@ import { client } from "@/shared/lib/client-wrapper";
 import { atom } from "@reatom/core";
 import { reatomAsync, withAssign, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 
-export type Referral = { id: number; completed: boolean; created_at: Date; referral: string }
+export type Referral = { id: number; completed: boolean; created_at: Date; referral: { nickname: string, avatar: string } }
 
 export const referrals = atom(null, "referrals").pipe(
   withAssign(() => ({

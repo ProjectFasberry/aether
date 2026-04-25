@@ -4,7 +4,7 @@ import { action, atom, AtomState, batch } from "@reatom/core";
 import { reatomAsync, reatomRecord, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { getStoreItems, StoreItemsParams } from "../../shop/models/store.model";
 import { StoreItemsPayload } from "@repo/shared/types/entities/store";
-import { client, withJsonBody, withLogging } from "@/shared/lib/client-wrapper";
+import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
 import { alertDialog } from "@/shared/components/config/alert-dialog.model";
@@ -127,7 +127,7 @@ export const editStoreItemAction = reatomAsync(async (ctx, id: number) => {
   return await ctx.schedule(() =>
     client
       .post(`privated/store/item/edit/${id}`)
-      .pipe(withJsonBody(body), withLogging())
+      .pipe(withJsonBody(body))
       .exec()
   )
 }, {
@@ -141,12 +141,12 @@ export const editStoreItemAction = reatomAsync(async (ctx, id: number) => {
 }).pipe(withStatusesAtom())
 
 // 
-export const storeCategoryAtom = atom<StoreItemsParams["type"]>("all");
+export const storeCategoryAtom = atom<StoreItemsParams["category"]>("all");
 export const storeWalletFilterAtom = atom<StoreItemsParams["wallet"]>("ALL");
 
 export const storeItemsAction = reatomAsync(async (ctx) => {
   const params: StoreItemsParams = {
-    type: ctx.get(storeCategoryAtom),
+    category: ctx.get(storeCategoryAtom),
     wallet: ctx.get(storeWalletFilterAtom),
     searchQuery: ""
   }

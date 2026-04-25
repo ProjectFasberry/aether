@@ -119,7 +119,7 @@ const PlayerSeemsLikePlayersList = reatomComponent(({ ctx }) => {
             aria-label={`Профиль игрока ${nickname}`}
             className={seemsLikeGridVariant().cardAvatar()}
           >
-            <Avatar nickname={nickname} propWidth={64} propHeight={64} />
+            <Avatar nickname={nickname} className="w-16 h-16" />
           </Link>
         </div>
       ))}

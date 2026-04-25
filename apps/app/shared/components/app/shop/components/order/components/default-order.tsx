@@ -7,10 +7,10 @@ import { IconCheck, IconCopy, IconEye } from "@tabler/icons-react";
 import { QRCode } from "react-qrcode-logo";
 import { useEffect, useState } from "react";
 import { Payment } from "../../../models/store.model";
-import { esAtom, orderDataAtom } from "../../../models/store-order.model";
 import { AutoWidthInput } from "@/shared/ui/autowidth-input";
 import { defaultOrderEvents, isCopiedAtom, orderIsLoadingAtom } from "../models/default-order.model";
 import { onDisconnect } from "@reatom/framework";
+import { orderState } from "../../../models/store-order.model";
 
 const STATUSES: Record<Payment["status"], { title: string, color: string }> = {
   "canceled": {
@@ -70,7 +70,7 @@ const OrderLoader = reatomComponent(({ ctx }) => {
 }, "OrderLoader")
 
 const OrderDetails = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(orderDataAtom)
+  const data = ctx.spy(orderState.data)
   if (!data) return null
 
   return (
@@ -113,7 +113,7 @@ const OrderQR = ({ url }: { url: string }) => {
 }
 
 const Order = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(orderDataAtom)
+  const data = ctx.spy(orderState.data)
 
   if (ctx.spy(orderIsLoadingAtom)) {
     return <PageLoader />
@@ -155,7 +155,7 @@ const Order = reatomComponent(({ ctx }) => {
   )
 }, "Order")
 
-onDisconnect(esAtom, (ctx) => defaultOrderEvents.disconnect(ctx))
+onDisconnect(orderState.es, (ctx) => defaultOrderEvents.disconnect(ctx))
 
 export const DefaultOrder = () => {
   return (

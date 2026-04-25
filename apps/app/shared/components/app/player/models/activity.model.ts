@@ -23,16 +23,13 @@ export const playerActivity = atom(null, "playerActivity").pipe(
           return await ctx.schedule(() =>
             client
               .get<PlayerActivityPayload>(`server/activity/now/${nickname}`, {
-                signal: ctx.controller.signal,
                 retry: 1
               })
               .exec()
           )
         }, {
           name: `${name}.fetch`,
-          onReject: (ctx, e) => {
-            logError(e)
-          }
+          onReject: (_, e) => logError(e)
         }).pipe(
           withDataAtom(null),
           withStatusesAtom(),
@@ -48,9 +45,7 @@ export const playerActivity = atom(null, "playerActivity").pipe(
           )
         }, {
           name: `${name}.fetch`,
-          onReject: (ctx, e) => {
-            logError(e)
-          }
+          onReject: (ctx, e) => logError(e)
         }).pipe(
           withDataAtom(null),
           withStatusesAtom(),

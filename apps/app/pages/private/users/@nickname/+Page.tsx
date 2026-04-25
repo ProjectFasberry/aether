@@ -54,8 +54,7 @@ const UserInfo = reatomComponent(({ ctx }) => {
       <div className="flex items-center justify-center w-full h-full">
         <Avatar
           nickname={data.nickname}
-          propWidth={64}
-          propHeight={64}
+          className="h-16 w-16"
         />
       </div>
       <Typography className="text-lg">

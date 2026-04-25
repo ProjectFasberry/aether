@@ -6,7 +6,6 @@ import { IconPencil, IconPlus, IconSettings } from "@tabler/icons-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
-import { AnimatedNumber } from "@repo/ui/animated-number"
 import { navigate } from "vike/client/router";
 import { appState } from "@/shared/models/app.model";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
@@ -14,30 +13,22 @@ import { isClientAtom } from "@/shared/models/page-context.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
+import NumberFlow from '@number-flow/react'
 
 const cardImage = getStaticImage("arts/steve_night.jpg")
 
-const animateOptions = {
-  bounce: 0,
-  duration: 2000,
-}
-
 type BalanceCardProps = {
-  balance: number,
-  value: string,
+  value: number,
+  wallet: string,
   image: string
 }
 
-const CardValue = reatomComponent<{ balance: number }>(({ ctx, balance }) => {
+const CardValue = reatomComponent<{ value: number }>(({ ctx, value }) => {
   const animate = ctx.spy(balanceState.settings.animateBalance);
 
   return (
     <div className="inline-flex items-center text-neutral-50 text-2xl font-light">
-      {animate ? (
-        <AnimatedNumber springOptions={animateOptions} value={balance} />
-      ) : (
-        <span>{balance}</span>
-      )}
+      <NumberFlow animated={animate} value={value} trend={0} format={{ notation: "standard" }} />
     </div>
   )
 }, "CardValue")
@@ -53,52 +44,38 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button className="px-2 py-0.5 gap-1" background="white">
-          <Typography className="text-nowrap">
-            Сервер:
-          </Typography>
-          <Typography className="text-nowrap capitalize">
-            {current}
-          </Typography>
+        <Button className="py-0.5 gap-1" background="default">
+          Сервер:
+          <span className="text-nowrap capitalize text-neutral-400">{current}</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col p-2 gap-2 w-full">
-          <Typography className="text-sm text-neutral-400">
-            Сервера
-          </Typography>
-          <div className="flex flex-col gap-1 w-full">
-            {SERVERS.map((server) => (
-              <DropdownMenuItem
-                key={server.value}
-                data-state={current === server.value ? "active" : "inactive"}
-                className="p-0 text-base group"
-                asChild
-              >
-                <Button
-                  className="py-1"
-                  onClick={() => balanceState.targetServer(ctx, server.value)}
-                  disabled={ctx.spy(balance.fetch.statusesAtom).isPending}
-                >
-                  <Typography
-                    className="capitalize 
+      <DropdownMenuContent className="min-w-[140px]">
+        <div className="flex flex-col gap-1 w-full">
+          {SERVERS.map((server) => (
+            <DropdownMenuItem
+              key={server.value}
+              data-state={current === server.value ? "active" : "inactive"}
+              className="text-base group"
+              onClick={() => balanceState.targetServer(ctx, server.value)}
+              disabled={ctx.spy(balance.fetch.statusesAtom).isPending}
+            >
+              <Typography
+                className="capitalize 
                       group-data-[state=active]:text-green-500 group-data-[state=inactive]:text-neutral-50"
-                  >
-                    {server.value}
-                  </Typography>
-                </Button>
-              </DropdownMenuItem>
-            ))}
-          </div>
+              >
+                {server.value}
+              </Typography>
+            </DropdownMenuItem>
+          ))}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }, "BalanceServerSelect")
 
-const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, image }) => {
-  const title = appState.dict.get(ctx, value)
-  const isLoading = !ctx.spy(isClientAtom)
+const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, value, wallet, image }) => {
+  const title = appState.dict.get(ctx, wallet)
+  const isLoading = !ctx.spy(isClientAtom) || ctx.spy(balance.fetch.statusesAtom).isPending
 
   return (
     <div className="relative rounded-2xl min-w-80 overflow-hidden w-full h-56">
@@ -118,7 +95,7 @@ const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, im
           <Typography className="select-none font-semibold text-neutral-50 text-xl">
             {title}
           </Typography>
-          {value === 'CHARISM' && <BalanceServerSelect />}
+          {wallet === 'CHARISM' && <BalanceServerSelect />}
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1">
@@ -130,14 +107,14 @@ const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, im
               draggable={false}
               className='select-none'
             />
-            {isLoading ? <Skeleton className="h-8 w-24" /> : <CardValue balance={balance} />}
+            {isLoading ? <Skeleton className="h-8 w-24" /> : <CardValue value={value} />}
           </div>
           <Button
             background="white"
-            className="p-1"
+            className="p-0"
             onClick={() => navigate(`/store/cart/topup?target=${value}`)}
           >
-            <IconPlus size={24} className="text-neutral-950" />
+            <IconPlus size={20} className="text-neutral-950" />
           </Button>
         </div>
       </div>
@@ -146,40 +123,12 @@ const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, balance, value, im
 }, "BalanceCard")
 
 const BelkoinCard = reatomComponent(({ ctx }) => (
-  <BalanceCard
-    balance={ctx.spy(balanceState.belkoinBalance)}
-    value="BELKOIN"
-    image={belkoinImage}
-  />
+  <BalanceCard value={ctx.spy(balanceState.belkoinBalance)} wallet="BELKOIN" image={belkoinImage} />
 ), "BelkoinCard")
 
 const CharismCard = reatomComponent(({ ctx }) => (
-  <BalanceCard
-    balance={ctx.spy(balanceState.charismBalance)}
-    value="CHARISM"
-    image={charismImage}
-  />
+  <BalanceCard value={ctx.spy(balanceState.charismBalance)} wallet="CHARISM" image={charismImage} />
 ), "CharismCard")
-
-const BalanceSettingsDesign = reatomComponent(({ ctx }) => {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button background="default" className="p-1">
-          <IconPencil size={18} className="text-neutral-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" side="bottom">
-        <div className="flex flex-col gap-2 w-full h-full">
-          <Typography className="text-neutral-400 text-md">
-            Дизайн
-          </Typography>
-          <Typography>недоступно</Typography>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}, "BalanceSettingsDesign")
 
 const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
   return (
@@ -209,13 +158,13 @@ const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
       </PopoverContent>
     </Popover>
   )
-})
+}, "BalanceSettingsOptions")
 
 const BalanceSettings = () => {
   return (
     <div className="flex items-center gap-2 border border-neutral-800 rounded-xl px-2 py-1">
       <BalanceSettingsOptions />
-      <BalanceSettingsDesign />
+      {/* <BalanceSettingsDesign /> */}
     </div>
   )
 }

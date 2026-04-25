@@ -48,8 +48,6 @@ const UserHead = ({ nickname }: { nickname: string }) => {
       <Link href={createLink("player", nickname)}>
         <Avatar
           nickname={nickname}
-          propHeight={42}
-          propWidth={42}
           className="h-[36px] w-[36px] max-h-[36px] max-w-[36px] sm:w-[36px] sm:h-[36px] sm:max-h-[42px] sm:max-w-[42px]"
         />
       </Link>

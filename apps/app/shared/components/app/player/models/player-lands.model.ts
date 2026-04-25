@@ -15,7 +15,7 @@ export async function getLands(nickname: string, init?: RequestInit) {
 export const playerLandsState = atom(null, "playerLandsState").pipe(
   withAssign((_, name) => ({
     data: atom<PlayerLandsPayload | null>(null, `${name}.data`).pipe(
-      withSsr("lands"), withReset()
+      withSsr("playerLandsState.data"), withReset()
     )
   }))
 )
@@ -31,14 +31,11 @@ export const playerLands = atom(null, "playerLands").pipe(
       onFulfill: (ctx, res) => {
         playerLandsState.data(ctx, isEmptyArray(res.data) ? null : res)
       },
-      onReject: (ctx, e) => {
-        logError(e)
-      }
+      onReject: (ctx, e) => logError(e)
     }).pipe(
       withStatusesAtom()
     )
   }))
 )
 
-// on client
 playerParamAtom.onChange((ctx, state) => state && playerLands.fetch(ctx, state))

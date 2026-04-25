@@ -56,7 +56,9 @@ export const onCreatePageContext = async (pageCtx: PageContextServer) => {
 
     const dictionary = new Map(Object.entries(dictionaries));
     const optionsExtend = { ...options, locale, country }
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(headers["user-agent"]);
 
+    appState.isMobile(ctx, isMobile)
     appState.dict(ctx, dictionary);
     appState.options(ctx, optionsExtend);
     app.initCookie(ctx, pageCtx);

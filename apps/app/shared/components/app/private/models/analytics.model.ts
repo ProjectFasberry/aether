@@ -1,4 +1,4 @@
-import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
+import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { atom, Ctx } from "@reatom/core";
 
@@ -23,8 +23,8 @@ export const registrationsChartsAction = reatomAsync(async (ctx) => {
   const period = ctx.get(registrationsPeriodAtom);
 
   return await ctx.schedule(() =>
-    client<ChartData[]>("privated/analytics/registrations")
-      .pipe(withQueryParams({ period }), withAbort(ctx.controller.signal))
+    client<ChartData[]>("privated/analytics/registrations", { signal: ctx.controller.signal })
+      .pipe(withQueryParams({ period }))
       .exec()
   )
 }, "registrationsChartsAction").pipe(

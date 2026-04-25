@@ -7,7 +7,10 @@ export type News = {
 	description: string;
 	imageUrl: string;
 	views: number;
-	creator: string;
+	creator: {
+		nickname: string;
+		avatar: string;
+	};
 	content: Json;
 };
 

@@ -1,6 +1,6 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { OrdersFilterOption, storeOrders, storeOrdersState, StoreOrdersStateStatus, StoreOrdersStateType } from "../../models/store-cart.model"
+import { OrdersFilterOption, cartOrders, cartOrdersState, StoreOrdersStateStatus, StoreOrdersStateType } from "../../models/store-orders.model"
 import { Link } from "@/shared/components/config/link"
 import { Button } from "@repo/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
@@ -65,11 +65,11 @@ const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, 
 }, "OrdersFilterDropdown");
 
 const CartOrdersList = reatomComponent(({ ctx }) => {
-  useUpdate(storeOrders.fetch, [])
+  useUpdate(cartOrders.fetch, [])
 
-  if (ctx.spy(storeOrders.fetch.statusesAtom).isPending) return <PageLoader />
+  if (ctx.spy(cartOrders.fetch.statusesAtom).isPending) return <PageLoader />
 
-  const data = ctx.spy(storeOrders.fetch.dataAtom)
+  const data = ctx.spy(cartOrders.fetch.dataAtom)
   if (!data) return <CartOrdersEmpty />
 
   return (
@@ -104,15 +104,15 @@ export const CartOrders = () => {
         <div id="filters" className="flex items-center gap-2 w-full">
           <OrdersFilterDropdown
             label="Статус"
-            options={storeOrdersState.STATUS_OPTIONS}
-            currentValue={storeOrdersState.status}
-            onSelect={(ctx, val) => storeOrdersState.status(ctx, val as StoreOrdersStateStatus)}
+            options={cartOrdersState.STATUS_OPTIONS}
+            currentValue={cartOrdersState.status}
+            onSelect={(ctx, val) => cartOrdersState.status(ctx, val as StoreOrdersStateStatus)}
           />
           <OrdersFilterDropdown
             label="Тип"
-            options={storeOrdersState.TYPE_OPTIONS}
-            currentValue={storeOrdersState.type}
-            onSelect={(ctx, val) => storeOrdersState.type(ctx, val as StoreOrdersStateType)}
+            options={cartOrdersState.TYPE_OPTIONS}
+            currentValue={cartOrdersState.type}
+            onSelect={(ctx, val) => cartOrdersState.type(ctx, val as StoreOrdersStateType)}
           />
         </div>
         <CartOrdersList />

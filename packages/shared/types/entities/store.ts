@@ -34,9 +34,9 @@ export type CartItem = {
 	title: string;
 };
 
-export type CartPayload = {
-	products: CartItem[];
-	price: CartFinalPrice;
+export type CartListPayload = {
+	data: CartItem[];
+	meta: PaginatedMeta;
 };
 
 export type BalancePayload = CartFinalPrice;

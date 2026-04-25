@@ -66,7 +66,7 @@ export const news = atom(null, "news").pipe(
       }
 
       return await ctx.schedule(() =>
-        getNews(ctx, opts)
+        getNews(opts, { signal: ctx.controller.signal })
       )
     }, {
       name: `${name}.fetch`,

@@ -4,16 +4,16 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Button } from "@repo/ui/button";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
-import { serverStatusAction } from "../models/intro.model";
+import { serverStatus } from "../models/intro.model";
 import { LANDING_URL } from "@/shared/env";
 import { expImage } from "@/shared/consts/images";
 import { isClientAtom } from "@/shared/models/page-context.model";
 
-onConnect(serverStatusAction.dataAtom, serverStatusAction)
+onConnect(serverStatus.fetch.dataAtom, serverStatus.fetch)
 
-onConnect(serverStatusAction.dataAtom, async (ctx) => {
+onConnect(serverStatus.fetch.dataAtom, async (ctx) => {
   while (ctx.isConnected()) {
-    await serverStatusAction.retry(ctx).catch(() => { })
+    await serverStatus.fetch.retry(ctx).catch(() => { })
     await ctx.schedule(() => sleep(60000))
   }
 })
@@ -23,7 +23,7 @@ const IntroStatus = reatomComponent(({ ctx }) => {
     return <Skeleton className="w-4 h-4 inline-flex rounded-sm" />
   }
 
-  const data = ctx.spy(serverStatusAction.dataAtom);
+  const data = ctx.spy(serverStatus.fetch.dataAtom);
 
   return (
     <Typography className="text-lg">

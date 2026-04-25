@@ -1,31 +1,30 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/async"
-import { action, atom, batch, createCtx } from "@reatom/core"
-import { sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
+import { action, atom, AtomMut, createCtx, Ctx } from "@reatom/core"
+import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
 import type { Selectable } from "kysely"
-import type { OrderType, StoreItemsPayload } from "@repo/shared/types/entities/store"
-import { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
-import { navigate } from 'vike/client/router';
+import type { StoreItemsPayload } from "@repo/shared/types/entities/store"
 import { Payments } from "@repo/shared/types/db/payments-database-types"
 import { logError } from '@/shared/lib/log';
 import { mergeSnapshot } from '@/shared/lib/snapshot';
 import { PageContextServer } from 'vike/types';
-import { toast } from 'sonner';
 import { client, withQueryParams } from '@/shared/lib/client-wrapper';
 import { clientInstance } from "@/shared/api/client"
-import { TopUpButton } from '../components/wallet/top-up-button';
-import { DEFAULT_SOFT_TIMEOUT } from '@/shared/consts/delays';
+import { DEFAULT_SOFT_DELAY } from '@/shared/consts/index';
 import { withSearchParamsPersist } from '@reatom/url';
 import { withSsr } from "@/shared/lib/reatom-helpers"
 import { cartState } from "./store-cart.model"
+import { parseBoolean } from "@/shared/lib/utils"
+import { isClientAtom } from "@/shared/models/page-context.model"
 
 export type Payment = Selectable<Payments>
 
 type StoreCategory = "donate" | "event" | "all"
-type StoreWalletFilter = "CHARISM" | "BELKOIN" | "ALL"
+type StoreWallet = "CHARISM" | "BELKOIN" | "ALL"
 
+// TODO: replace to generated types
 export type StoreItemsParams = {
-  type: StoreCategory,
-  wallet: StoreWalletFilter,
+  category: StoreCategory,
+  wallet: StoreWallet,
   searchQuery: string | undefined
 }
 
@@ -50,17 +49,18 @@ export const storeItemsState = atom(null, "storeItemsState").pipe(
     data: atom<Nullable<StoreItemsPayload["data"]>>(null, `${name}.data`).pipe(withSsr(`${name}.data`)),
     meta: atom<Nullable<StoreItemsPayload["meta"]>>(null, `${name}.meta`).pipe(withSsr(`${name}.meta`)),
     filters: atom(null, `${name}.filters`).pipe(
-      withAssign(() => ({
+      withAssign((_, name) => ({
         category: atom<StoreCategory>("all", `${name}.category`).pipe(
           withSearchParamsPersist('c', (c = "all") => c),
           withReset(),
         ),
-        wallet: atom<StoreWalletFilter>("ALL", `${name}.wallet`).pipe(
+        wallet: atom<StoreWallet>("ALL", `${name}.wallet`).pipe(
           withSearchParamsPersist('w', (w = "ALL") => w),
         ),
         searchQuery: atom<string>("", `${name}.searchQuery`).pipe(
-          withSearchParamsPersist('sq', (sq = "") => sq)
-        )
+          withSearchParamsPersist('sq', (sq = "") => sq),
+        ),
+        all: reatomMap<string, string>(new Map(), `${name}.all`).pipe(withSsr(`${name}.all`))
       }))
     ),
     statuses: atom<SelectItemToCartStatus | null>(null, `itemStatuses`).pipe(
@@ -86,99 +86,53 @@ export const storeItemsState = atom(null, "storeItemsState").pipe(
 storeItemsState.filters.category.onChange((ctx) => storeItems.fetch(ctx))
 storeItemsState.filters.wallet.onChange((ctx) => storeItems.fetch(ctx))
 
-export const createdOrderDataAtom = atom<CreateOrderRoutePayload | null>(null)
-export const getOrderUrl = (uniqueId: string, t: Exclude<OrderType, "all"> = "default") =>
-  `/store/order/status/${uniqueId}?type=${t}`
-
-export const order = atom(null, "order").pipe(
-  withAssign((_, name) => ({
-    create: reatomAsync(async (ctx) => {
-      return await ctx.schedule(() =>
-        client
-          .post<CreateOrderRoutePayload>("store/order/create", {
-            throwHttpErrors: false,
-            retry: 1
-          })
-          .exec()
-      )
-    }, {
-      name: `${name}.create`,
-      onFulfill: (ctx, res) => {
-        if (!res) return;
-
-        ctx.schedule(() => {
-          createdOrderDataAtom(ctx, res);
-          navigate(
-            getOrderUrl(res.purchase.uniqueId, "default")
-          )
-        })
-      },
-      onReject: (ctx, e) => {
-        logError(e);
-
-        if (e instanceof Error) {
-          if (e.message === 'insufficient') {
-            toast.error("Недостаточно баланса", {
-              action: <TopUpButton />
-            })
-            return;
-          }
-
-          if (e.message === 'items-not-found') {
-            toast.error("Товары не найдены или устарели")
-            return;
-          }
-
-          toast.error("Произошла ошибка при создании заказа", { description: "Повтори попытку позже" })
-        }
-      }
-    }).pipe(
-      withStatusesAtom()
-    )
-  }))
-)
-
 export const storeItems = atom(null, "storeItems").pipe(
   withAssign((_, name) => ({
     async init(pageCtx: PageContextServer) {
       const headers = pageCtx.headers;
+      if (!headers) return;
+
       const ctx = createCtx();
 
-      if (headers) {
-        const type = pageCtx.urlParsed.search["c"] ?? "all"
-        const wallet = pageCtx.urlParsed.search["w"] ?? "ALL"
-        const searchQuery = pageCtx.urlParsed.search["sq"] ?? undefined;
+      const category = pageCtx.urlParsed.search["c"] ?? "all"
+      const wallet = pageCtx.urlParsed.search["w"] ?? "ALL"
+      const searchQuery = pageCtx.urlParsed.search["sq"] ?? undefined;
 
-        const res = await clientInstance.get("store/items", {
-          searchParams: {
-            type, wallet, searchQuery
-          },
-          headers
-        });
-
-        const data = await res.json<WrappedResponse<StoreItemsPayload>>();
-
-        if ("error" in data) throw new Error(data.error)
-
-        const payload = data.data
-
-        // set/update the client_id
-        const setCookieValue = res.headers.getSetCookie()
-
-        if (setCookieValue.length >= 1) {
-          pageCtx.headersResponse = res.headers
-        }
-
-        storeItemsState.data(ctx, payload.data);
-        storeItemsState.meta(ctx, payload.meta);
+      const searchParams = {
+        category,
+        wallet,
+        searchQuery
       }
+
+      const res = await clientInstance.get("store/items", {
+        searchParams, headers
+      });
+
+      const data = await res.json<WrappedResponse<StoreItemsPayload>>();
+      if ("error" in data) throw new Error(data.error)
+
+      const payload = data.data
+
+      // set/update the client_id
+      const setCookieValue = res.headers.getSetCookie()
+
+      if (setCookieValue.length >= 1) {
+        pageCtx.headersResponse = res.headers
+      }
+
+      for (const [origin, val] of Object.entries(searchParams)) {
+        storeItemsState.filters.all.set(ctx, origin, val)
+      }
+
+      storeItemsState.data(ctx, payload.data);
+      storeItemsState.meta(ctx, payload.meta);
 
       const newSnapshot = mergeSnapshot(ctx, pageCtx)
       pageCtx.snapshot = newSnapshot
     },
     fetch: reatomAsync(async (ctx) => {
       const params: StoreItemsParams = {
-        type: ctx.get(storeItemsState.filters.category),
+        category: ctx.get(storeItemsState.filters.category),
         wallet: ctx.get(storeItemsState.filters.wallet),
         searchQuery: ctx.get(storeItemsState.filters.searchQuery)
       }
@@ -187,12 +141,10 @@ export const storeItems = atom(null, "storeItems").pipe(
     }, {
       name: `${name}.fetch`,
       onFulfill: (ctx, { data, meta }) => {
-        batch(ctx, () => {
-          storeItemsState.data(ctx, data)
-          storeItemsState.meta(ctx, meta)
-        })
+        storeItemsState.data(ctx, data)
+        storeItemsState.meta(ctx, meta)
       },
-      onReject: (_, e) => logError(e, { type: "combined" })
+      onReject: (_, e) => logError(e)
     }).pipe(
       withStatusesAtom()
     ),
@@ -200,7 +152,7 @@ export const storeItems = atom(null, "storeItems").pipe(
       const { value } = e.target;
       storeItemsState.filters.searchQuery(ctx, value)
 
-      await ctx.schedule(() => sleep(DEFAULT_SOFT_TIMEOUT))
+      await sleep(DEFAULT_SOFT_DELAY)
 
       storeItems.fetch(ctx)
     }).pipe(
@@ -234,3 +186,72 @@ export const storeItems = atom(null, "storeItems").pipe(
     })
   }))
 )
+
+export type Filter = {
+  title: string,
+  origin: string,
+  atom: AtomMut<any>,
+  updater: <T>(ctx: Ctx, val: T) => void,
+  filters: Array<{
+    name: string,
+    value: string,
+  }>
+}
+
+export const filtersState = atom(null, "filters").pipe(
+  withAssign((_, name) => ({
+    data: atom<Filter[]>((ctx) => {
+      return [
+        {
+          title: "Тип товара",
+          origin: "category",
+          atom: storeItemsState.filters.category,
+          updater: (ctx, v) => storeItemsState.filters.category(ctx, v as StoreCategory),
+          filters: [
+            { name: "Все", value: "all" },
+            { name: "Привилегии", value: "donate", },
+            { name: "Ивенты", value: "event" },
+          ]
+        },
+        {
+          title: "Валюта",
+          origin: "wallet",
+          atom: storeItemsState.filters.wallet,
+          updater: (ctx, v) => storeItemsState.filters.wallet(ctx, v as StoreWallet),
+          filters: [
+            { name: "Все", value: "ALL", },
+            { name: "Харизма", value: "CHARISM" },
+            { name: "Белкоин", value: "BELKOIN", }
+          ]
+        }
+      ]
+    }, `${name}.data`)
+  }))
+)
+
+export const filterIsAppliedAtom = ({
+  origin, currValue }: Pick<Filter, "origin"> & { currValue: string }
+) => atom((ctx) => {
+  const isClient = ctx.spy(isClientAtom)
+
+  if (isClient) {
+    const atom = ctx.get(filtersState.data).find(d => d.origin === origin)?.atom
+
+    if (atom) {
+      const spyedResult = ctx.spy(atom)
+      return spyedResult === currValue
+    }
+
+    return false
+  }
+
+  // server only
+  const valueByParsedFilter = storeItemsState.filters.all.get(ctx, origin)
+  if (typeof valueByParsedFilter === 'undefined') return false;
+
+  if (["false", "true"].includes(valueByParsedFilter)) {
+    return parseBoolean(valueByParsedFilter) === parseBoolean(currValue)
+  }
+
+  return valueByParsedFilter === currValue
+})

@@ -1,27 +1,13 @@
 import dayjs from "@/shared/lib/create-dayjs"
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { eventsAction } from "../models/events.model";
-import { Skeleton } from "@repo/ui/skeleton";
-import { AtomState, onConnect } from "@reatom/framework";
 import { NotFound } from "@/shared/ui/not-found";
-import { isClientAtom } from "@/shared/models/page-context.model";
-import { scrollableVariant } from "@/shared/consts/style-variants";
 import { tv } from "tailwind-variants";
+import { EventPayload } from "@repo/shared/types/entities/other";
+import { eventsState } from "../models/events.model";
+import { isEmptyArray } from "@/shared/lib/utils";
 
-const EventsSkeleton = () => {
-  return (
-    <>
-      <EventCardSkeleton />
-      <EventCardSkeleton />
-      <EventCardSkeleton />
-    </>
-  )
-}
-
-onConnect(eventsAction, eventsAction)
-
-type EventCardProps = NonNullable<AtomState<typeof eventsAction.dataAtom>>[number]
+type EventCardProps = EventPayload
 
 const eventCardVariant = tv({
   base: `
@@ -33,24 +19,6 @@ const eventCardVariant = tv({
     secondGroup: "flex flex-col justify-between h-full mt-2"
   }
 })
-
-const EventCardSkeleton = () => {
-  return (
-    <div
-      className={eventCardVariant().base()}
-    >
-      <div className={eventCardVariant().firstGroup()}>
-        <Skeleton className="h-6 w-24" />
-      </div>
-      <div className={eventCardVariant().secondGroup()}>
-        <Skeleton className="h-6 w-16" />
-        <div className="flex flex-col justify-center items-end w-full">
-          <Skeleton className="h-6 w-16" />
-        </div>
-      </div>
-    </div>
-  )
-}
 
 const EventCard = ({ content, id, title }: EventCardProps) => {
   const created_at = dayjs(content.created_at).fromNow();
@@ -81,26 +49,12 @@ const EventCard = ({ content, id, title }: EventCardProps) => {
   )
 }
 
-const EventsList = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom)  || ctx.spy(eventsAction.statusesAtom).isPending) {
-    return <EventsSkeleton />
-  }
+export const EventsList = reatomComponent(({ ctx }) => {
+  const data = ctx.spy(eventsState.data);
   
-  const data = ctx.spy(eventsAction.dataAtom)
-  if (!data) return <NotFound title="Ивентов нет" />
+  if (!data || isEmptyArray(data)) {
+    return <NotFound title="Ивентов нет" />
+  }
 
   return data.map(event => <EventCard key={event.id} {...event}/>)
 }, "EventsList")
-
-export const Events = () => {
-  return (
-    <div className="flex flex-col gap-4 w-full h-full">
-      <Typography className="text-3xl font-bold">
-        Последние события
-      </Typography>
-      <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
-        <EventsList />
-      </div>
-    </div>
-  )
-}

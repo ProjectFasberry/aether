@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db";
+import { getPlayerAvatar } from "../server/skin/skin.model";
 
-export async function likePlayer({ recipient, initiator }: { initiator: string, recipient: string }) {
+export async function ratePlayer({ recipient, initiator }: { initiator: string, recipient: string }) {
   const query = await general.transaction().execute(async (trx) => {
     const del = await trx
       .deleteFrom("likes")
@@ -17,11 +18,11 @@ export async function likePlayer({ recipient, initiator }: { initiator: string, 
       .values({ initiator, recipient })
       .executeTakeFirst();
 
-    if (!upd.numInsertedOrUpdatedRows) {
-      throw new Error("Rating is not updated")
+    if (upd.numInsertedOrUpdatedRows) {
+      return "rated"
     }
 
-    return "rated"
+    throw new Error("Rating is not updated")
   });
 
   return query
@@ -40,7 +41,14 @@ export async function getPlayerLikes(nickname: string) {
     .orderBy("created_at", "desc")
     .execute()
 
-  const data = query.map(item => ({ initiator: item.initiator, created_at: item.created_at }))
+  const data = await Promise.all(
+    query.map(async (row) => ({
+      initiator: row.initiator, 
+      created_at: row.created_at,
+      avatar: await getPlayerAvatar(row.initiator)
+    }))
+  )
+
   const count: number = Number(query[0]?.total_count ?? 0)
 
   return {

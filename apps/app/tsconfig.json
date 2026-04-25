@@ -23,7 +23,7 @@
 	},
 	"include": [
 		"./vite.config.ts", "./declare.d.ts", "./env.d.ts", "./**/*.ts", "./**/*.tsx"
-	],
+, "shared/components/app/shop/models/store-order.model.tsч"	],
 	"exclude": ["dist", "node_modules"],
 	"references": [
 		{ 

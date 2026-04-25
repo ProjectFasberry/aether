@@ -28,8 +28,9 @@ const NewsList = reatomComponent(({ ctx }) => {
 
   const data = ctx.spy(newsAllDataArrAtom);
 
-  const isEmpty = isEmptyArray(data)
-  if (isEmpty) return <NewsListNotFound />
+  if (!data || isEmptyArray(data)) {
+    return <NewsListNotFound />
+  }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 auto-rows-auto gap-2 sm:gap-4 w-full h-full">

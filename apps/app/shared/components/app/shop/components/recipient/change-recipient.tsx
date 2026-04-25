@@ -1,14 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import {
-  changeRecipientAction,
-  changeRecipientDialogIsOpenAtom,
-  changeRecipientErrorAtom,
-  changeRecipientIdAtom,
-  changeRecipientIsValidAtom,
-  changeRecipientNewRecipientAtom,
-  changeRecipientOldRecipientAtom,
-  changeRecipientTitleAtom
-} from "../../models/store-recipient.model"
+import { changeRecipientIsValidAtom, changeRecipient, changeRecipientState } from "../../models/store-recipient.model"
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog"
 import { Typography } from "@repo/ui/typography"
 import { Input } from "@repo/ui/input"
@@ -16,7 +7,7 @@ import { Button } from "@repo/ui/button"
 import { cart } from "../../models/store-cart.model"
 
 const ChangeRecipientError = reatomComponent(({ ctx }) => {
-  const error = ctx.spy(changeRecipientErrorAtom);
+  const error = ctx.spy(changeRecipientState.local.error);
   if (!error) return null;
 
   return (
@@ -25,33 +16,33 @@ const ChangeRecipientError = reatomComponent(({ ctx }) => {
 }, "ChangeRecipientError")
 
 const ChangeRecipientField = reatomComponent(({ ctx }) => {
-  const oldRecipient = ctx.get(changeRecipientOldRecipientAtom) ?? ""
-  const newRecipient = ctx.spy(changeRecipientNewRecipientAtom)
+  const oldRecipient = ctx.get(changeRecipientState.local.oldRecipient) ?? ""
+  const newRecipient = ctx.spy(changeRecipientState.local.newRecipient)
 
   return (
     <Input
       placeholder="Введите никнейм"
       maxLength={32}
       value={newRecipient ?? oldRecipient}
-      onChange={e => changeRecipientNewRecipientAtom(ctx, e.target.value)}
+      onChange={e => changeRecipientState.local.newRecipient(ctx, e.target.value)}
       className="[&[aria-invalid=true]]:border-red peer border-transparent border-2"
       onClick={() => {
-        changeRecipientErrorAtom.reset(ctx)
+        changeRecipientState.local.error.reset(ctx)
       }}
-      aria-invalid={!!ctx.spy(changeRecipientErrorAtom)}
+      aria-invalid={!!ctx.spy(changeRecipientState.local.error)}
     />
   )
 }, "ChangeRecipientField")
 
 const ChangeRecipientSave = reatomComponent<{ id: number }>(({ ctx, id }) => {
-  const isDisabled = !ctx.spy(changeRecipientIsValidAtom) || ctx.spy(changeRecipientAction.statusesAtom).isPending
+  const isDisabled = !ctx.spy(changeRecipientIsValidAtom) || ctx.spy(changeRecipient.submitLocal.statusesAtom).isPending
 
   return (
     <Button
       background="white"
       className="px-4 w-fit self-end font-semibold"
       disabled={isDisabled}
-      onClick={() => changeRecipientAction(ctx, id, cart.update)}
+      onClick={() => changeRecipient.submitLocal(ctx, id, cart.update)}
     >
       Применить
     </Button>
@@ -59,13 +50,13 @@ const ChangeRecipientSave = reatomComponent<{ id: number }>(({ ctx, id }) => {
 }, "ChangeRecipientSave")
 
 export const ChangeRecipientDialog = reatomComponent(({ ctx }) => {
-  const id = ctx.get(changeRecipientIdAtom)!
-  const title = ctx.get(changeRecipientTitleAtom)!
+  const id = ctx.get(changeRecipientState.local.recipientId)!
+  const title = ctx.get(changeRecipientState.local.title)!
 
   return (
     <Dialog
-      open={ctx.spy(changeRecipientDialogIsOpenAtom)}
-      onOpenChange={v => changeRecipientDialogIsOpenAtom(ctx, v)}
+      open={ctx.spy(changeRecipientState.local.dialogIsOpen)}
+      onOpenChange={v => changeRecipientState.local.dialogIsOpen(ctx, v)}
     >
       <DialogContent>
         <DialogTitle className="text-center text-2xl">Получатель</DialogTitle>

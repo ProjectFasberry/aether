@@ -1,30 +1,19 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { Checkbox, CheckboxProps } from "@repo/ui/checkbox"
-import { AtomMut, AtomState, Ctx } from "@reatom/core";
-import { storeItems, storeItemsState } from "../../models/store.model";
+import { Ctx } from "@reatom/core";
+import { Filter, filterIsAppliedAtom, filtersState, storeItems, storeItemsState } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
 import { LabelHTMLAttributes, useState } from "react";
 import { isClientAtom } from "@/shared/models/page-context.model";
-import { tv } from "tailwind-variants";
 import { Input } from "@repo/ui/input";
 import { Vaul, VaulContent, VaulHeader, VaulTrigger } from "@/shared/ui/vaul";
-
-export const storeSectionWrapper = tv({
-  base: ``,
-  variants: {
-    variant: {
-      default: "p-2 sm:p-3 lg:p-4",
-      reset: ""
-    }
-  },
-  defaultVariants: {
-    variant: "default"
-  }
-})
+import { appState } from "@/shared/models/app.model";
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
-  const searchQuery = ctx.spy(isClientAtom) ? ctx.spy(storeItemsState.filters.searchQuery) : ""
+  const searchQuery = ctx.spy(isClientAtom) 
+    ? ctx.spy(storeItemsState.filters.searchQuery) 
+    : storeItemsState.filters.all.get(ctx, "searchQuery")
 
   return (
     <div className="flex h-10 items-center justify-start w-full relative">
@@ -42,43 +31,6 @@ export const StoreSearch = reatomComponent(({ ctx }) => {
     </div>
   )
 }, "StoreSearch")
-
-type Filter = {
-  title: string,
-  origin: string,
-  atom: AtomMut<any>,
-  updater: (ctx: Ctx, val: string) => void,
-  filters: Array<{
-    name: string, value: string,
-  }>
-}
-
-const FILTERS: Filter[] = [
-  {
-    title: "Тип товара",
-    origin: "category",
-    atom: storeItemsState.filters.category,
-    updater: (ctx: Ctx, value: string) =>
-      storeItemsState.filters.category(ctx, value as AtomState<typeof storeItemsState.filters.category>),
-    filters: [
-      { name: "Все", value: "all" },
-      { name: "Привилегии", value: "donate", },
-      { name: "Ивенты", value: "event" },
-    ]
-  },
-  {
-    title: "Валюта",
-    origin: "wallet",
-    atom: storeItemsState.filters.wallet,
-    updater: (ctx: Ctx, value: string) =>
-      storeItemsState.filters.wallet(ctx, value as AtomState<typeof storeItemsState.filters.wallet>),
-    filters: [
-      { name: "Все", value: "ALL", },
-      { name: "Харизма", value: "CHARISM" },
-      { name: "Белкоин", value: "BELKOIN", }
-    ]
-  }
-]
 
 type FilterItemProps = {
   label?: LabelHTMLAttributes<HTMLLabelElement>,
@@ -100,18 +52,15 @@ const FilterItem = ({ filterName, label: labelProps, checkbox: checkboxProps }: 
   )
 }
 
-const StoreFilterItem = reatomComponent<Filter>(({
-  ctx, title, filters, atom, updater, origin
+const StoreFilterItem = reatomComponent<Omit<Filter, "atom">>(({
+  ctx, title, filters, updater, origin
 }) => {
-  const isClient = ctx.spy(isClientAtom)
-
   const handle = (
     updater: (ctx: Ctx, value: string) => void,
     isChecked: string | boolean,
     target: string
   ) => {
     if (typeof isChecked !== 'boolean') return;
-
     updater(ctx, isChecked ? target : "ALL");
   }
 
@@ -131,7 +80,9 @@ const StoreFilterItem = reatomComponent<Filter>(({
             }}
             checkbox={{
               id: getUniqueFilterId(origin, filter.value),
-              checked: isClient ? ctx.spy(atom) === filter.value : false,
+              checked: ctx.spy(
+                filterIsAppliedAtom({ origin, currValue: filter.value })
+              ),
               onCheckedChange: e => handle(updater, e, filter.value)
             }}
             filterName={filter.name}
@@ -143,21 +94,21 @@ const StoreFilterItem = reatomComponent<Filter>(({
 }, "StoreFilterItem")
 
 export const StoreFilterList = reatomComponent(({ ctx }) =>
-  FILTERS.map((item) => <StoreFilterItem key={item.origin} {...item} />),
+  ctx.spy(filtersState.data).map((item) => <StoreFilterItem key={item.origin} {...item} />),
   "StoreFilterList"
 )
 
-export const StoreFiltersSheet = () => {
+export const StoreFiltersSheet = reatomComponent(({ctx}) => {
   const [open, setOpen] = useState(false);
+
+  const isMobile = ctx.spy(appState.isMobile)
+  if (!isMobile) return null;
 
   return (
     <Vaul open={open} onOpenChange={setOpen}>
       <VaulTrigger>
-        <div className={storeSectionWrapper({ className: "flex w-full cursor-pointer h-full gap-2 items-center justify-center" })}>
+        <div className="flex bg-neutral-800 items-center justify-center rounded-xl h-10 aspect-square p-2 sm:p-3 lg:p-4">
           <IconFilter size={20} className="text-neutral-400" />
-          <Typography color="gray" className="text-lg font-semibold">
-            Изменить фильтры
-          </Typography>
         </div>
       </VaulTrigger>
       <VaulContent>
@@ -168,4 +119,4 @@ export const StoreFiltersSheet = () => {
       </VaulContent>
     </Vaul>
   )
-}
+}, "StoreFiltersSheet")

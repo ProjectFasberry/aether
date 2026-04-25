@@ -2,7 +2,7 @@ import { isClientAtom } from "@/shared/models/page-context.model"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Separator } from "@repo/ui/separator"
 import { Skeleton } from "@repo/ui/skeleton"
-import { playerSocialsAction, PlayerSocialsPayload, PlayerSocialsValuePayload, SOCIAL_EVENTS, SOCIAL_ICONS } from "../models/socials.model"
+import { playerSocials, PlayerSocialsPayload, PlayerSocialsValuePayload, SOCIAL_EVENTS, SOCIAL_ICONS } from "../models/socials.model"
 import { playerParamAtom } from "../models/player.model"
 
 const SocialCard = ({ type, value }: { type: PlayerSocialsPayload["type"], value: PlayerSocialsValuePayload }) => {
@@ -44,13 +44,13 @@ const PlayerSocialsSkeleton = () => {
 export const PlayerSocials = reatomComponent(({ ctx }) => {
   const nickname = ctx.spy(playerParamAtom)
 
-  useUpdate((ctx) => playerSocialsAction(ctx, nickname!), [nickname]);
+  useUpdate((ctx) => playerSocials.fetch(ctx, nickname!), [nickname]);
 
-  if (!ctx.spy(isClientAtom) || ctx.spy(playerSocialsAction.statusesAtom).isPending) {
+  if (!ctx.spy(isClientAtom) || ctx.spy(playerSocials.fetch.statusesAtom).isPending) {
     return <PlayerSocialsSkeleton/>
   }
 
-  const data = ctx.spy(playerSocialsAction.dataAtom);
+  const data = ctx.spy(playerSocials.fetch.dataAtom);
   if (!data) return null;
 
   return (

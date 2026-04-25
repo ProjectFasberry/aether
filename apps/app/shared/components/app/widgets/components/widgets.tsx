@@ -58,7 +58,7 @@ export const Widgets = reatomComponent(({ ctx }) => {
   return (
     <div
       id="widgets"
-      className="hidden z-[1] sm:flex items-center justify-center w-full fixed bottom-2 left-0 right-0"
+      className="hidden z-10 sm:flex items-center justify-center w-full fixed bottom-2 left-0 right-0"
     >
       <div className="mx-auto responsive">
         <Widget {...active} />

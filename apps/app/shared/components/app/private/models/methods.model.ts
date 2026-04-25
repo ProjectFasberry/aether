@@ -1,4 +1,4 @@
-import { client, withAbort, withJsonBody } from "@/shared/lib/client-wrapper";
+import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { PrivatedMethodsPayload } from "@repo/shared/types/entities/other";
 import { toast } from "sonner";
@@ -7,8 +7,7 @@ import { logError } from "@/shared/lib/log";
 
 export const methodsAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<PrivatedMethodsPayload>("privated/store/methods/list")
-      .pipe(withAbort(ctx.controller.signal))
+    client<PrivatedMethodsPayload>("privated/store/methods/list", { signal: ctx.controller.signal })
       .exec()
   )
 }).pipe(withDataAtom(), withStatusesAtom(), withCache({ swr: false }))

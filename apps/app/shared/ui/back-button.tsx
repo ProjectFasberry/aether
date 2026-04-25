@@ -19,7 +19,7 @@ export const BackButton = ({ href, onClick, event = "history" }: BackButtonProps
 
         return onClick?.()
       }}
-      className="min-h-8 h-8 sm:min-h-10 sm:h-10 p-0 aspect-square w-fit text-neutral-400"
+      className="min-h-8 h-8 sm:min-h-8 sm:h-8 p-0 aspect-square w-fit text-neutral-400"
     >
       <IconArrowLeft className="size-[16px] sm:size-[20px]" />
     </Button>

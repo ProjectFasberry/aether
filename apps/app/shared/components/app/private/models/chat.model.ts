@@ -4,10 +4,10 @@ import { logError } from "@/shared/lib/log";
 import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom, batch, Ctx } from "@reatom/core";
 import { onDisconnect, reatomMap, withAssign, withReset } from "@reatom/framework";
-import { makeChangeValidator } from "../../shop/models/store-recipient.model";
 import * as z from "zod/v4";
 import { toast } from "sonner";
 import { withLocalStorage } from "@reatom/persist-web-storage";
+import { makeChangeValidator } from "@/shared/lib/utils";
 
 type ChatEventVariant = 'create' | 'edit' | 'delete'
 

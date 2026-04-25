@@ -26,11 +26,8 @@ export async function updateSeemsLikeList() {
 	const players = await general.selectFrom("players").select(["nickname", "uuid"]).limit(1000).execute();
 
 	if (players.length === 0) {
-		console.warn("Not found players for updating");
 		return;
 	}
-
-	console.log(`Start updating for ${players.length} players...`);
 
 	const start = Date.now();
 	const candidates: { nickname: string; uuid: string }[] = [];
@@ -55,7 +52,6 @@ export async function updateSeemsLikeList() {
 	});
 
 	if (candidates.length === 0) {
-		console.log("All collections are fresh");
 		return;
 	}
 
@@ -95,10 +91,6 @@ export async function updateSeemsLikeList() {
 				}),
 			),
 		);
-
-		if (!isProduction) {
-			console.log(`Batch #${index + 1} (${batch.length} players) proccessed for ${Date.now() - batchStart}ms`);
-		}
 	}
 
 	for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
@@ -106,12 +98,15 @@ export async function updateSeemsLikeList() {
 		await processBatch(batch, i / BATCH_SIZE);
 		await new Promise((res) => setTimeout(res, 500));
 	}
-
-	console.log(`Updating result: ${successCount} success, ${errorCount} errors. Time: ${(Date.now() - start) / 1000}s`);
 }
 
 async function getRandomPlayers(limit: number) {
-	return general.selectFrom("players").select(["nickname", "uuid"]).orderBy(sql`RANDOM()`).limit(limit).execute();
+	return general
+		.selectFrom("players")
+		.select(["nickname", "uuid"])
+		.orderBy(sql`RANDOM()`)
+		.limit(limit)
+		.execute();
 }
 
 export async function processSeemsLikePlayersBatch(
@@ -145,7 +140,7 @@ export async function processSeemsLikePlayersBatch(
 				}
 			}
 		} else {
-			console.error(new Error(parsedMembers.error.message));
+			console.error(parsedMembers.error.message)
 		}
 	}
 

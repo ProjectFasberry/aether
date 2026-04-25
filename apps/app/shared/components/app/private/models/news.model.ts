@@ -3,7 +3,7 @@ import { action, atom, AtomMut } from "@reatom/core";
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { createNewsSchema } from "@repo/shared/schemas/news";
 import { toast } from "sonner";
-import { client, withAbort, withJsonBody, withLogging, withQueryParams } from "@/shared/lib/client-wrapper";
+import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper";
 import { News, NewsPayload } from "@repo/shared/types/entities/news";
 import { devLog, logError } from "@/shared/lib/log";
 import { generateHTML, type JSONContent } from "@tiptap/react"
@@ -16,8 +16,8 @@ import { navigate } from "vike/client/router";
 
 export const newsListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<NewsPayload>("privated/news/list")
-      .pipe(withQueryParams({ asc: false, content: true }), withAbort(ctx.controller.signal))
+    client<NewsPayload>("privated/news/list", { signal: ctx.controller.signal })
+      .pipe(withQueryParams({ asc: false, content: true }))
       .exec()
   )
 }, "newsListAction").pipe(
@@ -216,7 +216,7 @@ export const editNewsAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
     client
       .post(`privated/news/${id}/edit`)
-      .pipe(withJsonBody(body), withLogging())
+      .pipe(withJsonBody(body))
       .exec()
   )
 }, {

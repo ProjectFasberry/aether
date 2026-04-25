@@ -25,7 +25,7 @@ const ipValidator = () => new Elysia()
   .use(ipPlugin())
   .onBeforeHandle(async ({ ip, status }) => {
     const isValid = await registerService.validateIpRestricts(ip)
-    if (isValid) throw status(400, wrapError("ip-limit"))
+    if (isValid) throw status(400, wrapError("IP_RESTRICTIONS"))
   })
   .as("scoped")
 

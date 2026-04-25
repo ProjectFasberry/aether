@@ -1,9 +1,9 @@
 import Elysia, { type Context } from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
-import { isProduction } from "#/shared/env";
 import { SESSION_KEY } from "#/utils/auth/cookie";
 import { logger } from "#/utils/config/logger";
+import { toLog } from "./validators";
 
 export const validateLogger = logger.withTag("Validation")
 
@@ -29,13 +29,10 @@ export async function handleAuthedByApiUser(headers: Context["headers"]): Promis
 
 export const defineOptionalUser = () => new Elysia()
   .use(defineSession())
+  .use(toLog("defineOptionalUser"))
   .derive(async ({ session, headers }) => {
     const result = await handleAuthedByApiUser(headers)
     if (result) return result
-
-    if (!isProduction) {
-      validateLogger.log("defineOptionalUser");
-    }
 
     let nickname: string | null = null;
 
@@ -49,23 +46,15 @@ export const defineOptionalUser = () => new Elysia()
 
 export const defineUser = () => new Elysia()
   .use(defineSession())
+  .use(toLog("defineUser"))
   .derive(async ({ session, status, headers }) => {
+    if (!session) throw status(401)
+
     const result = await handleAuthedByApiUser(headers)
     if (result) return result
 
-    if (!isProduction) {
-      validateLogger.log("defineUser");
-    }
-
-    if (!session) {
-      throw status(401)
-    }
-
     const nickname: string | null = await auth.getUserNickname(session);
-
-    if (!nickname) {
-      throw status(401)
-    }
+    if (!nickname) throw status(401)
 
     return { nickname }
   })
@@ -81,6 +70,7 @@ export const defineSession = () => new Elysia()
 
 export const defineUserRole = () => new Elysia()
   .use(defineUser())
+  .use(toLog("defineUserRole"))
   .derive(async ({ nickname, status, headers }) => {
     let role: { id: number, name: string } | null = null;
 
@@ -92,10 +82,6 @@ export const defineUserRole = () => new Elysia()
       return { role }
     }
 
-    if (!isProduction) {
-      validateLogger.log("defineUserRole");
-    }
-
     role = await general
       .selectFrom("players")
       .innerJoin("roles", "roles.id", "players.role_id")
@@ -103,9 +89,7 @@ export const defineUserRole = () => new Elysia()
       .where("players.nickname", "=", nickname)
       .executeTakeFirstOrThrow();
 
-    if (!role) {
-      throw status(500)
-    }
+    if (!role) throw status(500)
 
     return { role }
   })

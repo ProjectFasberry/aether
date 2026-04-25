@@ -50,7 +50,7 @@ export const SettingsDialog = reatomComponent(({ ctx }) => {
   const open = ctx.spy(settingsState.dialogIsOpen)
   const isMobile = ctx.spy(appState.isMobile);
 
-  const handle = (v: boolean) => settingsState.dialogIsOpen.toggle(ctx, v)
+  const handle = (v: boolean) => settingsState.dialogIsOpen(ctx, v)
 
   if (isMobile) {
     return (

@@ -1,5 +1,5 @@
 import { TopUp } from "@/shared/components/app/shop/components/wallet/top-up";
-import { topUpAction, topUpExchangeRatesAction, topUpMethodsAction, topUpSearchAtom } from "@/shared/components/app/shop/models/store-top-up.model";
+import { topup, topupState } from "@/shared/components/app/shop/models/store-top-up.model";
 import { startPageEvents } from "@/shared/lib/events";
 import { pageContextAtom } from "@/shared/models/page-context.model";
 import { action } from "@reatom/core";
@@ -12,14 +12,14 @@ const events = action((ctx) => {
 
   const search = pageContext.urlParsed.search;
 
-  topUpSearchAtom(ctx, search);
+  topupState.search(ctx, search);
 
-  topUpMethodsAction(ctx)
-  topUpExchangeRatesAction(ctx)
+  topup.fetchMethods(ctx)
+  topup.fetchExchange(ctx)
 })
 
 const StoreLoader = reatomComponent(({ ctx }) => {
-  const isLoading = ctx.spy(topUpAction.statusesAtom).isPending;
+  const isLoading = ctx.spy(topup.submit.statusesAtom).isPending;
 
   ctx.schedule(() => {
     if (isLoading) {

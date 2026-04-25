@@ -1,29 +1,19 @@
-import Elysia from "elysia";
-import * as z from "zod/v4";
-import { buildRatings, events, ratingSchema } from "./rating.model";
-
-const bySchema = z.enum(["belkoin", "charism", "lands_chunks", "reputation", "playtime", "parkour"]);
+import Elysia, { t } from "elysia";
+import { buildRatings, bySchema, getRating, ratingPayload, ratingSchema } from "./rating.model";
+import { withData } from "#/shared/schemas";
 
 const ratingBy = new Elysia()
 	.get("/:by", async ({ params: { by }, query }) => {
-		const event = events[by];
-
-		try {
-			const data = await event(query);
-
-			// set.headers["Cache-Control"] = "public, max-age=30"
-			// set.headers["vary"] = "Origin";
-
-			return { data };
-		} catch (e) {
-			return { data: { data: [], meta: {} } };
-		}
+		const data = await getRating(by, query)
+		return { data }
 	}, {
-		params: z.object({
+		params: t.Object({
 			by: bySchema,
 		}),
 		query: ratingSchema,
-		// todo: add model for response
+		response: {
+			200: withData(ratingPayload)
+		}
 	});
 
 const list = buildRatings();

@@ -6,13 +6,12 @@ import { CartPrice } from "./cart-price";
 import { Link } from "@/shared/components/config/link";
 import { Button } from "@repo/ui/button";
 import { spawn } from "@reatom/framework";
-import { order } from "../../models/store.model";
 import { CartItem } from "./cart-item";
 import { ChangeRecipientDialog } from "../recipient/change-recipient";
 import { IconCreditCardPay } from "@tabler/icons-react";
 import { expImage } from "@/shared/consts/images";
 import { WithLoader } from "../../../layout/components/with-loader";
-import { navigate } from "vike/client/router";
+import { order } from "../../models/store-order.model";
 
 const CartContentData = reatomComponent(({ ctx }) => {
   const data = ctx.spy(cartState.data);
@@ -33,14 +32,14 @@ const CartActionsSubmit = reatomComponent(({ ctx }) => {
 
   return (
     <Button
+      id="submit"
+      type="button"
+      background="positive"
       disabled={!isValid}
-      onClick={() => spawn(ctx, async (spawnCtx) => order.create(spawnCtx))}
-      className="w-full h-10 bg-gradient-to-br
-        from-green-600/90 via-green-600/80 to-green-600/80 border border-green-700"
+      className="w-full h-10 font-semibold"
+      onClick={() => spawn(ctx, (spawnCtx) => order.create(spawnCtx))}
     >
-      <Typography className="text-lg font-semibold">
-        К оформлению
-      </Typography>
+      К оформлению
     </Button>
   )
 }, "CartActionsSubmit")
@@ -88,6 +87,53 @@ const CartListContent = reatomComponent(({ ctx }) => {
   )
 }, 'CartListContent')
 
+const CartActions = () => {
+  return (
+    <div className="flex flex-col lg:w-1/3 bg-neutral-900 gap-4 p-2 sm:p-3 lg:p-4 rounded-xl w-full">
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col items-center w-full gap-2">
+          <div className="flex-1 flex w-full">
+            <CartActionsSubmit />
+          </div>
+          <div className="flex-1 flex w-full">
+            <Link
+              href="/store/cart/topup"
+              className="flex-1 
+              flex rounded-xl items-center justify-center bg-neutral-50 text-neutral-950 font-semibold text-nowrap truncate gap-1 min-w-0 h-10
+              "
+            >
+              <IconCreditCardPay size={22} />
+              Пополнить счет
+            </Link>
+          </div>
+        </div>
+        <div
+          className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 w-full h-full"
+        >
+          <div className="flex items-start gap-2 justify-center w-fit rounded-lg">
+            <div className="flex items-center justify-center bg-neutral-600/40 p-2 rounded-lg">
+              <img
+                src={expImage}
+                loading="lazy"
+                width={32}
+                height={32}
+                alt=""
+                draggable={false}
+              />
+            </div>
+            <div className="flex flex-col justify-center">
+              <Typography color="gray" className="text-lg leading-6">
+                Стоимость
+              </Typography>
+              <CartPrice />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const CartContent = () => {
   return (
     <WithLoader loaderAtom={loaderIsActiveAtom} title="Готовим заказ">
@@ -97,49 +143,7 @@ export const CartContent = () => {
         </Typography>
         <div className="flex flex-col lg:flex-row items-start w-full gap-6 h-fit">
           <CartListContent />
-          <div className="flex flex-col lg:w-1/3 bg-neutral-900 gap-4 p-2 sm:p-3 lg:p-4 rounded-xl w-full">
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col items-center w-full gap-2">
-                <div className="flex-1 flex w-full">
-                  <CartActionsSubmit />
-                </div>
-                <div className="flex-1 flex w-full">
-                  <Button
-                    onClick={() => navigate("/store/cart/topup")}
-                    background="white"
-                    className="flex-1 text-nowrap truncate gap-1 min-w-0 h-10 aspect-square p-0"
-                  >
-                    <IconCreditCardPay size={22} />
-                    <Typography className="text-base font-semibold">
-                      Пополнить счет
-                    </Typography>
-                  </Button>
-                </div>
-              </div>
-              <div
-                className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 w-full h-full"
-              >
-                <div className="flex items-start gap-2 justify-center w-fit rounded-lg">
-                  <div className="flex items-center justify-center bg-neutral-600/40 p-2 rounded-lg">
-                    <img
-                      src={expImage}
-                      loading="lazy"
-                      width={32}
-                      height={32}
-                      alt=""
-                      draggable={false}
-                    />
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <Typography color="gray" className="text-lg leading-6">
-                      Стоимость
-                    </Typography>
-                    <CartPrice />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <CartActions />
         </div>
       </div>
     </WithLoader>

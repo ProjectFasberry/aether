@@ -13,15 +13,19 @@ import { safeJsonParse } from "#/utils/config/transforms";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
 
+export const toLog = (name: string) => new Elysia()
+  .onAfterResponse(() => {
+    if (!isProduction) {
+      validateLogger.log(name);
+    }
+  })
+  .as("scoped")
+
 export const validatePermission = (permission: string) => new Elysia()
   .use(defineUserRole())
+  .use(toLog("validatePermission"))
   .derive(async ({ role, nickname, status }) => {
-    if (!isProduction) {
-      validateLogger.log("validatePermission");
-    }
-
     const perms = await getPermissions(nickname, role.id)
-
     const targetIsExist = perms.includes(permission)
 
     if (!targetIsExist) {
@@ -34,53 +38,44 @@ export const validatePermission = (permission: string) => new Elysia()
 
 export const validateAuthStatus = () => new Elysia()
   .use(defineSession())
-  .onBeforeHandle(async ({ session, status }) => {    
-    if (session) {
-      if (!isProduction) {
-        validateLogger.log("validateAuthStatus");
-      }
+  .use(toLog("validateAuthStatus"))
+  .onBeforeHandle(async ({ session, status }) => {
+    if (!session) return;
 
-      const nickname = await auth.getUserNickname(session);
-
-      if (nickname) {
-        throw status(406, "authorized")
-      }
-    }
+    const nickname = await auth.getUserNickname(session);
+    if (nickname) throw status(406, "authorized")
   })
   .as("scoped")
 
 export const validateBannedStatus = () => new Elysia()
   .use(defineOptionalUser())
+  .use(toLog("validateBannedStatus"))
   .onBeforeHandle(async ({ nickname, status }) => {
-    if (nickname) {
-      if (!isProduction) {
-        validateLogger.log("validateBannedStatus");
+    if (!nickname) return;
+
+    const target = await general
+      .selectFrom("players")
+      .select("role_id")
+      .where("players.nickname", "=", nickname)
+      .executeTakeFirst()
+
+    if (target) {
+      if (target?.role_id === 3) {
+        console.warn("is admin. skipping check ban")
+        return;
       }
+    }
 
-      const target = await general
-        .selectFrom("players")
-        .select("role_id")
-        .where("players.nickname", "=", nickname)
-        .executeTakeFirst()
+    const ban = await libertybans
+      .selectFrom("libertybans_victims")
+      .innerJoin("libertybans_names", "libertybans_names.uuid", "libertybans_victims.uuid")
+      .innerJoin("libertybans_bans", "libertybans_bans.victim", "libertybans_victims.id")
+      .select("libertybans_victims.id")
+      .where("libertybans_names.lower_name", "=", nickname.toLowerCase())
+      .executeTakeFirst()
 
-      if (target) {
-        if (target?.role_id === 3) {
-          console.log("is admin. skipping check ban")
-          return;
-        }
-      }
-
-      const ban = await libertybans
-        .selectFrom("libertybans_victims")
-        .innerJoin("libertybans_names", "libertybans_names.uuid", "libertybans_victims.uuid")
-        .innerJoin("libertybans_bans", "libertybans_bans.victim", "libertybans_victims.id")
-        .select("libertybans_victims.id")
-        .where("libertybans_names.lower_name", "=", nickname.toLowerCase())
-        .executeTakeFirst()
-
-      if (ban && ban.id) {
-        throw status(400, "banned")
-      }
+    if (ban && ban.id) {
+      throw status(400, "banned")
     }
   })
   .as("scoped")
@@ -152,7 +147,7 @@ export const botValidator = () => new Elysia()
       logErrorMsg(e);
 
       if (e instanceof Error) {
-        throw status(400, e.message)
+        throw status(500, e.message)
       }
     }
   })

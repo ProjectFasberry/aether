@@ -1,4 +1,4 @@
-import { DIALOG_DELAY } from "@/shared/consts/delays"
+import { DIALOG_DELAY } from "@/shared/consts/index"
 import { action, Action, atom } from "@reatom/core"
 import { sleep, withAssign, withReset } from "@reatom/framework"
 

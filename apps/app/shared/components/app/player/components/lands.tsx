@@ -14,16 +14,16 @@ const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land
     >
       <div className="flex items-center gap-3 w-full lg:w-3/4">
         {details?.banner ? (
-          <img src={details?.banner} draggable={false} className="w-12 h-full" alt="" />
+          <img src={details?.banner} draggable={false} className="rounded-lg object-cover h-14 w-12" alt="" />
         ) : (
           <div className="h-full w-10 bg-neutral-50 rounded-lg" />
         )}
         <div className="flex flex-col gap-1">
-          <Typography className="text-lg leading-6 font-semibold">
+          <Typography className="text-lg leading-5 font-semibold">
             {name}
           </Typography>
           <div className="flex flex-col gap-1">
-            <span className="text-base text-neutral-400">
+            <span className="text-base leading-4 text-neutral-400">
               {members.length} {members.length > 1 ? "участника" : "участник"}
             </span>
           </div>
@@ -48,10 +48,7 @@ const PlayerLandsList = reatomComponent(({ ctx }) => {
   return data.map(land => <PlayerLand key={land.ulid} {...land} />)
 }, "PlayerLandsList")
 
-const playerLandsCountAtom = atom(
-  (ctx) => ctx.spy(playerLandsState.data)?.meta.count ?? 0, 
-  "playerLandsCount"
-)
+const playerLandsCountAtom = atom((ctx) => ctx.spy(playerLandsState.data)?.meta.count ?? 0)
 
 const PlayerLandsCount = reatomComponent(({ ctx }) => {
   const data = ctx.spy(playerLandsCountAtom)

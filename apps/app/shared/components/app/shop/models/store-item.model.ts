@@ -65,10 +65,9 @@ export const storeItem = atom(null, "storeItem").pipe(
       invariant(current, "Current is not defined")
 
       const result = await client
-        .post<boolean>("store/cart/edit")
+        .post<boolean>(`store/cart/edit/${id}`)
         .pipe(
           withJsonBody({
-            id,
             key: "selected",
             value: !current.selected
           })

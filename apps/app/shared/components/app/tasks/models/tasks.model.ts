@@ -1,4 +1,4 @@
-import { DEFAULT_SOFT_TIMEOUT } from "@/shared/consts/delays";
+import { DEFAULT_SOFT_DELAY } from "@/shared/consts/index";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom, sleep, withAssign, withConcurrency } from "@reatom/framework";
@@ -50,7 +50,7 @@ export const tasks = atom(null, "tasks").pipe(
       const { value } = e.target;
       tasksFilter.searchQuery(ctx, value)
 
-      await ctx.schedule(() => sleep(DEFAULT_SOFT_TIMEOUT))
+      await sleep(DEFAULT_SOFT_DELAY)
 
       tasks.fetch(ctx)
     }).pipe(

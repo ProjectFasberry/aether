@@ -1,8 +1,5 @@
 import { HTMLAttributes } from 'react';
 import { tv, VariantProps } from 'tailwind-variants';
-import { reatomComponent, useUpdate } from '@reatom/npm-react';
-import { Skeleton } from '@repo/ui/skeleton';
-import { avatarAction, avatarsAtom, getAvatar, getAvatarState } from '../models/avatar.model';
 import { getStaticImage } from '@/shared/lib/volume-helpers';
 
 export const avatarVariants = tv({
@@ -14,47 +11,40 @@ export const avatarVariants = tv({
   },
 })
 
-interface AvatarProps extends HTMLAttributes<HTMLDivElement>,
-  VariantProps<typeof avatarVariants> {
+type AvatarProps = HTMLAttributes<HTMLDivElement> & VariantProps<typeof avatarVariants> & {
   withStatus?: boolean,
-  propHeight?: number;
-  propWidth?: number;
-  nickname: string;
+  nickname?: string;
+  url: string
 }
 
-const AvatarImage = reatomComponent<AvatarProps>(({
-  ctx, className, children, withStatus, variant, propWidth, propHeight, nickname, ...props
-}) => {
-  const url = ctx.spy(getAvatar(nickname))
-  const isLoading = ctx.spy(getAvatarState(nickname))
+export const Avatar = ({ className, variant, url, nickname, ...props }: AvatarProps) => {
+  const fallback = getStaticImage("fallback/steve_head.png");
 
-  if (!url || isLoading) {
-    return <Skeleton style={{ height: propHeight, width: propWidth }} />
-  }
+  const handleRef = (img: HTMLImageElement | null) => {
+    if (!img) return;
+
+    if (img.complete && img.naturalWidth === 0) {
+      img.src = fallback;
+    }
+  };
 
   return (
     <div
       className={avatarVariants({ variant, className })}
-      style={{ height: propHeight, width: propWidth }}
       {...props}
     >
       <img
+        ref={handleRef}
         src={url}
-        width={propWidth}
-        height={propHeight}
-        className="rounded-sm"
+        onError={(e) => {
+          e.currentTarget.onerror = null;
+          e.currentTarget.src = fallback;
+        }}
+        className="rounded-sm w-full h-full"
         loading="eager"
-        alt=""
-        onError={() => avatarsAtom.set(ctx, nickname, getStaticImage("fallback/steve_head.png"))}
+        alt={nickname ?? `Avatar`}
+        crossOrigin="anonymous"
       />
     </div>
-  );
-}, "AvatarImage")
-
-export const Avatar = reatomComponent<AvatarProps>(({ ctx, ...values }) => {
-  const nickname = values.nickname;
-
-  useUpdate((ctx) => avatarAction(ctx, nickname), [nickname])
-
-  return <AvatarImage {...values} />
-}, "Avatar")
+  )
+}

@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react';
+import type { HTMLAttributes } from 'react';
 import { tv } from 'tailwind-variants';
 
 const skeleton = tv({

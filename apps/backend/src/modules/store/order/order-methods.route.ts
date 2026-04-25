@@ -28,7 +28,7 @@ async function getMethods() {
 }
 
 export const paymentMethods = new Elysia()
-  .get("/methods", async ({ status }) => {
+  .get("/methods", async (ctx) => {
     const data: MethodsPayload = await getMethods()
     return { data }
   }, {

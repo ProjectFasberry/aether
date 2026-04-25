@@ -1,12 +1,7 @@
 import { Link } from "@/shared/components/config/link"
 import { HEADERS_LINKS } from "./navigation.model"
-import { reatomComponent } from "@reatom/npm-react"
-import { appState } from "@/shared/models/app.model"
 
-export const MobileBottomBar = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.isMobile)
-  if (!isMobile) return null;
-
+export const MobileBottomBar = () => {
   return (
     <div
       className="
@@ -32,4 +27,4 @@ export const MobileBottomBar = reatomComponent(({ ctx }) => {
       </div>
     </div>
   )
-}, "MobileBottomBar")
+}

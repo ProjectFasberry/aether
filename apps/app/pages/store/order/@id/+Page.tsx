@@ -1,6 +1,6 @@
 import { Data } from "./+data";
 import { useUpdate } from "@reatom/npm-react";
-import { connectToOrderEventsAction, orderDataAtom } from "@/shared/components/app/shop/models/store-order.model";
+import { order, orderState } from "@/shared/components/app/shop/models/store-order.model";
 import { action } from "@reatom/core";
 import { pageContextAtom } from "@/shared/models/page-context.model";
 import { startPageEvents } from "@/shared/lib/events";
@@ -16,8 +16,8 @@ const events = action((ctx) => {
   const { data } = pageContext.data as { data: OrderSingleDefault }
   const uniqueId = pageContext.routeParams.id;
 
-  orderDataAtom(ctx, data)
-  connectToOrderEventsAction(ctx, uniqueId)
+  orderState.data(ctx, data)
+  order.connect(ctx, uniqueId)
 }, "events")
 
 export default function Page() {

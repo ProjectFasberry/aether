@@ -8,7 +8,7 @@ import { client } from "@/shared/lib/client-wrapper";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 import { setCookie } from "@/shared/lib/utils";
 
-export const playerSeemsLikePlayersIsShowKey = "playerSeemsLikeShow"
+export const playerSeemsLikePlayersIsShowKey = "playerSLPState.isShow"
 
 export const playerSLPState = atom(null, "playerSLPState").pipe(
   withAssign((_, name) => ({
@@ -56,11 +56,12 @@ export const playerSLP = atom(null, "playerSLP").pipe(
 
       if (!nickname) return null;
 
-      const result = await ctx.schedule(
-        () => client<SeemsLikePlayersPayload>(`server/seems-like/${nickname}`, {
-          signal: ctx.controller.signal,
-          searchParams: { limit: 8 }
-        })
+      const result = await ctx.schedule(() =>
+        client
+          .get<SeemsLikePlayersPayload>(`server/seems-like/${nickname}`, {
+            signal: ctx.controller.signal,
+            searchParams: { limit: 8 }
+          })
           .exec()
       )
 

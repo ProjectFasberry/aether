@@ -2,7 +2,7 @@ import { bisquite } from "#/shared/database/bisquite-db";
 import { lobby } from "#/shared/database/lobby-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { reputation } from "#/shared/database/reputation-db";
-import { metaSchema } from "#/shared/schemas";
+import { metaSchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types";
@@ -10,6 +10,10 @@ import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import * as z from "zod/v4";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation-database-types";
+import { getPlayerAvatar } from "../skin/skin.model";
+import { type Static, t, type TSchema } from "elysia";
+import { invariant } from "#/helpers/invariant";
+import { general } from "#/shared/database/general-db";
 
 export const ratingSchema = z.intersection(
 	metaSchema.pick({ asc: true, limit: true, endCursor: true }),
@@ -18,28 +22,158 @@ export const ratingSchema = z.intersection(
 	}),
 );
 
-async function getBelkoinRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>) {
+function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
+	invariant(server, "Server is not defined")
+	const dbInstance = dbs[server];
+	invariant(dbInstance, "Target db instance is not defined")
+	return { dbInstance };
+}
+
+interface RatingEntry {
+	schema: TSchema;
+	fn: (...args: any[]) => any;
+}
+
+export const bySchema = t.UnionEnum([
+	"belkoin", "charism", "lands", "reputation", "playtime", "parkour"
+]);
+
+type AllowedKeys = Static<typeof bySchema>;
+const defineRatingConfig = <T extends Record<AllowedKeys, RatingEntry>>(config: T) => config;
+
+const ratingConfig = defineRatingConfig({
+	belkoin: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					nickname: t.String(),
+					balance: t.Number(),
+					avatar: t.String()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getBelkoinRating
+	},
+	parkour: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					player: t.String(),
+					area: t.Nullable(t.String()),
+					score: t.Number(),
+					gamesplayed: t.Number(),
+					nickname: t.String(),
+					avatar: t.String()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getParkourRating
+	},
+	playtime: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					nickname: t.String(),
+					avatar: t.String(),
+					total: t.Number()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getPlaytimeRating
+	},
+	reputation: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					reputation: t.Number(),
+					uuid: t.Nullable(t.String()),
+					avatar: t.String(),
+					nickname: t.String()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getReputationRating
+	},
+	charism: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					nickname: t.String(),
+					balance: t.Number(),
+					avatar: t.String()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getCharismRating
+	},
+	lands: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					land: t.String(),
+					ulid: t.String(),
+					chunks_amount: t.Number(),
+					name: t.String(),
+					members: t.Record(
+						t.String(),
+						t.Object({
+							avatar: t.String(),
+							nickname: t.String(),
+							chunks: t.Number()
+						})
+					),
+					blocks: t.Any(),
+					type: t.String()
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getLandsRating
+	}
+})
+
+const configValues = Object.values(ratingConfig);
+const allSchemas = configValues.map(item => item.schema);
+
+export const ratingPayload = t.Union(allSchemas);
+
+async function getBelkoinRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.belkoin.schema>> {
 	const direction = getDirection(asc);
 
 	const belkoinQuery = playerpoints
 		.selectFrom("playerpoints_points")
 		.innerJoin("playerpoints_username_cache", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
-		.select(["playerpoints_points.points", "playerpoints_username_cache.username as nickname"]);
+		.select([
+			"playerpoints_points.points",
+			"playerpoints_username_cache.username as nickname"
+		]);
 
 	const belkoinRes = await executeWithCursorPagination(belkoinQuery, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "points", direction, expression: "points" }],
+		fields: [{
+			key: "points", direction, expression: "points"
+		}],
 		parseCursor: (cursor) => ({ points: Number(cursor.points) }),
 	});
 
-	return {
-		data: belkoinRes.rows.map((d) => ({ nickname: d.nickname, balance: d.points })),
-		meta: wrapMeta(belkoinRes),
-	};
+	const data = await Promise.all(
+		belkoinRes.rows.map(async (row) => ({
+			nickname: row.nickname,
+			avatar: await getPlayerAvatar(row.nickname),
+			balance: row.points
+		}))
+	)
+
+	return { data, meta: wrapMeta(belkoinRes) };
 }
 
-async function getParkourRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>) {
+async function getParkourRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.parkour.schema>> {
 	const direction = getDirection(asc);
 
 	const parkourQuery = lobby
@@ -61,20 +195,27 @@ async function getParkourRating({ asc, limit, endCursor }: z.infer<typeof rating
 		parseCursor: (cursor) => ({ score: Number(cursor.score) }),
 	});
 
-	return {
-		data: parkourRes.rows,
-		meta: wrapMeta(parkourRes),
-	};
+	const data = await Promise.all(
+		parkourRes.rows.map(async (row) => ({
+			player: row.player ?? "unknown",
+			nickname: row.nickname ?? "unknown",
+			area: row.area,
+			avatar: await getPlayerAvatar(row.nickname!),
+			gamesplayed: Number(row.gamesplayed ?? 0),
+			score: Number(row.score ?? 0)
+		}))
+	)
+
+	return { data, meta: wrapMeta(parkourRes) };
 }
 
-async function getLandsRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>) {
+async function getLandsRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.lands.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
 	};
 
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
-
 	const direction = getDirection(asc);
 
 	const landsQuery = dbInstance
@@ -93,147 +234,164 @@ async function getLandsRating({ asc, limit, endCursor, server }: z.infer<typeof 
 	const landsRes = await executeWithCursorPagination(landsQuery, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "chunks_amount", direction, expression: "chunks_amount" }],
+		fields: [{
+			key: "chunks_amount", direction, expression: "chunks_amount"
+		}],
 		parseCursor: (cursor) => ({ chunks_amount: Number(cursor.chunks_amount) }),
 	});
 
-	landsRes.rows = landsRes.rows.map((item) => {
-		return {
-			...item,
-			members: JSON.parse(item.members),
-			chunks_amount: Number(item.chunks_amount),
-			blocks: item.blocks ? JSON.parse(item.blocks) : null,
-		};
-	});
+	const data = await Promise.all(
+		landsRes.rows.map(async (row) => {
+			const rmembers = JSON.parse(row.members) as Record<string, { chunks: number }>;
+			const membersMap: Map<string, { chunks: number, avatar: string, nickname: string }> = new Map()
 
-	return {
-		data: landsRes.rows,
-		meta: wrapMeta(landsRes),
-	};
+			for (const [uuid, { chunks }] of Object.entries(rmembers)) {
+				const { nickname } = await general
+					.selectFrom("players")
+					.select("nickname")
+					.where("uuid", "=", uuid)
+					.executeTakeFirstOrThrow();
+
+				membersMap.set(uuid, {
+					nickname,
+					avatar: await getPlayerAvatar(nickname),
+					chunks
+				})
+			}
+
+			const members = Object.fromEntries(membersMap)
+
+			return {
+				...row,
+				members,
+				chunks_amount: Number(row.chunks_amount),
+				blocks: row.blocks ? JSON.parse(row.blocks) : null,
+			}
+		})
+	)
+
+	return { data, meta: wrapMeta(landsRes) };
 }
 
-async function getCharismRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>) {
+async function getCharismRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.charism.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
 	};
 
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
-
 	const direction = getDirection(asc);
 
-	const charismQuery = dbInstance.selectFrom("cmi_users").select(["Balance as balance", "username as nickname"]);
+	const charismQuery = dbInstance
+		.selectFrom("cmi_users")
+		.select([
+			"Balance as balance",
+			"username as nickname"
+		]);
 
 	const charismRes = await executeWithCursorPagination(charismQuery, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "balance", direction, expression: "Balance" }],
+		fields: [{
+			key: "balance", direction, expression: "Balance"
+		}],
 		parseCursor: (cursor) => ({ balance: Number(cursor.balance) }),
 	});
 
-	return {
-		data: charismRes.rows,
-		meta: wrapMeta(charismRes),
-	};
+	const data = await Promise.all(
+		charismRes.rows.map(async (row) => ({
+			nickname: row.nickname ?? "unknown",
+			balance: Number(row.balance ?? 0),
+			avatar: await getPlayerAvatar(row.nickname ?? "unknown")
+		}))
+	)
+
+	return { data, meta: wrapMeta(charismRes) };
 }
 
-async function getReputationRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>) {
+async function getReputationRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.reputation.schema>> {
 	const dbs: Record<string, Kysely<reputationDB> | null> = {
 		bisquite: reputation,
 		muffin: null,
 	};
 
 	const { dbInstance } = getServerDBInstance<reputationDB>({ server, dbs });
-
 	const direction = getDirection(asc);
 
-	const reputationQuery = dbInstance.selectFrom("reputation").select(["reputation", "reputation.uuid"]);
+	const reputationQuery = dbInstance
+		.selectFrom("reputation")
+		.select(["reputation", "reputation.uuid"]);
 
 	const reputationRes = await executeWithCursorPagination(reputationQuery, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "reputation", direction, expression: "reputation" }],
+		fields: [{
+			key: "reputation", direction, expression: "reputation"
+		}],
 		parseCursor: (cursor) => ({ reputation: Number(cursor.reputation) }),
 	});
 
-	const result = await Promise.all(
+	const data = await Promise.all(
 		reputationRes.rows.map(async (row) => {
-			const { nickname, uuid } = await bisquite
+			const query = await bisquite
 				.selectFrom("cmi_users")
-				.select(["username as nickname", "player_uuid as uuid"])
+				.select([
+					"username as nickname",
+					"player_uuid as uuid"
+				])
 				.where("player_uuid", "=", row.uuid)
 				.executeTakeFirstOrThrow();
 
+			const nickname = query.nickname ?? "unknown"
+
 			return {
 				reputation: row.reputation ?? 0,
-				uuid: row.uuid ?? uuid,
-				nickname: nickname as string,
+				uuid: row.uuid ?? query.uuid,
+				avatar: await getPlayerAvatar(nickname),
+				nickname,
 			};
 		}),
 	);
 
-	return {
-		data: result,
-		meta: wrapMeta(reputationRes),
-	};
+	return { data, meta: wrapMeta(reputationRes) };
 }
 
-function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
-	if (!server) {
-		throw new Error("Server is not defined");
-	}
-
-	const dbInstance = dbs[server];
-	if (!dbInstance) {
-		throw new Error("Target db instance is not defined");
-	}
-
-	return { dbInstance };
-}
-
-async function getPlaytimeRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>) {
+async function getPlaytimeRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.playtime.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
 	};
 
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
-
 	const direction = getDirection(asc);
 
-	const playtimeQuery = dbInstance.selectFrom("cmi_users").select(["TotalPlayTime as total", "username as nickname"]);
+	const playtimeQuery = dbInstance
+		.selectFrom("cmi_users")
+		.select(["TotalPlayTime as total", "username as nickname"]);
 
 	const playtimeRes = await executeWithCursorPagination(playtimeQuery, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "total", direction, expression: "TotalPlayTime" }],
+		fields: [{
+			key: "total", direction, expression: "TotalPlayTime"
+		}],
 		parseCursor: (cursor) => ({ total: Number(cursor.total) }),
 	});
 
-	return {
-		data: playtimeRes.rows,
-		meta: wrapMeta(playtimeRes),
-	};
+	const data = await Promise.all(
+		playtimeRes.rows.map(async (row) => ({
+			nickname: row.nickname ?? "unknown",
+			avatar: await getPlayerAvatar(row.nickname ?? "unknown"),
+			total: Number(row.total ?? 0)
+		}))
+	);
+
+	return { data, meta: wrapMeta(playtimeRes) };
 }
 
-const ratingFunctions = {
-	reputation: getReputationRating,
-	belkoin: getBelkoinRating,
-	charism: getCharismRating,
-	playtime: getPlaytimeRating,
-	lands_chunks: getLandsRating,
-	parkour: getParkourRating,
-} as const;
-
-type ExtractData<T> = T extends (...args: any[]) => Promise<infer R> ? R : never;
-
-type EventsRecord = {
-	[K in keyof typeof ratingFunctions]: (
-		q: Parameters<(typeof ratingFunctions)[K]>[0],
-	) => Promise<ExtractData<(typeof ratingFunctions)[K]>>;
-};
-
-export const events: EventsRecord = ratingFunctions;
+export async function getRating(by: AllowedKeys, query: z.infer<typeof ratingSchema>) {
+	return ratingConfig[by].fn?.(query)
+}
 
 const RATINGS_SECTIONS = {
 	global: {
@@ -243,7 +401,7 @@ const RATINGS_SECTIONS = {
 	servers: {
 		bisquite: {
 			title: "Bisquite",
-			childs: ["charism", "playtime", "lands_chunks", "reputation"],
+			childs: ["charism", "playtime", "lands", "reputation"],
 		},
 		muffin: {
 			title: "Muffin",
@@ -255,7 +413,7 @@ const RATINGS_SECTIONS = {
 const RATINGS_SECTIONS_BY_KEY: Record<string, string> = {
 	charism: "Харизма",
 	reputation: "Репутация",
-	lands_chunks: "Территории",
+	lands: "Территории",
 	belkoin: "Белкоин",
 	playtime: "Время игры",
 	parkour: "Паркур",

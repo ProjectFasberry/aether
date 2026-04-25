@@ -1,10 +1,9 @@
 import Elysia from "elysia";
-import type { StoreItemsPayload } from "@repo/shared/types/entities/store";
-import { getStoreItems, storeListSchema } from "./store-items.model";
+import { store, storeListSchema } from "./store-items.model";
 
 export const storeItems = new Elysia()
   .get("/items", async ({ query }) => {
-    const data: StoreItemsPayload = await getStoreItems(query);
+    const data = await store.getItems(query);
     return { data }
   }, {
     query: storeListSchema

@@ -15,8 +15,6 @@ import { NotFound } from "@/shared/ui/not-found"
 import { isClientAtom } from "@/shared/models/page-context.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 
-type LandCard = Lands
-
 const landCardVariants = tv({
   base: `flex items-start justify-between gap-6 duration-150 relative w-full rounded-xl p-3 sm:p-4 lg:p-6 bg-neutral-900`,
   slots: {
@@ -25,19 +23,18 @@ const landCardVariants = tv({
   }
 })
 
-const LandCard = ({ level, members, name, title, ulid, details: { banner } }: LandCard) => {
+const LandCard = ({ level, members, name, title, ulid, details: { banner } }: Lands) => {
   return (
     <Link href={createLink("land", ulid)} className={landCardVariants().base()}>
       <div className={landCardVariants().child()}>
         <div className="flex items-center gap-2 w-full">
           <Avatar
-            nickname={"distribate"}
-            propWidth={26}
-            propHeight={26}
-            className="min-w-[26px] min-h-[26px]"
+            nickname={members[0].nickname}
+            url={members[0].avatar}
+            className="h-6 w-6"
           />
           <Typography className="text-lg truncate">
-            {"distribate"}
+            {members[0].nickname}
           </Typography>
         </div>
         <Typography className="text-xl truncate font-semibold">
@@ -47,7 +44,7 @@ const LandCard = ({ level, members, name, title, ulid, details: { banner } }: La
         <div className="flex flex-col select-none gap-1">
           <Typography className={landCardVariants().stat()}>
             <IconCircleFilled size={8} />
-            {Object.keys(members).length} участников
+            {members.length} участников
           </Typography>
           <Typography className={landCardVariants().stat()}>
             <IconCircleFilled size={8} />
@@ -111,7 +108,9 @@ export const LandsListShorted = reatomComponent(({ ctx }) => {
   }
 
   const data = ctx.spy(landsAction.dataAtom)
-  if (!data) return <NotFound title="Пока ничего нет" />
+  if (!data) {
+    return <NotFound title="Пока ничего нет" />
+  }
 
   return (
     <div className="flex flex-col w-full gap-2">

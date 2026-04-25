@@ -1,27 +1,21 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
-import {
-  changeGlobalRecipientAction,
-  changeGlobalRecipientErrorAtom,
-  changeGlobalRecipientIsValidAtom,
-  changeGlobalRecipientNewAtom,
-  changeGlobalRecipientOldAtom,
-} from "../../shop/models/store-recipient.model";
+import { changeRecipient, changeRecipientState, changeGlobalRecipientIsValidAtom } from "../../shop/models/store-recipient.model";
 import { Button } from "@repo/ui/button";
 import { atom } from "@reatom/core";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 
 const isDisabledAtom = atom((ctx) =>
-  !ctx.spy(changeGlobalRecipientIsValidAtom) || ctx.spy(changeGlobalRecipientAction.statusesAtom).isPending,
-  "isDisabled"
+  !ctx.spy(changeGlobalRecipientIsValidAtom) || 
+  ctx.spy(changeRecipient.submitGlobal.statusesAtom).isPending,
 )
 
 const GlobalRecipient = reatomComponent(({ ctx }) => {
-  const oldRecipient = ctx.get(changeGlobalRecipientOldAtom) ?? ""
-  const newRecipient = ctx.spy(changeGlobalRecipientNewAtom)
+  const oldRecipient = ctx.get(changeRecipientState.global.oldRecipient) ?? ""
+  const newRecipient = ctx.spy(changeRecipientState.global.newRecipient)
 
-  const error = ctx.spy(changeGlobalRecipientErrorAtom)
+  const error = ctx.spy(changeRecipientState.global.error)
 
   return (
     <SettingsSection
@@ -32,14 +26,14 @@ const GlobalRecipient = reatomComponent(({ ctx }) => {
           <Input
             value={newRecipient ?? oldRecipient}
             placeholder="Введите никнейм"
-            onChange={e => changeGlobalRecipientNewAtom(ctx, e.target.value)}
+            onChange={e => changeRecipientState.global.newRecipient(ctx, e.target.value)}
             maxLength={32}
-            onClick={() => changeGlobalRecipientErrorAtom.reset(ctx)}
+            onClick={() => changeRecipientState.global.error.reset(ctx)}
             aria-invalid={!!error}
             className="flex-1 w-[70%] h-10 bg-neutral-700"
           />
           <Button
-            onClick={() => changeGlobalRecipientAction(ctx)}
+            onClick={() => changeRecipient.submitGlobal(ctx)}
             className="p-0! aspect-square h-10 font-semibold"
             background="white"
             disabled={ctx.spy(isDisabledAtom)}

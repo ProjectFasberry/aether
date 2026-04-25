@@ -1,4 +1,4 @@
-import { client, withAbort, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper"
+import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
 import { action, atom, batch, Ctx } from "@reatom/core"
@@ -112,10 +112,10 @@ export const usersControlRestrictAction = reatomAsync(async (ctx, type: UsersCon
   const nicknames = [...ctx.get(usersControlNicknamesAtom)]
 
   type BodyPayload = { type: UsersControlPunishType, nicknames: string[], args?: UsersControlArgs }
-  
+
   const args = getArgs(ctx)
   const body: BodyPayload = { type, nicknames, args }
-  
+
   const result = await ctx.schedule(() =>
     client
       .post<ControlPayload>("privated/user/restrict/create", { timeout: 20000 })
@@ -263,8 +263,7 @@ export type Role = {
 
 export const rolesAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<Role[]>("privated/role/list")
-      .pipe(withAbort(ctx.controller.signal))
+    client<Role[]>("privated/role/list", { signal: ctx.controller.signal })
       .exec()
   )
 }, {

@@ -33,9 +33,7 @@ export const player = new Elysia()
       getRate({ recipient, initiator }),
     ]);
 
-    if (!main || !group || !avatar || !rate) {
-      return status(404, { data: null });
-    }
+    if (!main || !group || !avatar || !rate) throw status(404, { data: null });
 
     const { meta, ...some } = main
 

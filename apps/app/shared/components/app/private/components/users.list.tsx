@@ -105,7 +105,7 @@ const User = reatomComponent<PrivatedUser>(({ ctx, id, nickname, role_name, role
             href={createLink("player", nickname)}
             className="flex items-center min-w-0 gap-2"
           >
-            <Avatar nickname={nickname} propHeight={32} propWidth={32} />
+            <Avatar nickname={nickname} className="h-8 w-8"/>
             <Typography className="font-semibold truncate">
               {nickname}
             </Typography>

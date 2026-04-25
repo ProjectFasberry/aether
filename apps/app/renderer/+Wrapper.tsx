@@ -2,7 +2,6 @@ import '@bprogress/core/css';
 import "@/shared/styles/tailwind.css";
 
 import { PropsWithChildren } from 'react'
-import { Banner } from '@/shared/components/app/widgets/components/banner';
 import { Navigation } from '@/shared/components/app/layout/components/header';
 import { Widgets } from '@/shared/components/app/widgets/components/widgets';
 import { WrapperChild } from '@/shared/components/app/layout/components/wrapper';
@@ -22,7 +21,6 @@ const Global = () => {
 export default function Wrapper({ children }: PropsWithChildren) {
   return (
     <WrapperChild>
-      <Banner />
       <Navigation />
       {children}
       <Global />

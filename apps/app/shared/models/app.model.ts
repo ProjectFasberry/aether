@@ -54,7 +54,7 @@ export const appState = atom(null, "appState").pipe(
 				onChange
 			}
 		}),
-		isMobile: atom(false, `${name}.isMobile`),
+		isMobile: atom(false, `${name}.isMobile`).pipe(withSsr(`${name}.isMobile`)),
 		initState: atom(null, `${name}.initState`).pipe(
 			withAssign((_, name) => ({
 				isMobile: atom(false, `${name}.isMobile`)

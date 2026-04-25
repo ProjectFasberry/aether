@@ -12,17 +12,16 @@ const newsPayload = t.Object({
   imageUrl: t.Union([t.String(), t.Null()]),
   views: t.Number(),
   content: t.Record(t.String(), t.Any()),
-  creator: t.String()
+  creator: t.Object({
+    nickname: t.String(),
+    avatar: t.String()
+  })
 })
 
 export const newsList = new Elysia()
   .use(ipPlugin())
-  .get("/list", async ({ query, set }) => {
+  .get("/list", async ({ query }) => {
     const data = await getNewsList(query)
-
-    // set.headers["Cache-Control"] = "public, max-age=60, s-maxage=60"
-    // set.headers["vary"] = "Origin"
-
     return { data }
   }, {
     query: newsSchema,

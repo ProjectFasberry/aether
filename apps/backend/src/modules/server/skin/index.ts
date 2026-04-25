@@ -26,17 +26,18 @@ const set = new Elysia()
     const result = await setSkin(nickname, query.id)
 
     if (!result) {
-      throw status(400, wrapError("Error updating skin"))
+      throw status(500, wrapError("THIRDPARTY_ERROR"))
     }
 
-    return { data: "success" }
+    return { data: "OK" }
   }, {
     query: z.object({
       id: z.string().min(1)
     }),
     response: {
-      200: withData(t.Literal("success")),
-      400: withError
+      200: withData(t.Literal("OK")),
+      400: withError,
+      500: withError
     }
   })
 

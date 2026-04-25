@@ -1,10 +1,11 @@
 import { normalizeIp } from "#/helpers/normalize-ip";
 import { getStaticUrl } from "#/helpers/volume";
+import { DEFAULT_HEAD, getPlayerAvatar } from "#/modules/server/skin/skin.model";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
-import type { NewsPayload } from "@repo/shared/types/entities/news";
+import type { News, NewsPayload } from "@repo/shared/types/entities/news";
 import { executeWithCursorPagination } from "kysely-paginate";
 import * as z from "zod/v4";
 
@@ -36,7 +37,9 @@ export async function createNewsViews(target: { ids: number[], ip: string | null
     .execute()
 }
 
-export async function getNewsList({ asc, limit, endCursor, searchQuery, content }: z.infer<typeof newsSchema>) {
+export async function getNewsList({ 
+  asc, limit, endCursor, searchQuery, content 
+}: z.infer<typeof newsSchema>) {
   let query = general
     .selectFrom('news')
     .leftJoin('news_views', 'news_views.news_id', 'news.id')
@@ -80,6 +83,10 @@ export async function getNewsList({ asc, limit, endCursor, searchQuery, content 
   const data = res.rows.map((news) => ({
     ...news,
     views: Number(news.views),
+    creator: {
+      nickname: news.creator,
+      avatar: getStaticUrl(DEFAULT_HEAD)
+    },
     imageUrl: getStaticUrl(news.imageUrl)
   }))
 
@@ -91,7 +98,7 @@ export async function getNewsList({ asc, limit, endCursor, searchQuery, content 
   return response
 }
 
-export async function getNewsSingle(id: number) {
+export async function getNewsSingle(id: number): Promise<News | null> {
   const query = await general
     .selectFrom("news")
     .leftJoin('news_views', 'news_views.news_id', 'news.id')
@@ -101,11 +108,10 @@ export async function getNewsSingle(id: number) {
       'news.title',
       'news.description',
       'news.imageUrl',
-      'news.creator',
+      'news.creator as newsCreator',
       'news.content',
       eb.fn.count('news_views.id').as('views')
     ])
-    .where("news.id", "=", id)
     .groupBy([
       'news.id',
       'news.created_at',
@@ -115,13 +121,25 @@ export async function getNewsSingle(id: number) {
       'news.creator',
       'news.content'
     ])
+    .where("news.id", "=", id)
     .limit(1)
     .executeTakeFirst()
 
   if (!query) return null;
 
-  return {
-    ...query,
+  const { newsCreator, ...base } = query;
+
+  const creator = {
+    nickname: newsCreator,
+    avatar: await getPlayerAvatar(newsCreator)
+  }
+
+  const item = {
+    ...base,
+    views: Number(query.views),
+    creator,
     imageUrl: getStaticUrl(query.imageUrl)
   }
+
+  return item
 }

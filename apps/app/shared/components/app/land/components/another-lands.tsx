@@ -17,7 +17,11 @@ const List = reatomComponent(({ ctx }) => {
         href={createLink("land", land.ulid)}
         className="flex bg-neutral-800 gap-2 rounded-lg p-2 w-full items-center"
       >
-        <Avatar nickname={land.members[0].nickname} propHeight={22} propWidth={22} />
+        <Avatar
+          nickname={land.members[0].nickname}
+          className="h-5 w-5"
+          url={land.members[0].avatar}
+        />
         {land.name}
       </Link>
     ))

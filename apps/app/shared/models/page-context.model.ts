@@ -20,8 +20,8 @@ export const countryAtom = atom((ctx) => ctx.spy(appState.options).country, "cou
 pageContextAtom.onChange((ctx, state) => {
 	if (!state) return;
 
-	const url = new URL(state.urlParsed.href, window.location.origin);
-	urlAtom(ctx, url);
+	// const url = new URL(state.urlParsed.href, window.location.origin);
+	// urlAtom(ctx, url);
 });
 
 // sync snapshot

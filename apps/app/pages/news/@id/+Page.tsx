@@ -2,7 +2,7 @@ import dayjs from "@/shared/lib/create-dayjs";
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { IconEye, IconPencil } from "@tabler/icons-react";
-import { newsItemAtom } from "@/shared/components/app/news/models/news.model";
+import { newsState } from "@/shared/components/app/news/models/news.model";
 import { renderToHTMLString } from '@tiptap/static-renderer'
 import type { JSONContent } from "@tiptap/react";
 import { onDisconnect } from "@reatom/framework";
@@ -15,7 +15,7 @@ import { MePayload } from "@repo/shared/types/entities/user";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
 import { useEffect, useState } from "react";
 
-onDisconnect(newsItemAtom, (ctx) => newsItemAtom(ctx, null))
+onDisconnect(newsState.item, (ctx) => newsState.item(ctx, null))
 
 const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   const [editLink, setEditLink] = useState<string>("")
@@ -42,7 +42,7 @@ const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
 
 const News = reatomComponent(({ ctx }) => {
   const currentUser = usePageContext().snapshot[CURRENT_USER_KEY]?.data as MePayload | undefined
-  const data = ctx.spy(newsItemAtom);
+  const data = ctx.spy(newsState.item);
   if (!data) return null;
 
   const content = data.content as JSONContent
@@ -73,16 +73,16 @@ const News = reatomComponent(({ ctx }) => {
             Создано
           </Typography>
           <Link
-            href={createLink("player", data.creator)}
+            href={createLink("player", data.creator.nickname)}
             className="flex items-center gap-1"
           >
             <Avatar
-              nickname={data.creator}
-              propWidth={18}
-              propHeight={18}
+              url={data.creator.avatar}
+              nickname={data.creator.nickname}
+              className="h-4 w-4"
             />
             <Typography>
-              {data.creator}
+              {data.creator.nickname}
             </Typography>
           </Link>
         </div>

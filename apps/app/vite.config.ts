@@ -41,9 +41,8 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       tsconfigPaths(),
       analyzer({ 
-        enabled: false, 
-        analyzerMode: "static", 
-        openAnalyzer: false, 
+        enabled: true, 
+        analyzerMode: "server", 
       }),
       svg({
         inputRoot: 'assets/svg',

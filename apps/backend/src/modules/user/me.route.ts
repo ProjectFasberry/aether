@@ -5,25 +5,20 @@ import type { MePayload } from "@repo/shared/types/entities/user"
 import { validateBannedStatus } from "#/lib/middlewares/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
+import { getPlayerAvatar } from "../server/skin/skin.model";
 
 export const me = new Elysia()
   .use(validateBannedStatus())
   .use(defineOptionalUser())
   .get("/me", async ({ nickname, status }) => {
-    if (!nickname) {
-      throw status(404, { data: null })
-    }
+    if (!nickname) throw status(404, { data: null })
 
     const query = await getMe(nickname)
-
-    if (!query) {
-      return status(404, { data: null })
-    }
+    if (!query) throw status(404, { data: null })
 
     const { reg_date, login_date, role_id, role_name, ...base } = query;
 
     const permissions = await getPermissions(nickname, role_id);
-
     const loginDate = dayjs(Number(query.login_date)).toDate();
     const regDate = dayjs(Number(query.reg_date)).toDate()
 
@@ -37,8 +32,11 @@ export const me = new Elysia()
       permissions
     }
 
+    const avatar = await getPlayerAvatar(base.nickname);
+
     const data: MePayload = {
       ...base,
+      avatar,
       meta
     }
 
@@ -58,6 +56,7 @@ export const me = new Elysia()
             }),
             permissions: t.Array(t.String())
           }),
+          avatar: t.String()
         })
       ),
       404: t.Object({ data: t.Null() })

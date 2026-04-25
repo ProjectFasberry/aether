@@ -1,9 +1,8 @@
-import { Link } from "@/shared/components/config/link"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { BackButton } from "@/shared/ui/back-button"
 import { Button } from "@repo/ui/button"
-import { Typography } from "@repo/ui/typography"
 import { usePageContext } from "vike-react/usePageContext"
+import { navigate } from "vike/client/router"
 
 const STORE_BADGES = [
   { title: "Корзина", value: "" },
@@ -17,24 +16,18 @@ export const CartNavigation = () => {
 
   return (
     <div
-      className={scrollableVariant({
-        className: "flex items-center overflow-x-auto scrollbar-h-2 gap-1 sm:w-full"
-      })}
+      className={scrollableVariant({ className: "flex items-center overflow-x-auto scrollbar-h-2 gap-1 w-full" })}
     >
       <BackButton href="/store" />
       {STORE_BADGES.map((badge) => (
-        <Link
+        <Button
           key={badge.value}
-          href={`/store/cart${badge.value}`}
-          className="group"
+          background={isActive(`/store/cart${badge.value}`) ? "white" : "default"}
+          onClick={() => navigate(`/store/cart${badge.value}`)}
+          className="h-8 sm:h-8 text-sm text-nowrap font-semibold"
         >
-          <Button
-            background={isActive(`/store/cart${badge.value}`) ? "white" : "default"}
-            className="h-8 sm:h-10 text-nowrap font-semibold"
-          >
-            {badge.title}
-          </Button>
-        </Link>
+          {badge.title}
+        </Button>
       ))}
     </div>
   )

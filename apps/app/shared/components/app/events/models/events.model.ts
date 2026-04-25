@@ -1,26 +1,20 @@
-import { isEmptyArray } from "@/shared/lib/utils";
-import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
+import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { atom } from "@reatom/core";
 import { EventPayload } from "@repo/shared/types/entities/other";
+import { withAssign } from "@reatom/framework";
+import { withSsr } from "@/shared/lib/reatom-helpers";
 
-const eventsTypeAtom = atom<Maybe<string>>(undefined, "eventsType")
-
-export async function getEvents(init: RequestInit, params: Partial<Record<string, string | number>>) {
-  return client<EventPayload[]>("server/events/list")
-    .pipe(withQueryParams(params), withAbort(init.signal))
+export async function getEvents(
+  params: Partial<Record<string, string | number>>,
+  init?: RequestInit
+) {
+  return client<EventPayload[]>("server/events/list", init)
+    .pipe(withQueryParams(params))
     .exec()
 }
 
-export const eventsAction = reatomAsync(async (ctx) => {
-  const params = {
-    type: ctx.get(eventsTypeAtom),
-    limit: 3
-  }
-
-  return await ctx.schedule(() => getEvents({ signal: ctx.controller.signal }, params))
-}, "eventsAction").pipe(
-  withDataAtom(null, (ctx, data) => isEmptyArray(data) ? null : data),
-  withCache({ swr: false, staleTime: 1 * 60 * 1000 }),
-  withStatusesAtom()
+export const eventsState = atom(null, "eventsState").pipe(
+  withAssign((_, name) => ({
+    data: atom<EventPayload[]>([], `${name}.data`).pipe(withSsr(`${name}.data`))
+  }))
 )

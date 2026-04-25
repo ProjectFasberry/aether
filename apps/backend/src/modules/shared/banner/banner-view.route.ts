@@ -25,7 +25,7 @@ const bannerViewPayload = t.Object({
 
 export const bannerView = new Elysia()
   .use(defineUser())
-  .post("/view/:id", async ({ status, nickname, params: { id } }) => {
+  .post("/view/:id", async ({ nickname, params: { id } }) => {
     const data = await viewBanner(id, nickname);
     return { data }
   }, {

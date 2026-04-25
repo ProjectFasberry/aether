@@ -15,11 +15,11 @@ export const invalidate = new Elysia()
 
 		unsetCookie({ cookie, key: SESSION_KEY });
 
-		return { data: "ok" };
+		return { data: "OK" };
 	}, {
 		response: {
 			200: withData(
-				t.String()
+				t.Literal("OK")
 			),
 			500: withError,
 		},

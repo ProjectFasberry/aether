@@ -45,7 +45,7 @@ export type Skin = {
 }
 
 const DEFAULT_SKIN_VARIANT = "CLASSIC"
-const DEFAULT_HEAD = "fallback/steve_head.png"
+export const DEFAULT_HEAD = "fallback/steve_head.png"
 const DEFAULT_SKIN = "fallback/steve_skin.png"
 
 async function getCachedSkinPayload(nickname: string): Promise<SkinsHistoryPayload | null> {

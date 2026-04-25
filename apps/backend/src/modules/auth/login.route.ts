@@ -25,10 +25,10 @@ const withPassword = new Elysia()
 	.post("/basic", async ({ cookie, status, body: { nickname, password }, ip, ua }) => {
 		const { hash, result: isExist } = await auth.getExistsUser(nickname);
 
-		if (!isExist) throw status(400, wrapError("not-exists"));
+		if (!isExist) throw status(400, wrapError("NOT_EXISTS"));
 
 		const passIsValid = bcrypt.compareSync(password, hash);
-		if (!passIsValid) throw status(400, wrapError("invalid"));
+		if (!passIsValid) throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
 		const { expires_at: expires, token } = await session.create({
 			nickname,
@@ -68,7 +68,8 @@ export const withQR = new Elysia()
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/generate", async ({ ip, ua, status, body: { visitorId } }) => {
 		if (!ua || !ip) {
-			throw status(403, wrapError("Forbidden: Missing UA or IP"));
+			logger.error("Missing ua or ip on request")
+			throw status(403, wrapError("INVALID_REQUEST"));
 		}
 
 		const result = await loginQRService.generate({
@@ -160,12 +161,12 @@ export const withQR = new Elysia()
 
 			await loginQRService.confirm({ token, nickname });
 
-			return { data: "ok" };
+			return { data: "OK" };
 		}, {
 			query: tokenSchema,
 			response: {
 				200: withData(
-					t.Literal("ok")
+					t.Literal("OK")
 				),
 				400: withError
 			}
@@ -178,12 +179,12 @@ export const withQR = new Elysia()
 
 			await loginQRService.decline({ token })
 
-			return { data: "ok" };
+			return { data: "OK" };
 		}, {
 			query: tokenSchema,
 			response: {
 				200: withData(
-					t.Literal("ok")
+					t.Literal("OK")
 				),
 				400: withError
 			}
@@ -212,7 +213,7 @@ export const withQR = new Elysia()
 				})
 			]),
 			response: {
-				200: withData(t.Literal("ok")),
+				200: withData(t.String()),
 				400: withError
 			}
 		})
@@ -221,7 +222,7 @@ export const withQR = new Elysia()
 		const { vId, ua, ip, verifiedBy } = await loginQRService.getData(qrToken)
 
 		if (!verifiedBy) {
-			throw status(400, wrapError("Login is not verified"))
+			throw status(400, wrapError("LOGIN_NOT_VERIFIED"))
 		}
 
 		const { expires_at: expires, token: sessionToken } = await session.create({

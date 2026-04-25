@@ -65,16 +65,16 @@ const ReferralsList = reatomComponent(({ ctx }) => {
           className="flex flex-col flex-1 min-w-0 p-4 h-22 gap-2 border border-neutral-800 rounded-lg"
         >
           <div className="flex items-center gap-2">
-            <Link href={createLink("player", referral)}>
+            <Link href={createLink("player", referral.nickname)}>
               <Avatar
-                nickname={referral}
-                propWidth={24}
-                propHeight={24}
+                nickname={referral.nickname}
+                url={referral.avatar}
+                className="h-6 w-6"
               />
             </Link>
-            <Link href={createLink("player", referral)}>
+            <Link href={createLink("player", referral.nickname)}>
               <Typography>
-                {referral}
+                {referral.nickname}
               </Typography>
             </Link>
           </div>

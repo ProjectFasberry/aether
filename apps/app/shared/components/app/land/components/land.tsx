@@ -163,9 +163,7 @@ export const Land = reatomComponent(({ ctx }) => {
                 <div className="flex items-center gap-2">
                   <Avatar
                     nickname={member.nickname}
-                    className="min-h-[34px] min-w-[34px]"
-                    propHeight={34}
-                    propWidth={34}
+                    className="h-8 w-8"
                   />
                   <Typography className="text-lg">
                     {member.nickname}

@@ -1,8 +1,8 @@
 import { action, atom } from "@reatom/core"
 import { sleep, withAssign } from "@reatom/framework"
-import { esAtom, orderDataAtom, orderRequestEventAtom } from "../../../models/store-order.model"
+import { orderState } from "../../../models/store-order.model"
 
-orderRequestEventAtom.onChange(async (ctx, target) => {
+orderState.requestEvent.onChange(async (ctx, target) => {
   if (target === 'invoice_paid') {
     showOrderLoaderAtom(ctx, true)
     await sleep(2000)
@@ -15,11 +15,11 @@ export const isCopiedAtom = atom(false, "isCopied")
 export const defaultOrderEvents = atom(null).pipe(
   withAssign((ctx, name) => ({
     disconnect: action((ctx) => {
-      const source = ctx.get(esAtom);
+      const source = ctx.get(orderState.es);
       if (!source) return;
 
       source.close()
-      esAtom.reset(ctx)
+      orderState.es.reset(ctx)
     }, `${name}.disconnect`),
     copyHref: action(async (ctx, value: string) => {
       await navigator.clipboard.writeText(value);
@@ -34,8 +34,8 @@ export const defaultOrderEvents = atom(null).pipe(
 export const showOrderLoaderAtom = atom(false, "showOrderLoader")
 
 export const orderIsLoadingAtom = atom<boolean>((ctx) => {
-  const target = ctx.spy(orderDataAtom)
-  const es = ctx.spy(esAtom)
+  const target = ctx.spy(orderState.data)
+  const es = ctx.spy(orderState.es)
   const result = Boolean(target && es)
   return !result
 }, "orderIsLoading")

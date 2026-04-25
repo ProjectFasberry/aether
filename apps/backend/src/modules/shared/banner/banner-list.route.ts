@@ -16,7 +16,7 @@ const bannersListSchema = z.intersection(
 
 async function getBanners(
   { asc, endCursor, searchQuery }: z.infer<typeof bannersListSchema>
-) {
+): Promise<BannersPayload> {
   const direction = getDirection(asc);
 
   let query = general
@@ -65,7 +65,7 @@ export const bannerPayload = t.Object({
 
 export const bannerList = new Elysia()
   .get("/list", async ({ query }) => {
-    const data: BannersPayload = await getBanners(query);
+    const data = await getBanners(query);
     return { data }
   }, {
     query: bannersListSchema,

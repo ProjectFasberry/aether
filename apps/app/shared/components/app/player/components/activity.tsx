@@ -64,11 +64,6 @@ const PlayerServer = reatomComponent(({ ctx }) => {
   )
 }, "PlayerLocation")
 
-onConnect(playerActivity.online.fetch.dataAtom, (ctx) => {
-  const nickname = ctx.get(playerParamAtom)
-  playerActivity.online.fetch(ctx, nickname!)
-})
-
 onConnect(playerActivity.online.fetch.dataAtom, async (ctx) => {
   while (ctx.isConnected()) {
     await playerActivity.online.fetch.retry(ctx).catch(() => { })
@@ -86,13 +81,17 @@ const PlayerActivitySkeleton = () => {
 }
 
 export const PlayerActivity = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom)) {
-    return <PlayerActivitySkeleton />
-  }
+  const nickname = ctx.spy(playerParamAtom);
+
+  useUpdate((ctx) => {
+    if (!nickname) return;
+    
+    playerActivity.online.fetch(ctx, nickname)
+  }, [nickname])
 
   const data = ctx.spy(playerActivity.online.fetch.dataAtom);
 
-  if (ctx.spy(playerActivity.online.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(isClientAtom) || ctx.spy(playerActivity.online.fetch.statusesAtom).isPending) {
     return <PlayerActivitySkeleton />
   }
 

@@ -22,7 +22,7 @@
 
 @theme {
   --color-neutral-*: initial;
-  
+
   --color-green-50: #f0fdf4;
   --color-green-100: #dbfde6;
   --color-green-200: #baf8cf;
@@ -103,7 +103,6 @@
 
 @layer components {
   .responsive {
-    @apply w-full px-2 sm:px-0;
-    max-width: clamp(420px, 80vw, 1200px);
+    @apply w-full px-2 sm:px-0 max-w-[clamp(420px,80vw,1200px)];
   }
 }

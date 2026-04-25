@@ -4,10 +4,10 @@ import { IconCheck, IconGift, IconTrash } from "@tabler/icons-react"
 import { Typography } from "@repo/ui/typography"
 import { createLink } from "@/shared/components/config/link"
 import { storeItem } from "../../models/store-item.model"
-import { changeRecipientOpenDialogAction } from "../../models/store-recipient.model"
-import { CartPayload } from "@repo/shared/types/entities/store"
+import { CartItem as CartItemProps } from "@repo/shared/types/entities/store"
 import { CURRENCIES } from "./cart-price"
 import { cart, cartDataItemIsSelectAtom } from "../../models/store-cart.model"
+import { changeRecipient } from "../../models/store-recipient.model"
 
 const CartItemRemoveFromCart = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (
@@ -36,7 +36,7 @@ const CartItemUpdateSelectStatus = reatomComponent<{ id: number }>(({ ctx, id })
   )
 }, "CartItemUpdateSelectStatus")
 
-export const CartItem = reatomComponent<CartPayload["products"][number]>(({
+export const CartItem = reatomComponent<CartItemProps>(({
   ctx, ...item
 }) => {
   const { id, title, imageUrl, description, recipient, price, currency } = item
@@ -70,7 +70,7 @@ export const CartItem = reatomComponent<CartPayload["products"][number]>(({
           <div className="flex items-center gap-1">
             <Button
               className="p-0 h-8 w-8 bg-neutral-800 rounded-lg"
-              onClick={() => changeRecipientOpenDialogAction(ctx, item)}
+              onClick={() => changeRecipient.openDialog(ctx, item)}
             >
               <IconGift size={20} />
             </Button>

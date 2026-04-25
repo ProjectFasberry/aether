@@ -5,7 +5,7 @@ import { currentUserState } from "@/shared/models/current-user.model";
 import { withHistory, withSsr } from "@/shared/lib/reatom-helpers";
 import type { Land } from "@repo/shared/types/entities/land";
 import { logError } from "@/shared/lib/log";
-import { client, withAbort, withQueryParams } from "@/shared/lib/client-wrapper";
+import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 
 export const landAtom = atom<Land | null>(null, "land").pipe(withReset(), withSsr("land"));
 
@@ -63,8 +63,8 @@ export const anotherLandsByOwnerAction = reatomAsync(
 		const exclude = ctx.get(landParamAtom);
 
 		return await ctx.schedule(() =>
-			client<AnotherLands>(`server/lands/list/${nickname}`, { throwHttpErrors: false })
-				.pipe(withQueryParams({ exclude }), withAbort(ctx.controller.signal))
+			client<AnotherLands>(`server/lands/list/${nickname}`, { signal: ctx.controller.signal, throwHttpErrors: false })
+				.pipe(withQueryParams({ exclude }))
 				.exec(),
 		);
 	},

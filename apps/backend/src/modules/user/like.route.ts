@@ -3,7 +3,7 @@ import { defineUser } from "#/lib/middlewares/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData } from "#/shared/schemas";
 import { validateBannedStatus } from "#/lib/middlewares/validators";
-import { getPlayerLikes, likePlayer } from "./like.model";
+import { getPlayerLikes, ratePlayer } from "./like.model";
 
 const likes = new Elysia()
   .get("/list/:nickname", async ({ params: { nickname } }) => {
@@ -31,10 +31,10 @@ const like = new Elysia()
   .use(defineUser())
   .post("/:nickname", async ({ nickname: initiator, status, params: { nickname: recipient } }) => {
     if (initiator === recipient) {
-      throw status(400, wrapError("Dont like yourself"))
+      throw status(400, wrapError("INVALID_REQUEST"))
     }
 
-    const data = await likePlayer({ initiator, recipient })
+    const data = await ratePlayer({ initiator, recipient })
     return { data }
   }, {
     response: {

@@ -82,9 +82,7 @@ const playerSocialsAdd = new Elysia()
 			.where("value", "=", social)
 			.executeTakeFirst();
 
-		if (!socialIsExist || !socialIsExist.value) {
-			throw status(400, "not-exist-social");
-		}
+		if (!socialIsExist || !socialIsExist.value) throw status(400, "SOCIAL_NOT_FOUND");
 
 		const query = await general
 			.selectFrom("players_socials")
@@ -93,18 +91,13 @@ const playerSocialsAdd = new Elysia()
 			.where("nickname", "=", nickname)
 			.executeTakeFirst();
 
-		if (query && query.social) {
-			throw status(400, "exist-target-social");
-		}
+		if (query && query.social) throw status(400, "SAVED_SOCIAL_EXISTS");
 
 		const redis = getRedis();
 		const socialRedisKey = getSocialsAddCacheKey(nickname, social);
 
 		const existsRequestStr = await redis.get(socialRedisKey);
-
-		if (existsRequestStr) {
-			throw status(400, "exist-request");
-		}
+		if (existsRequestStr) throw status(400, "SOCIAL_REQUEST_EXISTS");
 
 		const code = nanoid(4);
 
@@ -113,7 +106,10 @@ const playerSocialsAdd = new Elysia()
 			code,
 		};
 
-		await redis.set(socialRedisKey, JSON.stringify(reqPayload), "EX", 5 * 60);
+		await redis.set(
+			socialRedisKey, 
+			JSON.stringify(reqPayload), "EX", 5 * 60
+		);
 
 		const data = {
 			code,

@@ -47,9 +47,7 @@ export const balance = atom(null, "balance").pipe(
           balanceState.belkoinBalance(ctx, transform(res.BELKOIN))
         })
       },
-      onReject: (_, e) => {
-        logError(e)
-      }
+      onReject: (_, e) => logError(e)
     }).pipe(
       withStatusesAtom(),
       withCache({ swr: false })

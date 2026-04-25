@@ -1,5 +1,7 @@
 import { PageContextServer } from "vike/types";
 import { APP_OPTIONS_KEY, AppOptionsPayloadExtend } from "../models/app.model";
+import { Atom, CtxSpy } from "@reatom/core";
+import { isDeepEqual } from "@reatom/framework";
 
 type WsConfig = {
   host: string;
@@ -108,4 +110,72 @@ export function validateNumber(input: string): number | null {
 
 export function parseBoolean(str: string | undefined | null): boolean {
   return String(str).toLowerCase() === "true";
+}
+
+export function makeChangeValidator<T>(
+  oldAtom: Atom<T>,
+  newAtom: Atom<T>
+): (ctx: CtxSpy) => boolean {
+  return (ctx: CtxSpy): boolean => {
+    const newValue = ctx.spy(newAtom) ?? ""
+    const oldValue = ctx.spy(oldAtom)
+    const unchanged = isDeepEqual(oldValue, newValue)
+    const hasInput =
+      typeof newValue === "string" ? newValue.length >= 1 : Boolean(newValue)
+
+    return Boolean(hasInput && !unchanged)
+  }
+}
+
+export function hardwareAccelerationIsActive(): boolean {
+  let gl: WebGLRenderingContext | null = null;
+  const canvas = document.createElement('canvas');
+
+  try {
+    gl = (
+      canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true }) ||
+      canvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: true })
+    ) as WebGLRenderingContext | null;
+  } catch (e) {
+    return false;
+  }
+  if (!gl) {
+    try {
+      gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
+    } catch (e) {
+      return false;
+    }
+    if (!gl) return false;
+  }
+
+  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  let rendererName = '';
+
+  if (debugInfo) {
+    rendererName = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || gl.getParameter(gl.RENDERER);
+  } else {
+    rendererName = gl.getParameter(gl.RENDERER);
+  }
+
+  rendererName = rendererName.toLowerCase();
+
+  const softwareRenderers = [
+    'swiftshader',
+    'llvmpipe',
+    'software rasterizer',
+    'microsoft basic render driver',
+    'vmware svga ii',
+    'virtualbox graphics adapter'
+  ];
+
+  for (const softwareKeyword of softwareRenderers) {
+    if (rendererName.includes(softwareKeyword)) {
+      if (import.meta.env.DEV) {
+        console.warn(`Potential software WebGL renderer detected: ${rendererName}`);
+      }
+      return false;
+    }
+  }
+
+  return true;
 }

@@ -4,43 +4,29 @@ import { reatomComponent } from "@reatom/npm-react";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { Avatar } from "@/shared/components/app/avatar/components/avatar";
 import { Typography } from "@repo/ui/typography";
-import { usePageContext } from "vike-react/usePageContext";
 import { Separator } from "@repo/ui/separator";
 import { Fragment } from "react/jsx-runtime";
-import { isAuthedAtom } from "@/shared/models/page-context.model";
-import { logout } from "../../auth/models/logout.model";
 import { cartDataSelectedItemsLengthAtom, cartState } from "../../shop/models/store-cart.model";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
-import { HEADERS_LINKS, validatedLinksAtom } from "./navigation.model";
-import { settingsState } from "../../settings/models/settings.model";
+import { HEADERS_LINKS, MENU_ACTIONS, MenuActionItem, MenuLink, showCartIconAtom, showCurrentUserMenuAtom, validatedLinksAtom } from "./navigation.model";
 import { MobileBottomBar } from "./mobile-navigation";
 import { appState } from "@/shared/models/app.model";
+import { Banner } from "../../widgets/components/banner";
+import { cn } from "@/shared/lib/cn";
 
-const HeaderMenuActions = reatomComponent(({ ctx }) => {
+const HeaderMenuActionItem = reatomComponent<MenuActionItem>(({ ctx, label, cb, disabled, className }) => {
   return (
-    <>
-      <DropdownMenuItem
-        className="gap-2 hover:bg-neutral-800 w-full"
-        onClick={() => settingsState.dialogIsOpen.toggle(ctx, true)}
-      >
-        <Typography className="font-semibold">
-          Настройки
-        </Typography>
-      </DropdownMenuItem>
-      <DropdownMenuItem
-        className="gap-2 hover:bg-neutral-800 w-full"
-        disabled={ctx.spy(logout.exec.statusesAtom).isPending}
-        onClick={() => logout.withConfirm(ctx)}
-      >
-        <Typography className="font-semibold text-red">
-          Выйти из аккаунта
-        </Typography>
-      </DropdownMenuItem>
-    </>
+    <DropdownMenuItem
+      className={cn("gap-2 w-full text-neutral-400 font-semibold", className)}
+      disabled={disabled?.(ctx) ?? false}
+      onClick={() => cb(ctx)}
+    >
+      {label}
+    </DropdownMenuItem>
   )
-}, "HeaderMenuActions")
+}, "HeaderMenuActionItem")
 
 const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
   const currentUser = ctx.spy(currentUserState);
@@ -48,14 +34,13 @@ const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
 
   return (
     <DropdownMenuItem
-      className="active:scale-[0.98] select-none cursor-pointer py-2 bg-neutral-800 w-full overflow-hidden"
+      className="active:scale-[0.98] min-h-10 select-none cursor-pointer py-2 bg-neutral-800 w-full overflow-hidden"
       onClick={() => navigate(createLink("player", currentUser.nickname))}
     >
       <Avatar
         nickname={currentUser.nickname}
-        propHeight={40}
-        propWidth={40}
-        className="min-w-10 min-h-10 w-10 h-10 aspect-square"
+        url={currentUser.avatar}
+        className="min-w-10 w-10"
       />
       <div className="flex flex-col justify-center items-start w-full h-10">
         <Typography className="text-sm text-neutral-50 font-semibold leading-4 truncate">
@@ -69,29 +54,23 @@ const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
   )
 }, "HeaderMenuCurrentUser")
 
-const HeaderMenuLinks = reatomComponent(({ ctx }) => {
-  const links = ctx.spy(validatedLinksAtom)
+const HeaderMenuLinkItem = reatomComponent<MenuLink & { idx: number }>(({ ctx, type, title, idx, href }) => {
+  const arr = ctx.spy(validatedLinksAtom)
+
+  const isPrivated = type === 'privated'
+  const firstPrivatedIdx = arr.findIndex(l => l.type === 'privated')
+  const lastPrivatedIdx = arr.map(l => l.type).lastIndexOf('privated')
 
   return (
-    links.map((link, idx, arr) => {
-      const isPrivated = link.type === 'privated'
-      const firstPrivatedIndex = arr.findIndex(l => l.type === 'privated')
-      const lastPrivatedIndex = arr.map(l => l.type).lastIndexOf('privated')
-
-      return (
-        <Fragment key={link.href}>
-          {isPrivated && idx === firstPrivatedIndex && <Separator />}
-          <DropdownMenuItem onClick={() => navigate(link.href)}>
-            <Typography className="font-semibold text-neutral-200">
-              {link.title}
-            </Typography>
-          </DropdownMenuItem>
-          {isPrivated && idx === lastPrivatedIndex && <Separator />}
-        </Fragment>
-      )
-    })
+    <Fragment>
+      {isPrivated && idx === firstPrivatedIdx && <Separator className="my-2" />}
+      <DropdownMenuItem onClick={() => navigate(href)} className="font-semibold text-neutral-400">
+        {title}
+      </DropdownMenuItem>
+      {isPrivated && idx === lastPrivatedIdx && <Separator className="my-2" />}
+    </Fragment>
   )
-}, "HeaderMenuLinks")
+}, "HeaderMenuLinkItem")
 
 const AuthorizeButton = () => {
   return (
@@ -118,8 +97,7 @@ const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
     >
       <Avatar
         nickname={currentUser.nickname}
-        propHeight={32}
-        propWidth={32}
+        url={currentUser.avatar}
         className="min-w-8 min-h-8 w-8 h-8 aspect-square"
       />
     </Link>
@@ -136,12 +114,12 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
       href="/store/cart"
       data-trigger={isTriggered}
       className="
-        flex items-center justify-center group duration-150 max-h-8 w-8 max-w-8 h-8 
+        flex items-center justify-center group duration-150 max-h-6 w-6 max-w-8 aspect-square
         data-[trigger=true]:scale-[1.15] data-[trigger=false]:scale-100
       "
     >
       <IconBuildingStore
-        size={28}
+        size={24}
         className="group-data-[trigger=true]:text-green-500 group-data-[trigger=false]:text-neutral-400"
       />
       {cartLength > 0 && (
@@ -156,79 +134,78 @@ const HeaderCartTrigger = reatomComponent(({ ctx }) => {
   )
 }, "HeaderCartTrigger")
 
-const HeaderUserBar = reatomComponent(({ ctx }) => {
-  const pathname = usePageContext().urlPathname;
-
-  const isAuthed = ctx.spy(isAuthedAtom)
-  const isNonAuthPage = pathname === "/auth/"
-  const showCurrentUserMenu = isAuthed && !isNonAuthPage
+const HeaderUserMenu = reatomComponent(({ ctx }) => {
+  const links = ctx.spy(validatedLinksAtom);
 
   return (
-    <div className="flex gap-4 items-center w-full justify-end">
-      {pathname.includes("/store") && <HeaderCartTrigger />}
-      {showCurrentUserMenu ? (
-        <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
-          <HeaderUserCurrentTrigger />
-          <DropdownMenu modal={false}>
-            <DropdownMenuTrigger className="group cursor-pointer h-8 w-8 flex items-center justify-center">
-              <IconChevronUp
-                size={20}
-                className="group-data-[state=open]:rotate-0 group-data-[state=closed]:rotate-180 duration-100 text-neutral-400"
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
-              <div className="flex flex-col gap-1 w-full">
-                <HeaderMenuCurrentUser />
-                <Separator className="my-2" />
-                <HeaderMenuLinks />
-                <HeaderMenuActions />
-              </div>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      ) : (
-        <AuthorizeButton />
-      )}
+    <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
+      <HeaderUserCurrentTrigger />
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger className="group cursor-pointer h-8 w-8 flex items-center justify-center">
+          <IconChevronUp
+            size={20}
+            className="group-data-[state=open]:rotate-0 group-data-[state=closed]:rotate-180 duration-100 text-neutral-400"
+          />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
+          <div className="flex flex-col gap-1 w-full">
+            <HeaderMenuCurrentUser />
+            <Separator className="my-2" />
+            {links.map((l, idx) => <HeaderMenuLinkItem key={l.href} idx={idx} {...l} />)}
+            {MENU_ACTIONS.map((a, idx) => <HeaderMenuActionItem key={idx} {...a} />)}
+          </div>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}, "HeaderUserMenu")
+
+const HeaderUserBar = reatomComponent(({ ctx }) => {
+  const showCurrentUserMenu = ctx.spy(showCurrentUserMenuAtom)
+  const showCartIcon = ctx.spy(showCartIconAtom)
+
+  return (
+    <div className="flex gap-2 items-center w-full justify-end">
+      {showCartIcon && <HeaderCartTrigger />}
+      {showCurrentUserMenu ? <HeaderUserMenu /> : <AuthorizeButton />}
     </div>
   )
 }, "HeaderUserBar")
 
-const HeaderLinks = () => {
-  return (
-    <div className="flex w-3/5 justify-center items-center h-full text-neutral-400">
-      {HEADERS_LINKS.map(link => (
-        <Link
-          key={link.title}
-          aria-label={link.label}
-          href={link.href}
-          className="inline-flex justify-center items-center border-b h-full px-10 hover:bg-neutral-800
-                data-[state=inactive]:border-transparent data-[state=active]:border-green-500"
-        >
-          <p className="font-semibold text-[14px]">{link.title}</p>
-        </Link>
-      ))}
-    </div>
-  )
-}
-
-export const Header = reatomComponent<{ withBar?: boolean }>(({ ctx, withBar = true }) => {
+export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = false }) => {
   const isMobile = ctx.spy(appState.isMobile)
 
   return (
-    <div className="flex items-center justify-start w-full border-b rounded-b-xl border-neutral-800 relative z-20 h-20 max-h-20 top-0">
-      <div className="flex items-center justify-between px-2 gap-2 sm:px-6 h-full w-full">
-        <div className="w-1/5 bg-transparent h-14 relative">
-          <Logotype />
-        </div>
-        {!isMobile && <HeaderLinks />}
-        <div className="w-full md:w-1/5">
-          {withBar ? (
-            <HeaderUserBar />
-          ) : (
-            <div></div>
+    <div className="flex flex-col w-full border-b rounded-b-xl border-neutral-800 relative z-20">
+      <div className="flex items-center justify-start w-full h-20 max-h-20 top-0">
+        <div className="flex items-center justify-between px-2 gap-2 sm:px-6 h-full w-full">
+          <div className="w-1/5 bg-transparent h-14 relative">
+            <Logotype />
+          </div>
+          {!isMobile && (
+            <div className="flex w-3/5 justify-center items-center h-full text-neutral-400">
+              {HEADERS_LINKS.map(link => (
+                <Link
+                  key={link.title}
+                  aria-label={link.label}
+                  href={link.href}
+                  className="
+                    inline-flex justify-center items-center h-full px-8 border-b-2 hover:bg-neutral-800
+                    data-[state=inactive]:border-transparent data-[state=active]:border-green-500
+                    font-semibold text-sm truncate
+                  "
+                >
+                  {link.title}
+                </Link>
+              ))}
+            </div>
           )}
+          <div className="w-full md:w-1/5">
+            {compact ? <div /> : <HeaderUserBar />}
+          </div>
         </div>
       </div>
+      {!compact && <Banner />}
     </div>
   )
 }, "Header")

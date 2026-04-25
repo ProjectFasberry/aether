@@ -8,8 +8,14 @@ import { logError } from "@/shared/lib/log"
 import { notifyAboutRestrictRole } from "./actions.model"
 
 export const eventsListAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() => getEvents({ signal: ctx.controller.signal }, { limit: 12 }))
-}).pipe(withDataAtom(null), withCache({ swr: false }), withStatusesAtom())
+  return await ctx.schedule(() =>
+    getEvents({ limit: 12 }, { signal: ctx.controller.signal })
+  )
+}).pipe(
+  withDataAtom(null),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const createEventTitleAtom = atom("", "createEventTitle").pipe(withReset())
 export const createEventDescriptionAtom = atom("", "createEventDescription").pipe(withReset())
@@ -18,7 +24,7 @@ export const createEventTypeAtom = atom("", "createEventType").pipe(withReset())
 
 export const createEvent = atom(null, "createEvent").pipe(
   withAssign((ctx, name) => ({
-    resetFull: action((ctx) => { 
+    resetFull: action((ctx) => {
       createEventTitleAtom.reset(ctx)
       createEventDescriptionAtom.reset(ctx)
       createEventInitiatorAtom.reset(ctx)

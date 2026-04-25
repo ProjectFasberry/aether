@@ -1,71 +1,62 @@
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { getObjectUrl } from "@/shared/lib/volume-helpers";
 import { clientInstance } from "@/shared/api/client";
-import { action, atom, batch, Ctx } from "@reatom/core";
-import { sleep, withAssign, withReset } from "@reatom/framework";
+import { action, atom, batch } from "@reatom/core";
+import { sleep, withAssign, withInit, withReset } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { SkinsHistory } from "@repo/shared/types/entities/other";
 import { isIdentityAtom, playerParamAtom } from "./player.model";
 import { toast } from "sonner";
-import { avatarAction, avatarsAtom } from "../../avatar/models/avatar.model";
+import { DIALOG_DELAY } from "@/shared/consts";
+import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer } from "skinview3d";
+import { IconButterfly, TablerIcon } from "@tabler/icons-react";
+import { IconRun } from "@tabler/icons-react";
+import { IconManFilled } from "@tabler/icons-react";
+import { hardwareAccelerationIsActive } from "@/shared/lib/utils";
 
-export function hardwareAccelerationIsActive(): boolean {
-  let gl: WebGLRenderingContext | null = null;
+type SkinAnimationType = "idle" | "run" | "flying";
+type SkinAnimation = typeof FlyingAnimation | typeof IdleAnimation | typeof RunningAnimation
+type SkinControls = { animation: SkinAnimationType; icon: TablerIcon };
 
-  const canvas = document.createElement('canvas');
+export const SKIN_ANIMATIONS: SkinControls[] = [
+  { animation: "idle", icon: IconManFilled },
+  { animation: "run", icon: IconRun, },
+  { animation: "flying", icon: IconButterfly },
+];
 
-  try {
-    gl = (
-      canvas.getContext('webgl', { failIfMajorPerformanceCaveat: true })
-      || canvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: true })) as WebGLRenderingContext | null;
-  } catch (e) {
-    return false;
-  }
+export const skinAnimation = atom(null, "skinAnimation").pipe(
+  withAssign((_, name) => ({
+    type: atom<SkinAnimationType>("idle", `${name}.type`),
+    isRotate: atom<boolean>(false, "skinRotating"),
+    viewer: atom<SkinViewer | null>(null, "skinViewer")
+  }))
+)
 
-  if (!gl) {
-    try {
-      gl = (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')) as WebGLRenderingContext | null;
-    } catch (e) {
-      return false;
-    }
+const animationClasses: Record<SkinAnimationType, SkinAnimation> = {
+  idle: IdleAnimation,
+  run: RunningAnimation,
+  flying: FlyingAnimation,
+};
 
-    if (!gl) return false;
-  }
+skinAnimation.isRotate.onChange((ctx, state) => {
+  let viewer = ctx.get(skinAnimation.viewer)
+  if (!viewer) return;
 
-  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-  let rendererName = '';
+  viewer.autoRotate = state
+  skinAnimation.viewer(ctx, viewer)
+})
 
-  if (debugInfo) {
-    rendererName = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || gl.getParameter(gl.RENDERER);
-  } else {
-    rendererName = gl.getParameter(gl.RENDERER);
-  }
+skinAnimation.type.onChange((ctx, state) => {
+  let viewer = ctx.get(skinAnimation.viewer)
+  if (!viewer) return;
 
-  rendererName = rendererName.toLowerCase();
-
-  const softwareRenderers = [
-    'swiftshader',
-    'llvmpipe',
-    'software rasterizer',
-    'microsoft basic render driver',
-    'vmware svga ii',
-    'virtualbox graphics adapter'
-  ];
-
-  for (const softwareKeyword of softwareRenderers) {
-    if (rendererName.includes(softwareKeyword)) {
-      console.warn(`Potential software WebGL renderer detected: ${rendererName}`);
-      return false;
-    }
-  }
-
-  return true;
-}
+  viewer.animation = new animationClasses[state]();
+  skinAnimation.viewer(ctx, viewer)
+})
 
 export async function getSkinDetails(
-  { type, nickname }: { type: "head" | "skin", nickname: string },
-  init?: RequestInit
+  { type, nickname }: { type: "head" | "skin", nickname: string }, init?: RequestInit
 ) {
   const fallback = getObjectUrl(
     "static",
@@ -79,183 +70,192 @@ export async function getSkinDetails(
 
   if (!res.ok) return fallback;
 
-  const data = await res.text()
-  return data
+  return await res.text()
 }
 
-//#region
 type SkinSelected = {
   skin_head_url: string | null,
   skin_url: string | null,
   identifier: string
 }
 
-export const skinsSelectedAtom = atom<SkinSelected | null>(null, "skinSelected").pipe(withReset())
+const SKIN_VARIANTS = ["classic", "slim"] as const
 
-export const skinsHistoryAction = reatomAsync(async (ctx, nickname: string) => {
-  return await ctx.schedule(() =>
-    client<SkinsHistory[]>(`server/skin/history/${nickname}`).exec()
-  )
-}, {
-  name: "skinsHistoryAction",
-  onFulfill: (ctx, res) => {
-    if (!res) return;
+export const skinsState = atom(null, "skinsState").pipe(
+  withAssign((_, name) => ({
+    selected: atom<SkinSelected | null>(null, `${name}.selected`).pipe(withReset()),
+    control: atom(null, `${name}.state`).pipe(
+      withAssign((_, name) => ({
+        dialogIsOpen: atom(false, `${name}.dialogIsOpen`).pipe(withReset()),
+        file: atom<File | null>(null, `${name}.file`).pipe(
+          withAssign((target) => ({
+            reset: action((ctx) => {
+              const url = ctx.get(skinsState.control.fileData)?.url
+              if (!url) return;
 
-    const first = res[0]
-    if (!first) return;
+              URL.revokeObjectURL(url);
 
-    skinsSelectedAtom(ctx, {
-      skin_url: first.skin_url!,
-      skin_head_url: first.skin_head_url!,
-      identifier: first.skin_identifier
-    })
-  }
-}).pipe(
-  withDataAtom(null, (_, data) => data.length ? data : null),
-  withStatusesAtom(),
-  withCache({ swr: false })
-)
-//#endregion
-
-function updateSkinAndHead(ctx: Ctx) {
-  const nickname = ctx.get(playerParamAtom);
-  if (!nickname) throw new Error("Nickname is not defined");
-
-  batch(ctx, () => {
-    skinsHistoryAction.cacheAtom.reset(ctx);
-    skinsHistoryAction(ctx, nickname);
-
-    avatarsAtom.delete(ctx, nickname);
-    avatarAction(ctx, nickname);
-  })
-}
-
-//#region
-export const skinControlDialogIsOpenAtom = atom(false, "skinControlDialogIsOpen").pipe(withReset());
-
-export const getIsUploadAvailableAtom = atom((ctx) => {
-  if (!ctx.spy(isIdentityAtom)) {
-    return false;
-  }
-
-  return true;
-}, "getIsUploadAvailable")
-
-export const changeSkinAction = reatomAsync(async (ctx) => {
-  const payloadFormData = new FormData()
-
-  payloadFormData.append("file", ctx.get(skinFileAtom)!)
-  payloadFormData.append("variant", ctx.get(skinVariantAtom))
-
-  const result = await ctx.schedule(() =>
-    client.post<{ url: string }>("server/skin/upload", { body: payloadFormData, timeout: 10000 }).exec()
-  )
-
-  await ctx.schedule(() => sleep(2000));
-
-  return { result }
-}, {
-  name: "changeSkinAction",
-  onFulfill: async (ctx, res) => {
-    toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
-
-    updateSkinAndHead(ctx)
-
-    skinControlDialogIsOpenAtom.reset(ctx)
-
-    await ctx.schedule(() => sleep(200));
-
-    skinFileAtom.reset(ctx)
-    skinVariantAtom.reset(ctx)
-  },
-  onReject: (_, e) => {
-    logError(e, { type: "combined" })
-  }
-}).pipe(withStatusesAtom())
-
-export const variants = ["classic", "slim"] as const
-export type SkinVariant = typeof variants[number]
-
-export const skinFileAtom = atom<File | null>(null, "skinFile").pipe(
-  withAssign((target, name) => ({
-    reset: action((ctx) => {
-      const url = ctx.get(skinFileDataAtom)?.url
-      if (!url) return;
-
-      URL.revokeObjectURL(url);
-
-      target(ctx, null);
-      skinFileDataAtom.reset(ctx)
-    }, `${name}.reset`)
+              target(ctx, null);
+              skinsState.control.fileData.reset(ctx)
+            })
+          }))
+        ),
+        fileData: atom<SkinFileData | null>(null, `${name}.fileData`).pipe(withReset()),
+        variant: atom<SkinVariant>("classic", `${name}.variant`).pipe(withReset()),
+        SKIN_VARIANTS
+      }))
+    )
   }))
 )
 
-type SkinFileData = { name: string, size: number, url: string }
-
-export const skinFileDataAtom = atom<SkinFileData | null>(null, "skinFileData").pipe(withReset())
-
-export const skinSubmitIsDisabledAtom = atom((ctx) => {
-  if (ctx.spy(changeSkinAction.statusesAtom).isPending) return true;
-  return !ctx.spy(skinFileAtom);
-}, "skinSubmitIsDisabled")
-
-export const getSkinVariantIsActiveAtom = (type: string) => atom(
-  (ctx) => ctx.spy(skinVariantAtom) === type,
-  "getSkinVariantIsActive"
+export const hardwareAccIsEnabledAtom = atom(false, "hardwareAccIsEnabled").pipe(
+  withInit(() => hardwareAccelerationIsActive())
 )
 
-export const skinVariantAtom = atom<SkinVariant>("classic", "skinVariant").pipe(withReset())
+export const skins = atom(null, "skins").pipe(
+  withAssign((_, name) => ({
+    control: atom(null, `${name}.control`).pipe(
+      withAssign(() => ({
+        setupSkinData: reatomAsync(async (ctx) => {
+          const target = ctx.get(skinsState.control.file)
+          if (!target) return null;
 
-skinFileAtom.onChange((ctx, state) => {
-  if (!state) return;
-  setupSkinFileDataAction(ctx)
+          const url = URL.createObjectURL(target)
+
+          const info = {
+            name: target.name,
+            size: target.size * 1024,
+            url
+          }
+
+          skinsState.control.fileData(ctx, info)
+        }, {
+          name: `${name}.setupSkinData`,
+          onReject: (_, e) => logError(e)
+        }).pipe(
+          withStatusesAtom()
+        ),
+        set: reatomAsync(async (ctx) => {
+          const selectedSkin = ctx.get(skinsState.selected)
+          if (!selectedSkin) return null;
+
+          const id = selectedSkin.identifier
+
+          return await ctx.schedule(() =>
+            client<"success" | "error">("server/skin/set", { searchParams: { id }, retry: 1 }).exec()
+          )
+        }, {
+          name: `${name}.set`,
+          onFulfill: (ctx, res) => {
+            toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
+            skins.updateSkinAndHead(ctx)
+          },
+          onReject: (_, e) => logError(e, { type: "combined" })
+        }).pipe(
+          withStatusesAtom()
+        ),
+        change: reatomAsync(async (ctx) => {
+          const payloadFormData = new FormData()
+
+          payloadFormData.append("file", ctx.get(skinsState.control.file)!)
+          payloadFormData.append("variant", ctx.get(skinsState.control.variant))
+
+          const result = await client
+            .post<{ url: string }>("server/skin/upload", {
+              body: payloadFormData,
+              timeout: 10000
+            })
+            .exec()
+
+          await ctx.schedule(() => sleep(2000));
+
+          return { result }
+        }, {
+          name: `${name}.change`,
+          onFulfill: async (ctx, res) => {
+            toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
+
+            skins.updateSkinAndHead(ctx)
+            skinsState.control.dialogIsOpen.reset(ctx)
+
+            await sleep(DIALOG_DELAY)
+
+            skinsState.control.file.reset(ctx)
+            skinsState.control.variant.reset(ctx)
+          },
+          onReject: (_, e) => logError(e, { type: "combined" })
+        }).pipe(
+          withStatusesAtom()
+        )
+      }))
+    ),
+    fetch: reatomAsync(async (ctx, nickname: string) => {
+      return await ctx.schedule(() => client<SkinsHistory[]>(`server/skin/history/${nickname}`).exec())
+    }, {
+      name: `${name}.fetch`,
+      onFulfill: (ctx, res) => {
+        if (!res) return;
+
+        const first = res[0]
+        if (!first) return;
+
+        skinsState.selected(ctx, {
+          skin_url: first.skin_url!,
+          skin_head_url: first.skin_head_url!,
+          identifier: first.skin_identifier
+        })
+      },
+      onReject: (_, e) => logError(e)
+    }).pipe(
+      withDataAtom(null, (_, data) => data.length ? data : null),
+      withStatusesAtom(),
+      withCache({ swr: false })
+    ),
+    updateSkinAndHead: action((ctx) => {
+      const nickname = ctx.get(playerParamAtom);
+      if (!nickname) throw new Error("Nickname is not defined");
+
+      batch(ctx, () => {
+        skins.fetch.cacheAtom.reset(ctx);
+        skins.fetch(ctx, nickname);
+      })
+    }),
+    init: action((ctx, nickname: string) => {
+      const isHardwareAccEnabled = ctx.get(hardwareAccIsEnabledAtom)
+      if (!isHardwareAccEnabled || !nickname) return;
+    
+      skins.fetch.cacheAtom.reset(ctx);
+      skins.fetch.dataAtom.reset(ctx);
+      skinsState.selected.reset(ctx);
+    
+      skins.fetch(ctx, nickname)
+    }, "initSkinAction")
+  }))
+)
+
+export const getIsUploadAvailableAtom = atom((ctx) => {
+  if (!ctx.spy(isIdentityAtom)) return false;
+  return true;
 })
 
-export const setupSkinFileDataAction = reatomAsync(async (ctx) => {
-  const target = ctx.get(skinFileAtom)
-  if (!target) return null;
+export type SkinVariant = typeof SKIN_VARIANTS[number]
 
-  const url = URL.createObjectURL(target)
+type SkinFileData = { name: string, size: number, url: string }
 
-  const info = {
-    name: target.name,
-    size: target.size * 1024,
-    url
-  }
+export const skinSubmitIsDisabledAtom = atom((ctx) => {
+  if (ctx.spy(skins.control.change.statusesAtom).isPending) return true;
+  return !ctx.spy(skinsState.control.file);
+})
 
-  skinFileDataAtom(ctx, info)
-}, "setupSkinFileDataAction").pipe(withStatusesAtom())
-//#endregion
+export const getSkinVariantIsActiveAtom = (type: string) => atom((ctx) => ctx.spy(skinsState.control.variant) === type)
 
-//#region
-export const getIsSelectSkinAtom = atom(
-  (ctx) => {
-    if (!ctx.spy(isIdentityAtom)) {
-      return false;
-    }
+skinsState.control.file.onChange((ctx, state) => state && skins.control.setupSkinData(ctx))
 
-    const state = ctx.spy(skinsHistoryAction.dataAtom)
-    if (!state) return false;
+export const getIsSelectSkinAtom = atom((ctx) => {
+  if (!ctx.spy(isIdentityAtom)) return false;
 
-    return state[0].skin_identifier !== ctx.spy(skinsSelectedAtom)?.identifier
-  },
-  "getIsSelectSkin"
-)
+  const state = ctx.spy(skins.fetch.dataAtom)
+  if (!state) return false;
 
-export const setSkinAction = reatomAsync(async (ctx) => {
-  const selectedSkin = ctx.get(skinsSelectedAtom)
-  if (!selectedSkin) return null;
-
-  const id = selectedSkin.identifier
-
-  return await ctx.schedule(() =>
-    client<"success" | "error">("server/skin/set", { searchParams: { id }, retry: 1 }).exec()
-  )
-}, {
-  name: "setSkinAction",
-  onFulfill: (ctx, res) => {
-    toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
-    updateSkinAndHead(ctx)
-  }
-}).pipe(withStatusesAtom())
-//#endregion
+  return state[0].skin_identifier !== ctx.spy(skinsState.selected)?.identifier
+})

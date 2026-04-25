@@ -4,6 +4,7 @@ import { isEmptyArray } from "@/shared/lib/utils"
 import { ReactNode } from "react"
 import { toast } from "sonner"
 import { Icon } from "@/shared/ui/icon"
+import { atom, withAssign } from "@reatom/framework"
 
 export type PlayerSocialsValuePayload = {
   id: string | number,
@@ -19,12 +20,18 @@ export async function getPlayerSocials(nickname: string, init?: RequestInit) {
   return client<PlayerSocialsPayload[]>(`server/socials/list/${nickname}`, { ...init }).exec()
 }
 
-export const playerSocialsAction = reatomAsync(async (ctx, nickname: string) => {
-  return await ctx.schedule(() => getPlayerSocials(nickname, { signal: ctx.controller.signal }));
-}).pipe(
-  withDataAtom([], (_, data) => isEmptyArray(data) ? null : data),
-  withStatusesAtom(),
-  withCache({ swr: false })
+export const playerSocials = atom(null, "playerSocials").pipe(
+  withAssign((_, name) => ({
+    fetch: reatomAsync(async (ctx, nickname: string) => {
+      return await ctx.schedule(() =>
+        getPlayerSocials(nickname, { signal: ctx.controller.signal })
+      );
+    }, `${name}.fetch`).pipe(
+      withDataAtom([], (_, data) => isEmptyArray(data) ? null : data),
+      withStatusesAtom(),
+      withCache({ swr: false })
+    )
+  }))
 )
 
 export const SOCIAL_ICONS: Record<PlayerSocialsPayload["type"], () => ReactNode> = {

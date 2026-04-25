@@ -48,7 +48,7 @@ async function getBanner(
 }
 
 export const bannerSolo = new Elysia()
-  .get("/:id", async ({ status, params: { id } }) => {
+  .get("/:id", async ({ params: { id } }) => {
     const data = await getBanner(id);
     return { data }
   }, {
@@ -61,7 +61,7 @@ export const bannerSolo = new Elysia()
   })
 
 export const bannerLatest = new Elysia()
-  .get("/latest", async ({ status }) => {
+  .get("/latest", async (ctx) => {
     const data = await getLatestBanner();
     return { data }
   }, {

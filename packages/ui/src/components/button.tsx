@@ -15,7 +15,8 @@ const buttonVariants = tv({
     background: {
       default: "bg-neutral-800 hover:bg-neutral-700 text-neutral-50",
       compound: "bg-neutral-800 text-neutral-50",
-      white: "bg-neutral-200 hover:bg-neutral-50 text-neutral-950"
+      white: "bg-neutral-200 hover:bg-neutral-50 text-neutral-950",
+      positive: "bg-gradient-to-br text-neutral-50 from-green-600/90 via-green-600/80 font-semibold to-green-600/80"
     }
   }
 })

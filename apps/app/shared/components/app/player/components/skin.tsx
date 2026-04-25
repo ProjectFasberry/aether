@@ -1,35 +1,18 @@
 import { useUpdate } from "@reatom/npm-react";
 import { playerParamAtom } from "../models/player.model";
-import { action, atom } from "@reatom/core";
-import { spawn, withInit } from "@reatom/framework";
+import { spawn } from "@reatom/framework";
 import { tv } from "tailwind-variants";
-import { skinViewerAtom } from "../../player/models/skin-animation.model";
 import { reatomComponent } from "@reatom/npm-react";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import React, { useEffect, useRef, useState } from "react";
-import { skinRotatingAtom, skinAnimationAtom, SKIN_ANIMATIONS } from "../../player/models/skin-animation.model";
 import { IconPlus, IconRotate, IconUpload, IconX } from "@tabler/icons-react";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { Button } from "@repo/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import {
-  changeSkinAction,
-  getIsSelectSkinAtom,
-  getIsUploadAvailableAtom,
-  getSkinVariantIsActiveAtom,
-  hardwareAccelerationIsActive,
-  skinsSelectedAtom,
-  setSkinAction,
-  setupSkinFileDataAction,
-  skinControlDialogIsOpenAtom,
-  skinFileAtom,
-  skinFileDataAtom,
-  skinsHistoryAction,
-  skinSubmitIsDisabledAtom,
-  SkinVariant,
-  skinVariantAtom,
-  variants
+  getIsSelectSkinAtom, getIsUploadAvailableAtom, getSkinVariantIsActiveAtom, skins, skinsState, skinSubmitIsDisabledAtom,
+  SkinVariant, skinAnimation,  SKIN_ANIMATIONS, hardwareAccIsEnabledAtom
 } from "../models/skin.model";
 import { SkinsHistory } from "@repo/shared/types/entities/other";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
@@ -45,11 +28,11 @@ const SkinRenderSkeleton = () => {
 }
 
 const SkinRender = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(skinsHistoryAction.statusesAtom).isPending) {
+  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinRenderSkeleton />;
   }
 
-  const skin = ctx.spy(skinsSelectedAtom)
+  const skin = ctx.spy(skinsState.selected)
   if (!skin) return null;
 
   return (
@@ -61,7 +44,7 @@ const SkinRender = reatomComponent(({ ctx }) => {
             height="390"
             width="300"
             options={{ zoom: 0.8 }}
-            onReady={({ viewer }) => skinViewerAtom(ctx, viewer)}
+            onReady={({ viewer }) => skinAnimation.viewer(ctx, viewer)}
           />
         </ClientOnly>
       ) : (
@@ -74,21 +57,6 @@ const SkinRender = reatomComponent(({ ctx }) => {
     </div>
   );
 }, "SkinRender")
-
-export const hardwareAccIsEnabledAtom = atom(false, "hardwareAccIsEnabled").pipe(
-  withInit(() => hardwareAccelerationIsActive())
-)
-
-export const initSkinAction = action((ctx, nickname: string) => {
-  const isHardwareAccEnabled = ctx.get(hardwareAccIsEnabledAtom)
-  if (!isHardwareAccEnabled || !nickname) return;
-
-  skinsHistoryAction.cacheAtom.reset(ctx);
-  skinsHistoryAction.dataAtom.reset(ctx);
-  skinsSelectedAtom.reset(ctx);
-
-  skinsHistoryAction(ctx, nickname)
-}, "initSkinAction")
 
 const skinHeadVariant = tv({
   base: `flex items-center select-none justify-center *:rounded-lg p-0.5 aspect-square rounded-lg overflow-hidden cursor-pointer border-2`,
@@ -116,14 +84,14 @@ const skinHeadVariant = tv({
 const SkinsHistoryItem = reatomComponent<SkinsHistory & { variant: "mobile" | "desktop" }>(({
   ctx, variant, skin_head_url, skin_url, skin_identifier: identifier, skin_variant
 }) => {
-  const selectedSkin = ctx.spy(skinsSelectedAtom);
+  const selectedSkin = ctx.spy(skinsState.selected);
 
   const status = selectedSkin?.identifier === identifier
     ? "active"
     : "inactive"
 
   const handle = () => {
-    skinsSelectedAtom(ctx, {
+    skinsState.selected(ctx, {
       identifier,
       skin_url: skin_url ?? null,
       skin_head_url: skin_head_url ?? null
@@ -161,11 +129,11 @@ const SkinsHistoryListSkeleton = () => {
 }
 
 const SkinsHistoryList = reatomComponent<{ variant: "mobile" | "desktop" }>(({ ctx, variant }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(skinsHistoryAction.statusesAtom).isPending) {
+  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinsHistoryListSkeleton />
   }
 
-  const data = ctx.spy(skinsHistoryAction.dataAtom)
+  const data = ctx.spy(skins.fetch.dataAtom)
   if (!data) return null;
 
   return data.map(d => <SkinsHistoryItem key={d.skin_identifier} variant={variant} {...d} />)
@@ -198,11 +166,11 @@ const Avatar = reatomComponent<{ width: number, height: number, src: string }>((
 }, "Avatar")
 
 const SkinMainHead = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(skinsHistoryAction.statusesAtom).isPending) {
+  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinMainHeadSkeleton />
   }
 
-  const data = ctx.spy(skinsSelectedAtom)
+  const data = ctx.spy(skinsState.selected)
   if (!data) return null;
 
   return (
@@ -247,7 +215,7 @@ const skinControlVariants = tv({
 const SkinVariantItem = reatomComponent<{ variant: SkinVariant }>(({ ctx, variant }) => {
   return (
     <Button
-      onClick={() => skinVariantAtom(ctx, variant)}
+      onClick={() => skinsState.control.variant(ctx, variant)}
       background={ctx.spy(getSkinVariantIsActiveAtom(variant)) ? "white" : "default"}
       className="flex items-center justify-center w-full"
     >
@@ -264,7 +232,7 @@ const va = tv({
 })
 
 const SelectedSkinData = reatomComponent(({ ctx }) => {
-  if (ctx.spy(setupSkinFileDataAction.statusesAtom).isPending) {
+  if (ctx.spy(skins.control.setupSkinData.statusesAtom).isPending) {
     return (
       <div className={va()}>
         <div className="flex items-center justify-between w-full">
@@ -281,7 +249,7 @@ const SelectedSkinData = reatomComponent(({ ctx }) => {
     )
   }
 
-  const data = ctx.spy(skinFileDataAtom)
+  const data = ctx.spy(skinsState.control.fileData)
   if (!data) return null;
 
   return (
@@ -303,7 +271,7 @@ const SelectedSkinData = reatomComponent(({ ctx }) => {
         <IconX
           size={20}
           className="text-neutral-400"
-          onClick={() => skinFileAtom.reset(ctx)}
+          onClick={() => skinsState.control.file.reset(ctx)}
         />
       </div>
     </div>
@@ -326,7 +294,7 @@ const SkinControlInput = reatomComponent(({ ctx }) => {
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
-    void spawn(ctx, (spawnCtx) => skinFileAtom(spawnCtx, file))
+    void spawn(ctx, (spawnCtx) => skinsState.control.file(spawnCtx, file))
   };
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -335,7 +303,7 @@ const SkinControlInput = reatomComponent(({ ctx }) => {
     const file = e.target.files[0];
     if (!file) return;
 
-    void spawn(ctx, (spawnCtx) => skinFileAtom(spawnCtx, file))
+    void spawn(ctx, (spawnCtx) => skinsState.control.file(spawnCtx, file))
   }
 
   return (
@@ -358,7 +326,7 @@ const SkinControlInput = reatomComponent(({ ctx }) => {
 }, 'SkinControlInput')
 
 const SkinControlContent = reatomComponent(
-  ({ ctx }) => ctx.spy(skinFileAtom) ? <SelectedSkinData /> : <SkinControlInput />,
+  ({ ctx }) => ctx.spy(skinsState.control.file) ? <SelectedSkinData /> : <SkinControlInput />,
   "SkinControlContent"
 )
 
@@ -366,10 +334,10 @@ const SkinControlChangeSubmit = reatomComponent(({ ctx }) => {
   return (
     <Button
       disabled={ctx.spy(skinSubmitIsDisabledAtom)}
-      onClick={() => void spawn(ctx, (spawnCtx) => changeSkinAction(spawnCtx))}
+      onClick={() => void spawn(ctx, (spawnCtx) => skins.control.change(spawnCtx))}
       background="default"
       withSpinner={true}
-      isLoading={ctx.spy(changeSkinAction.statusesAtom).isPending}
+      isLoading={ctx.spy(skins.control.change.statusesAtom).isPending}
     >
       <Typography className="font-semibold text-base">
         Загрузить
@@ -384,8 +352,8 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
 
   return (
     <Dialog
-      open={ctx.spy(skinControlDialogIsOpenAtom)}
-      onOpenChange={v => skinControlDialogIsOpenAtom(ctx, v)}
+      open={ctx.spy(skinsState.control.dialogIsOpen)}
+      onOpenChange={v => skinsState.control.dialogIsOpen(ctx, v)}
     >
       <DialogTrigger asChild>
         <Button
@@ -413,7 +381,7 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
               Выбери тип скина
             </Typography>
             <div className="flex bg-neutral-800 rounded-lg *:h-10 items-center *:rounded-lg justify-between p-1 w-full">
-              {variants.map((d) => <SkinVariantItem key={d} variant={d} />)}
+              {skinsState.control.SKIN_VARIANTS.map((d) => <SkinVariantItem key={d} variant={d} />)}
             </div>
           </div>
           <SkinControlChangeSubmit />
@@ -430,7 +398,7 @@ const SkinSetButton = reatomComponent(({ ctx }) => {
   return (
     <Button
       className={skinControlVariants({ variant: "default", className: "p-0 hover:bg-neutral-800" })}
-      onClick={() => setSkinAction(ctx)}
+      onClick={() => skins.control.set(ctx)}
     >
       <IconPlus size={18} />
     </Button>
@@ -438,12 +406,12 @@ const SkinSetButton = reatomComponent(({ ctx }) => {
 }, "SkinSetButton")
 
 const SkinControlRotate = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(skinRotatingAtom) ? "active" : "default"
+  const variant = ctx.spy(skinAnimation.isRotate) ? "active" : "default"
 
   return (
     <div
       key="rotate"
-      onClick={() => skinRotatingAtom(ctx, (state) => !state)}
+      onClick={() => skinAnimation.isRotate(ctx, (state) => !state)}
       className={skinControlVariants({ variant })}
     >
       <IconRotate size={18} />
@@ -452,14 +420,14 @@ const SkinControlRotate = reatomComponent(({ ctx }) => {
 }, "SkinControlRotate")
 
 const SkinControlsList = reatomComponent(({ ctx }) => {
-  const variant = (c: typeof SKIN_ANIMATIONS[number]) => ctx.spy(skinAnimationAtom) === c.animation
+  const variant = (c: typeof SKIN_ANIMATIONS[number]) => ctx.spy(skinAnimation.type) === c.animation
     ? "active" : "default"
 
   return (
     SKIN_ANIMATIONS.map((control, i) => (
       <div
         key={i}
-        onClick={() => skinAnimationAtom(ctx, control.animation)}
+        onClick={() => skinAnimation.type(ctx, control.animation)}
         className={skinControlVariants({ variant: variant(control) })}
       >
         <control.icon size={18} />
@@ -488,7 +456,10 @@ const SkinControls = () => {
 export const PlayerSkin = reatomComponent(({ ctx }) => {
   const nickname = ctx.spy(playerParamAtom);
 
-  useUpdate((ctx) => initSkinAction(ctx, nickname!), [nickname])
+  useUpdate((ctx) => {
+    if (!nickname) return;
+    skins.init(ctx, nickname)
+  }, [nickname])
 
   return (
     <div className="flex flex-col h-full gap-4 w-full">

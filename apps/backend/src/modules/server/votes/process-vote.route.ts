@@ -49,13 +49,11 @@ export const processPlayerVote = new Elysia()
     const sign = parsedBody["sign"]
 
     if (!nick || !time || !sign) {
-      status(400);
-      return "error"
+      throw status(400, "INVALID_PAYLOAD")
     }
 
     if (nick.length > 16) {
-      status(400);
-      return "nickname limit"
+      throw status(400, "NICKNAME_ERROR")
     }
 
     const expSign = new Bun.CryptoHasher("sha1")
@@ -63,13 +61,12 @@ export const processPlayerVote = new Elysia()
       .digest('hex');
 
     if (sign !== expSign) {
-      status(400)
-      return "error"
+      throw status(400, "INVALID_PAYLOAD")
     }
 
     await postVoted(nick);
 
-    return "ok"
+    return "OK"
   }, {
     parse: "multipart/form-data"
   })

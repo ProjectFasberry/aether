@@ -1,32 +1,32 @@
 import { Typography } from "@repo/ui/typography";
 import { IconArrowRight } from "@tabler/icons-react";
-import { News } from "@/shared/components/app/news/components/news";
 import { Intro } from "@/shared/components/app/intro/components/intro";
-import { Events } from "@/shared/components/app/events/components/events";
+import { EventsList } from "@/shared/components/app/events/components/events";
 import { CONTACTS } from "@/shared/consts/contacts";
 import { action } from "@reatom/core";
 import { countryAtom } from "@/shared/models/page-context.model";
 import { reatomComponent } from "@reatom/npm-react";
 import { LandsListShorted } from "@/shared/components/app/lands/components/lands-list";
+import { scrollableVariant } from "@/shared/consts/style-variants";
+import { NewsList } from "@/shared/components/app/news/components/news";
+
+const ruAttr = ['ru-RU', 'RU', 'ru'];
 
 const getContacts = action((ctx) => {
-  let data = CONTACTS;
-
   const country = ctx.get(countryAtom)
-  if (!country) return data;
+  if (!country || !ruAttr.includes(country)) return CONTACTS;
 
-  if (['ru-RU', 'RU', 'ru'].includes(country)) {
-    data = data.filter(d => d.value !== 'ds')
-  }
-
-  return data;
-}, "getContacts")
+  return CONTACTS.filter(d => d.value !== 'ds')
+})
 
 const Contacts = reatomComponent(({ ctx }) => {
   const data = getContacts(ctx)
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-auto gap-2 sm:gap-4 w-full">
+    <div
+      id="contacts"
+      className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-auto gap-2 sm:gap-4 w-full"
+    >
       {data.map((item, idx) => (
         <a
           href={item.href}
@@ -48,24 +48,32 @@ const Contacts = reatomComponent(({ ctx }) => {
   )
 }, "Contacts")
 
-const Lands = () => {
-  return (
-    <div className="flex flex-col gap-4 h-full w-full">
-      <Typography className="font-semibold text-3xl">
-        Территории сервера
-      </Typography>
-      <LandsListShorted />
-    </div>
-  )
-}
-
 export default function Page() {
   return (
     <div className='flex flex-col gap-8 w-full h-full'>
       <Intro />
-      <News />
-      <Events />
-      <Lands />
+      <div id="news" className="flex flex-col gap-4 w-full h-full">
+        <Typography variant="title">
+          Новости
+        </Typography>
+        <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+          <NewsList />
+        </div>
+      </div>
+      <div id="last-events" className="flex flex-col gap-4 w-full h-full">
+        <Typography variant="title">
+          Последние события
+        </Typography>
+        <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+          <EventsList />
+        </div>
+      </div>
+      <div id="last-lands" className="flex flex-col gap-4 h-full w-full">
+        <Typography variant="title">
+          Территории сервера
+        </Typography>
+        <LandsListShorted />
+      </div>
       <Contacts />
     </div>
   )

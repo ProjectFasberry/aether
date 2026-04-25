@@ -1,35 +1,11 @@
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { Skeleton } from "@repo/ui/skeleton"
+import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { newsAction } from "../models/news.model"
 import { createLink, Link } from "@/shared/components/config/link"
-import { AtomState } from "@reatom/framework"
 import { NotFound } from "@/shared/ui/not-found"
-import { isClientAtom } from "@/shared/models/page-context.model"
 import { tv } from "tailwind-variants"
-import { scrollableVariant } from "@/shared/consts/style-variants"
-
-const NewsItemSkeleton = () => {
-  return (
-    <div className={newsItemVariant().base()}>
-      <Skeleton className="w-full h-[200px]" />
-      <div className={newsItemVariant().content()}>
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-6 w-16" />
-      </div>
-    </div>
-  )
-}
-
-const NewsSkeleton = () => {
-  return (
-    <>
-      <NewsItemSkeleton />
-      <NewsItemSkeleton />
-      <NewsItemSkeleton />
-    </>
-  )
-}
+import { NewsPayload } from "@repo/shared/types/entities/news"
+import { newsState } from "../models/news.model"
+import { isEmptyArray } from "@/shared/lib/utils"
 
 const newsItemVariant = tv({
   base: `
@@ -42,9 +18,7 @@ const newsItemVariant = tv({
   }
 })
 
-const NewsItem = ({
-  id, description, title, imageUrl
-}: NonNullable<AtomState<typeof newsAction.dataAtom>>[number]) => {
+const NewsItem = ({ id, title, imageUrl }: NewsPayload["data"][number]) => {
   return (
     <div className={newsItemVariant().base()}>
       <img
@@ -70,28 +44,12 @@ const NewsItem = ({
   )
 }
 
-const NewsList = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(newsAction.statusesAtom).isPending) {
-    return <NewsSkeleton />
-  }
+export const NewsList = reatomComponent(({ ctx }) => {
+  const data = ctx.spy(newsState.data)
 
-  const data = ctx.spy(newsAction.dataAtom)
-  if (!data) return <NotFound title="Новостей нет" />
+  if (!data || isEmptyArray(data)) {
+    return <NotFound title="Новостей нет" />
+  }
 
   return data.map(news => <NewsItem key={news.id} {...news} />)
 }, "NewsList")
-
-export const News = () => {
-  useUpdate(newsAction, []);
-
-  return (
-    <div className="flex flex-col gap-4 w-full h-full">
-      <Typography className="text-3xl font-bold">
-        Новости
-      </Typography>
-      <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
-        <NewsList />
-      </div>
-    </div>
-  )
-}

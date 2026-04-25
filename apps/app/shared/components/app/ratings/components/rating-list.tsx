@@ -123,7 +123,7 @@ const RatingTableBodyParkour = reatomComponent(({ ctx }) => {
       <TableRow key={user.nickname}>
         <TableCell className="font-medium">{idx + 1}</TableCell>
         <TableCell>
-          <UserHead nickname={user.nickname!} />
+          <UserHead nickname={user.nickname!} avatar={user.avatar} />
         </TableCell>
         <TableCell>{user.area}</TableCell>
         <TableHead className="text-right">{user.score}</TableHead>
@@ -141,7 +141,7 @@ const RatingTableBodyBelkoin = reatomComponent(({ ctx }) => {
       <TableRow key={user.nickname}>
         <TableCell className="font-medium">{idx + 1}</TableCell>
         <TableCell>
-          <UserHead nickname={user.nickname} />
+          <UserHead nickname={user.nickname} avatar={user.avatar} />
         </TableCell>
         <TableHead className="text-right">{formatNumber(user.balance)}</TableHead>
       </TableRow>
@@ -158,7 +158,7 @@ const RatingTableBodyReputation = reatomComponent(({ ctx }) => {
       <TableRow key={user.nickname}>
         <TableCell className="font-medium">{idx + 1}</TableCell>
         <TableCell>
-          <UserHead nickname={user.nickname} />
+          <UserHead nickname={user.nickname} avatar={user.avatar} />
         </TableCell>
         <TableHead className="text-right">{user.reputation}</TableHead>
       </TableRow>
@@ -184,7 +184,7 @@ const RatingTableBodyCharism = reatomComponent(({ ctx }) => {
       <TableRow key={user.nickname}>
         <TableCell className="font-medium">{idx + 1}</TableCell>
         <TableCell>
-          <UserHead nickname={user.nickname} />
+          <UserHead nickname={user.nickname} avatar={user.avatar} />
         </TableCell>
         <TableHead className="text-right">{formatNumber(user.balance)}</TableHead>
       </TableRow>
@@ -233,13 +233,13 @@ const RatingsHeader = () => {
   )
 }
 
-const UserHead = ({ nickname }: { nickname: string }) => {
+const UserHead = ({ nickname, avatar }: { nickname: string, avatar: string }) => {
   return (
     <Link href={createLink("player", nickname)} className="flex items-center gap-2">
       <Avatar
         nickname={nickname}
-        propWidth={26}
-        propHeight={26}
+        className="w-6 h-6"
+        url={avatar}
       />
       <span className="font-semibold text-base">
         {nickname}
@@ -257,7 +257,7 @@ const RatingTableBodyPlaytime = reatomComponent(({ ctx }) => {
       <TableRow key={user.nickname}>
         <TableCell className="font-medium">{idx + 1}</TableCell>
         <TableCell>
-          <UserHead nickname={user.nickname} />
+          <UserHead nickname={user.nickname} avatar={user.avatar} />
         </TableCell>
         <TableHead className="text-right">
           {Math.floor(dayjs.duration(user.total ?? 0).asHours())} часа(-ов)
@@ -268,7 +268,7 @@ const RatingTableBodyPlaytime = reatomComponent(({ ctx }) => {
 }, "RatingTableBodyPlaytime")
 
 const HEADERS: Record<AtomState<typeof ratingByAtom>, ReactNode> = {
-  "lands_chunks": <RatingListLandsHeaderU />,
+  "lands": <RatingListLandsHeaderU />,
   "parkour": <RatingListParkourHeaderU />,
   "playtime": <RatingListPlaytimeHeaderU />,
   "belkoin": <RatingListBelkoinHeaderU />,
@@ -278,7 +278,7 @@ const HEADERS: Record<AtomState<typeof ratingByAtom>, ReactNode> = {
 
 export const COMPONENTS: Record<AtomState<typeof ratingByAtom>, ReactNode> = {
   "playtime": <RatingTableBodyPlaytime />,
-  "lands_chunks": <RatingTableBodyLands />,
+  "lands": <RatingTableBodyLands />,
   "reputation": <RatingTableBodyReputation />,
   "charism": <RatingTableBodyCharism />,
   "belkoin": <RatingTableBodyBelkoin />,

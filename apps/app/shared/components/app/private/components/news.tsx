@@ -262,12 +262,16 @@ const NewsListItem = reatomComponent<News>(({ ctx, id, title, imageUrl, creator 
           </Typography>
           <div className="flex items-center gap-3 w-full justify-start">
             <Link
-              href={createLink("player", creator)}
+              href={createLink("player", creator.nickname)}
               className="flex items-center border border-neutral-800 p-1 rounded-lg gap-1"
             >
-              <Avatar nickname={creator} propWidth={18} propHeight={18} />
+              <Avatar
+                nickname={creator.nickname}
+                url={creator.avatar}
+                className="w-5 h-5"
+              />
               <Typography>
-                {creator}
+                {creator.nickname}
               </Typography>
             </Link>
             <div className="flex items-center border border-neutral-800 p-1 rounded-lg gap-1">

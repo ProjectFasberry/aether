@@ -49,7 +49,7 @@ async function createCryptoOrder({
   totalPrice, asset, initiator, value, target, comment
 }: CreateCryptoOrder) {
   const allowed = await validateOrderLimit(initiator);
-  if (!allowed) throw new Error("Вы превысили лимит заказов. Подождите и попробуйте позже.");
+  if (!allowed) throw new Error("ORDERS_LIMIT");
 
   const redis = getRedis()
 
@@ -89,8 +89,6 @@ async function createCryptoOrder({
     initiator,
     comment
   }
-
-  logger.success(`Created invoice ${createdInvoice.result.invoice_id}, saved to Redis`)
 
   const success = await redis.set(
     orderKey,
