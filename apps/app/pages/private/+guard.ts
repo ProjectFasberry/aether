@@ -2,7 +2,8 @@ import { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { logRouting } from "@/shared/lib/log";
 import { CONFIG_PANEL_READ_PERMISSION, CURRENT_USER_KEY } from "@/shared/models/current-user.model";
-import { MePayload } from "@repo/shared/types/entities/user";
+
+type MePayload = ExtractApiData<"getMe">["data"];
 
 export const guard = async (pageContext: PageContextServer) => {
   logRouting(pageContext.urlPathname, "guard");

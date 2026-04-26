@@ -4,7 +4,8 @@ import { reatomAsync, withCache, withStatusesAtom } from "@reatom/async";
 import { action, atom, batch } from "@reatom/core";
 import { withAssign } from "@reatom/framework";
 import { withLocalStorage } from "@reatom/persist-web-storage";
-import { BalancePayload } from "@repo/shared/types/entities/store";
+
+type BalancePayload = ExtractApiData<"getServerBalance">["data"]
 
 export const balanceState = atom(null, "balanceState").pipe(
   withAssign((_, name) => ({

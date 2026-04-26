@@ -3,10 +3,10 @@ import { atom } from "@reatom/core";
 import { withReset } from "@reatom/framework";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { withHistory, withSsr } from "@/shared/lib/reatom-helpers";
-import type { Land } from "@repo/shared/types/entities/land";
 import { logError } from "@/shared/lib/log";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 
+export type Land = ExtractApiData<"getServerLandsByUlid">["data"]
 export const landAtom = atom<Land | null>(null, "land").pipe(withReset(), withSsr("land"));
 
 export const landParamAtom = atom<string>((ctx) => {

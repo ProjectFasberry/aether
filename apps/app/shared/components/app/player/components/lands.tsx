@@ -1,12 +1,13 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
-import { Land } from "@repo/shared/types/entities/land"
 import { createLink, Link } from "../../../config/link"
 import { playerLands, playerLandsState } from "../models/player-lands.model"
 import { atom } from "@reatom/core"
 
-const PlayerLand = ({ ulid, title, details, name, members, chunks_amount }: Land) => {
+type Land = ExtractApiData<"getServerLandsListByNickname">["data"]["data"][number]
+
+const PlayerLand = ({ ulid, title, details, name, members }: Land) => {
   return (
     <Link
       href={createLink("land", ulid)}
@@ -44,7 +45,6 @@ const PlayerLandsList = reatomComponent(({ ctx }) => {
     return <Typography color="gray" className="text-lg">нет</Typography>
   }
 
-  // @ts-expect-error
   return data.map(land => <PlayerLand key={land.ulid} {...land} />)
 }, "PlayerLandsList")
 

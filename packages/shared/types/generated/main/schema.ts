@@ -564,7 +564,7 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/auth/restore": {
+	"/auth/restore/validate": {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -573,7 +573,23 @@ export interface paths {
 		};
 		get?: never;
 		put?: never;
-		post: operations["postAuthRestore"];
+		post: operations["postAuthRestoreValidate"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/auth/restore/set-new-password": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post: operations["postAuthRestoreSet-new-password"];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -708,14 +724,14 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/server/lands/{id}": {
+	"/server/lands/{ulid}": {
 		parameters: {
 			query?: never;
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
-		get: operations["getServerLandsById"];
+		get: operations["getServerLandsByUlid"];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -1412,7 +1428,23 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/store/cart/add": {
+	"/store/cart/price": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreCartPrice"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/cart/add/{id}": {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -1421,14 +1453,14 @@ export interface paths {
 		};
 		get?: never;
 		put?: never;
-		post: operations["postStoreCartAdd"];
+		post: operations["postStoreCartAddById"];
 		delete?: never;
 		options?: never;
 		head?: never;
 		patch?: never;
 		trace?: never;
 	};
-	"/store/cart/remove": {
+	"/store/cart/remove/{id}": {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -1438,13 +1470,13 @@ export interface paths {
 		get?: never;
 		put?: never;
 		post?: never;
-		delete: operations["deleteStoreCartRemove"];
+		delete: operations["deleteStoreCartRemoveById"];
 		options?: never;
 		head?: never;
 		patch?: never;
 		trace?: never;
 	};
-	"/store/cart/edit": {
+	"/store/cart/edit/{id}": {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -1453,7 +1485,7 @@ export interface paths {
 		};
 		get?: never;
 		put?: never;
-		post: operations["postStoreCartEdit"];
+		post: operations["postStoreCartEditById"];
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -1511,396 +1543,7 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-	schemas: {
-		options: {
-			data: {
-				bannerIsExists: boolean;
-				isBanned: boolean;
-				isWl: boolean;
-				isAuth: boolean;
-			};
-		};
-		exists: {
-			data: (string | null) | null;
-		};
-		ban: {
-			data:
-				| ({
-						created_at: Record<string, never> | string | number;
-						nickname: string;
-						reason: (string | null) | null;
-				  } | null)
-				| null;
-		};
-		"news-list": {
-			data: {
-				data: {
-					id: number;
-					title: string;
-					created_at: Record<string, never> | string | number;
-					description: string;
-					imageUrl: string | null;
-					views: number;
-					content: {
-						[key: string]: unknown;
-					};
-					creator: string;
-				}[];
-				meta: {
-					hasNextPage: boolean;
-					hasPrevPage: boolean;
-					startCursor?: string;
-					endCursor?: string;
-				};
-			};
-		};
-		"modpack-list": {
-			data: {
-				mods: string[];
-				shaders: string[];
-				imageUrl: string;
-				client: string;
-				created_at: (Record<string, never> | string | number) | string;
-				id: number;
-				name: string;
-				version: string;
-				downloadLink: string;
-			}[];
-		};
-		modpack: {
-			data:
-				| ({
-						id: number;
-						client: string;
-						created_at: Record<string, never> | string | number;
-						imageUrl: string;
-						mods: string;
-						name: string;
-						shaders: string | null;
-						version: string;
-						downloadLink: string;
-				  } | null)
-				| null;
-		};
-		rules: {
-			data: {
-				id: number;
-				created_at: Record<string, never> | string | number;
-				updated_at: ((Record<string, never> | string | number) | null) | null;
-				content: unknown;
-				category: string;
-			}[];
-		};
-		"banners-list": {
-			data: {
-				data: {
-					id: number;
-					title: string;
-					description: string | null;
-					href: {
-						title: string;
-						value: string;
-					};
-				}[];
-				meta: {
-					hasNextPage: boolean;
-					hasPrevPage: boolean;
-					startCursor?: string;
-					endCursor?: string;
-				};
-			};
-		};
-		banner: {
-			data:
-				| ({
-						id: number;
-						title: string;
-						description: string | null;
-						href: {
-							title: string;
-							value: string;
-						};
-				  } | null)
-				| null;
-		};
-		"banner-view": {
-			data: {
-				banner_id: (number | null) | null;
-				id: number;
-				nickname: string;
-			};
-		};
-		login: {
-			data: {
-				nickname: string;
-			};
-		};
-		invalidate: {
-			data: boolean;
-		};
-		register: {
-			data: {
-				nickname: string;
-			};
-		};
-		me: {
-			data: {
-				nickname: string;
-				uuid: string;
-				meta: {
-					login_date: Record<string, never> | string | number;
-					reg_date: Record<string, never> | string | number;
-					role: {
-						id: number;
-						name: string;
-					};
-					permissions: string[];
-				};
-			};
-		};
-		"lands-by-player": {
-			data: {
-				data: {
-					members: {
-						uuid: string;
-						nickname: string;
-						chunks: number;
-					}[];
-					created_at: Record<string, never> | string | number;
-					title: string | null;
-					type: string;
-					name: string;
-					ulid: string;
-				}[];
-				meta: {
-					count: number;
-				};
-			};
-		};
-		status: {
-			data:
-				| ({
-						proxy: {
-							status: string;
-							online: number;
-							max: number;
-							players: string[];
-						};
-						servers: {
-							[key: string]: {
-								online: number;
-								fullname: string;
-								thumbnail: string;
-								max: number;
-								players: string[];
-								status: string;
-								available: boolean;
-								description?: (string | null) | null;
-							};
-						};
-				  } | null)
-				| null;
-		};
-		"events-list": {
-			data: {
-				id: string;
-				type: string;
-				title: string;
-				content: {
-					created_at: string | (Record<string, never> | string | number);
-					description: (string | null) | null;
-					initiator: string;
-				};
-			}[];
-		};
-		event: {
-			data:
-				| ({
-						id: string;
-						type: string;
-						title: string;
-						content: {
-							created_at: string | (Record<string, never> | string | number);
-							description: (string | null) | null;
-							initiator: string;
-						};
-				  } | null)
-				| null;
-		};
-		item: {
-			data: {
-				image: string;
-				description: (string | null) | null;
-				title: string;
-				id: number;
-			}[];
-		};
-		"tasks-list": {
-			data: {
-				data: {
-					id: number;
-					description: string;
-					created_at: string | (Record<string, never> | string | number);
-					title: string;
-					expires: string | null | (Record<string, never> | string | number);
-					action_type: string;
-					action_value: (string | null) | null;
-					reward_currency: string;
-					reward_value: number;
-				}[];
-				meta: {
-					hasNextPage: boolean;
-					hasPrevPage: boolean;
-					startCursor?: string;
-					endCursor?: string;
-				};
-			};
-		};
-		task: {
-			data: {
-				id: number;
-				description: string;
-				created_at: string | (Record<string, never> | string | number);
-				title: string;
-				expires: string | null | (Record<string, never> | string | number);
-				action_type: string;
-				action_value: (string | null) | null;
-				reward_currency: string;
-				reward_value: number;
-			};
-		};
-		player: {
-			data: {
-				nickname: string;
-				lower_case_nickname: string;
-				uuid: string;
-				group: string;
-				avatar: string;
-				meta: {
-					reg_date: string | (Record<string, never> | string | number);
-					login_date: string | (Record<string, never> | string | number);
-				};
-				rate: {
-					count: number;
-					isRated: boolean;
-				};
-			};
-		};
-		"activity-summary": {
-			data:
-				| ({
-						[key: string]: {
-							[key: string]: number;
-						};
-				  } | null)
-				| null;
-		};
-		location: {
-			data:
-				| ({
-						world: string;
-						x: number;
-						y: number;
-						z: number;
-						pitch: number;
-						yaw: number;
-						customLocation: (string | null) | null;
-				  } | null)
-				| null;
-		};
-		"seems-players": {
-			data: {
-				data: {
-					nickname: string;
-					uuid: string;
-					seemsRate: number;
-				}[];
-				meta: {
-					count: number;
-				};
-			};
-		};
-		balance: {
-			data: {
-				CHARISM: number;
-				BELKOIN: number;
-			};
-		};
-		"top-up": {
-			data: {
-				url: string;
-				orderId: string;
-				invoiceId: number;
-				totalPrice: number;
-				uniqueId: string;
-			};
-		};
-		methods: {
-			data: {
-				id: number;
-				description: (string | null) | null;
-				imageUrl: string;
-				title: string;
-				value: string;
-			}[];
-		};
-		"currencies-list": {
-			data: {
-				id: number;
-				imageUrl: string;
-				isAvailable: boolean;
-				title: string;
-				value: string;
-			}[];
-		};
-		"cart-list": {
-			data: {
-				products: {
-					id: number;
-					title: string;
-					description: (string | null) | null;
-					imageUrl: string;
-					price: number;
-					recipient: string;
-					selected: boolean;
-					quantity: number;
-					value: string;
-					type: string;
-					command: (string | null) | null;
-					currency: string;
-				}[];
-				price: {
-					CHARISM: number;
-					BELKOIN: number;
-				};
-			};
-		};
-		"exchange-rates": {
-			data: {
-				[key: string]: {
-					[key: string]: number;
-				};
-			};
-		};
-		like: {
-			data: {
-				data: {
-					initiator: string;
-					created_at: Record<string, never> | string | number;
-				}[];
-				meta: {
-					count: number;
-				};
-			};
-		};
-		"post-like": {
-			/**
-			 * @default unrated
-			 * @enum {string}
-			 */
-			data: "unrated" | "rated";
-		};
-	};
+	schemas: never;
 	responses: never;
 	parameters: never;
 	requestBodies: never;
@@ -1934,7 +1577,14 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["options"];
+					"application/json": {
+						data: {
+							bannerIsExists: boolean;
+							isBanned: boolean;
+							isWl: boolean;
+							isAuth: boolean;
+						};
+					};
 				};
 			};
 		};
@@ -1957,7 +1607,26 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							list: {
+								url: string;
+								created_at: string | (Record<string, never> | string | number);
+								id: number;
+								title: (string | null) | null;
+							}[];
+						};
+					};
+				};
+			};
+		};
 	};
 	getValidateNicknameByNickname: {
 		parameters: {
@@ -1969,7 +1638,19 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: (string | null) | null;
+					};
+				};
+			};
+		};
 	};
 	getValidateBan: {
 		parameters: {
@@ -1986,7 +1667,15 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["ban"];
+					"application/json": {
+						data:
+							| ({
+									created_at: Record<string, never> | string | number;
+									nickname: string;
+									reason: (string | null) | null;
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -1999,7 +1688,25 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							immediately: boolean;
+							schedule: boolean;
+							allowIsDev?: boolean;
+							scheduledTo: (Record<string, never> | string | number) | string;
+							name: string;
+						}[];
+					};
+				};
+			};
+		};
 	};
 	getForceInitSkinByNickname: {
 		parameters: {
@@ -2030,7 +1737,31 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["news-list"];
+					"application/json": {
+						data: {
+							data: {
+								id: number;
+								title: string;
+								created_at: Record<string, never> | string | number;
+								description: string;
+								imageUrl: string | null;
+								views: number;
+								content: {
+									[key: string]: unknown;
+								};
+								creator: {
+									nickname: string;
+									avatar: string;
+								};
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -2062,7 +1793,19 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["modpack-list"];
+					"application/json": {
+						data: {
+							mods: string[];
+							shaders: string[];
+							imageUrl: string;
+							client: string;
+							created_at: (Record<string, never> | string | number) | string;
+							id: number;
+							name: string;
+							version: string;
+							downloadLink: string;
+						}[];
+					};
 				};
 			};
 		};
@@ -2084,7 +1827,21 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["modpack"];
+					"application/json": {
+						data:
+							| ({
+									id: number;
+									client: string;
+									created_at: Record<string, never> | string | number;
+									imageUrl: string;
+									mods: string;
+									name: string;
+									shaders: string | null;
+									version: string;
+									downloadLink: string;
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -2104,7 +1861,15 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["rules"];
+					"application/json": {
+						data: {
+							id: number;
+							created_at: Record<string, never> | string | number;
+							updated_at: ((Record<string, never> | string | number) | null) | null;
+							content: unknown;
+							category: string;
+						}[];
+					};
 				};
 			};
 		};
@@ -2117,7 +1882,22 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							title: string;
+							value: string;
+						}[];
+					};
+				};
+			};
+		};
 	};
 	"getSharedServer-ip": {
 		parameters: {
@@ -2127,7 +1907,21 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							ip?: string;
+						};
+					};
+				};
+			};
+		};
 	};
 	"getSharedServers-with-map": {
 		parameters: {
@@ -2137,7 +1931,24 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							name: string;
+							value: string;
+							href: string;
+							img: string;
+						}[];
+					};
+				};
+			};
+		};
 	};
 	"getSharedRandom-fact": {
 		parameters: {
@@ -2176,7 +1987,25 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["banners-list"];
+					"application/json": {
+						data: {
+							data: {
+								id: number;
+								title: string;
+								description: string | null;
+								href: {
+									title: string;
+									value: string;
+								};
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -2196,7 +2025,19 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["banner"];
+					"application/json": {
+						data:
+							| ({
+									id: number;
+									title: string;
+									description: string | null;
+									href: {
+										title: string;
+										value: string;
+									};
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -2218,7 +2059,19 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["banner"];
+					"application/json": {
+						data:
+							| ({
+									id: number;
+									title: string;
+									description: string | null;
+									href: {
+										title: string;
+										value: string;
+									};
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -2240,7 +2093,13 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["banner-view"];
+					"application/json": {
+						data: {
+							banner_id: (number | null) | null;
+							id: number;
+							nickname: string;
+						};
+					};
 				};
 			};
 		};
@@ -2253,7 +2112,27 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							[key: string]: {
+								title: string;
+								nodes: {
+									title: string;
+									value: string;
+								}[];
+							};
+						};
+					};
+				};
+			};
+		};
 	};
 	getSharedWikiCategoryByName: {
 		parameters: {
@@ -2265,7 +2144,27 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| ({
+									category: string;
+									content: unknown;
+									id: number;
+									updated_at: ((Record<string, never> | string | number) | null) | null;
+									title: string;
+							  } | null)
+							| null;
+					};
+				};
+			};
+		};
 	};
 	postAuthLoginBasic: {
 		parameters: {
@@ -2297,7 +2196,11 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["login"];
+					"application/json": {
+						data: {
+							nickname: string;
+						};
+					};
 				};
 			};
 			/** @description Response for status 400 */
@@ -2338,7 +2241,32 @@ export interface operations {
 				};
 			};
 		};
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							token: string;
+						};
+					};
+				};
+			};
+			/** @description Response for status 403 */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	postAuthLoginQrConfirm: {
 		parameters: {
@@ -2350,7 +2278,31 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						/** @constant */
+						data: "OK";
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	postAuthLoginQrDecline: {
 		parameters: {
@@ -2362,7 +2314,31 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						/** @constant */
+						data: "OK";
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	getAuthLoginQrCallback: {
 		parameters: {
@@ -2372,7 +2348,30 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: string;
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	postAuthLoginQrCreate: {
 		parameters: {
@@ -2384,7 +2383,32 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							nickname: string;
+						};
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	getAuthLoginQrValidate: {
 		parameters: {
@@ -2396,7 +2420,39 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| {
+									browser: string;
+									geo: {
+										city: string;
+										country: string;
+									};
+									timestampz: string | (Record<string, never> | string | number);
+							  }
+							| boolean;
+					};
+				};
+			};
+			/** @description Response for status 500 */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	postAuthLoginGameGenerate: {
 		parameters: {
@@ -2429,7 +2485,10 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["invalidate"];
+					"application/json": {
+						/** @constant */
+						data: "OK";
+					};
 				};
 			};
 			/** @description Response for status 500 */
@@ -2460,7 +2519,7 @@ export interface operations {
 					findout: string;
 					/** @enum {string} */
 					findoutType: "custom" | "referrer";
-					mnHex: string;
+					hash: string;
 				};
 				"application/x-www-form-urlencoded": {
 					nickname: string & (unknown & unknown);
@@ -2468,7 +2527,7 @@ export interface operations {
 					findout: string;
 					/** @enum {string} */
 					findoutType: "custom" | "referrer";
-					mnHex: string;
+					hash: string;
 				};
 				"multipart/form-data": {
 					nickname: string & (unknown & unknown);
@@ -2476,7 +2535,7 @@ export interface operations {
 					findout: string;
 					/** @enum {string} */
 					findoutType: "custom" | "referrer";
-					mnHex: string;
+					hash: string;
 				};
 			};
 		};
@@ -2487,7 +2546,11 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["register"];
+					"application/json": {
+						data: {
+							nickname: string;
+						};
+					};
 				};
 			};
 			/** @description Response for status 400 */
@@ -2536,14 +2599,37 @@ export interface operations {
 			};
 		};
 	};
-	postAuthRestore: {
+	postAuthRestoreValidate: {
 		parameters: {
 			query?: never;
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
-		requestBody?: never;
+		requestBody: {
+			content: {
+				"application/json": {
+					nickname: string;
+					hash: string;
+				};
+			};
+		};
+		responses: never;
+	};
+	"postAuthRestoreSet-new-password": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody: {
+			content: {
+				"application/json": {
+					newPassword: string;
+				};
+			};
+		};
 		responses: never;
 	};
 	getAuthSessionList: {
@@ -2603,7 +2689,22 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["me"];
+					"application/json": {
+						data: {
+							nickname: string;
+							uuid: string;
+							meta: {
+								login_date: Record<string, never> | string | number;
+								reg_date: Record<string, never> | string | number;
+								role: {
+									id: number;
+									name: string;
+								};
+								permissions: string[];
+							};
+							avatar: string;
+						};
+					};
 				};
 			};
 			/** @description Response for status 404 */
@@ -2634,12 +2735,116 @@ export interface operations {
 			query?: never;
 			header?: never;
 			path: {
-				by: "belkoin" | "charism" | "lands_chunks" | "reputation" | "playtime" | "parkour";
+				by: "belkoin" | "charism" | "lands" | "reputation" | "playtime" | "parkour";
 			};
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| {
+									data: {
+										nickname: string;
+										balance: number;
+										avatar: string;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  }
+							| {
+									data: {
+										player: string;
+										area: (string | null) | null;
+										score: number;
+										gamesplayed: number;
+										nickname: string;
+										avatar: string;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  }
+							| {
+									data: {
+										nickname: string;
+										avatar: string;
+										total: number;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  }
+							| {
+									data: {
+										reputation: number;
+										uuid: (string | null) | null;
+										avatar: string;
+										nickname: string;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  }
+							| {
+									data: {
+										nickname: string;
+										balance: number;
+										avatar: string;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  }
+							| {
+									data: {
+										land: string;
+										ulid: string;
+										chunks_amount: number;
+										name: string;
+										members: {
+											[key: string]: {
+												avatar: string;
+												nickname: string;
+												chunks: number;
+											};
+										};
+										blocks: unknown;
+										type: string;
+									}[];
+									meta: {
+										hasNextPage: boolean;
+										hasPrevPage: boolean;
+										startCursor?: string;
+										endCursor?: string;
+									};
+							  };
+					};
+				};
+			};
+		};
 	};
 	getServerLandsList: {
 		parameters: {
@@ -2651,14 +2856,58 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							data: {
+								ulid: string;
+								name: string;
+								title: (string | null) | null;
+								level: number;
+								created_at: string | (Record<string, never> | string | number);
+								type: string;
+								stats: {
+									kills: number;
+									deaths: number;
+									wins: number;
+									defeats: number;
+									captures: number;
+								};
+								members: {
+									uuid: string;
+									nickname: string;
+									chunks: number;
+									avatar: string;
+								}[];
+								details: {
+									banner: (string | null) | null;
+									gallery: string[];
+								};
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
+				};
+			};
+		};
 	};
-	getServerLandsById: {
+	getServerLandsByUlid: {
 		parameters: {
 			query?: never;
 			header?: never;
 			path: {
-				id: string;
+				ulid: string;
 			};
 			cookie?: never;
 		};
@@ -2684,7 +2933,30 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["lands-by-player"];
+					"application/json": {
+						data: {
+							data: {
+								ulid: string;
+								type: string;
+								name: string;
+								title: (string | null) | null;
+								members: {
+									uuid: string;
+									nickname: string;
+									chunks: number;
+									avatar: string;
+								}[];
+								details: {
+									banner: (string | null) | null;
+									gallery: string[];
+								};
+								created_at: string | (Record<string, never> | string | number);
+							}[];
+							meta: {
+								count: number;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -2706,7 +2978,30 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["status"];
+					"application/json": {
+						data:
+							| ({
+									proxy: {
+										status: string;
+										online: number;
+										max: number;
+										players: string[];
+									};
+									servers: {
+										[key: string]: {
+											online: number;
+											fullname: string;
+											thumbnail: string;
+											max: number;
+											players: string[];
+											status: string;
+											available: boolean;
+											description?: (string | null) | null;
+										};
+									};
+							  } | null)
+							| null;
+					};
 				};
 			};
 			/** @description Response for status 500 */
@@ -2737,7 +3032,18 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["events-list"];
+					"application/json": {
+						data: {
+							id: string;
+							type: string;
+							title: string;
+							content: {
+								created_at: string | (Record<string, never> | string | number);
+								description: (string | null) | null;
+								initiator: string;
+							};
+						}[];
+					};
 				};
 			};
 		};
@@ -2759,7 +3065,20 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["event"];
+					"application/json": {
+						data:
+							| ({
+									id: string;
+									type: string;
+									title: string;
+									content: {
+										created_at: string | (Record<string, never> | string | number);
+										description: (string | null) | null;
+										initiator: string;
+									};
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -2779,7 +3098,14 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["item"];
+					"application/json": {
+						data: {
+							image: string;
+							description: (string | null) | null;
+							title: string;
+							id: number;
+						}[];
+					};
 				};
 			};
 		};
@@ -2802,7 +3128,27 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["tasks-list"];
+					"application/json": {
+						data: {
+							data: {
+								id: number;
+								description: string;
+								created_at: string | (Record<string, never> | string | number);
+								title: string;
+								expires: string | null | (Record<string, never> | string | number);
+								action_type: string;
+								action_value: (string | null) | null;
+								reward_currency: string;
+								reward_value: number;
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -2824,7 +3170,19 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["task"];
+					"application/json": {
+						data: {
+							id: number;
+							description: string;
+							created_at: string | (Record<string, never> | string | number);
+							title: string;
+							expires: string | null | (Record<string, never> | string | number);
+							action_type: string;
+							action_value: (string | null) | null;
+							reward_currency: string;
+							reward_value: number;
+						};
+					};
 				};
 			};
 		};
@@ -2875,7 +3233,42 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						/** @constant */
+						data: "OK";
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+			/** @description Response for status 500 */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	getServerSkinHistoryByNickname: {
 		parameters: {
@@ -2960,7 +3353,23 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["player"];
+					"application/json": {
+						data: {
+							nickname: string;
+							lower_case_nickname: string;
+							uuid: string;
+							group: string;
+							avatar: string;
+							meta: {
+								reg_date: string | (Record<string, never> | string | number);
+								login_date: string | (Record<string, never> | string | number);
+							};
+							rate: {
+								count: number;
+								isRated: boolean;
+							};
+						};
+					};
 				};
 			};
 			/** @description Response for status 404 */
@@ -3029,7 +3438,15 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["activity-summary"];
+					"application/json": {
+						data:
+							| ({
+									[key: string]: {
+										[key: string]: number;
+									};
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -3073,7 +3490,19 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["location"];
+					"application/json": {
+						data:
+							| ({
+									world: string;
+									x: number;
+									y: number;
+									z: number;
+									pitch: number;
+									yaw: number;
+									customLocation: (string | null) | null;
+							  } | null)
+							| null;
+					};
 				};
 			};
 		};
@@ -3126,7 +3555,18 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["seems-players"];
+					"application/json": {
+						data: {
+							data: {
+								nickname: string;
+								uuid: string;
+								seemsRate: number;
+							}[];
+							meta: {
+								count: number;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -3148,7 +3588,12 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["balance"];
+					"application/json": {
+						data: {
+							CHARISM: number;
+							BELKOIN: number;
+						};
+					};
 				};
 			};
 		};
@@ -3312,7 +3757,26 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["top-up"];
+					"application/json": {
+						data: {
+							url: string;
+							orderId: string;
+							invoiceId: number;
+							totalPrice: number;
+							uniqueId: string;
+						};
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
 				};
 			};
 		};
@@ -3378,7 +3842,15 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["methods"];
+					"application/json": {
+						data: {
+							id: number;
+							description: (string | null) | null;
+							imageUrl: string;
+							title: string;
+							value: string;
+						}[];
+					};
 				};
 			};
 		};
@@ -3398,7 +3870,15 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["currencies-list"];
+					"application/json": {
+						data: {
+							id: number;
+							imageUrl: string;
+							isAvailable: boolean;
+							title: string;
+							value: string;
+						}[];
+					};
 				};
 			};
 		};
@@ -3418,91 +3898,182 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["cart-list"];
+					"application/json": {
+						data: {
+							data: {
+								id: number;
+								title: string;
+								description: (string | null) | null;
+								imageUrl: string;
+								price: number;
+								recipient: string;
+								selected: boolean;
+								quantity: number;
+								value: string;
+								type: string;
+								command: (string | null) | null;
+								currency: string;
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
 				};
 			};
 		};
 	};
-	postStoreCartAdd: {
+	getStoreCartPrice: {
 		parameters: {
 			query?: never;
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
-		requestBody: {
-			content: {
-				"application/json": {
-					id: number;
-				} & {
-					recipient: string;
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
 				};
-				"application/x-www-form-urlencoded": {
-					id: number;
-				} & {
-					recipient: string;
-				};
-				"multipart/form-data": {
-					id: number;
-				} & {
-					recipient: string;
+				content: {
+					"application/json": {
+						data: {
+							CHARISM: number;
+							BELKOIN: number;
+						};
+					};
 				};
 			};
 		};
-		responses: never;
 	};
-	deleteStoreCartRemove: {
+	postStoreCartAddById: {
 		parameters: {
 			query?: never;
 			header?: never;
-			path?: never;
+			path: {
+				id: number;
+			};
 			cookie?: never;
 		};
 		requestBody: {
 			content: {
 				"application/json": {
-					id: number;
+					recipient: string;
 				};
 				"application/x-www-form-urlencoded": {
-					id: number;
+					recipient: string;
 				};
 				"multipart/form-data": {
-					id: number;
+					recipient: string;
 				};
 			};
 		};
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: (number | null) | null;
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+			/** @description Response for status 404 */
+			404: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
-	postStoreCartEdit: {
+	deleteStoreCartRemoveById: {
 		parameters: {
 			query?: never;
 			header?: never;
-			path?: never;
+			path: {
+				id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: number;
+					};
+				};
+			};
+		};
+	};
+	postStoreCartEditById: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: number;
+			};
 			cookie?: never;
 		};
 		requestBody: {
 			content: {
 				"application/json": {
-					id: number;
 					/** @enum {string} */
 					key: "recipient" | "selected";
 					value: string | boolean;
 				};
 				"application/x-www-form-urlencoded": {
-					id: number;
 					/** @enum {string} */
 					key: "recipient" | "selected";
 					value: string | boolean;
 				};
 				"multipart/form-data": {
-					id: number;
 					/** @enum {string} */
 					key: "recipient" | "selected";
 					value: string | boolean;
 				};
 			};
 		};
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: string | boolean;
+					};
+				};
+			};
+		};
 	};
 	"getStoreExchange-rates": {
 		parameters: {
@@ -3519,7 +4090,13 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["exchange-rates"];
+					"application/json": {
+						data: {
+							[key: string]: {
+								[key: string]: number;
+							};
+						};
+					};
 				};
 			};
 			/** @description Response for status 500 */
@@ -3552,7 +4129,17 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["like"];
+					"application/json": {
+						data: {
+							data: {
+								initiator: string;
+								created_at: Record<string, never> | string | number;
+							}[];
+							meta: {
+								count: number;
+							};
+						};
+					};
 				};
 			};
 		};
@@ -3574,7 +4161,13 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"application/json": components["schemas"]["post-like"];
+					"application/json": {
+						/**
+						 * @default unrated
+						 * @enum {string}
+						 */
+						data: "unrated" | "rated";
+					};
 				};
 			};
 			/** @description Response for status 400 */

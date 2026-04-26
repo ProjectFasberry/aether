@@ -11,7 +11,7 @@ import { withAssign } from "@reatom/framework";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 
 type RateUserPayload = "rated" | "unrated";
-type RateList = { data: RateUser[]; meta: number };
+type RateList = ExtractApiData<"getRateListByNickname">["data"]
 
 export type RateUser = {
 	initiator: string;

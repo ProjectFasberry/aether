@@ -3,7 +3,6 @@ import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { PageContextServer } from "vike/types";
-import { Land } from "@repo/shared/types/entities/land";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
@@ -13,6 +12,7 @@ import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 const previewImage = getStaticImage("arts/adventure-in-blossom.jpg")
 
+export type Land = ExtractApiData<"getServerLandsByUlid">["data"]
 export type Data = Awaited<ReturnType<typeof data>>;
 
 async function getLand(ulid: string, init: RequestInit) {

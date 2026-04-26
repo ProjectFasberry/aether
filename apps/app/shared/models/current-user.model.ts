@@ -1,10 +1,11 @@
 import { SKIP_HOOK_HEADER } from './../api/client';
 import { atom } from "@reatom/core";
 import { withAssign, withReset } from "@reatom/framework";
-import { MePayload } from "@repo/shared/types/entities/user"
 import { clientInstance } from "../api/client";
 import { parseWrappedJson } from '../lib/client-wrapper';
 import { withSsr } from '../lib/reatom-helpers';
+
+type MePayload = ExtractApiData<"getMe">['data'];
 
 export const CURRENT_USER_KEY = 'currentUser'
 export const CONFIG_PANEL_READ_PERMISSION = "config.panel.read"

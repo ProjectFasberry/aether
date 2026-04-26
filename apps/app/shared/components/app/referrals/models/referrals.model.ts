@@ -6,7 +6,7 @@ import { reatomAsync, withAssign, withCache, withDataAtom, withStatusesAtom } fr
 export type Referral = { id: number; completed: boolean; created_at: Date; referral: { nickname: string, avatar: string } }
 
 export const referrals = atom(null, "referrals").pipe(
-  withAssign(() => ({
+  withAssign((_, name) => ({
     fetch: reatomAsync(async (ctx) => {
       return await ctx.schedule(() =>
         client<Referral[]>("server/referrals/list").exec()

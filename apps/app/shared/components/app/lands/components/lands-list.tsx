@@ -10,10 +10,11 @@ import { DefaultBanner } from "../../land/components/land-banner"
 import { Avatar } from "../../avatar/components/avatar"
 import { IconCircleFilled } from "@tabler/icons-react"
 import { MasonryGrid } from "@repo/ui/masonry-grid"
-import { Lands } from "@repo/shared/types/entities/land"
 import { NotFound } from "@/shared/ui/not-found"
 import { isClientAtom } from "@/shared/models/page-context.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
+
+type Lands = ExtractApiData<"getServerLandsList">["data"]["data"][number]
 
 const landCardVariants = tv({
   base: `flex items-start justify-between gap-6 duration-150 relative w-full rounded-xl p-3 sm:p-4 lg:p-6 bg-neutral-900`,

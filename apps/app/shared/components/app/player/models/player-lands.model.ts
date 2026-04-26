@@ -1,5 +1,4 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/async"
-import { PlayerLandsPayload } from "@repo/shared/types/entities/land"
 import { logError } from "@/shared/lib/log"
 import { atom } from "@reatom/core"
 import { withAssign, withReset } from "@reatom/framework"
@@ -7,6 +6,8 @@ import { playerParamAtom } from "./player.model"
 import { client } from "@/shared/lib/client-wrapper"
 import { isEmptyArray } from "@/shared/lib/utils"
 import { withSsr } from "@/shared/lib/reatom-helpers"
+
+type PlayerLandsPayload = ExtractApiData<"getServerLandsListByNickname">["data"]
 
 export async function getLands(nickname: string, init?: RequestInit) {
   return client<PlayerLandsPayload>(`server/lands/list/${nickname}`, init).exec()

@@ -42,7 +42,7 @@ export default defineConfig(({ mode }) => {
       tsconfigPaths(),
       analyzer({ 
         enabled: true, 
-        analyzerMode: "server", 
+        analyzerMode: "static", 
       }),
       svg({
         inputRoot: 'assets/svg',

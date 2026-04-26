@@ -7,8 +7,9 @@ import { redirect } from 'vike/abort';
 import { appState, appOptionsInit, getAppDictionaries, getAppOptions, app } from '@/shared/models/app.model';
 import { AppOptionsPayload } from '@repo/shared/types/entities/other';
 import { setupUrlAtomSettings } from '@reatom/url';
-import { MePayload } from '@repo/shared/types/entities/user';
 import { snapshotAtom } from '@/shared/lib/reatom-helpers';
+
+type MePayload = ExtractApiData<"getMe">["data"]
 
 function getTopCountry(acceptLanguage?: string): string | null {
   if (!acceptLanguage) return null

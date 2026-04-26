@@ -1,3 +1,5 @@
+import type { operations } from "@repo/shared/types/generated/main/schema"
+
 declare global {
   declare module "*.jpg"
   declare module "*.png"
@@ -15,6 +17,10 @@ declare global {
   type Maybe<T> = T | undefined
   type Nullable<T> = T | null
   type ReadonlyPartial<T> = Readonly<Partial<T>>
+  type ExtractApiData<T extends keyof operations> =
+    operations[T]["responses"] extends { 200: { content: { "application/json": infer Data } } }
+    ? Data
+    : never;
 
   namespace Vike {
     interface GlobalContext {
@@ -28,5 +34,3 @@ declare global {
     }
   }
 }
-
-export { }

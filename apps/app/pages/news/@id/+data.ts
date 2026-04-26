@@ -2,7 +2,6 @@ import { client } from "@/shared/lib/client-wrapper";
 import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { wrapTitle } from "@/shared/lib/wrap-title";
-import { News } from "@repo/shared/types/entities/news";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { PageContextServer } from "vike/types";
@@ -11,6 +10,7 @@ import { mergeSnapshot } from "@/shared/lib/snapshot";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 
 export type Data = Awaited<ReturnType<typeof data>>;
+export type News = ExtractApiData<"getSharedNewsById">["data"]
 
 async function getNewsById(id: string, init: RequestInit) {
   return client<News>(`shared/news/${id}`, init).exec()

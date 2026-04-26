@@ -2,9 +2,9 @@ import { currentUserState } from "@/shared/models/current-user.model"
 import { withHistory, withSsr } from "@/shared/lib/reatom-helpers"
 import { atom } from "@reatom/core"
 import { withReset } from "@reatom/framework"
-import { Player } from "@repo/shared/types/entities/user"
 import { client } from "@/shared/lib/client-wrapper"
 
+type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 export type PlayerOmitted = Omit<Player, "rate">
 
 export const playerAtom = atom<PlayerOmitted | null>(null, "player").pipe(

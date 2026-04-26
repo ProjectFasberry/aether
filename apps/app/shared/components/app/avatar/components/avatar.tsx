@@ -3,7 +3,7 @@ import { tv, VariantProps } from 'tailwind-variants';
 import { getStaticImage } from '@/shared/lib/volume-helpers';
 
 export const avatarVariants = tv({
-  base: `relative rounded-lg aspect-square border border-neutral-800/20`,
+  base: `relative rounded-lg aspect-square border border-neutral-800`,
   variants: {
     variant: {
       default: 'min-h-16 min-w-16 w-16 h-16 max-w-16 max-h-16',
@@ -12,14 +12,13 @@ export const avatarVariants = tv({
 })
 
 type AvatarProps = HTMLAttributes<HTMLDivElement> & VariantProps<typeof avatarVariants> & {
-  withStatus?: boolean,
   nickname?: string;
   url: string
 }
 
-export const Avatar = ({ className, variant, url, nickname, ...props }: AvatarProps) => {
-  const fallback = getStaticImage("fallback/steve_head.png");
+const fallback = getStaticImage("fallback/steve_head.png");
 
+export const Avatar = ({ className, variant, url, nickname, ...props }: AvatarProps) => {
   const handleRef = (img: HTMLImageElement | null) => {
     if (!img) return;
 

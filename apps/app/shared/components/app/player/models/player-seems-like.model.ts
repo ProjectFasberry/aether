@@ -1,5 +1,4 @@
 import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { SeemsLikePlayersPayload } from "@repo/shared/types/entities/other";
 import { playerParamAtom } from "./player.model";
 import { action, atom, take, withAssign } from "@reatom/framework";
 import { toast } from "sonner";
@@ -9,6 +8,7 @@ import { withSsr } from "@/shared/lib/reatom-helpers";
 import { setCookie } from "@/shared/lib/utils";
 
 export const playerSeemsLikePlayersIsShowKey = "playerSLPState.isShow"
+type SeemsLikePlayersPayload = ExtractApiData<"getServerSeems-likeByNickname">["data"]
 
 export const playerSLPState = atom(null, "playerSLPState").pipe(
   withAssign((_, name) => ({

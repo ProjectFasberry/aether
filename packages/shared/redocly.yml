@@ -1,5 +1,5 @@
 apis:
   main@v1:
-    root: https://api.fasberry.fun/openapi/json
+    root: https://api.alpha.fasberry.fun/openapi/json
     x-openapi-ts:
       output: ./types/generated/main/schema.ts

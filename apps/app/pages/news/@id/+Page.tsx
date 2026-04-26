@@ -11,9 +11,10 @@ import { Avatar } from "@/shared/components/app/avatar/components/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { usePageContext } from "vike-react/usePageContext";
 import { CURRENT_USER_KEY } from "@/shared/models/current-user.model";
-import { MePayload } from "@repo/shared/types/entities/user";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
 import { useEffect, useState } from "react";
+
+type MePayload = ExtractApiData<"getMe">["data"];
 
 onDisconnect(newsState.item, (ctx) => newsState.item(ctx, null))
 

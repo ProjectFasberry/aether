@@ -3,7 +3,8 @@ import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { pageContextAtom } from "@/shared/models/page-context.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { LandsPayload } from "@repo/shared/types/entities/land";
+
+export type LandsPayload = ExtractApiData<"getServerLandsList">["data"]
 
 export const landsAction = reatomAsync(async (ctx, params?: { limit?: number }) => {
   const limit = params?.limit ?? 32;
