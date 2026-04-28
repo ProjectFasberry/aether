@@ -8,6 +8,7 @@ import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
 import * as z from "zod/v4";
+import { getPlayerAvatar } from "../server/skin/skin.model";
 
 export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) =>
 	getRedisKey("internal", `seems-like:last-update:${nickname}:data`);
@@ -247,6 +248,13 @@ export async function getSeemsLikePlayersByPlayer(
 	if (limit) {
 		data = data.slice(0, limit);
 	}
+
+	data = await Promise.all(
+		data.map(async (row) => ({
+			...row,
+			avatar: await getPlayerAvatar(row.nickname)
+		}))
+	)
 
 	return {
 		data,

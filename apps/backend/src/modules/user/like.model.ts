@@ -44,7 +44,7 @@ export async function getPlayerLikes(nickname: string) {
   const data = await Promise.all(
     query.map(async (row) => ({
       initiator: row.initiator, 
-      created_at: row.created_at,
+      created_at: row.created_at.toString(),
       avatar: await getPlayerAvatar(row.initiator)
     }))
   )

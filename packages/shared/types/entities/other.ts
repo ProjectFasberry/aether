@@ -41,6 +41,7 @@ export type SeemsLikePlayer = {
 	nickname: string;
 	uuid: string;
 	seemsRate: number;
+	avatar: string;
 };
 
 export type SeemsLikePlayersPayload = {

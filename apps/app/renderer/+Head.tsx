@@ -44,7 +44,7 @@ export default function HeadDefault() {
         {`
           @font-face {
             font-family: 'PIXY';
-            src: url('/fonts/PIXY.ttf') format('ttf');
+            src: url('/fonts/PIXY.ttf') format('truetype');
             font-display: swap;
           }
         `}
