@@ -3,9 +3,9 @@ import { getIsAuth } from "@/shared/lib/utils";
 import { redirect } from "vike/abort";
 import { PageContext } from "vike/types";
 
-export const guard = async (pageContext: PageContext) => {
-  logRouting(pageContext.urlPathname, "guard");
+export const guard = async (pageCtx: PageContext) => {
+  logRouting(pageCtx.urlPathname, "guard");
 
-  const isAuth = getIsAuth(pageContext.snapshot)
+  const isAuth = getIsAuth(pageCtx.snapshot)
   if (!isAuth) throw redirect("/auth")
 }

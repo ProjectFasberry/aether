@@ -22,6 +22,11 @@ declare global {
     ? Data
     : never;
 
+  type ExtractApiParams<T extends keyof operations> =
+    operations[T] extends { parameters: infer Data }
+    ? Data
+    : never;
+
   namespace Vike {
     interface GlobalContext {
       Page: () => React.JSX.Element

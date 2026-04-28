@@ -3,67 +3,50 @@ import { logError } from "@/shared/lib/log";
 import { isEmptyArray } from "@/shared/lib/utils";
 import { action, atom, reatomAsync, withAssign, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
-import { PaymentStatus } from "@repo/shared/types/db/general-database-types";
-import { OrderSingleDefault } from "@repo/shared/types/entities/store";
-
-export type Orders =
-  | {
-    type: "game";
-    created_at: Date;
-    initiator: string;
-    unique_id: string;
-    finished_at: Date | null;
-    status: "succeeded";
-  }
-  | {
-    type: "default";
-    unique_id: string;
-    asset: string;
-    created_at: Date;
-    initiator: string;
-    invoice_id: number;
-    order_id: string;
-    pay_url: string;
-    payload: string;
-    price: string;
-    status: PaymentStatus;
-  }
-  | (OrderSingleDefault & {
-    type: "default";
-  });
-
-export type StoreOrdersStateStatus = "all" | "succeeded" | "pending"
-export type StoreOrdersStateType = "default" | "game" | "all"
 
 export type OrdersFilterOption = { title: string; value: string };
 
-const STATUS_OPTIONS = [
-  { title: "Все", value: "all" },
-  { title: "В ожидании", value: "pending" },
-  { title: "Завершенные", value: "succeeded" },
-];
-
-const TYPE_OPTIONS = [
-  { title: "Все", value: "all" },
-  { title: "Игровые", value: "game" },
-  { title: "Пополнение", value: "default" },
-];
-
 export const cartOrdersState = atom(null, "cartOrdersState").pipe(
   withAssign((_, name) => ({
-    status: atom<StoreOrdersStateStatus>("all", `${name}.status`).pipe(
+    status: atom<string>("all", `${name}.status`).pipe(
       withSearchParamsPersist("status", (d = "all") => d),
     ),
-    type: atom<StoreOrdersStateType>("all", `${name}.type`).pipe(
+    type: atom<string>("all", `${name}.type`).pipe(
       withSearchParamsPersist("type", (d = "all") => d),
     ),
-    STATUS_OPTIONS,
-    TYPE_OPTIONS
+    STATUS_OPTIONS: [
+      { title: "Все", value: "all" },
+      { title: "В ожидании", value: "pending" },
+      { title: "Завершенные", value: "succeeded" },
+    ],
+    TYPE_OPTIONS: [
+      { title: "Все", value: "all" },
+      { title: "Игровые", value: "game" },
+      { title: "Пополнение", value: "default" },
+    ]
   }))
 )
 
 cartOrdersState.status.onChange((ctx) => cartOrders.refetchAll(ctx));
 cartOrdersState.type.onChange((ctx) => cartOrders.refetchAll(ctx));
+
+type InternalOrdersPayload = ExtractApiData<"getStoreOrderInternalList">["data"]
+type ExternalOrdersPayload = ExtractApiData<"getStoreOrderExternalList">["data"]
+type ExternalOrdersParams = ExtractApiParams<"getStoreOrderExternalList">["query"];
+
+async function getInternalOrders({ init }: { init?: RequestInit }) {
+  return client
+    .get<InternalOrdersPayload>("store/order/internal/list", init)
+    .exec()
+}
+async function getExternalOrders({ params, init }: { params: ExternalOrdersParams, init?: RequestInit }) {
+  return client
+    .get<ExternalOrdersPayload>("store/order/external/list", init)
+    .pipe(
+      withQueryParams(params)
+    )
+    .exec()
+}
 
 export const cartOrders = atom(null, "cartOrders").pipe(
   withAssign((_, name) => ({
@@ -72,21 +55,23 @@ export const cartOrders = atom(null, "cartOrders").pipe(
       cartOrders.fetch(ctx);
     }),
     fetch: reatomAsync(async (ctx) => {
-      const params = {
-        type: ctx.get(cartOrdersState.type),
-        status: ctx.get(cartOrdersState.status),
+      const type = ctx.get(cartOrdersState.type)
+      const target = type === 'game' ? "internal" : "external"
+
+      const EVENTS = {
+        internal: () => getInternalOrders({
+          init: { signal: ctx.controller.signal }
+        }),
+        external: () => getExternalOrders({
+          params: {
+            status: ctx.get(cartOrdersState.status) as ExternalOrdersParams["status"],
+          },
+          init: { signal: ctx.controller.signal }
+        })
       };
 
-      return await ctx.schedule(() =>
-        client
-          .get<Orders[]>("store/order/list", {
-            signal: ctx.controller.signal,
-          })
-          .pipe(
-            withQueryParams(params)
-          )
-          .exec()
-      );
+      const result = await EVENTS[target]()
+      return result
     }, {
       name: `${name}.fetch`,
       onReject: (_, e) => logError(e)
@@ -97,27 +82,3 @@ export const cartOrders = atom(null, "cartOrders").pipe(
     )
   }))
 )
-
-export const cartOrdersFilterAtom = atom<"pending" | "succeeded" | "all">("all", "storeCartFilter");
-
-export const cartOrdersFilteredAtom = atom((ctx) => {
-  const filter = ctx.spy(cartOrdersFilterAtom);
-
-  let data: Orders[] = [];
-
-  if (filter === "succeeded") {
-    const orders = ctx.spy(cartOrders.fetch.dataAtom);
-    data = orders ? orders.filter((target) => target.status === "succeeded") : [];
-  }
-
-  if (filter === "pending") {
-    const orders = ctx.spy(cartOrders.fetch.dataAtom);
-    data = orders ? orders.filter((target) => target.status === "pending") : [];
-  }
-
-  if (filter === "all") {
-    data = ctx.spy(cartOrders.fetch.dataAtom) ?? [];
-  }
-
-  return data;
-});

@@ -8,7 +8,6 @@
 		"lint": "bun scripts/run lint",
 		"type-check": "bun scripts/run type-check",
 		"postinstall": "[ \"$NODE_ENV\" != \"production\" ] && lefthook install || true",
-		"-------------------------": "",
 		"--------------------------": "",
 		"docker-infra:up": "docker compose -f './infra/docker-compose.yml' up -d",
 		"docker-infra:down": "docker compose -f './infra/docker-compose.yml' down",
@@ -34,7 +33,6 @@
 		"@clack/prompts": "1.2.0",
 		"@types/bun": "1.2.22",
 		"concurrently": "9.1.2",
-		"cross-env": "7.0.3",
 		"lefthook": "2.1.4"
 	},
 	"workspaces": [

@@ -6,6 +6,7 @@ import { CAP_INSTANCE_URL, CAP_SITEKEY } from "@/shared/env";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../models/pof.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
+import { ErrorBlock } from "@/shared/ui/error-block";
 
 export const NicknameInput = reatomComponent(({ ctx }) => {
   const variant = ctx.spy(authState.errorsType).includes("nickname") ? "danger" : "default"
@@ -71,11 +72,7 @@ export const AuthError = reatomComponent(({ ctx }) => {
   if (!error) return null;
 
   return (
-    <div id="error" className="flex bg-red/80 max-w-2xl rounded-lg px-4 py-2 items-center justify-start">
-      <Typography className='text-base font-semibold'>
-        {error}
-      </Typography>
-    </div>
+    <ErrorBlock title={error} />
   )
 }, "AuthError")
 

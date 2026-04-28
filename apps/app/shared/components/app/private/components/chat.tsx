@@ -119,13 +119,14 @@ const ChatMessagesItemEditActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx
 }, "ChatMessagesItemEditActions")
 
 const ChatMessagesItemViewsItem = reatomComponent<ChatItemViews>(({
-  ctx, id, nickname, created_at
+  ctx, id, nickname, created_at, avatar
 }) => {
   return (
     <div
       className="flex border border-neutral-800 gap-2 rounded-lg px-2 py-1 items-center"
     >
       <Avatar
+        url={avatar}
         className="w-8 h-8"
         nickname={nickname}
       />
@@ -173,7 +174,7 @@ const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({
 }, "ChatMessagesItemViews")
 
 const ChatMessagesItem = reatomComponent<ChatItem>(({
-  ctx, id, nickname, created_at, message, edited, edited_at, views
+  ctx, id, nickname, avatar, created_at, message, edited, edited_at, views
 }) => {
   const isOwner = nickname === ctx.get(currentUserState)?.nickname
 
@@ -187,8 +188,8 @@ const ChatMessagesItem = reatomComponent<ChatItem>(({
           <Link href={createLink("player", nickname)}>
             <Avatar
               nickname={nickname}
-              propWidth={18}
-              propHeight={18}
+              className="h-5 w-5"
+              url={avatar}
             />
           </Link>
           <Link href={createLink("player", nickname)}>

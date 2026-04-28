@@ -10,12 +10,11 @@ function metadata() {
   }
 }
 
-export const data = async (pageContext: PageContextServer) => {
-  logRouting(pageContext.urlPathname, "data")
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, "data")
 
   const config = useConfig()
-
   config(metadata())
 
-  await cart.init(pageContext)
+  await cart.init(pageCtx)
 }

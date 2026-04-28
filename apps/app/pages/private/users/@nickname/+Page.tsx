@@ -53,6 +53,7 @@ const UserInfo = reatomComponent(({ ctx }) => {
     <div className="flex flex-col items-start gap-1 w-full h-full">
       <div className="flex items-center justify-center w-full h-full">
         <Avatar
+          url={data.avatar}
           nickname={data.nickname}
           className="h-16 w-16"
         />

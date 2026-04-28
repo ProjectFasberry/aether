@@ -18,18 +18,14 @@ export async function executeSaga<T>(
         throw new Error("Saga was aborted but a new task was attempted.");
       }
 
-      console.log(`[Saga] Executing: ${task.name}`);
       const result = await task.execute(controller.signal);
 
       completedTasks.push(task);
       results.push(result);
-      console.log(`[Saga] Success: ${task.name}`);
     }
 
     return { status: "success" as const, results };
   } catch (e) {
-    console.error(`[Saga] Error during execution. Initiating rollback.`);
-
     controller.abort();
 
     for (let i = completedTasks.length - 1; i >= 0; i--) {
@@ -42,9 +38,9 @@ export async function executeSaga<T>(
           await taskToRollback.rollback(
             new AbortController().signal
           );
-        } catch (rollbackError) {
-          if (rollbackError instanceof Error) {
-            console.error(`[Saga] CRITICAL: Failed to rollback task "${taskToRollback.name}"`, rollbackError.message);
+        } catch (e) {
+          if (e instanceof Error) {
+            console.error(e);
           }
         }
       }

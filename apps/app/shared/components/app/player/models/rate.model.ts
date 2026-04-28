@@ -6,9 +6,10 @@ import { client } from "@/shared/lib/client-wrapper";
 import { isAuthedAtom } from "@/shared/models/page-context.model";
 import { navigate } from "vike/client/router";
 import { action, atom } from "@reatom/core";
-import { Player } from "@repo/shared/types/entities/user";
 import { withAssign } from "@reatom/framework";
 import { withSsr } from "@/shared/lib/reatom-helpers";
+
+type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 
 type RateUserPayload = "rated" | "unrated";
 type RateList = ExtractApiData<"getRateListByNickname">["data"]

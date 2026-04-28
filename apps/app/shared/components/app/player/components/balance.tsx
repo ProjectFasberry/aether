@@ -3,7 +3,7 @@ import { Typography } from "@repo/ui/typography";
 import { Button } from "@repo/ui/button";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { IconPencil, IconPlus, IconSettings } from "@tabler/icons-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-card";
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { navigate } from "vike/client/router";
@@ -132,13 +132,13 @@ const CharismCard = reatomComponent(({ ctx }) => (
 
 const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
+    <HoverCard>
+      <HoverCardTrigger asChild>
         <Button background="default" className="p-1">
           <IconSettings size={18} className="text-neutral-50" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" side="bottom">
+      </HoverCardTrigger>
+      <HoverCardContent align="end" side="bottom">
         <div className="flex flex-col gap-2 w-full h-full">
           <Typography className="text-neutral-400 text-md">
             Особенности
@@ -155,8 +155,8 @@ const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
             </div>
           </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      </HoverCardContent>
+    </HoverCard>
   )
 }, "BalanceSettingsOptions")
 

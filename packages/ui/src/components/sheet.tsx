@@ -7,7 +7,7 @@ import {
   type Transition,
 } from 'motion/react';
 import { cn } from '../lib/cn';
-import { tv, VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from 'tailwind-variants';
 import { IconX } from '@tabler/icons-react';
 
 type SheetContextType = {

@@ -2,7 +2,6 @@ import type { CreateOrderTopUpSchema, STORE_TYPES, storeItemSchema } from "../..
 import type * as z from "zod/v4";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
 import type { PaymentStatus } from "../db/payments-database-types";
-import type { ordersRouteSchema } from "../../schemas/store";
 
 export type StoreItem = z.infer<typeof storeItemSchema> & {
 	type: (typeof STORE_TYPES)[number] | string;
@@ -75,9 +74,6 @@ export type OrderSingleDefault = {
 	initiator: string;
 	comment: CreateOrderTopUpSchema["comment"];
 };
-
-export type OrderType = z.infer<typeof ordersRouteSchema>["type"];
-export type OrderStatus = z.infer<typeof ordersRouteSchema>["status"];
 
 export type OrdersDefault = OrderSingleDefault & {
 	type: "default";

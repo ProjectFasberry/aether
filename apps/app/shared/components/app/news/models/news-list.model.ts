@@ -3,8 +3,9 @@ import {
   action, atom, batch, reatomAsync, reatomMap, sleep,
   withAssign, withCache, withConcurrency, withDataAtom, withStatusesAtom
 } from "@reatom/framework"
-import { NewsPayload } from "@repo/shared/types/entities/news"
 import { getNews } from "./news.model"
+
+type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
 
 export const newsAllDataArrAtom = atom((ctx) =>
   Array.from(ctx.spy(newsState.allData).values()),

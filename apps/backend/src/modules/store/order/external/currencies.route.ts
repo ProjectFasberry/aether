@@ -10,12 +10,7 @@ async function getCurrencies() {
     .where("isPublic", "=", true)
     .execute()
 
-  const data = query.map(currency => ({
-    ...currency,
-    imageUrl: getStaticUrl(currency.imageUrl)
-  }))
-
-  return data
+  return query.map((row) => ({ ...row, imageUrl: getStaticUrl(row.imageUrl) }))
 }
 
 const currencyPayload = t.Object({
@@ -27,7 +22,7 @@ const currencyPayload = t.Object({
 })
 
 export const currencies = new Elysia()
-  .get("/currencies", async (ctx) => {
+  .get("/currencies", async () => {
     const data = await getCurrencies()
     return { data }
   }, {

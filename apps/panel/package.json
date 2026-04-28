@@ -21,9 +21,9 @@
 		"release:staging": "make all STAGE=staging NAME=api-panel"
 	},
 	"dependencies": {
-		"@elysiajs/bearer": "1.4.1",
-		"@elysiajs/cors": "1.4.0",
-		"elysia-ip": "1.0.10",
+		"@elysia/bearer": "1.4.4",
+		"@elysiajs/cors": "1.4.2",
+		"elysia-ip": "1.1.0",
 		"consola": "3.4.2",
 		"@repo/shared": "workspace:*",
 		"croner": "9.1.0",
@@ -31,10 +31,10 @@
 		"@nats-io/jetstream": "3.2.0",
 		"@nats-io/nats-core": "3.2.0",
 		"@nats-io/transport-node": "3.2.0",
-		"elysia": "1.4.16",
+		"elysia": "1.4.28",
 		"ioredis": "5.6.1",
-		"ky": "1.14.0",
-		"gramio": "0.4.9",
+		"ky": "2.0.2",
+		"gramio": "0.6.0",
 		"kysely": "0.28.2",
 		"pg": "8.13.1",
 		"yaml": "2.8.3"

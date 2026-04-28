@@ -1,18 +1,14 @@
-import Elysia, { sse } from "elysia";
+import Elysia, { sse, t } from "elysia";
 import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import { orderEventPayloadSchema } from "@repo/shared/schemas/payment";
-import { getOrder } from "./order.model";
-import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
+import { externalOrders } from "./external-order.model";
 
 const getPaymentEventsSubject = (uniqueId: string) => `payment.events.${uniqueId}`
 
-export const sseLogger = logger.withTag("SSE")
-
 export const orderEvents = new Elysia()
-  .get("/:id/events", async function* (ctx) {
-    const uniqueId = ctx.params.id;
-    const data = await getOrder(uniqueId, "default") as OrderSingleDefault | null;
+  .get("/events", async function* ({ params: { id: uniqueId }, ...ctx }) {
+    const data = await externalOrders.getSingle(uniqueId)
 
     if (!data) {
       yield sse({ event: "config", data: "disconnect" });
@@ -40,7 +36,7 @@ export const orderEvents = new Elysia()
           if (!result.success) {
             return;
           }
-          
+
           queue.push(result.data);
         } catch (e) {
           logger.error(e)
@@ -60,4 +56,8 @@ export const orderEvents = new Elysia()
     } finally {
       sub.unsubscribe();
     }
+  }, {
+    params: t.Object({
+      id: t.String()
+    })
   });

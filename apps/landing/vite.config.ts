@@ -6,7 +6,6 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import path from "node:path";
 import { vercel } from "vite-plugin-vercel/vite"
 
-// @ts-expect-error
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd());
 
@@ -20,7 +19,7 @@ export default defineConfig(({ mode }) => {
 		],
 		build: {
 			target: "esnext",
-			sourcemap: true,
+			minify: "esbuild"
 		},
 		resolve: {
 			dedupe: ["react", "react-dom"],
@@ -30,7 +29,7 @@ export default defineConfig(({ mode }) => {
 			},
 		},
 		ssr: {
-			noExternal: process.env.NODE_ENV === 'production' ? true : undefined
+			noExternal: process.env.NODE_ENV === 'production' || undefined
 		},
 		css: {
 			postcss: {
@@ -47,9 +46,6 @@ export default defineConfig(({ mode }) => {
 					},
 				],
 			},
-		},
-		server: {
-			allowedHosts: true,
 		},
 	};
 });

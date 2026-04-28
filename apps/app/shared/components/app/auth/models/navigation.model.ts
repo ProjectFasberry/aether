@@ -15,7 +15,8 @@ export const createNavigationModel = ({
   name,
   typeAtom,
   opts = {
-    depsWithLast: true
+    depsWithLast: true,
+    withLog: false
   }
 }: {
   steps: NavigationSteps[],
@@ -23,12 +24,14 @@ export const createNavigationModel = ({
   typeAtom: AtomMut<string>,
   opts?: Partial<{
     fallbackNext: () => void,
-    depsWithLast: boolean
+    depsWithLast: boolean,
+    withLog: boolean
   }>
 }) => {
   const currentIdx = atom((ctx) => steps.findIndex(s => s.id === ctx.spy(typeAtom)));
   const isLastStepAtom = atom((ctx) => ctx.spy(currentIdx) === steps.length - 1)
   const isFirstStepAtom = atom((ctx) => ctx.spy(currentIdx) === 0);
+  const modelName = opts.withLog ? name : `_${name}`
 
   const createValidator = (type: "toNext" | "toBack") => atom((ctx) => {
     const step = steps[ctx.spy(currentIdx)];
@@ -37,7 +40,7 @@ export const createNavigationModel = ({
     if (validator == null) return true;
 
     return isAtom(validator) ? ctx.spy(validator) : validator;
-  }, `${name}.isStep${type === "toNext" ? "Next" : "Back"}Valid`);
+  }, `${modelName}.isStep${type === "toNext" ? "Next" : "Back"}Valid`);
 
   const isStepNextValidAtom = createValidator("toNext");
   const isStepBackValidAtom = createValidator("toBack");
@@ -51,7 +54,7 @@ export const createNavigationModel = ({
     }
 
     return isValid && !isFirst
-  }, `${name}.canGoBack`);
+  }, `${modelName}.canGoBack`);
 
   const canGoNextAtom = atom((ctx) => {
     const isLast = ctx.spy(isLastStepAtom)
@@ -62,10 +65,10 @@ export const createNavigationModel = ({
     }
 
     return isValid && !isLast
-  }, `${name}.canGoNext`);
+  }, `${modelName}.canGoNext`);
 
-  const events = atom(null, `${name}.nav`).pipe(
-    withAssign(() => ({
+  const events = atom(null, `${modelName}.nav`).pipe(
+    withAssign((_, name) => ({
       back: action((ctx): void => {
         const isFirst = ctx.get(isFirstStepAtom)
         if (isFirst) {
@@ -78,12 +81,13 @@ export const createNavigationModel = ({
         if (!prev) return;
 
         typeAtom(ctx, prev.id)
-      }),
+      }, `${name}.back`),
       continue: action((ctx): boolean => {
         const canGoNext = ctx.get(canGoNextAtom)
         if (!canGoNext) return false;
 
         const currIdx = ctx.get(currentIdx);
+
         const next = steps[currIdx + 1];
         if (!next) return false;
 
@@ -92,7 +96,7 @@ export const createNavigationModel = ({
 
         typeAtom(ctx, next.id)
         return true;
-      }),
+      }, `${name}.continue`),
     }))
   )
 

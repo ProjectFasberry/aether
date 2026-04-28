@@ -69,8 +69,7 @@ function startApp() {
 	showRoutes(app);
 	app.listen(PORT);
 
-	appLogger.success(`Starting app finished`);
-	appLogger.log(`Server is running at ${app.server?.hostname}:${app.server?.port}`);
+	appLogger.success(`Starting app finished. Server is running at ${app.server?.hostname}:${app.server?.port}`);
 
 	return app;
 }

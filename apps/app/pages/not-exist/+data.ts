@@ -24,16 +24,14 @@ const TITLE = {
 
 type TitleType = keyof typeof TITLE
 
-export const data = async (pageContext: PageContextServer) => {
-  logRouting(pageContext.urlPathname, "data");
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, "data");
   
-  const config = useConfig()
-
-  const type = pageContext.urlParsed.search["type"] as TitleType | undefined ?? "default"
-
-  const locale = getServerLocale(pageContext);
+  const type = pageCtx.urlParsed.search["type"] as TitleType | undefined ?? "default"
+  const locale = getServerLocale(pageCtx);
   const title = translate(TITLE[type], locale);
 
+  const config = useConfig()
   config(metadata(title));
 
   return {

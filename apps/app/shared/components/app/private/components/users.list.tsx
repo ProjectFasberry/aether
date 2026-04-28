@@ -79,7 +79,7 @@ type UserActionsProps = {
   role: { role_id: number, role_name: string }
 }
 
-const User = reatomComponent<PrivatedUser>(({ ctx, id, nickname, role_name, role_id }) => {
+const User = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, role_name, role_id }) => {
   const currentUser = ctx.get(currentUserState)
 
   const isChecked = ctx.spy(getIsCheckedAtom(nickname));
@@ -105,7 +105,7 @@ const User = reatomComponent<PrivatedUser>(({ ctx, id, nickname, role_name, role
             href={createLink("player", nickname)}
             className="flex items-center min-w-0 gap-2"
           >
-            <Avatar nickname={nickname} className="h-8 w-8"/>
+            <Avatar url={avatar} nickname={nickname} className="h-8 w-8" />
             <Typography className="font-semibold truncate">
               {nickname}
             </Typography>

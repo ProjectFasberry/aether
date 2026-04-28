@@ -11,8 +11,9 @@ import { tv } from "tailwind-variants"
 import { ReactNode } from "react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
-import { TaskItem as TaskItemProps } from "@repo/shared/types/entities/other"
 import { PageLoader } from "@/shared/ui/page-loader"
+
+type TaskItemProps = ExtractApiData<"getServerTaskById">["data"];
 
 const eventImage = getStaticImage("arts/looking.jpg")
 

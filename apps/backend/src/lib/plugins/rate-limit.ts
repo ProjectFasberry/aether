@@ -11,7 +11,7 @@ export type Generator<T extends object = {}> = (
 
 export class RateLimitError extends Error {
 	constructor(
-		public message: string = "rate-limited",
+		public message: string = "RATE_LIMIT",
 		public detail: string = "",
 		public status: number = 429,
 	) {
@@ -23,7 +23,9 @@ let server: Server | null;
 
 const LIMIT_PER_MINUTE = 300;
 
-const keyGenerator: Generator<{ ip: string }> = async (req, server, { ip }) => Bun.hash(JSON.stringify(ip)).toString();
+const keyGenerator: Generator<{ ip: string }> = async (req, server, { ip }) => {
+	return Bun.hash(JSON.stringify(ip)).toString();
+}
 
 const rateLimitError = new RateLimitError();
 
@@ -42,7 +44,9 @@ const errorResponse = new Response(JSON.stringify(errorBody), {
 const rateLimitConfig: Partial<Options> = {
 	errorResponse,
 	max: LIMIT_PER_MINUTE,
+	// @ts-expect-error
 	injectServer: () => server!,
+	// @ts-expect-error
 	generator: keyGenerator,
 };
 

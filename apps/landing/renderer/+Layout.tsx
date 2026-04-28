@@ -14,8 +14,8 @@ import { Footer } from '@/shared/components/layouts/footer';
 import { Header } from '@/shared/components/layouts/header';
 
 const SyncPageContext = () => {
-  const pageContext = usePageContext()
-  useUpdate((ctx) => pageContextAtom(ctx, pageContext), [])
+  const pageCtx = usePageContext()
+  useUpdate((ctx) => pageContextAtom(ctx, pageCtx), [])
   return null;
 }
 

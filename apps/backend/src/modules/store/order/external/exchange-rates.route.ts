@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db"
 import type { StoreExchangeRatesPayload } from "@repo/shared/schemas/payment"
 import Elysia, { t } from "elysia"
-import { getExchangeRates } from "../order/create-crypto-order"
+import { exchangeRates as exchangeRatesService } from "./create-crypto-order"
 import { safeJsonParse } from "#/utils/config/transforms"
 import type { ExchangeRate } from "#/shared/types/payment/payment-types"
 import { wrapError } from "#/helpers/wrap-error"
@@ -15,15 +15,11 @@ export const exchangeRates = new Elysia()
       .select(["value", "type"])
       .execute()
 
-    const exchangeRatesStr = await getExchangeRates()
-    if (!exchangeRatesStr) {
-      throw status(500, wrapError("EXCHANGES_NOT_FOUND"))
-    }
+    const exchangeRatesStr = await exchangeRatesService.getList()
+    if (!exchangeRatesStr) throw status(500, wrapError("EXCHANGES_NOT_FOUND"))
 
     const parsed = safeJsonParse<ExchangeRate[]>(exchangeRatesStr)
-    if (!parsed.ok) {
-      throw status(500, wrapError("STRUCTURE_INCORRECT"))
-    }
+    if (!parsed.ok) throw status(500, wrapError("STRUCTURE_INCORRECT"))
 
     const exchangeRates = parsed.value
     const data: StoreExchangeRatesPayload = await getExchangeRatesStore(query, exchangeRates)

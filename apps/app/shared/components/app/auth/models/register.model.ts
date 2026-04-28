@@ -8,7 +8,8 @@ import { pof } from "./pof.model";
 import { logError } from "@/shared/lib/log";
 import { isEmptyArray } from "@/shared/lib/utils";
 import { createPhraseModel } from "./seed-phrase.model";
-import { createNavigationModel, NavigationSteps } from "./navigation.model";
+import { createNavigationModel } from "./navigation.model";
+import { authSecurity } from "./auth-security.model";
 
 export type AuthRegisterType = |
   "start-input" |
@@ -76,7 +77,7 @@ export const register = atom(null, "register").pipe(
           return true
         }),
         seedPhraseSaveGenerate: action((ctx): boolean => {
-          const mn = auth.generateMnemonic(ctx)
+          const mn = authSecurity.generateMnemonic(ctx)
 
           registerSeedPhraseModel.state.words(ctx, mn.split(" "))
           registerState.mn(ctx, mn)
@@ -110,7 +111,7 @@ export const register = atom(null, "register").pipe(
       const mn = ctx.get(registerState.mn)
       invariant(mn, 'Mn is not defined')
 
-      const hash = await auth.mnToHash(ctx, mn)
+      const hash = await authSecurity.mnToHash(ctx, mn)
 
       const pd = {
         hash,
@@ -183,40 +184,37 @@ export const register = atom(null, "register").pipe(
   }))
 )
 
-type RegisterSteps = NavigationSteps & { id: AuthRegisterType }
-const REGISTER_STEPS: RegisterSteps[] = [
-  {
-    id: "start-input",
-    validators: {
-      toNext: register.validators.startInput
-    },
-    cb: register.cb.seedPhraseSaveGenerate
-  },
-  {
-    id: "seed-phrase-save",
-    validators: {
-      toNext: registerSeedPhraseModel.state.isValid("default")
-    },
-    cb: register.cb.savePhraseConfirmStartValidate
-  },
-  {
-    id: "seed-phrase-confirm",
-    cb: register.cb.seedPhraseConfirmValidate,
-    validators: {
-      toNext: registerSeedPhraseModel.state.isValid("repeat"),
-      toBack: false
-    },
-  },
-  {
-    id: "confirm",
-    validators: {
-      toBack: false
-    }
-  }
-]
-
 export const registerNavigationModel = createNavigationModel({
-  steps: REGISTER_STEPS,
+  steps: [
+    {
+      id: "start-input",
+      validators: {
+        toNext: register.validators.startInput
+      },
+      cb: register.cb.seedPhraseSaveGenerate
+    },
+    {
+      id: "seed-phrase-save",
+      validators: {
+        toNext: registerSeedPhraseModel.state.isValid("default")
+      },
+      cb: register.cb.savePhraseConfirmStartValidate
+    },
+    {
+      id: "seed-phrase-confirm",
+      cb: register.cb.seedPhraseConfirmValidate,
+      validators: {
+        toNext: registerSeedPhraseModel.state.isValid("repeat"),
+        toBack: false
+      },
+    },
+    {
+      id: "confirm",
+      validators: {
+        toBack: false
+      }
+    }
+  ],
   name: "authRegister",
   typeAtom: registerState.type as AtomMut<string>
 })

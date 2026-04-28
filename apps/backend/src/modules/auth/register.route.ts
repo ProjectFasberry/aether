@@ -5,7 +5,7 @@ import { general } from "#/shared/database/general-db";
 import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
 import { withData, withError } from "#/shared/schemas";
 import { registerSchema } from "@repo/shared/schemas/auth"
-import { ipPlugin } from "#/lib/plugins/ip";
+import { ipPlugin } from "#/lib/plugins/index";
 import { register as registerService } from "./register.model"
 
 const registerValidator = () => new Elysia()

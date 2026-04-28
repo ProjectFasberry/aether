@@ -11,7 +11,7 @@ async function getBuildFilesInfo(output: Bun.BuildOutput) {
 		try {
 			const value = fs.statSync(artifact.path).size / (1024 * 1024);
 			size = Number(value.toFixed(2));
-		} catch {}
+		} catch { }
 
 		files.push({
 			path: artifact.path,
@@ -39,14 +39,45 @@ async function getBuildFilesInfo(output: Bun.BuildOutput) {
 	return files;
 }
 
-const output = await Bun.build({
+type Stage = "staging" | "prod"
+const STAGE = Bun.env["STAGE"] as Stage | undefined
+
+const opts: Partial<Record<Stage, Partial<Bun.BuildConfig>>> = {
+	"staging": {
+		minify: false,
+		sourcemap: true,
+		// @ts-expect-error
+		metafile: true,
+	},
+	"prod": {
+		minify: true,
+		sourcemap: false,
+		// @ts-expect-error
+		metafile: false,
+	}
+}
+
+const buildOpts = opts[STAGE ?? "staging"]
+
+const fullOpts: Bun.BuildConfig = {
 	entrypoints: ["./src/index.ts"],
 	outdir: "./dist",
-	minify: true,
-	sourcemap: true,
 	target: "bun",
-	// @ts-expect-error
-	metafile: true,
-});
+	external: [
+		// https://github.com/elysiajs/elysia-bearer/issues/25
+		"@elysia/bearer"
+	],
+	...buildOpts
+}
 
-console.log(await getBuildFilesInfo(output));
+const output = await Bun.build(fullOpts);
+
+console.log(
+	`\nBuild successful.`,
+	`\nStage: ${STAGE}`,
+	`\nOpts:`,
+	buildOpts,
+	`\nResult:`,
+	await getBuildFilesInfo(output),
+	`\n`
+);

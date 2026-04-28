@@ -11,7 +11,7 @@ import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 function metadata(
   item: StoreItem,
-  pageContext: PageContextServer
+  pageCtx: PageContextServer
 ) {
   const title = wrapTitle(item.title).slice(0, 64)
   const description = item.description ?? "";
@@ -24,7 +24,7 @@ function metadata(
     image,
     Head: (
       <>
-        <meta property="og:url" content={pageContext.urlPathname} />
+        <meta property="og:url" content={pageCtx.urlPathname} />
         <meta property="og:type" content="website" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
@@ -35,15 +35,6 @@ function metadata(
   }
 }
 
-async function loadItem(id: string, headers?: Record<string, string>): Promise<StoreItem | null> {
-  try {
-    const item = await getStoreItem(id, { headers })
-    return item
-  } catch (e) {
-    return null;
-  }
-}
-
 export async function data(pageCtx: PageContextServer) {
   logRouting(pageCtx.urlPathname, "data")
 
@@ -51,14 +42,18 @@ export async function data(pageCtx: PageContextServer) {
   const headers = pageCtx.headers ?? undefined
   const id = pageCtx.routeParams.id;
 
-  const item = await loadItem(id, headers)
-  if (!item) throw render("/not-exist?type=store-item")
+  const data = await getStoreItem(id, { headers }).catch((e) => {
+    console.error(e)
+    return null;
+  })
+  
+  if (!data) throw render("/not-exist?type=store-item")
 
-  config(metadata(item, pageCtx))
+  config(metadata(data, pageCtx))
 
   await cart.init(pageCtx)
 
   const ctx = createCtx()
-  storeItemState.data(ctx, item)
+  storeItemState.data(ctx, data)
   pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
 }

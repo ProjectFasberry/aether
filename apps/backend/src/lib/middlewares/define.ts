@@ -1,16 +1,14 @@
-import Elysia, { type Context } from "elysia";
+import Elysia from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
 import { logger } from "#/utils/config/logger";
 import { toLog } from "./validators";
+import { bearer } from "@elysia/bearer";
 
 export const validateLogger = logger.withTag("Validation")
 
-export async function handleAuthedByApiUser(headers: Context["headers"]): Promise<{ nickname: string } | null> {
-  const apiKeyRaw = headers["authorization"];
-  const apiKey = apiKeyRaw?.replace("Bearer", "").trim();
-
+async function handleAuthedByApiUser(apiKey: string | undefined): Promise<{ nickname: string } | null> {
   if (!!apiKey && apiKey.trim().length !== 0) {
     const query = await general
       .selectFrom("api_keys")
@@ -29,9 +27,10 @@ export async function handleAuthedByApiUser(headers: Context["headers"]): Promis
 
 export const defineOptionalUser = () => new Elysia()
   .use(defineSession())
+  .use(bearer())
   .use(toLog("defineOptionalUser"))
-  .derive(async ({ session, headers }) => {
-    const result = await handleAuthedByApiUser(headers)
+  .derive(async ({ session, bearer }) => {
+    const result = await handleAuthedByApiUser(bearer)
     if (result) return result
 
     let nickname: string | null = null;
@@ -46,11 +45,12 @@ export const defineOptionalUser = () => new Elysia()
 
 export const defineUser = () => new Elysia()
   .use(defineSession())
+  .use(bearer())
   .use(toLog("defineUser"))
-  .derive(async ({ session, status, headers }) => {
+  .derive(async ({ session, status, bearer }) => {
     if (!session) throw status(401)
 
-    const result = await handleAuthedByApiUser(headers)
+    const result = await handleAuthedByApiUser(bearer)
     if (result) return result
 
     const nickname: string | null = await auth.getUserNickname(session);
@@ -61,6 +61,7 @@ export const defineUser = () => new Elysia()
   .as("scoped")
 
 export const defineSession = () => new Elysia()
+  .use(toLog("defineSession"))
   .derive(({ cookie }) => {
     const sessionCookie = cookie[SESSION_KEY];
     const session = sessionCookie.value as string | undefined;
@@ -71,10 +72,11 @@ export const defineSession = () => new Elysia()
 export const defineUserRole = () => new Elysia()
   .use(defineUser())
   .use(toLog("defineUserRole"))
-  .derive(async ({ nickname, status, headers }) => {
+  .use(bearer())
+  .derive(async ({ nickname, status, bearer }) => {
     let role: { id: number, name: string } | null = null;
 
-    const result = await handleAuthedByApiUser(headers)
+    const result = await handleAuthedByApiUser(bearer)
 
     if (result) {
       // todo: impl correct way for define the highest role

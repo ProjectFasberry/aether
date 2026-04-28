@@ -13,6 +13,5 @@ export async function data(pageContext: PageContextServer) {
   logRouting(pageContext.urlPathname, "data");
 
   const config = useConfig()
-
   config(metadata())
 }

@@ -1,5 +1,4 @@
 import { action, atom, Ctx } from "@reatom/core";
-import { AppOptionsPayload } from "@repo/shared/types/entities/other";
 import { client } from "../lib/client-wrapper";
 import { Locale } from "../locales";
 import { reatomMap, withAssign } from "@reatom/framework";
@@ -9,6 +8,8 @@ import { devLog } from "../lib/log";
 import { playerSeemsLikePlayersIsShowKey, playerSLPState } from "../components/app/player/models/player-seems-like.model";
 import { withSsr } from "../lib/reatom-helpers";
 import { isMobile, parseBoolean, parseCookie } from "../lib/utils";
+
+export type AppOptionsPayload = ExtractApiData<"getAppOptions">["data"]
 
 export type AppOptionsPayloadExtend = AppOptionsPayload & {
 	locale: Locale;

@@ -46,7 +46,7 @@ const SettingsContentDesktop = reatomComponent(({ ctx }) => {
   return component
 }, "SettingsContent")
 
-export const SettingsDialog = reatomComponent(({ ctx }) => {
+export const SettingsDialog = reatomComponent(({ ctx }) => {  
   const open = ctx.spy(settingsState.dialogIsOpen)
   const isMobile = ctx.spy(appState.isMobile);
 

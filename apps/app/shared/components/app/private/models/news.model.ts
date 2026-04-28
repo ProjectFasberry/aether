@@ -4,7 +4,6 @@ import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatus
 import { createNewsSchema } from "@repo/shared/schemas/news";
 import { toast } from "sonner";
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper";
-import { News, NewsPayload } from "@repo/shared/types/entities/news";
 import { devLog, logError } from "@/shared/lib/log";
 import { generateHTML, type JSONContent } from "@tiptap/react"
 import { actionsTargetAtom, collectChanges, compareChanges, notifyAboutRestrictRole } from "./actions.model";
@@ -13,6 +12,9 @@ import { withUndo } from "@reatom/undo";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { alertDialog } from "@/shared/components/config/alert-dialog.model";
 import { navigate } from "vike/client/router";
+
+type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
+type News = NewsPayload["data"][number];
 
 export const newsListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
@@ -146,7 +148,7 @@ export const editNews = atom(null, "editNews").pipe(
       editNewsTitleAtom(ctx, targetValues.title)
       editNewsDescAtom(ctx, targetValues.description)
       editNewsContentAtom(ctx, targetValues.content)
-      editNewsImageUrlAtom(ctx, targetValues.imageUrl)
+      editNewsImageUrlAtom(ctx, targetValues.imageUrl!)
 
       return targetItem
     }, `${name}.item`),

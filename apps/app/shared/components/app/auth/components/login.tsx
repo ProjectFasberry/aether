@@ -11,7 +11,7 @@ import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { authState } from "../models/auth.model"
 
-export const LoginVariants = reatomComponent(({ ctx }) => {
+const LoginVariants = reatomComponent(({ ctx }) => {
   const variants = ctx.spy(authLoginVariantAtom.filterVariants(LOGIN_VARIANTS))
 
   return (

@@ -2,8 +2,8 @@ import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineUser } from "#/lib/middlewares/define";
 import { wrapError } from "#/helpers/wrap-error";
-import { cartItem } from "../cart/cart.model";
-import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order.model";
+import { cartItem } from "../../cart/cart.model";
+import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import type { GameCurrency } from "@repo/shared/schemas/payment";
 import { withError } from "#/shared/schemas";
@@ -56,8 +56,6 @@ export const createOrder = new Elysia()
         ...target,
         recipient: itemsMap.get(target.id)!
       }));
-
-      console.log(products);
 
       await createGamePaymentRecord(uniqueId, initiator, products)
       

@@ -10,6 +10,7 @@ import { service } from "./modules/root/service";
 import { force } from "./modules/root";
 import { appGroup } from "./modules/root/app";
 import { validateGroup } from "./modules/root/validate";
+import { processPlayerVote } from "./modules/server/votes/process-vote.route";
 
 export const main = new Elysia()
 	.use(shared)
@@ -25,4 +26,7 @@ export const root = new Elysia()
 	.use(appGroup)
 	.use(validateGroup)
 	.use(service)
-	.use(force);
+	.use(force)
+	.group("/third-party", app => app
+		.use(processPlayerVote)
+	)

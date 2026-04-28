@@ -2,8 +2,8 @@ import { DEFAULT_SOFT_DELAY } from "@/shared/consts/index";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom, sleep, withAssign, withConcurrency } from "@reatom/framework";
-import { TasksPayload } from "@repo/shared/types/entities/other";
 
+export type TasksPayload = ExtractApiData<"getServerTaskList">["data"]
 export type TasksFilterSortBy = "relevance"
 
 const FILTERS = [

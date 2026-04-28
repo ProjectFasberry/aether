@@ -3,11 +3,10 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { NotFound } from "@/shared/ui/not-found";
 import { tv } from "tailwind-variants";
-import { EventPayload } from "@repo/shared/types/entities/other";
 import { eventsState } from "../models/events.model";
 import { isEmptyArray } from "@/shared/lib/utils";
 
-type EventCardProps = EventPayload
+type EventCardProps = ExtractApiData<"getServerEventsList">["data"][number]
 
 const eventCardVariant = tv({
   base: `
@@ -21,7 +20,7 @@ const eventCardVariant = tv({
 })
 
 const EventCard = ({ content, id, title }: EventCardProps) => {
-  const created_at = dayjs(content.created_at).fromNow();
+  const created_at = dayjs(content.created_at.toString()).fromNow();
   
   return (
     <div

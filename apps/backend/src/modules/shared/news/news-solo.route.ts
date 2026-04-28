@@ -1,11 +1,18 @@
-import Elysia from "elysia";
-import * as z from "zod/v4";
-import { getNewsSingle } from "./news.model";
+import Elysia, { t } from "elysia";
+import { getNewsSingle, newsSingleSchema } from "./news.model";
+import { withData } from "#/shared/schemas";
 
 export const newsSingle = new Elysia()
   .get("/:id", async ({ params: { id } }) => {
     const data = await getNewsSingle(id)
     return { data }
   }, {
-    params: z.object({ id: z.coerce.number() })
+    params: t.Object({ 
+      id: t.Number() 
+    }),
+    response: {
+      200: withData(
+        newsSingleSchema
+      )
+    }
   })

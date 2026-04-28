@@ -2,10 +2,11 @@ import { action, atom } from "@reatom/core"
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework"
 import { getEvents } from "../../events/models/events.model"
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
-import { EventPayload } from "@repo/shared/types/entities/other"
 import { toast } from "sonner"
 import { logError } from "@/shared/lib/log"
 import { notifyAboutRestrictRole } from "./actions.model"
+
+type EventPayload = ExtractApiData<"getServerEventsList">["data"][number]
 
 export const eventsListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
@@ -41,12 +42,10 @@ export const createEventAction = reatomAsync(async (ctx) => {
     type: ctx.get(createEventTypeAtom)
   }
 
-  return await ctx.schedule(() =>
-    client
-      .post<EventPayload>("privated/events/create", { throwHttpErrors: false })
-      .pipe(withJsonBody(json))
-      .exec()
-  )
+  return await client
+    .post<EventPayload>("privated/events/create", { throwHttpErrors: false })
+    .pipe(withJsonBody(json))
+    .exec()
 }, {
   name: "createEventAction",
   onFulfill: (ctx, res) => {

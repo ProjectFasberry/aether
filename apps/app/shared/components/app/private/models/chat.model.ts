@@ -18,6 +18,7 @@ export type ChatItem = {
   edited_at: string | null
   message: string
   nickname: string,
+  avatar: string,
   views: number
 }
 
@@ -102,6 +103,7 @@ export type ChatItemViews = {
   id: number;
   nickname: string;
   message_id: number;
+  avatar: string
 }
 
 export const chatItemViewsAtom = reatomMap<number, ChatItemViews[]>()

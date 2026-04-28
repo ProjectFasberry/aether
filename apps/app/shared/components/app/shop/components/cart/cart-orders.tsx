@@ -1,6 +1,6 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { OrdersFilterOption, cartOrders, cartOrdersState, StoreOrdersStateStatus, StoreOrdersStateType } from "../../models/store-orders.model"
+import { OrdersFilterOption, cartOrders, cartOrdersState } from "../../models/store-orders.model"
 import { Link } from "@/shared/components/config/link"
 import { Button } from "@repo/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
@@ -51,7 +51,7 @@ const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, 
               key={item.value}
               data-state={current === item.value ? "active" : "inactive"}
               className="group"
-              onClick={() => currentValue(ctx, item.value as StoreOrdersStateStatus | StoreOrdersStateType)}
+              onClick={() => currentValue(ctx, item.value)}
             >
               <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
                 {item.title}
@@ -64,7 +64,7 @@ const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, 
   );
 }, "OrdersFilterDropdown");
 
-const CartOrdersList = reatomComponent(({ ctx }) => {
+export const CartOrdersList = reatomComponent(({ ctx }) => {
   useUpdate(cartOrders.fetch, [])
 
   if (ctx.spy(cartOrders.fetch.statusesAtom).isPending) return <PageLoader />
@@ -72,12 +72,14 @@ const CartOrdersList = reatomComponent(({ ctx }) => {
   const data = ctx.spy(cartOrders.fetch.dataAtom)
   if (!data) return <CartOrdersEmpty />
 
+  const getOrderLink = (uniqueId: string) => `/store/order/${uniqueId}?type=${ctx.get(cartOrdersState.type)}`
+
   return (
     <div id="content" className='flex flex-col gap-2 rounded-xl bg-neutral-900 p-2 sm:p-3 lg:p-4 w-full h-full'>
       {data.map((order) => (
         <Link
           key={order.unique_id}
-          href={`/store/order/${order.unique_id}?type=${order.type}`}
+          href={getOrderLink(order.unique_id)}
           className="flex items-center justify-between w-full p-4 rounded-lg border border-neutral-800"
         >
           <div className="flex flex-col gap-1 min-w-0">
@@ -94,29 +96,21 @@ const CartOrdersList = reatomComponent(({ ctx }) => {
   )
 }, "CartOrders")
 
-export const CartOrders = () => {
+export const CartOrdersFilters = () => {
   return (
-    <div className="flex flex-col gap-6 w-full h-full">
-      <Typography className="text-3xl font-semibold">
-        Заказы
-      </Typography>
-      <div className="flex flex-col gap-4 h-full w-full">
-        <div id="filters" className="flex items-center gap-2 w-full">
-          <OrdersFilterDropdown
-            label="Статус"
-            options={cartOrdersState.STATUS_OPTIONS}
-            currentValue={cartOrdersState.status}
-            onSelect={(ctx, val) => cartOrdersState.status(ctx, val as StoreOrdersStateStatus)}
-          />
-          <OrdersFilterDropdown
-            label="Тип"
-            options={cartOrdersState.TYPE_OPTIONS}
-            currentValue={cartOrdersState.type}
-            onSelect={(ctx, val) => cartOrdersState.type(ctx, val as StoreOrdersStateType)}
-          />
-        </div>
-        <CartOrdersList />
-      </div>
+    <div id="filters" className="flex items-center gap-2 w-full">
+      <OrdersFilterDropdown
+        label="Статус"
+        options={cartOrdersState.STATUS_OPTIONS}
+        currentValue={cartOrdersState.status}
+        onSelect={(ctx, val) => cartOrdersState.status(ctx, val)}
+      />
+      <OrdersFilterDropdown
+        label="Тип"
+        options={cartOrdersState.TYPE_OPTIONS}
+        currentValue={cartOrdersState.type}
+        onSelect={(ctx, val) => cartOrdersState.type(ctx, val)}
+      />
     </div>
   )
 }

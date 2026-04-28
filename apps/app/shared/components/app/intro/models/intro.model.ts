@@ -2,7 +2,8 @@ import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withRetry, withStatusesAtom } from "@reatom/async";
 import { atom } from "@reatom/core";
 import { withAssign } from "@reatom/framework";
-import { StatusPayload } from "@repo/shared/types/entities/other"
+
+type StatusPayload = ExtractApiData<"getServerStatus">["data"]
 
 export const serverStatus = atom(null, "serverStatus").pipe(
   withAssign((_, name) => ({

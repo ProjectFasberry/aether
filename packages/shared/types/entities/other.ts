@@ -90,6 +90,7 @@ export type PrivatedUser = {
 	premium_uuid: string | null;
 	uuid: string;
 	created_at: Date;
+	avatar: string;
 	nickname: string;
 	role_id: number;
 	role_name: string;

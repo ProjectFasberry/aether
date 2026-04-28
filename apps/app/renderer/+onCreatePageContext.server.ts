@@ -4,8 +4,7 @@ import { currentUserState, getMe } from "@/shared/models/current-user.model";
 import { devLog, logRouting } from '@/shared/lib/log';
 import { isBotRequest } from '@/shared/lib/bot-guard';
 import { redirect } from 'vike/abort';
-import { appState, appOptionsInit, getAppDictionaries, getAppOptions, app } from '@/shared/models/app.model';
-import { AppOptionsPayload } from '@repo/shared/types/entities/other';
+import { appState, appOptionsInit, getAppDictionaries, getAppOptions, app, AppOptionsPayload } from '@/shared/models/app.model';
 import { setupUrlAtomSettings } from '@reatom/url';
 import { snapshotAtom } from '@/shared/lib/reatom-helpers';
 
@@ -37,10 +36,10 @@ export const onCreatePageContext = async (pageCtx: PageContextServer) => {
     }
   }
 
-  logRouting(pageCtx.urlPathname, "onCreatePageContext");
-
   const { headers, urlPathname, locale } = pageCtx;
   if (!headers) return;
+
+  logRouting(pageCtx.urlPathname, "onCreatePageContext.server");
 
   const ctx = createCtx();
 

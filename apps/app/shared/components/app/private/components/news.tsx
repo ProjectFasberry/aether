@@ -8,7 +8,6 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Avatar } from "../../avatar/components/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Typography } from "@repo/ui/typography";
-import { News } from "@repo/shared/types/entities/news";
 import { ReactNode } from "react";
 import { DeleteButton, EditButton, ToLink } from "./ui";
 import {
@@ -40,6 +39,8 @@ import { Editor, EditorContent, generateJSON, JSONContent, useEditor, useEditorS
 import { CharacterCount, Placeholder } from "@tiptap/extensions"
 import { useEffect } from "react"
 import { ButtonXSubmit } from "./global"
+
+type News = ExtractApiData<"getSharedNewsList">["data"]["data"][number]
 
 const NewsContentApply = reatomComponent<{
   tempContentAtom: Atom<string>,

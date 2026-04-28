@@ -45,7 +45,7 @@ const VerifyDeclined = () => {
 
 const VerifyIdle = reatomComponent(({ ctx }) => {
   const data = ctx.spy(login.qr.verify.validateToken.dataAtom)?.result
-  if (!data) return null;
+  if (!data || typeof data === 'boolean') return null;
 
   const isPending = ctx.spy(login.qr.verify.decline.statusesAtom).isPending
     || ctx.spy(login.qr.verify.confirm.statusesAtom).isPending
@@ -219,7 +219,7 @@ const AccountSessionsConnectNewConfirmDialog = reatomComponent(({ ctx }) => {
   )
 }, "AccountSessionsConnectNewConfirmDialog")
 
-export const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
+const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
   return (
     <div className="flex flex-col gap-2 w-full">
       <p className="text-base font-medium leading-5">

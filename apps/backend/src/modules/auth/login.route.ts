@@ -7,7 +7,7 @@ import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
 import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
 import { session, loginQR as loginQRService, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger } from "./login.model";
-import { ipPlugin } from "#/lib/plugins/ip";
+import { ipPlugin } from "#/lib/plugins/index";
 import { defineUser } from "#/lib/middlewares/define";
 import Bowser from "bowser";
 import { getNats } from "#/shared/nats/client";
@@ -295,12 +295,20 @@ export const withQR = new Elysia()
 export const withGame = new Elysia()
 	.resolve(({ headers }) => ({ ua: headers["user-agent"] }))
 	.post("/generate", async ({ ua, status, body: { visitorId } }) => {
-		if (!ua) throw status(403);
+		if (!ua) throw status(403, wrapError("INCORRECT_REQUEST"));
 
 		return { data: null };
 	}, {
 		parse: "json",
 		body: visitorSchema,
+		response: {
+			200: withData(
+				t.Object({
+					code: t.String()
+				})
+			),
+			403: withError
+		}
 	});
 
 export const login = new Elysia()

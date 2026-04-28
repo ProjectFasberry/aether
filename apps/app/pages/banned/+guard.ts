@@ -1,7 +1,8 @@
 import { APP_OPTIONS_KEY } from "@/shared/models/app.model";
-import { AppOptionsPayload } from "@repo/shared/types/entities/other";
 import { redirect } from "vike/abort";
 import { PageContextServer } from "vike/types";
+
+type AppOptionsPayload = ExtractApiData<"getAppOptions">["data"]
 
 export async function guard(pageContext: PageContextServer) {
   const actualSnapshot = pageContext.snapshot[APP_OPTIONS_KEY].data as AppOptionsPayload;

@@ -1,6 +1,6 @@
 import { cleanOldEvents } from "#/modules/server/events/events.model";
 import { updateServerStatus } from "#/modules/server/status/status.model";
-import { updateExchangeRates } from "#/modules/store/order/cryptobot/cryptobot.model";
+import { updateExchangeRates } from "#/modules/store/order/external/cryptobot.model";
 import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
 import { logger } from "#/utils/config/logger";
 

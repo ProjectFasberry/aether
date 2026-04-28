@@ -30,7 +30,10 @@ function buildPermissions(data: { name: string, id: number }[]): Record<string, 
       if (idx === parts.length - 1) {
         current[key] = name;
       } else {
-        if (!current[key]) current[key] = {};
+        if (!current[key]) {
+          current[key] = {};
+        }
+        
         current = current[key];
       }
     });

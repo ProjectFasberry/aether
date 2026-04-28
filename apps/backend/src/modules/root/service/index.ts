@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { bearer } from "@elysiajs/bearer";
+import { bearer } from "@elysia/bearer";
 import { general } from "#/shared/database/general-db";
 import { cronTasks } from "#/shared/cron/init";
 import { withData } from "#/shared/schemas";

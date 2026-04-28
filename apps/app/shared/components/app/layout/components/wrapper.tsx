@@ -1,14 +1,36 @@
-import { useUpdate } from '@reatom/npm-react';
+import { reatomComponent, useUpdate } from '@reatom/npm-react';
 import { Toaster } from '@/shared/components/config/toaster';
 import { connectLogger, createCtx, Ctx } from '@reatom/framework'
 import { reatomContext } from '@reatom/npm-react'
-import { PropsWithChildren, useRef } from 'react'
+import { lazy, PropsWithChildren, useRef } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { Footer } from '@/shared/components/app/layout/components/footer';
 import { Button } from "@repo/ui/button";
 import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { app } from '@/shared/models/app.model';
 import { snapshotAtom } from '@/shared/lib/reatom-helpers';
+import { Widgets } from '@/shared/components/app/widgets/components/widgets';
+import { AlertDialog } from '@/shared/components/config/alert-dialog';
+import { getIsAuth } from '@/shared/lib/utils';
+import { ClientOnly } from 'vike-react/ClientOnly';
+import { isClientAtom } from '@/shared/models/page-context.model';
+
+const SettingsDialog = lazy(() => import("@/shared/components/app/settings/components/settings").then(d => ({ default: d.SettingsDialog })))
+
+const Global = reatomComponent(({ ctx }) => {
+  const pageCtx = usePageContext()
+  const isAuthed = ctx.spy(isClientAtom) ? getIsAuth(pageCtx.snapshot) : false
+
+  return (
+    <>
+      <Widgets />
+      <AlertDialog />
+      <ClientOnly>
+        {isAuthed && <SettingsDialog />}
+      </ClientOnly>
+    </>
+  )
+}, "Global")
 
 interface Fn<Args extends any[] = any[], Return = any> {
   (...a: Args): Return
@@ -89,6 +111,7 @@ export const WrapperChild = ({ children }: PropsWithChildren) => {
           {children}
           <Footer />
         </div>
+        <Global />
       </ReatomProvider>
     </ErrorBoundary>
   )

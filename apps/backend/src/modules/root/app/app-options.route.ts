@@ -5,7 +5,7 @@ import { bannerExists } from "../../shared/banner/banner.model";
 import type { AppOptionsPayload } from "@repo/shared/types/entities/other";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
-import { ipPlugin } from "#/lib/plugins/ip";
+import { ipPlugin } from "#/lib/plugins/index";
 
 function getWhitelist(ip: string) {
   const whitelist = getWhitelistIpList()

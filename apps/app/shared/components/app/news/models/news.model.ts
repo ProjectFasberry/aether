@@ -1,8 +1,10 @@
-import { News, NewsPayload } from "@repo/shared/types/entities/news"
 import { client, withQueryParams } from "@/shared/lib/client-wrapper"
 import { atom } from "@reatom/core";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 import { withAssign } from "@reatom/framework";
+
+type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
+type News = ExtractApiData<"getSharedNewsById">["data"]
 
 export const getNews = async (
   params: Partial<{ content?: boolean, limit: number, asc: boolean }>, 

@@ -2,7 +2,7 @@ import { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { useConfig } from "vike-react/useConfig";
 import { wrapTitle } from "@/shared/lib/wrap-title";
-import { DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
+import { DONATE_GROUPS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { logRouting } from "@/shared/lib/log";
 import { createCtx, Ctx } from "@reatom/core";
 import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
@@ -36,13 +36,13 @@ async function loadLands(nickname: string, headers?: Record<string, string>) {
 
 function buildMetadataValues(user: Player, pageCtx: PageContextServer) {
   const nickname = user.nickname;
-  const reg = dayjs(user.meta.reg_date).format("DD MMM YYYY");
-  const login = dayjs(user.meta.login_date).format("DD MMM YYYY");
+  const reg = dayjs(user.meta.reg_date.toString()).format("DD MMM YYYY");
+  const login = dayjs(user.meta.login_date.toString()).format("DD MMM YYYY");
 
   return {
     title: wrapTitle(nickname),
     image: user.avatar ?? "",
-    description: `Профиль игрока ${nickname}. Привилегия: ${DONATE_TITLE[user.group]}. Играет с ${reg}. Последний вход: ${login}.`,
+    description: `Профиль игрока ${nickname}. Привилегия: ${DONATE_TITLE[user.group as keyof typeof DONATE_GROUPS]}. Играет с ${reg}. Последний вход: ${login}.`,
     url: pageCtx.urlPathname,
     nickname
   };

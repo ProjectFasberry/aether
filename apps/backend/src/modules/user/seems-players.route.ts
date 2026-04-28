@@ -7,7 +7,8 @@ const seemsPlayersPayload = t.Object({
   data: t.Array(t.Object({
     nickname: t.String(),
     uuid: t.String(),
-    seemsRate: t.Number()
+    seemsRate: t.Number(),
+    avatar: t.String()
   })),
   meta: t.Object({
     count: t.Number()

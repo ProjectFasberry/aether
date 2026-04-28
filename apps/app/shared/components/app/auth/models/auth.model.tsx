@@ -3,8 +3,6 @@ import { action, atom, batch, Ctx } from "@reatom/core";
 import { reatomRecord, sleep, withAssign, withReset } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
 import { pof } from "./pof.model";
-import * as bip39 from '@scure/bip39';
-import { wordlist } from "@/shared/consts";
 
 export type AuthType = "register" | "login";
 export type AuthErrorType = "nickname" | "password" | "findout";
@@ -105,17 +103,6 @@ export const auth = atom(null, "auth").pipe(
 			})
 
 			pof.resetState(ctx)
-		}),
-		mnToHash: action(async (ctx, mn: string) => {
-			const seed = await bip39.mnemonicToSeed(mn);
-			const hashBuff = await crypto.subtle.digest('SHA-256', seed);
-			const hash = Array.from(new Uint8Array(hashBuff))
-				.map(b => b.toString(16).padStart(2, '0'))
-				.join('')
-			return hash
-		}),
-		generateMnemonic: action((ctx) => {
-			return bip39.generateMnemonic(wordlist)
 		})
 	})),
 );

@@ -1,9 +1,9 @@
 import { defineUser } from "#/lib/middlewares/define";
-import { sseLogger } from "#/modules/store/order/order-events.route";
 import { getNats } from "#/shared/nats/client";
 import Elysia, { sse } from "elysia";
 import { ACTIVITY_LOG_SUBJECT } from "../private.model";
 import { safeJsonParse } from "#/utils/config/transforms";
+import { logger } from "#/utils/config/logger";
 
 type HistoryPayload = {
   event: string;
@@ -20,27 +20,24 @@ export const historyEvents = new Elysia()
     const queue: unknown[] = [];
 
     yield sse({ event: "config", data: "connected" });
-    sseLogger.log("Connected", nickname);
 
     const sub = nc.subscribe(ACTIVITY_LOG_SUBJECT, {
       callback: (e, msg) => {
         try {
           if (e) {
-            sseLogger.warn("Failed to process message", e);
             throw e
           }
-          
+
           const decoded = decoder.decode(msg.data);
           const result = safeJsonParse<HistoryPayload>(decoded)
 
           if (!result.ok) {
-            sseLogger.warn(`Invalid message payload`);
             return;
           }
 
           queue.push(result.value);
         } catch (e) {
-          sseLogger.warn("Failed to process message", e);
+          logger.error(e)
         }
       }
     })
@@ -55,7 +52,6 @@ export const historyEvents = new Elysia()
         await new Promise((r) => setTimeout(r, 1000));
       }
     } finally {
-      sseLogger.log("NATS unsubscribed")
       sub.unsubscribe();
     }
   })

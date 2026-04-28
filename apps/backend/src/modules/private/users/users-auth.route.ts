@@ -1,5 +1,5 @@
 import { validatePermission } from "#/lib/middlewares/validators";
-import { ipPlugin } from "#/lib/plugins/ip";
+import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { getNats } from "#/shared/nats/client";
@@ -14,14 +14,14 @@ function publishAuth(event: string, { nickname, created_at }: { nickname: string
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())
-  // @ts-expect-error
-  .post("/register", async ({ ip, body: { nickname, password, mnHex } }) => {
-    const query = await register.create({ nickname, ip, password, mnHex });
+  .post("/register", async ({ ip, body: { nickname, password, hash } }) => {
+    const query = await register.create({ nickname, ip, password, hash });
     return { data: query }
   }, {
     body: z.object({
       nickname: nicknameSchema,
-      password: passwordSchema
+      password: passwordSchema,
+      hash: z.string()
     }),
     afterResponse: ({ responseValue }) => {
       const res = responseValue as { data: { nickname: string, created_at: Date } }

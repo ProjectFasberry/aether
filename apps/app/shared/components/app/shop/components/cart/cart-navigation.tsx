@@ -15,9 +15,7 @@ export const CartNavigation = () => {
   const isActive = (path: string) => pageCtx.urlPathname === path;
 
   return (
-    <div
-      className={scrollableVariant({ className: "flex items-center overflow-x-auto scrollbar-h-2 gap-1 w-full" })}
-    >
+    <div className={scrollableVariant({ className: "flex items-center overflow-x-auto scrollbar-h-2 gap-1 w-full" })}>
       <BackButton href="/store" />
       {STORE_BADGES.map((badge) => (
         <Button

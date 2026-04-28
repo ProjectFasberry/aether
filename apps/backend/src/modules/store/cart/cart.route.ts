@@ -1,16 +1,11 @@
 import Elysia, { t } from "elysia";
-import * as z from "zod/v4";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import { cartItem, cartListPayload, cartPricePayload, editItemToBasketSchema } from "./cart.model";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData, withError } from "#/shared/schemas";
 import { defineUser } from "#/lib/middlewares/define";
 
-const itemBasketBaseSchema = z.object({
-  id: z.coerce.number()
-})
-
-const basketAddItem = new Elysia()
+const cartAddItem = new Elysia()
   .use(defineUser())
   .post("/add/:id", async ({ status, nickname: initiator, body: { recipient }, params: { id } }) => {
     const validateResult = await cartItem.validateInitiatorExists(recipient)
@@ -26,26 +21,30 @@ const basketAddItem = new Elysia()
 
     return { data }
   }, {
-    params: itemBasketBaseSchema,
+    params: t.Object({
+      id: t.Number()
+    }),
     body: t.Object({
       recipient: t.String({ minLength: 1 })
     }),
     response: {
       200: withData(
-        t.Nullable(t.Number())
+        t.Number()
       ),
       400: withError,
       404: withError
     }
   })
 
-const basketRemoveItem = new Elysia()
+const cartRemoveItem = new Elysia()
   .use(defineUser())
   .delete("/remove/:id", async ({ nickname: initiator, params: { id } }) => {
     const data = await cartItem.delete(id, initiator)
     return { data }
   }, {
-    params: itemBasketBaseSchema,
+    params: t.Object({
+      id: t.Number()
+    }),
     response: {
       200: withData(
         t.Number()
@@ -53,14 +52,16 @@ const basketRemoveItem = new Elysia()
     }
   })
 
-const basketEditItem = new Elysia()
+const cartEditItem = new Elysia()
   .use(defineUser())
   .post("/edit/:id", async ({ nickname: initiator, body, params: { id } }) => {
     const data = await cartItem.edit(initiator, { ...body, id })
     return { data }
   }, {
     body: editItemToBasketSchema,
-    params: itemBasketBaseSchema,
+    params: t.Object({
+      id: t.Number()
+    }),
     response: {
       200: withData(
         t.Union([
@@ -70,7 +71,7 @@ const basketEditItem = new Elysia()
     }
   })
 
-const basketPrice = new Elysia()
+const cartPrice = new Elysia()
   .use(defineUser())
   .get("/price", async ({ nickname: initiator }) => {
     const data = await defineGlobalPrice(initiator);
@@ -81,10 +82,11 @@ const basketPrice = new Elysia()
     }
   })
 
-const basketList = new Elysia()
+const cartList = new Elysia()
   .use(defineUser())
   .get("/list", async ({ nickname: initiator }) => {
     const data = await cartItem.getData(initiator)
+    
     return {
       data: {
         data,
@@ -102,9 +104,9 @@ const basketList = new Elysia()
 
 export const cart = new Elysia()
   .group("/cart", app => app
-    .use(basketList)
-    .use(basketPrice)
-    .use(basketAddItem)
-    .use(basketRemoveItem)
-    .use(basketEditItem)
+    .use(cartList)
+    .use(cartPrice)
+    .use(cartAddItem)
+    .use(cartRemoveItem)
+    .use(cartEditItem)
   )

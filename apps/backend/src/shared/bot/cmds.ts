@@ -12,8 +12,7 @@ import {
 	forceUpdateWatchtower,
 } from "./lib";
 
-type CommandHandler = Parameters<Bot["command"]>[1];
-export type CommandCtx = Parameters<CommandHandler>[0];
+export type CommandCtx = Parameters<Parameters<Bot["command"]>[1]>[0];
 
 type GuardCommand = {
 	name: string;

@@ -2,12 +2,34 @@ import { normalizeIp } from "#/helpers/normalize-ip";
 import { getStaticUrl } from "#/helpers/volume";
 import { DEFAULT_HEAD, getPlayerAvatar } from "#/modules/server/skin/skin.model";
 import { general } from "#/shared/database/general-db";
-import { metaSchema, searchQuerySchema } from "#/shared/schemas";
+import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
-import type { News, NewsPayload } from "@repo/shared/types/entities/news";
+import { type Static, t } from "elysia";
 import { executeWithCursorPagination } from "kysely-paginate";
 import * as z from "zod/v4";
+
+export const newsSingleSchema = t.Object({
+  id: t.Number(),
+  title: t.String(),
+  created_at: t.String(),
+  description: t.String(),
+  imageUrl: t.String(),
+  views: t.Number(),
+  creator: t.Object({
+    nickname: t.String(),
+    avatar: t.String()
+  }),
+  content: t.Any()
+})
+
+export const newsPayloadSchema = t.Object({
+  data: t.Array(newsSingleSchema),
+  meta: withMeta
+})
+
+type News = Static<typeof newsSingleSchema>
+type NewsPayload = Static<typeof newsPayloadSchema>
 
 export const newsSchema = z.intersection(
   metaSchema.pick({ asc: true, endCursor: true, limit: true }),
@@ -83,6 +105,7 @@ export async function getNewsList({
   const data = res.rows.map((news) => ({
     ...news,
     views: Number(news.views),
+    created_at: news.created_at.toString(),
     creator: {
       nickname: news.creator,
       avatar: getStaticUrl(DEFAULT_HEAD)
@@ -138,6 +161,7 @@ export async function getNewsSingle(id: number): Promise<News | null> {
     ...base,
     views: Number(query.views),
     creator,
+    created_at: query.created_at.toString(),
     imageUrl: getStaticUrl(query.imageUrl)
   }
 

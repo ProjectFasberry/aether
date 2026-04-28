@@ -16,7 +16,8 @@ const likes = new Elysia()
           data: t.Array(
             t.Object({
               initiator: t.String(),
-              created_at: t.Date(),
+              created_at: t.String(),
+              avatar: t.String()
             })
           ),
           meta: t.Object({

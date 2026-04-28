@@ -3,9 +3,10 @@ import { Typography } from "@repo/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
 import { NotFound } from "@/shared/ui/not-found"
 import { tv } from "tailwind-variants"
-import { NewsPayload } from "@repo/shared/types/entities/news"
 import { newsState } from "../models/news.model"
 import { isEmptyArray } from "@/shared/lib/utils"
+
+type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
 
 const newsItemVariant = tv({
   base: `

@@ -9,6 +9,7 @@ import * as z from "zod/v4";
 import { metaSchema, searchQuerySchema } from "#/shared/schemas";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
+import { getPlayerAvatar } from "#/modules/server/skin/skin.model";
 
 const USER_SORT = ["abc", "created_at", "role"]
 
@@ -85,7 +86,13 @@ async function getPlayersList({ asc, startCursor, searchQuery, endCursor, limit,
     }
   })
 
-  const data = result.rows.map((user => ({ ...user, status: "default" as "banned" | "default" | "muted" })))
+  const data = await Promise.all(
+    result.rows.map((async (user) => ({
+      ...user,
+      status: "default" as "banned" | "default" | "muted",
+      avatar: await getPlayerAvatar(user.nickname)
+    })))
+  )
 
   return {
     data,

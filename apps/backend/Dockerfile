@@ -19,7 +19,7 @@ RUN chmod +x /entrypoint.sh
 RUN bun install
 
 WORKDIR /apps/backend
-RUN bun run build
+RUN bun run build:prod
 
 FROM oven/bun:1-slim AS runtime
 
@@ -33,9 +33,17 @@ ENV STAGE=$STAGE
 
 WORKDIR /
 
+COPY --from=build /package.json /bun.lock ./
+COPY --from=build /apps/backend/package.json ./apps/backend/package.json
+COPY --from=build /packages ./packages
+
+RUN bun install --production
+
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh
-COPY --from=build /apps/backend/dist ./dist
+COPY --from=build /apps/backend/dist ./apps/backend/dist
+
+WORKDIR /apps/backend
 
 ENV NODE_ENV=production
 USER bun

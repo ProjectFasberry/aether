@@ -12,7 +12,6 @@ export default function HeadDefault() {
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content="Fasberry" />
       <link rel="manifest" href="/site.webmanifest" />
-
       <meta name="keywords" content="fasberry, minecraft, фасберри, фесберри, фесберри проект, майнкрафт сервер,
         майнкрафт, майнкрафт играть, minecraft play, сервера майнкрафт бесплатно, список серверов майнкрафта,
         полу-ванильные сервера майнкрафта, полуванила майнкрафт, rp сервер майнкрафт, rpg сервер майнкрафт,
@@ -21,7 +20,6 @@ export default function HeadDefault() {
       <meta name="author" content="Fasberry Team" />
       <meta name="format-detection" content="email=yes, address=yes, telephone=yes" />
       <meta name="description" content={`Официальная страница майнкрафт-проекта Fasberry. Жанр: RP, RPG, полу-ванила. 1.20+. Играть: play.${MAIN_DOMAIN}`} />
-
       <meta property="og:title" content="Fasberry" />
       <meta property="og:description" content="Сколько топовых майнкрафт-серверов вы знаете? Теперь знаете на один больше" />
       <meta property="og:locale" content="ru_RU" />
@@ -31,22 +29,16 @@ export default function HeadDefault() {
       <meta property="og:image:type" content="image/jpeg" />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-
       <meta name="twitter:title" content="Fasberry" />
       <meta name="twitter:description" content="Сколько топовых майнкрафт-серверов вы знаете? Теперь знаете на один больше" />
       <meta name="twitter:image" content={bgImage} />
       <meta property="twitter:image:type" content="image/jpeg" />
       <meta property="twitter:image:width" content="1200" />
       <meta property="twitter:image:height" content="630" />
-
       <meta name="robots" content="index, follow" />
       <meta name="googlebot" content="index, follow, noimageindex, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />
-      {import.meta.env.PROD && (
-        <>
-          <link rel="preconnect" href={API_PREFIX} crossOrigin="" />
-          <link rel="preconnect" href={VOLUME_ENDPOINT} crossOrigin="" />
-        </>
-      )}
+      <link rel="preconnect" href={API_PREFIX} crossOrigin="" />
+      <link rel="preconnect" href={VOLUME_ENDPOINT} crossOrigin="" />
       <link
         rel="preload"
         as="font"

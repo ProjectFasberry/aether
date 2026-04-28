@@ -132,6 +132,22 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	"/third-party/vote": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post: operations["postThird-partyVote"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	"/shared/news/list": {
 		parameters: {
 			query?: never;
@@ -1236,22 +1252,6 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/store/hooks/vote": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post: operations["postStoreHooksVote"];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
 	"/store/hooks/process-order": {
 		parameters: {
 			query?: never;
@@ -1262,150 +1262,6 @@ export interface paths {
 		get?: never;
 		put?: never;
 		post: operations["postStoreHooksProcess-order"];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/item/{id}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreItemById"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/items": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreItems"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/{id}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreOrderById"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/{id}/events": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreOrderByIdEvents"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/top-up": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post: operations["postStoreOrderTop-up"];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/create": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get?: never;
-		put?: never;
-		post: operations["postStoreOrderCreate"];
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/list": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreOrderList"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/methods": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreMethods"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/currencies": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreCurrencies"];
-		put?: never;
-		post?: never;
 		delete?: never;
 		options?: never;
 		head?: never;
@@ -1492,14 +1348,190 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/store/exchange-rates": {
+	"/store/item/{id}": {
 		parameters: {
 			query?: never;
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
-		get: operations["getStoreExchange-rates"];
+		get: operations["getStoreItemById"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/items": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreItems"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/create": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post: operations["postStoreOrderExternalCreate"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/list": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalList"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/methods/list": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalMethodsList"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/methods/currencies/{method}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalMethodsCurrenciesByMethod"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/currencies": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalCurrencies"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/exchange-rates": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalExchange-rates"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/{uniqueId}/": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalByUniqueId"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/external/{uniqueId}/events": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderExternalByUniqueIdEvents"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/internal/create": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get?: never;
+		put?: never;
+		post: operations["postStoreOrderInternalCreate"];
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/order/internal/list": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreOrderInternalList"];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -1722,6 +1754,16 @@ export interface operations {
 		requestBody?: never;
 		responses: never;
 	};
+	"postThird-partyVote": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
 	getSharedNewsList: {
 		parameters: {
 			query?: never;
@@ -1742,17 +1784,15 @@ export interface operations {
 							data: {
 								id: number;
 								title: string;
-								created_at: Record<string, never> | string | number;
+								created_at: string;
 								description: string;
-								imageUrl: string | null;
+								imageUrl: string;
 								views: number;
-								content: {
-									[key: string]: unknown;
-								};
 								creator: {
 									nickname: string;
 									avatar: string;
 								};
+								content: unknown;
 							}[];
 							meta: {
 								hasNextPage: boolean;
@@ -1776,7 +1816,31 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							id: number;
+							title: string;
+							created_at: string;
+							description: string;
+							imageUrl: string;
+							views: number;
+							creator: {
+								nickname: string;
+								avatar: string;
+							};
+							content: unknown;
+						};
+					};
+				};
+			};
+		};
 	};
 	getSharedModpackList: {
 		parameters: {
@@ -2468,7 +2532,32 @@ export interface operations {
 				};
 			};
 		};
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							code: string;
+						};
+					};
+				};
+			};
+			/** @description Response for status 403 */
+			403: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
 	};
 	"postAuthInvalidate-session": {
 		parameters: {
@@ -3561,6 +3650,7 @@ export interface operations {
 								nickname: string;
 								uuid: string;
 								seemsRate: number;
+								avatar: string;
 							}[];
 							meta: {
 								count: number;
@@ -3674,16 +3764,6 @@ export interface operations {
 		requestBody?: never;
 		responses: never;
 	};
-	postStoreHooksVote: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
 	"postStoreHooksProcess-order": {
 		parameters: {
 			query?: never;
@@ -3693,195 +3773,6 @@ export interface operations {
 		};
 		requestBody?: never;
 		responses: never;
-	};
-	getStoreItemById: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	getStoreItems: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	getStoreOrderById: {
-		parameters: {
-			query: {
-				type: "default" | "game";
-			};
-			header?: never;
-			path: {
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	getStoreOrderByIdEvents: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				id: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	"postStoreOrderTop-up": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 200 */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						data: {
-							url: string;
-							orderId: string;
-							invoiceId: number;
-							totalPrice: number;
-							uniqueId: string;
-						};
-					};
-				};
-			};
-			/** @description Response for status 400 */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						error: string;
-					};
-				};
-			};
-		};
-	};
-	postStoreOrderCreate: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 400 */
-			400: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						error: string;
-					};
-				};
-			};
-			/** @description Response for status 500 */
-			500: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						error: string;
-					};
-				};
-			};
-		};
-	};
-	getStoreOrderList: {
-		parameters: {
-			query: {
-				status: "succeeded" | "all" | "pending";
-				type: "default" | "game" | "all";
-			};
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	getStoreMethods: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 200 */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						data: {
-							id: number;
-							description: (string | null) | null;
-							imageUrl: string;
-							title: string;
-							value: string;
-						}[];
-					};
-				};
-			};
-		};
-	};
-	getStoreCurrencies: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 200 */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						data: {
-							id: number;
-							imageUrl: string;
-							isAvailable: boolean;
-							title: string;
-							value: string;
-						}[];
-					};
-				};
-			};
-		};
 	};
 	getStoreCartList: {
 		parameters: {
@@ -4075,7 +3966,203 @@ export interface operations {
 			};
 		};
 	};
-	"getStoreExchange-rates": {
+	getStoreItemById: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
+	getStoreItems: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
+	postStoreOrderExternalCreate: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							url: string;
+							orderId: string;
+							invoiceId: number;
+							totalPrice: number;
+							uniqueId: string;
+						};
+					};
+				};
+			};
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+			/** @description Response for status 500 */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderExternalList: {
+		parameters: {
+			query: {
+				status: "succeeded" | "all" | "pending";
+			};
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							unique_id: string;
+							/**
+							 * @default USDT
+							 * @enum {string}
+							 */
+							asset: "USDT" | "TON" | "BTC" | "ETH" | "LTC" | "BNB" | "TRX" | "USDC";
+							price: string;
+							created_at: string;
+							/**
+							 * @default canceled
+							 * @enum {string}
+							 */
+							status: "canceled" | "pending" | "succeeded" | "waitingForCapture";
+							payload: string;
+							order_id: string;
+							invoice_id: number;
+							pay_url: string;
+							initiator: string;
+							comment: (string | null) | null;
+						}[];
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderExternalMethodsList: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							id: number;
+							description: (string | null) | null;
+							imageUrl: string;
+							title: string;
+							value: string;
+						}[];
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderExternalMethodsCurrenciesByMethod: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				method: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: string[];
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderExternalCurrencies: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							id: number;
+							imageUrl: string;
+							isAvailable: boolean;
+							title: string;
+							value: string;
+						}[];
+					};
+				};
+			};
+		};
+	};
+	"getStoreOrderExternalExchange-rates": {
 		parameters: {
 			query?: never;
 			header?: never;
@@ -4112,6 +4199,131 @@ export interface operations {
 			};
 		};
 	};
+	getStoreOrderExternalByUniqueId: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				uniqueId: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| ({
+									unique_id: string;
+									/**
+									 * @default USDT
+									 * @enum {string}
+									 */
+									asset: "USDT" | "TON" | "BTC" | "ETH" | "LTC" | "BNB" | "TRX" | "USDC";
+									price: string;
+									created_at: string;
+									/**
+									 * @default canceled
+									 * @enum {string}
+									 */
+									status: "canceled" | "pending" | "succeeded" | "waitingForCapture";
+									payload: string;
+									order_id: string;
+									invoice_id: number;
+									pay_url: string;
+									initiator: string;
+									comment: (string | null) | null;
+							  } | null)
+							| null;
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderExternalByUniqueIdEvents: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: string;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
+	postStoreOrderInternalCreate: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 400 */
+			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+			/** @description Response for status 500 */
+			500: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						error: string;
+					};
+				};
+			};
+		};
+	};
+	getStoreOrderInternalList: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| (
+									| {
+											created_at: string;
+											initiator: string;
+											unique_id: string;
+											finished_at: ((Record<string, never> | string | number) | null) | null;
+											/** @constant */
+											status: "succeeded";
+									  }[]
+									| null
+							  )
+							| null;
+					};
+				};
+			};
+		};
+	};
 	getRateListByNickname: {
 		parameters: {
 			query?: never;
@@ -4133,7 +4345,8 @@ export interface operations {
 						data: {
 							data: {
 								initiator: string;
-								created_at: Record<string, never> | string | number;
+								created_at: string;
+								avatar: string;
 							}[];
 							meta: {
 								count: number;

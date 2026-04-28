@@ -1,5 +1,4 @@
-import Elysia from "elysia";
-import * as z from "zod/v4";
+import Elysia, { t } from "elysia";
 import { store } from "./store-items.model";
 
 export const storeItem = new Elysia()
@@ -7,7 +6,7 @@ export const storeItem = new Elysia()
     const data = await store.getItem(id)
     return { data }
   }, {
-    params: z.object({
-      id: z.coerce.number()
+    params: t.Object({
+      id: t.Number()
     })
   })

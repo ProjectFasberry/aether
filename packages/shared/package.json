@@ -11,7 +11,7 @@
 	},
 	"dependencies": {
 		"kysely": "0.28.2",
-		"zod": "4.1.11"
+		"zod": "4.2.1"
 	},
 	"devDependencies": {
 		"@repo/config-typescript": "workspace:*",

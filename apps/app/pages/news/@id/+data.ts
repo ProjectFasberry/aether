@@ -48,7 +48,6 @@ export async function data(pageCtx: PageContextServer) {
   config(metadata(news))
 
   const ctx = createCtx()
-
   newsState.item(ctx, news)
   pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
 }

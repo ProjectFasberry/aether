@@ -2,15 +2,13 @@ import { isProduction, PORT } from "./shared/env";
 import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysiajs/server-timing";
-import { corsPlugin } from "./lib/plugins/cors";
-import { ipPlugin } from "./lib/plugins/ip";
 // import { prometheusPlugin } from "./lib/plugins/prometheus";
 import { openApiPlugin } from "./lib/plugins/openapi";
-import { loggerPlugin } from "./lib/plugins/logger";
 import { defineSession } from "./lib/middlewares/define";
 import { session } from "./modules/auth/login.model";
 import { appLogger } from "./utils/config/logger";
 import { main, root } from "./routes";
+import { corsPlugin, ipPlugin, loggerPlugin } from "./lib/plugins";
 
 const appConfig: ElysiaConfig<string> = {
 	serve: {
@@ -31,11 +29,9 @@ export function startApp() {
 		.use(loggerPlugin())
 		.onError((payload) => {
 			const { error, code } = payload;
-			if (!isProduction) {
-				appLogger.error(error, code);
-			}
+			if (!isProduction) appLogger.error(error, code);
 
-			let message: string | ValidationError = "Internal Server Error";
+			let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
 			if (code === "VALIDATION") {
 				const result = safeJsonParse<ValidationError>(error.message);
@@ -43,16 +39,15 @@ export function startApp() {
 				return { error: message };
 			}
 
-			if (code === "NOT_FOUND") {
-				return { error: "Not found" };
-			}
+			if (code === "NOT_FOUND") return { error: code };
 
 			if ("response" in error) {
 				const response = error.response as { error?: string } | number;
-				appLogger.error(error, code);
 
 				if (typeof response === "object" && response !== null) {
-					if (response.error) message = response.error;
+					if (response.error) {
+						message = response.error;
+					}
 				} else {
 					message = String(response);
 				}
@@ -66,14 +61,15 @@ export function startApp() {
 		})
 		.use(root)
 		.use(defineSession())
-		.onBeforeHandle(async ({ cookie, session: sessionToken }) => await session.updateSession(sessionToken, cookie))
+		.onBeforeHandle(async ({ cookie, session: sessionToken }) =>
+			await session.updateSession(sessionToken, cookie)
+		)
 		.use(main);
 
 	showRoutes(app);
 	app.listen(PORT);
 
-	appLogger.success(`Starting app finished`);
-	appLogger.log(`Server is running at ${app.server?.hostname}:${app.server?.port}`);
+	appLogger.success(`Starting app finished. Server is running at ${app.server?.hostname}: ${app.server?.port}`);
 
 	return app;
 }

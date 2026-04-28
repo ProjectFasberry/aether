@@ -18,6 +18,5 @@ export const guard = async (pageContext: PageContext) => {
   if (!isAuth) throw redirect("/auth")
 
   const config = useConfig()
-
   config(metadata())
 }

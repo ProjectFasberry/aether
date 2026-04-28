@@ -1,35 +1,33 @@
 import { toast } from "sonner";
-import { createConsola } from "consola";
-
-export const logger = createConsola();
-export const routingLogger = logger.withTag('Routing');
+import { logger } from "./logger";
 
 export function logError(
-  e: unknown,
-  { type = 'console' }: { type?: 'console' | 'toast' | 'combined' } = {}
+  e: unknown, { type = 'console' }: { type?: 'console' | 'toast' | 'combined' } = {}
 ) {
   if (!(e instanceof Error)) return;
   const msg = e.message;
 
-  switch (type) {
-    case 'console':
-      break;
-    case 'toast':
-      toast(msg);
-      break;
-    case 'combined':
-      toast(msg);
-      break;
-    default:
-      console.warn('Skipped logging: invalid log type');
+  const EVENTS = {
+    "console": null,
+    "toast": () => void toast(msg),
+    "combined": () => void toast(msg)
   }
+
+  const exec = EVENTS[type]
+
+  if (typeof exec === 'undefined') {
+    console.warn('Skipped logging: invalid log type');
+    return;
+  }
+
+  if (typeof exec === 'function') exec()
 }
 
-export function logRouting(pathname: string, hook: string) {
-  routingLogger.log(`${pathname} called +${hook}`);
+export function logRouting(path: string, hook: string): void {
+  logger.withTag('Routing').log(`${path} called +${hook}`);
 }
 
-export function devLog(...args: Parameters<typeof logger.log>) {
+export function devLog(...args: Parameters<typeof logger["log"]>): void {
   if (import.meta.env.DEV) {
     logger.withTag("dev").log(...args)
   }

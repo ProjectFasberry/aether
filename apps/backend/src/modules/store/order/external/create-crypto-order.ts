@@ -3,12 +3,10 @@ import { getRedis } from "#/shared/redis/init";
 import type { ExchangeRate } from "#/shared/types/payment/payment-types";
 import { logger } from "#/utils/config/logger";
 import type { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema";
-import { PaymentStatus } from "@repo/shared/types/db/payments-database-types";
 import type * as z from "zod/v4";
 import { FRONTEND_URL } from "#/shared/env";
-import { CreateOrderTopUpSchema } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
-import { type CryptoPayPayload, EXCHANGE_RATES_KEY } from "./cryptobot/cryptobot.model";
+import { type CryptoPayPayload, EXCHANGE_RATES_KEY } from "./cryptobot.model";
 import { invariant } from "#/helpers/invariant";
 
 export const getOrderLink = (uniqueId: string) => `${FRONTEND_URL}/store/order/${uniqueId}`
@@ -24,9 +22,11 @@ function extractDiff(rubPrice: number, exchangeRate: number): number {
   return parseFloat(priceInTargetCurrency.toFixed(8));
 }
 
-export async function getExchangeRates() {
-  const redis = getRedis()
-  return redis.get(EXCHANGE_RATES_KEY)
+export const exchangeRates = {
+  async getList() {
+    const redis = getRedis()
+    return redis.get(EXCHANGE_RATES_KEY)
+  }
 }
 
 export async function getEconomyByTarget(target: string) {
@@ -41,7 +41,7 @@ export async function getPriceInCurrency(
   inputPrice: number,
   currency: z.infer<typeof currencyCryptoSchema>
 ): Promise<number> {
-  const data = await getExchangeRates()
+  const data = await exchangeRates.getList()
   invariant(data, "Exchange rates cache is not defined")
 
   const rates: ExchangeRate[] = JSON.parse(data)

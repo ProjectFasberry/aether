@@ -4,7 +4,7 @@ import { general } from "#/shared/database/general-db";
 import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
 import { isProduction } from "#/shared/env";
-import { ipPlugin } from "../plugins/ip";
+import { ipPlugin } from "../plugins/index";
 import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
 import { CAP_URL, CAP_SECRET, CAP_SITE_KEY } from "#/shared/env";
@@ -15,9 +15,7 @@ import { getWhitelistIpList } from "#/shared/constants/urls";
 
 export const toLog = (name: string) => new Elysia()
   .onAfterResponse(() => {
-    if (!isProduction) {
-      validateLogger.log(name);
-    }
+    if (!isProduction) validateLogger.log(name);
   })
   .as("scoped")
 
@@ -29,7 +27,7 @@ export const validatePermission = (permission: string) => new Elysia()
     const targetIsExist = perms.includes(permission)
 
     if (!targetIsExist) {
-      throw status(400, "restricted_by_role")
+      throw status(400, "RESTRICT_BY_ROLE")
     }
 
     return { role, permission }
@@ -43,7 +41,7 @@ export const validateAuthStatus = () => new Elysia()
     if (!session) return;
 
     const nickname = await auth.getUserNickname(session);
-    if (nickname) throw status(406, "authorized")
+    if (nickname) throw status(406, "AUTHORIZED")
   })
   .as("scoped")
 
@@ -75,7 +73,7 @@ export const validateBannedStatus = () => new Elysia()
       .executeTakeFirst()
 
     if (ban && ban.id) {
-      throw status(400, "banned")
+      throw status(400, "RESTRICT_BY_BAN")
     }
   })
   .as("scoped")
@@ -86,7 +84,7 @@ const capClient = client.extend((opts) => ({
 }))
 
 const ERRORS: Record<string, string> = {
-  "Token not found": "token-not-found"
+  "Token not found": "TOKEN_NOT_FOUND"
 }
 
 async function verifyRequest(token: string): Promise<{ ok: boolean; error?: string }> {
@@ -113,7 +111,7 @@ async function verifyRequest(token: string): Promise<{ ok: boolean; error?: stri
       return { ok: false, error: e.message }
     }
 
-    return { ok: false, error: "unknown-error" }
+    return { ok: false, error: "UNKNOWN_ERROR" }
   }
 }
 
@@ -136,10 +134,10 @@ export const botValidator = () => new Elysia()
     const isEnabled = Boolean(query?.value)
     if (!isEnabled) return;
 
-    if (token.length <= 1) throw status(400, "Bad Request")
+    if (token.length <= 1) throw status(400)
 
     try {
-      if (!token) throw status(400, "Token is not provided")
+      if (!token) throw status(400, "TOKEN_IS_NOT_PROVIDED")
 
       const result = await verifyRequest(token);
       if (!result.ok) throw status(400, result.error)

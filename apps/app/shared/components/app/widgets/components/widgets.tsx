@@ -2,7 +2,6 @@ import { onConnect } from "@reatom/framework"
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
 import { tv } from "tailwind-variants"
-import { motion } from "motion/react"
 import { activeWidgetAtom, initWidgets, Widget as WidgetProps } from "../models/widgets.model"
 
 const widgetVariant = tv({
@@ -12,12 +11,7 @@ const widgetVariant = tv({
 
 const Widget = ({ title, icon: Icon, description, action }: WidgetProps) => {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 50, scale: 0.5 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 20, scale: 0.9 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
+    <div
       className={widgetVariant()}
     >
       <div className="flex items-center gap-2 sm:gap-4">
@@ -45,7 +39,7 @@ const Widget = ({ title, icon: Icon, description, action }: WidgetProps) => {
           {action}
         </div>
       )}
-    </motion.div>
+    </div>
   )
 }
 

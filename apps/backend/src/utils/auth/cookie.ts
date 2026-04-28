@@ -13,22 +13,23 @@ type SetCookie = Properties & {
   expires: Date
 }
 
+const FALLBACK_DOMAIN = "127.0.0.1";
+export const SESSION_KEY = "session";
+
 function getDomain() {
   const urls = getUrls()
   const domain = urls.get("domain")
   invariant(domain, "Domain is not defined");
+
+  if (!isProduction) {
+    return FALLBACK_DOMAIN
+  }
+
   return `.${domain}`
 }
 
-export const SESSION_KEY = "session";
-const FALLBACK_DOMAIN = "127.0.0.1";
-
 export function setCookie({ cookie, key, expires, value }: SetCookie) {
-  let domain = getDomain()
-
-  if (!isProduction) {
-    domain = FALLBACK_DOMAIN
-  }
+  const domain = getDomain()
 
   cookie[key].domain = domain
   cookie[key].value = value
@@ -40,11 +41,7 @@ export function setCookie({ cookie, key, expires, value }: SetCookie) {
 }
 
 export function unsetCookie({ cookie, key }: Properties) {
-  let domain = getDomain()
-
-  if (!isProduction) {
-    domain = FALLBACK_DOMAIN
-  }
+  const domain = getDomain()
 
   cookie[key].domain = domain
   cookie[key].value = ""

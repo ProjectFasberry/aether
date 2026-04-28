@@ -1,320 +1,266 @@
-import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
 import { Typography } from "@repo/ui/typography";
-import {
-  topup,
-  topUpAvailableCurrenciesAtom,
-  topUpIsValidAtom,
-  topupState,
-} from "../../models/store-top-up.model";
-import { tv } from "tailwind-variants";
+import { topup, topupErrorAtom, TopupMethodListPayload, topupNavigationModel, topupState, TopupType } from "../../models/store-top-up.model";
 import { Button } from "@repo/ui/button";
-import { AtomState } from "@reatom/core";
 import { Skeleton } from "@repo/ui/skeleton";
 import { TARGET_TITLE } from "../cart/cart-price";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
-import { IconExchange } from "@tabler/icons-react";
+import { IconCheck, IconExchange } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
-import { validateNumber } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@repo/ui/select";
+import React, { ReactNode } from "react";
+import { Ctx, spawn } from "@reatom/framework";
+import { IconLoader } from "@/shared/ui/icon-loader";
+import { ErrorBlock } from "@/shared/ui/error-block";
 
-const boostsImg = getStaticImage("icons/boosts_icon.png")
+type TopupTargetProps = {
+  variant?: "compact", title?: never, img: string
+} | {
+  variant?: "full", title: string, img: string
+}
 
-const itemVariant = tv({
-  base: `px-4 h-14 cursor-pointer w-full gap-2
-    flex items-center justify-start rounded-xl data-[state=false]:bg-neutral-900 data-[state=true]:bg-neutral-700`
-})
-
-const TopUpTarget = reatomComponent<{
-  title: string, img: string, value: AtomState<typeof topupState.target>
-}>(({ ctx, img, title, value }) => {
-  const current = ctx.spy(topupState.target);
-
+const TopUpTarget = reatomComponent<TopupTargetProps>(({ img, variant = "compact", title }) => {
   return (
-    <div
-      data-state={current === value}
-      onClick={() => topupState.target(ctx, value)}
-      className={itemVariant()}
-    >
-      <div className="flex items-center h-8 w-8 rounded-lg overflow-hidden">
-        <img src={img} className="h-8 w-8 object-cover" alt="" />
-      </div>
-      <Typography className="font-semibold text-lg">{title}</Typography>
+    <div className="flex items-center w-full gap-2">
+      <img src={img} className="h-6 min-w-6 min-h-6 w-6 object-cover" alt="" />
+      {variant === 'full' && (
+        <p className="leading-5 font-medium text-sm">{title}</p>
+      )}
     </div>
   )
 }, "TopUpTarget")
 
-const TopUpTargets = () => {
-  return (
-    <div className="flex items-center gap-2 justify-start w-full">
-      <TopUpTarget title="Харизма" value="CHARISM" img={charismImage} />
-      <TopUpTarget title="Белкоин" value="BELKOIN" img={belkoinImage} />
-    </div>
-  )
-}
-
-const TopUpValue = reatomComponent(({ ctx }) => {
-  return (
-    <Input
-      type="text"
-      maxLength={8}
-      className="px-4 w-full lg:w-1/3"
-      placeholder="Количество"
-      value={ctx.spy(topupState.value)}
-      onChange={e => {
-        const value = validateNumber(e.target.value);
-
-        if (value !== null) {
-          topupState.value(ctx, value)
-        }
-      }}
-    />
-  )
-}, "TopUpValue")
-
-const TopUpComment = reatomComponent(({ ctx }) => {
-  return (
-    <Input
-      value={ctx.spy(topupState.comment) ?? ""}
-      onChange={e => topupState.comment(ctx, e.target.value)}
-      placeholder="Комментарий (необязательно)"
-    />
-  )
-}, "TopUpComment")
-
 const TopUpError = reatomComponent(({ ctx }) => {
-  const validationError = ctx.spy(topupState.validationError);
-  const resultError = ctx.spy(topupState.resultError)
-  if (!validationError && !resultError) return null;
-
-  const message = resultError?.message ?? validationError?.message
-  if (!message) return null;
-
-  return (
-    <span className="text-red text-base text-nowrap truncate">
-      {message}
-    </span>
-  )
+  const msg = ctx.spy(topupErrorAtom)?.message
+  if (!msg) return null;
+  return <ErrorBlock title={msg} />
 }, "TopUpError")
 
-const TopUpMethod = reatomComponent<{
-  method: NonNullable<AtomState<typeof topup.fetchMethods.dataAtom>>[number]
-}>(({ ctx, method }) => {
+const TopUpMethod = reatomComponent<{ method: TopupMethodListPayload[number] }>(({ ctx, method }) => {
   const current = ctx.spy(topupState.method.type);
 
   return (
-    <div
-      data-state={current === method.value as AtomState<typeof topupState.method.type>}
-      className={itemVariant()}
-      onClick={() => topupState.method.type(ctx, method.value as AtomState<typeof topupState.method.type>)}
+    <Button
+      background={current === method.value ? "white" : "default"}
+      onClick={() => topupState.method.type(ctx, method.value)}
+      className="gap-2 h-12"
     >
-      <div className="flex items-center h-8 w-8 rounded-lg overflow-hidden">
-        <img src={method.imageUrl} className="h-8 w-8 object-cover" alt="" />
-      </div>
-      <Typography className="font-semibold text-lg">{method.title}</Typography>
-    </div>
+      <img src={method.imageUrl} className="min-h-6 min-w-6 rounded-lg h-6 w-6 object-cover" alt="" />
+      {method.title}
+    </Button>
   )
 }, "TopUpMethod")
 
-const TopUpMethodsSkeleton = () => {
-  return (
-    <div className="grid grid-cols-3 auto-rows-auto gap-2 w-full h-full">
-      {Array.from({ length: 3 }).map((_, idx) => (
-        <div key={idx} className={itemVariant()} data-state={false}>
-          <Skeleton className="h-6 w-6" />
-          <Skeleton className="h-6 w-12" />
-        </div>
-      ))}
-    </div>
-  )
-}
-
 const TopUpMethods = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(topup.fetchMethods.dataAtom);
-
   if (ctx.spy(topup.fetchMethods.statusesAtom).isPending) {
-    return <TopUpMethodsSkeleton />
+    return Array.from({ length: 3 }).map((_, idx) => <Skeleton key={idx} className="h-12 w-full" />)
   }
 
+  const data = ctx.spy(topup.fetchMethods.dataAtom);
   if (!data) return null;
 
-  return (
-    <div className="grid sm:grid-cols-3 grid-cols-1 auto-rows-auto gap-2 w-full h-full">
-      {data.map((method) => (
-        <TopUpMethod key={method.id} method={method} />
-      ))}
-    </div>
-  )
+  return data.map((method) => <TopUpMethod key={method.id} method={method} />)
 }, 'TopUpMethods')
-
-const TopUpCurrency = reatomComponent<{ currency: AtomState<typeof topupState.method.currency> }>(({ ctx, currency }) => {
-  const current = ctx.spy(topupState.method.currency)
-
-  return (
-    <div
-      data-state={current === currency}
-      className={itemVariant()}
-      onClick={() => topupState.method.currency(ctx, currency)}
-    >
-      <Typography className="font-semibold">
-        {currency}
-      </Typography>
-    </div>
-  )
-}, "TopUpCurrency")
 
 const TopUpRecipient = reatomComponent(({ ctx }) => {
   return (
     <Input
       value={ctx.spy(topupState.recipient)}
       onChange={e => topupState.recipient(ctx, e.target.value)}
-      placeholder="Получатель"
+      placeholder="Никнейм"
+      maxLength={128}
     />
   )
 }, "TopUpRecipient")
 
 const TopUpCurrencies = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(topUpAvailableCurrenciesAtom);
-  if (!data) return null;
+  const data = ctx.spy(topup.fetchCurrencies.dataAtom);
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 auto-rows-auto gap-2 w-full h-full">
-      {data.map((currency) => (
-        <TopUpCurrency key={currency} currency={currency} />
-      ))}
-    </div>
+    <Select
+      disabled={ctx.spy(topup.fetchCurrencies.statusesAtom).isPending}
+      value={ctx.spy(topupState.method.currency) ?? ""}
+      onValueChange={(v) => topupState.method.currency(ctx, v)}
+    >
+      <SelectTrigger className="w-full">
+        {ctx.spy(topupState.method.currency) ?? "Не выбрано"}
+      </SelectTrigger>
+      <SelectContent>
+        {data?.map((currency, idx) => <SelectItem key={idx} value={currency}>{currency}</SelectItem>)}
+      </SelectContent>
+    </Select>
   )
 }, "TopUpCurrencies")
 
-const TopUpSubmit = reatomComponent(({ ctx }) => {
-  const isDisabled = !ctx.spy(topUpIsValidAtom) || ctx.spy(topup.submit.statusesAtom).isPending;
+const BUTTONS = [
+  { 
+    label: "Назад", 
+    bgVariant: "default",
+    cdAtom: topupNavigationModel.canGoBackAtom, 
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.back(spawnCtx)) 
+  },
+  { 
+    label: "Продолжить", 
+    bgVariant: "positive", 
+    cdAtom: topupNavigationModel.canGoNextAtom, 
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx)) 
+  }
+] as const
+
+const TopupNavigation = reatomComponent(({ ctx }) => {
+  const isLast = ctx.spy(topupNavigationModel.isLastStepAtom)
+  if (isLast) return null;
 
   return (
-    <Button
-      background="white"
-      className="px-4 w-full"
-      onClick={() => topup.submit(ctx)}
-      disabled={isDisabled}
-    >
-      <Typography className="text-lg font-semibold">
-        Оплатить
-      </Typography>
-    </Button>
+    <div className="flex items-center gap-2 w-full *:w-full">
+      {BUTTONS.map((button, idx) => (
+        <Button
+          key={idx}
+          type="button"
+          disabled={!ctx.spy(button.cdAtom)}
+          background={button.bgVariant}
+          onClick={() => button.cb(ctx)}
+        >
+          {button.label}
+        </Button>
+      ))}
+    </div>
   )
 }, "TopUpSubmit")
 
-const TopUpExchangesSkeleton = () => {
-  return (
-    <div className="flex items-center w-full sm:min-w-1/3 sm:w-fit h-full gap-2">
-      <Skeleton className="h-10 w-20" />
-      <Skeleton className="h-10 w-20" />
-    </div>
-  )
-}
+export const TopUpExchanges = reatomComponent(({ ctx }) => {
+  if (ctx.spy(topup.fetchExchange.statusesAtom).isPending) return <IconLoader />
 
-const TopUpExchanges = reatomComponent(({ ctx }) => {
   const data = ctx.spy(topup.fetchExchange.dataAtom);
-
-  if (ctx.spy(topup.fetchExchange.statusesAtom).isPending) {
-    return <TopUpExchangesSkeleton />
-  }
-
-  if (!data) return null;
+  if (!data || isEmptyArray(data)) return null;
 
   return (
-    <div className="flex items-center w-full sm:min-w-1/3 sm:w-fit h-full gap-2">
+    <div className="flex items-center justify-between w-full h-full gap-2">
       {data.map((entry) => (
-        <Popover key={entry.type}>
-          <PopoverTrigger>
-            <div className="flex bg-neutral-900 px-4 py-2 rounded-lg cursor-pointer items-center gap-2 w-full">
-              <Typography className="text-lg">
-                {TARGET_TITLE[entry.type as keyof typeof TARGET_TITLE]}
-              </Typography>
-              <IconExchange size={16} className="text-neutral-400" />
+        <div key={entry.type} className="flex flex-col w-full gap-2">
+          <div className="flex bg-neutral-800 justify-between px-4 h-10 rounded-lg cursor-pointer items-center gap-2 w-full">
+            <Typography className="text-lg leading-5">
+              {TARGET_TITLE[entry.type as keyof typeof TARGET_TITLE]}
+            </Typography>
+            <IconExchange size={16} className="text-neutral-400" />
+          </div>
+          <div className="flex flex-col gap-2 w-full h-full">
+            <Typography color="gray">Курс на текущий момент</Typography>
+            <div className='flex flex-col gap-1 w-full'>
+              {Object.entries(entry.values).map(([currency, value]) => (
+                <div key={currency}>~ {value.toFixed(2)} {currency}</div>
+              ))}
             </div>
-          </PopoverTrigger>
-          <PopoverContent>
-            <div className="flex flex-col gap-2 w-full h-full">
-              <Typography className="text-neutral-400">
-                Курс на текущий момент
-              </Typography>
-              <div className='flex flex-col gap-1 w-full'>
-                {Object.entries(entry.values).map(([currency, value]) => (
-                  <div key={currency}>
-                    ~ {value.toFixed(2)} {currency}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
+          </div>
+        </div>
       ))}
     </div>
   )
 }, "TopUpExchanges")
 
-export const TopUp = () => {
+const WALLETS_IMGS: Record<string, string> = { "CHARISM": charismImage, "BELKOIN": belkoinImage }
+
+const TopupValue = reatomComponent(({ ctx }) => {
   return (
-    <div className="flex flex-col h-full gap-4 w-full">
-      <div className="flex items-center gap-4 rounded-lg p-3 bg-blue-600/70 backdrop-blur-md">
-        <img src={boostsImg} width={102} height={102} alt="" />
-        <div className="flex flex-col gap-1 *:font-medium text-lg">
-          <Typography>1. Введите желаемое кол-во валюты</Typography>
-          <Typography>2. Выберите способ оплаты</Typography>
-          <Typography>3. Оплатите</Typography>
-        </div>
-      </div>
-      <div className="flex flex-col gap-6 w-full h-full">
-        <div className="flex flex-col gap-2 w-full h-full">
-          <Typography className="text-xl font-semibold">
-            У каждой валюты своя себестоимость относительно выбранной валюты
-          </Typography>
-          <TopUpExchanges />
-        </div>
-        <TopUpRecipient />
-        <div className="flex flex-col gap-2 w-full h-full">
-          <div className="flex flex-col gap-1 w-full h-full">
-            <Typography className="text-lg">
-              Игровая валюта
-            </Typography>
-            <div className="flex w-full sm:min-w-1/3 sm:w-fit h-full">
-              <TopUpTargets />
-            </div>
-          </div>
-          <div className="flex flex-col gap-1 w-full h-full">
-            <Typography className="text-lg">
-              Количество
-            </Typography>
-            <TopUpValue />
-          </div>
-        </div>
-        <div className="flex flex-col gap-1 w-full h-full">
-          <Typography className="text-lg">
-            Метод оплаты
-          </Typography>
-          <TopUpMethods />
-        </div>
-        <div className="flex flex-col gap-1 w-full h-full">
-          <Typography className="text-lg">
-            Валюта
-          </Typography>
-          <TopUpCurrencies />
-        </div>
-        <div className="flex flex-col gap-1 min-w-1/3 w-full sm:w-fit h-full">
-          <Typography className="text-lg">
-            Дополнительное
-          </Typography>
-          <TopUpComment />
-        </div>
-        <div className="flex flex-col sm:flex-row items-center justify-between w-full h-full gap-2">
-          <div className="min-w-0">
-            <TopUpError />
-          </div>
-          <div className="flex grow w-full sm:max-w-1/4">
-            <TopUpSubmit />
-          </div>
-        </div>
-      </div>
+    <div className="flex w-full justify-between gap-1 items-center">
+      <Input
+        maxLength={8}
+        className="w-full"
+        placeholder="Количество валюты"
+        value={ctx.spy(topupState.value)}
+        onChange={e => topupState.value.onChangeEvent(ctx, e)}
+      />
+      <Select value={ctx.spy(topupState.wallet)} onValueChange={v => topupState.wallet(ctx, v)}>
+        <SelectTrigger className="max-w-max">
+          <TopUpTarget img={WALLETS_IMGS[ctx.spy(topupState.wallet)]} />
+        </SelectTrigger>
+        <SelectContent>
+          {topupState.WALLETS.map((wallet) => (
+            <SelectItem key={wallet.value} value={wallet.value}>
+              <TopUpTarget variant="full" title={wallet.title} img={WALLETS_IMGS[wallet.value]} />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
+}, "TopupValue")
+
+const TopupConfirm = reatomComponent(({ ctx }) => {
+  if (ctx.spy(topup.submit.statusesAtom).isPending) return <IconLoader />
+
+  const error = ctx.spy(topupErrorAtom)
+
+  if (error) {
+    return (
+      <Button
+        background="default"
+        className='px-4 w-fit font-semibold'
+        onClick={() => topup.resetAll(ctx)}
+      >
+        Вернуться
+      </Button>
+    )
+  }
+
+  const data = ctx.spy(topup.submit.dataAtom)
+  if (!data) return null;
+
+  return (
+    <div className="flex flex-col items-center justify-center w-full gap-4">
+      <div className="flex flex-col gap-2 items-center justify-center">
+        <IconCheck size={36} className='text-green-400' />
+        <Typography className="text-lg font-semibold">Заказ создан</Typography>
+      </div>
+      <Button
+        type="button"
+        background="default"
+        onClick={() => topup.toOrder(ctx, data.uniqueId)}
+        className="font-semibold"
+      >
+        К заказу
+      </Button>
+    </div>
+  )
+}, "TopupConfirm")
+
+const COMPONENTS: Record<TopupType, ReactNode> = {
+  "start-input": (
+    <div className="flex flex-col gap-2 w-full">
+      <TopUpRecipient />
+      <TopupValue />
+    </div>
+  ),
+  "select-method": (
+    <div className="flex flex-col gap-4 w-full">
+      <div className="flex flex-col gap-2 w-full">
+        <Typography className="text-lg font-semibold">
+          Выберите метод оплаты и валюту
+        </Typography>
+        <div className="grid sm:grid-cols-3 grid-cols-1 auto-rows-auto gap-2 w-full h-full">
+          <TopUpMethods />
+        </div>
+      </div>
+      <TopUpCurrencies />
+    </div>
+  ),
+  "confirm": <TopupConfirm />
 }
+
+const TopupFormContent = reatomComponent(({ ctx }) => COMPONENTS[ctx.spy(topupState.type)], "TopupFormContent")
+
+export const TopupForm = reatomComponent(({ ctx }) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx))
+  }
+
+  return (
+    <form className="flex flex-col gap-8 w-full sm:w-[60%] h-full" onSubmit={handleSubmit}>
+      <TopupFormContent />
+      <TopUpError />
+      <TopupNavigation />
+    </form>
+  )
+}, "TopupForm")

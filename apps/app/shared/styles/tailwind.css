@@ -4,16 +4,9 @@
 @source "../../../../packages/ui/**/*.{ts,tsx}";
 
 @import "../../../../packages/ui/src/styles/index.css";
-@import "./editor.css";
 
 @plugin 'tailwind-scrollbar' {
   nocompatible: true;
-}
-
-
-@font-face {
-  font-family: "PIXY";
-  src: url("/fonts/PIXY.ttf") format("truetype");
 }
 
 :root {

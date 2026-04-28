@@ -21,7 +21,7 @@ import { Button } from "@repo/ui/button";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { Checkbox } from "@repo/ui/checkbox";
 import { Input } from "@repo/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@repo/ui/popover";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-card";
 
 const UsersGlobalActions = reatomComponent(({ ctx }) => {
   const isSelectedOver = ctx.spy(usersSelectedOverAtom);
@@ -134,11 +134,11 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
 
   return (
     <div>
-      <Popover>
-        <PopoverTrigger className="cursor-pointer bg-neutral-800 rounded-md h-8 px-4">
+      <HoverCard>
+        <HoverCardTrigger className="cursor-pointer bg-neutral-800 rounded-md h-8 px-4">
           {targetSort}
-        </PopoverTrigger>
-        <PopoverContent>
+        </HoverCardTrigger>
+        <HoverCardContent>
           <div className="flex flex-col gap-1 w-full h-full">
             {SORTS.map((sort) => (
               <div
@@ -152,8 +152,8 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
               </div>
             ))}
           </div>
-        </PopoverContent>
-      </Popover>
+        </HoverCardContent>
+      </HoverCard>
     </div>
   )
 }, "UsersFiltersSort")

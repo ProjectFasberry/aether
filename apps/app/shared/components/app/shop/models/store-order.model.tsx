@@ -1,12 +1,12 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/async";
-import { action, Action, atom, Ctx } from "@reatom/core";
+import { action, Action, atom } from "@reatom/core";
 import { CreateOrderRoutePayload, OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
 import { withAssign, withReset } from "@reatom/framework";
 import { API_PREFIX_URL } from "@/shared/env";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { OrderSingleDefault, OrderSinglePayload, OrderType } from "@repo/shared/types/entities/store";
+import { OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
 import { TopUpButton } from "../components/wallet/top-up-button";
 import { navigate } from "vike/client/router";
 
@@ -35,7 +35,7 @@ export const order = atom(null, "order").pipe(
     create: reatomAsync(async (ctx) => {
       return await ctx.schedule(() =>
         client
-          .post<CreateOrderRoutePayload>("store/order/create", {
+          .post<CreateOrderRoutePayload>("store/order/internal/create", {
             throwHttpErrors: false,
             retry: 1
           })
@@ -135,7 +135,7 @@ orderState.es.onChange((ctx, target) => {
 
 export async function getOrder(id: string, init: RequestInit, type: string = "default") {
   return client
-    .get<OrderSinglePayload>(`store/order/${id}`, {
+    .get<OrderSinglePayload>(`store/order/external/${id}`, {
       ...init,
       searchParams: {
         type
@@ -145,5 +145,6 @@ export async function getOrder(id: string, init: RequestInit, type: string = "de
 }
 
 export const createdOrderDataAtom = atom<CreateOrderRoutePayload | null>(null)
-export const getOrderUrl = (uniqueId: string, t: Exclude<OrderType, "all"> = "default") =>
+export const getOrderUrl = (uniqueId: string, t: string = "default") =>
   `/store/order/status/${uniqueId}?type=${t}`
+export const loaderIsActiveAtom = atom((ctx) => ctx.spy(order.create.statusesAtom).isPending)

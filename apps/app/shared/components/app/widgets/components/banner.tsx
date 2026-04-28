@@ -5,8 +5,9 @@ import { IconX } from "@tabler/icons-react";
 import { bannerIsExistsAtom, banner } from "../models/banner.model";
 import { Button } from "@repo/ui/button";
 import { Skeleton } from "@repo/ui/skeleton";
-import { BannerPayload } from "@repo/shared/types/entities/banner";
 import { tv } from "tailwind-variants";
+
+type BannerPayload = ExtractApiData<"getSharedBannerList">["data"]["data"][number]
 
 const BannerView = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (

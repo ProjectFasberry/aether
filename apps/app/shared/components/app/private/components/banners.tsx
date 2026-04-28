@@ -7,7 +7,6 @@ import {
 import { Skeleton } from "@repo/ui/skeleton"
 import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
-import { BannerPayload } from "@repo/shared/types/entities/banner"
 import { action, atom, AtomState } from "@reatom/core"
 import { sleep, withReset } from "@reatom/framework"
 import { IconEye, IconX } from "@tabler/icons-react"
@@ -25,6 +24,8 @@ import {
 } from "../models/banner.model"
 import { Input } from "@repo/ui/input"
 import { ButtonXSubmit } from "./global"
+
+type BannerPayload = ExtractApiData<"getSharedBannerList">["data"]["data"][number]
 
 const CreateBannerTitle = reatomComponent(({ ctx }) => {
   return (

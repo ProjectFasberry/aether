@@ -7,7 +7,7 @@ import {
   getPriceInCurrency, 
   rollbackOrder, 
   validateOrderLimit 
-} from "../create-crypto-order";
+} from "./create-crypto-order";
 import { logger } from "#/utils/config/logger";
 import type { CreateOrderTopUpSchema, OrderInputPayload, OutputPayload } from "@repo/shared/schemas/payment";
 import { getRedis } from "#/shared/redis/init";

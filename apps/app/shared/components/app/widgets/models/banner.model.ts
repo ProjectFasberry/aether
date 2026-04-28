@@ -4,7 +4,8 @@ import { appState } from "@/shared/models/app.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom } from "@reatom/core";
 import { withAssign } from "@reatom/framework";
-import { BannerPayload } from "@repo/shared/types/entities/banner";
+
+type BannerPayload = ExtractApiData<"getSharedBannerLatest">["data"]
 
 export const bannerIsExistsAtom = atom((ctx) => ctx.spy(appState.options).bannerIsExists, "bannerIsExists")
 bannerIsExistsAtom.onChange((ctx, state) => state && banner.fetch(ctx))

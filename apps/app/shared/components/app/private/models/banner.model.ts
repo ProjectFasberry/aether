@@ -1,12 +1,14 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
-import { action, atom, Ctx } from "@reatom/core"
+import { action, atom } from "@reatom/core"
 import { withAssign, withReset } from "@reatom/framework"
-import { BannerPayload, BannersPayload } from "@repo/shared/types/entities/banner"
 import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
 import { alertDialog } from "@/shared/components/config/alert-dialog.model"
+
+type BannersPayload = ExtractApiData<"getSharedBannerList">["data"]
+type BannerPayload = BannersPayload["data"][number]
 
 export const bannersAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>

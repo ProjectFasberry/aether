@@ -2,21 +2,22 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Rate } from "./rate";
 import { playerAtom, playerParamAtom } from "../models/player.model";
 import { DONATE_COLORS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
-import { Player } from "@repo/shared/types/entities/user";
 import { atom } from "@reatom/core";
 import { playerRateState } from "../models/rate.model";
+
+type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 
 const PlayerTag = ({ group }: { group: Player["group"] }) => {
   return (
     <div
-      style={{ borderColor: DONATE_COLORS[group] }}
+      style={{ borderColor: DONATE_COLORS[group as keyof typeof DONATE_COLORS] }}
       className="flex px-3 items-center justify-center gap-2 py-0.5 rounded-full border"
     >
       <span
-        style={{ backgroundColor: DONATE_COLORS[group] }}
+        style={{ backgroundColor: DONATE_COLORS[group as keyof typeof DONATE_COLORS] }}
         className="h-3 w-3 rounded-full"
       />
-      <span>{DONATE_TITLE[group]}</span>
+      <span>{DONATE_TITLE[group as keyof typeof DONATE_COLORS]}</span>
     </div>
   )
 }

@@ -109,17 +109,17 @@ const PlayerSeemsLikePlayersList = reatomComponent(({ ctx }) => {
 
   return (
     <div className={seemsLikeGridVariant().base()}>
-      {data.map(({ nickname, uuid }) => (
+      {data.map((player) => (
         <div
-          key={uuid}
+          key={player.uuid}
           className={seemsLikeGridVariant().card()}
         >
           <Link
-            href={createLink("player", nickname)}
-            aria-label={`Профиль игрока ${nickname}`}
+            href={createLink("player", player.nickname)}
+            aria-label={player.nickname}
             className={seemsLikeGridVariant().cardAvatar()}
           >
-            <Avatar nickname={nickname} className="w-16 h-16" />
+            <Avatar url={player.avatar} nickname={player.nickname} className="w-16 h-16" />
           </Link>
         </div>
       ))}

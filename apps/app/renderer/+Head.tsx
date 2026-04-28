@@ -3,24 +3,14 @@ import { APAY_TAG, API_PREFIX_URL, VOLUME_URL } from "@/shared/env";
 export default function HeadDefault() {
   return (
     <>
-      {import.meta.env.DEV && (
-        <script
-          crossOrigin="anonymous"
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-        ></script>
-      )}
       <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
       <link rel="shortcut icon" href="/favicon.ico" />
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content="Fasberry" />
       <link rel="manifest" href="/site.webmanifest" />
-      {import.meta.env.PROD && (
-        <>
-          <link rel="preconnect" href={API_PREFIX_URL} />
-          <link rel="preconnect" href={VOLUME_URL} />
-        </>
-      )}
+      <link rel="preconnect" href={API_PREFIX_URL} />
+      <link rel="preconnect" href={VOLUME_URL} />
       <meta name="keywords" content="fasberry, minecraft, фасберри, фесберри, фесберри проект, майнкрафт сервер,
       майнкрафт, майнкрафт играть, minecraft play, сервера майнкрафт бесплатно, список серверов майнкрафта,
       полу-ванильные сервера майнкрафта, полуванила майнкрафт, rp сервер майнкрафт, rpg сервер майнкрафт,
@@ -43,7 +33,24 @@ export default function HeadDefault() {
           href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400..900&display=swap"
         />
       </noscript>
+      <link
+        rel="preload"
+        href="/fonts/PIXY.ttf"
+        as="font"
+        type="font/ttf"
+        crossOrigin="anonymous"
+      />
+      <style>
+        {`
+          @font-face {
+            font-family: 'PIXY';
+            src: url('/fonts/PIXY.ttf') format('ttf');
+            font-display: swap;
+          }
+        `}
+      </style>
       <meta name="apay-tag" content={APAY_TAG} />
+      <script>0</script>
     </>
   );
 }

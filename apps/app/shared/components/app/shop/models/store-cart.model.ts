@@ -12,6 +12,7 @@ import { withSsr } from "@/shared/lib/reatom-helpers";
 import { invariant } from "@/shared/lib/invariant";
 import { storeItem } from "./store-item.model";
 import { storeItems } from "./store.model";
+import { getIsAuth } from "@/shared/lib/utils";
 
 async function getCartData(init?: RequestInit) {
 	return client<CartListPayload>("store/cart/list", { ...init }).exec();
@@ -26,6 +27,8 @@ export const cartDataSelectedAtom = atom<CartItem[]>((ctx) =>
 ).pipe(
 	withInit((ctx) => ctx.get(cartState.data).filter((t) => t.selected)),
 );
+
+export const cartDataIsEmptyAtom = atom((ctx) => ctx.spy(cartState.data).length === 0)
 
 export const cartDataItemIsSelectAtom = (id: number) => atom((ctx) => {
 	const data = ctx.spy(cartDataSelectedAtom).find((d) => d.id === id);
@@ -48,12 +51,24 @@ export const cartState = atom(null, "cartState").pipe(
 	}))
 )
 
+function assertDefined<T>(val: T, name: string): asserts val is NonNullable<T> {
+	if (val === undefined || val === null) {
+		const message = `${name} is undefined or null`;
+		console.warn(message);
+	}
+}
+
 export const cart = atom(null, "cart").pipe(
 	withAssign((_, name) => ({
 		// server only
 		async init(pageCtx: PageContextServer) {
 			const headers = pageCtx.headers;
 			if (!headers) return;
+
+			const isAuthed = getIsAuth(pageCtx.snapshot);
+			assertDefined(isAuthed, "isAuthed")
+			
+			if (!isAuthed) return;
 
 			const ctx = createCtx();
 

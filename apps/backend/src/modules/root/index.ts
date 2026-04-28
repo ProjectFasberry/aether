@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { initPlayerSkin, updatePlayersSkins } from "../server/skin/skin.model";
 import * as z from "zod/v4";
-import bearer from "@elysiajs/bearer";
+import { bearer } from "@elysia/bearer";
 import { general } from "#/shared/database/general-db";
 
 export const forceSkinInit = new Elysia()

@@ -11,7 +11,7 @@ import { invariant } from "@/shared/lib/invariant";
 
 export async function getStoreItem(id: string, init: RequestInit) {
   return client
-    .get<StoreItem>(`store/item/${id}`, { ...init, throwHttpErrors: false, })
+    .get<StoreItem>(`store/item/${id}`, init)
     .exec()
 }
 
@@ -21,8 +21,8 @@ type UpdateItemStatusOptions =
   | { set: { isSelected: boolean; isLoading: boolean } }
 
 export const storeItemState = atom(null, "storeItemState").pipe(
-  withAssign(() => ({
-    data: atom<StoreItem | null>(null, "selectedItem").pipe(withSsr("selectedItem"))
+  withAssign((_, name) => ({
+    data: atom<StoreItem | null>(null, `${name}.data`).pipe(withSsr(`${name}.data`))
   }))
 )
 

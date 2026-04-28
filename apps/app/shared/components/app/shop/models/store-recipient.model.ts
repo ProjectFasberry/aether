@@ -32,7 +32,7 @@ async function getExistNickname(nickname: string) {
 }
 
 const ERRORS: Record<string, string> = {
-  "not-found": "Такой игрок не зарегистрирован"
+  "NOT_FOUND": "Такой игрок не зарегистрирован"
 }
 
 export const changeRecipientState = atom(null, "changeRecipientState").pipe(

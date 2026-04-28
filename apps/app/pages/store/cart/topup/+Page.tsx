@@ -1,58 +1,41 @@
-import { TopUp } from "@/shared/components/app/shop/components/wallet/top-up";
+import { TopUpExchanges, TopupForm } from "@/shared/components/app/shop/components/wallet/top-up";
 import { topup, topupState } from "@/shared/components/app/shop/models/store-top-up.model";
 import { startPageEvents } from "@/shared/lib/events";
+import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { pageContextAtom } from "@/shared/models/page-context.model";
 import { action } from "@reatom/core";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 
+const boostsImg = getStaticImage("icons/boosts_icon.png")
+
 const events = action((ctx) => {
-  const pageContext = ctx.get(pageContextAtom);
-  if (!pageContext) return;
+  const pageCtx = ctx.get(pageContextAtom);
+  if (!pageCtx) return;
 
-  const search = pageContext.urlParsed.search;
-
-  topupState.search(ctx, search);
-
-  topup.fetchMethods(ctx)
+  topupState.search(ctx, pageCtx.urlParsed.search);
   topup.fetchExchange(ctx)
 })
-
-const StoreLoader = reatomComponent(({ ctx }) => {
-  const isLoading = ctx.spy(topup.submit.statusesAtom).isPending;
-
-  ctx.schedule(() => {
-    if (isLoading) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-  });
-
-  if (!isLoading) return null;
-
-  return (
-    <div className="flex z-[1000] items-center flex-col gap-4 fixed bg-black/60 justify-center h-full w-full">
-      <div className="ui-loader loader-blk">
-        <svg viewBox="22 22 44 44" className="multiColor-loader">
-          <circle cx="44" cy="44" r="20.2" fill="none" strokeWidth="3.6" className="loader-circle loader-circle-animation">
-          </circle>
-        </svg>
-      </div>
-      <Typography className="font-semibold text-xl">
-        Готовим заказ
-      </Typography>
-    </div>
-  )
-}, "StoreLoader")
 
 export default function Page() {
   useUpdate((ctx) => startPageEvents(ctx, events), [pageContextAtom])
 
   return (
-    <>
-      <StoreLoader />
-      <TopUp />
-    </>
+    <div className="flex flex-col h-full gap-6 w-full">
+      <div className="flex items-center gap-4 rounded-lg p-3 bg-blue-600/60 backdrop-blur-sm">
+        <img src={boostsImg} width={122} height={122} alt="" />
+        <div className="flex flex-col gap-3 *:font-medium text-lg">
+          <Typography>1. Введите желаемое кол-во валюты</Typography>
+          <Typography>2. Выберите способ оплаты</Typography>
+          <Typography>3. Оплатите</Typography>
+        </div>
+      </div>
+      <div className="flex items-start justify-between gap-6 sm:flex-row flex-col w-full">
+        <TopupForm />
+        <div className="flex w-full sm:w-[40%] h-full">
+          <TopUpExchanges />
+        </div>
+      </div>
+    </div>
   )
 }

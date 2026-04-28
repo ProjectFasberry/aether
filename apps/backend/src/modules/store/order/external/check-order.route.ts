@@ -4,8 +4,7 @@ import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
 import { getRedis } from "#/shared/redis/init";
 import { getOrderKey } from "./create-crypto-order";
-import { logger } from "#/utils/config/logger";
-import { CRYPTO_PAY_TESTNET_TOKEN, isProduction } from "#/shared/env";
+import { CRYPTO_PAY_TESTNET_TOKEN } from "#/shared/env";
 import { safeJsonParse } from "#/utils/config/transforms";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { general } from "#/shared/database/general-db";
@@ -43,47 +42,34 @@ export const checkOrderRoute = new Elysia()
     }
 
     const isValid = validateSignatureCryptoPay(text, signature);
-    if (!isValid) {
-      throw status(400, wrapError("INVALID_SIGNATURE"))
-    }
+    if (!isValid) throw status(400, wrapError("INVALID_SIGNATURE"))
 
     const redis = getRedis()
 
     const bodyResult = safeJsonParse<CheckOrderBody>(text)
-    if (!bodyResult.ok) {
-      throw status(500, wrapError("INCORRECT_BODY"))
-    }
+    if (!bodyResult.ok) throw status(500, wrapError("INCORRECT_BODY"))
 
     const { update_type, payload } = bodyResult.value;
-    invariant(payload.payload, "Payload is not found")
+    invariant(payload.payload, "INCORRECT_PAYLOAD")
 
     const payloadResult = safeJsonParse<OrderSingleDefault>(payload.payload);
-    if (!payloadResult.ok) {
-      throw status(500, wrapError("INCORRECT_PAYLOAD"))
-    }
+    if (!payloadResult.ok) throw status(500, wrapError("INCORRECT_PAYLOAD"))
 
     const data = payloadResult.value;
     const uniqueId = data.unique_id;
 
-    if (!uniqueId) {
-      throw status(500, wrapError("PAYMENT_NOT_FOUND"))
-    }
+    if (!uniqueId) throw status(500, wrapError("PAYMENT_NOT_FOUND"))
 
     if (payload.status === 'expired') {
       await redis.del(getOrderKey(uniqueId))
-      logger.success("Payment deleted from redis because is expired", payload.invoice_id)
     }
 
     if (update_type === 'invoice_paid') {
       const cached = await redis.get(getOrderKey(uniqueId))
-      if (!cached) {
-        throw status(404, wrapError("PAYMENT_NOT_FOUND"))
-      }
+      if (!cached) throw status(404, wrapError("PAYMENT_NOT_FOUND"))
 
       const cachedOrderResult = safeJsonParse<OrderSingleDefault>(cached);
-      if (!cachedOrderResult.ok) {
-        throw status(400, wrapError("INCORRECT_ORDER_DATA"))
-      }
+      if (!cachedOrderResult.ok) throw status(400, wrapError("INCORRECT_ORDER_DATA"))
 
       const order = cachedOrderResult.value
 
@@ -97,22 +83,9 @@ export const checkOrderRoute = new Elysia()
           })
           .executeTakeFirst()
 
-        if (!query.numInsertedOrUpdatedRows) {
-          if (!isProduction) {
-            logger.success("Payment saved to database", payload.invoice_id)
-          }
-          
-          throw status(500, wrapError("PAYMENT_NOT_SAVED"))
-        }
-
-        // publishPaymentSuccess()
-        // publishPaymentLog({ ...meta, orderId: payload.hash })
-
+        if (!query.numInsertedOrUpdatedRows) throw status(500, wrapError("PAYMENT_NOT_SAVED"))
+  
         await redis.del(getOrderKey(uniqueId));
-
-        if (!isProduction) {
-          logger.success("Deleted from redis cache. Order", payload.invoice_id)
-        }
       })
     }
 

@@ -12,10 +12,10 @@ export const SKIP_HOOK_HEADER = "X-Skip-Error-Handling";
 const hooksConfig: Options = {
 	hooks: {
 		afterResponse: [
-			async (_request, _options, response) => {
+			async ({ response, request }) => {
 				let skipHook = false;
 
-				const reqHeaders = _request.headers;
+				const reqHeaders = request.headers;
 
 				if (reqHeaders) {
 					if (reqHeaders.get(SKIP_HOOK_HEADER) === "true") {
@@ -41,12 +41,12 @@ const hooksConfig: Options = {
 
 export const clientInstance = ky.create({
 	...baseConfig,
-	prefixUrl: API_PREFIX_URL,
+	baseUrl: API_PREFIX_URL,
 	...hooksConfig,
 });
 
 export const panelClientInstance = ky.create({
 	...baseConfig,
-	prefixUrl: PANEL_API_PREFIX_URL,
+	baseUrl: PANEL_API_PREFIX_URL,
 	...hooksConfig,
 });

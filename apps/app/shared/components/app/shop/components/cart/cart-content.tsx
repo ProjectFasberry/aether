@@ -1,7 +1,6 @@
-import { atom } from "@reatom/core";
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { cartIsValidAtom, cartDataSelectedAtom, cartState } from "../../models/store-cart.model";
+import { cartIsValidAtom, cartDataSelectedAtom, cartState, cartDataIsEmptyAtom } from "../../models/store-cart.model";
 import { CartPrice } from "./cart-price";
 import { Link } from "@/shared/components/config/link";
 import { Button } from "@repo/ui/button";
@@ -10,7 +9,6 @@ import { CartItem } from "./cart-item";
 import { ChangeRecipientDialog } from "../recipient/change-recipient";
 import { IconCreditCardPay } from "@tabler/icons-react";
 import { expImage } from "@/shared/consts/images";
-import { WithLoader } from "../../../layout/components/with-loader";
 import { order } from "../../models/store-order.model";
 
 const CartContentData = reatomComponent(({ ctx }) => {
@@ -60,10 +58,7 @@ const CartContentEmpty = () => {
   )
 }
 
-const cartDataIsEmptyAtom = atom((ctx) => ctx.spy(cartState.data).length === 0)
-const loaderIsActiveAtom = atom((ctx) => ctx.spy(order.create.statusesAtom).isPending)
-
-const CartListContent = reatomComponent(({ ctx }) => {
+export const CartListContent = reatomComponent(({ ctx }) => {
   const isEmpty = ctx.spy(cartDataIsEmptyAtom);
   if (isEmpty) return <CartContentEmpty />;
 
@@ -87,7 +82,7 @@ const CartListContent = reatomComponent(({ ctx }) => {
   )
 }, 'CartListContent')
 
-const CartActions = () => {
+export const CartActions = () => {
   return (
     <div className="flex flex-col lg:w-1/3 bg-neutral-900 gap-4 p-2 sm:p-3 lg:p-4 rounded-xl w-full">
       <div className="flex flex-col gap-6">
@@ -131,21 +126,5 @@ const CartActions = () => {
         </div>
       </div>
     </div>
-  )
-}
-
-export const CartContent = () => {
-  return (
-    <WithLoader loaderAtom={loaderIsActiveAtom} title="Готовим заказ">
-      <div className="flex flex-col gap-6 w-full h-full">
-        <Typography className="text-3xl font-semibold">
-          Хранилище
-        </Typography>
-        <div className="flex flex-col lg:flex-row items-start w-full gap-6 h-fit">
-          <CartListContent />
-          <CartActions />
-        </div>
-      </div>
-    </WithLoader>
   )
 }

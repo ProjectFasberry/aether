@@ -5,19 +5,17 @@ import { AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorAtom, 
 import { onEvent } from "@reatom/web";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { AuthErrorType, authState, ErrorKey, getError, isPofActiveAtom, SCOPE_ACTIONS } from "./auth.model";
-import type { 
-  QRGeneratePayload, 
-  QREventsPayload, 
-  QREventsEvent,
-  GameGeneratePayload,
-  QRValidateTokenPayload 
-} from "@repo/shared/schemas/auth/login"
+import type { QREventsPayload, QREventsEvent } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
 import { API_HOST, API_PREFIX_URL } from "@/shared/env";
 import { pof } from "./pof.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod/v4";
 import { authSchema as loginSchema } from "@repo/shared/schemas/auth";
+
+type QRGeneratePayload = ExtractApiData<"postAuthLoginQrGenerate">["data"]
+type GameGeneratePayload = ExtractApiData<"postAuthLoginGameGenerate">["data"]
+type QRValidateTokenPayload = ExtractApiData<"getAuthLoginQrValidate">["data"]
 
 export type AuthLoginVariant = "qr" | "game" | "password";
 export type AuthLoginQRStatus = QREventsEvent | "idle"
@@ -70,22 +68,22 @@ export const login = atom(null, "login").pipe(
         submit: reatomAsync(async (ctx) => {
           const pofIsActive = ctx.get(pof.isActive);
           const token = ctx.get(pof.token);
-        
+
           if (pofIsActive && !token) {
             pof.showTokenVerifySectionAtom(ctx, true);
             return;
           }
-        
+
           authState.isProcessing(ctx, true);
-        
+
           const raw = {
             nickname: ctx.get(authState.fields.nickname),
             password: ctx.get(authState.fields.password),
           };
-        
+
           const { success, error, data } = z.safeParse(loginSchema, raw);
           if (!success) return error;
-        
+
           return await ctx.schedule(() =>
             client
               .post(`auth/login/basic`, {
@@ -102,28 +100,28 @@ export const login = atom(null, "login").pipe(
           name: `${name}.submit`,
           onFulfill: (ctx, res) => {
             if (!res) return;
-        
+
             if (res instanceof z.ZodError) {
               const issue = res.issues.map((d) => d)[0];
               const property = issue.path[0].toString() as AuthErrorType;
-        
+
               authState.globalError(ctx, issue.message);
               authState.errorsType(ctx, (state) => [...state, property]);
               authState.isProcessing(ctx, false);
-        
+
               return;
             }
-        
+
             login.afterEvent(ctx)
           },
           onReject: (ctx, e) => {
             logError(e);
             authState.isProcessing(ctx, false);
-        
+
             if (e instanceof Error) {
               const error = getError(e.message as ErrorKey);
               if (!error) return;
-        
+
               const { scope, message } = error;
               authState.globalError(ctx, message);
               SCOPE_ACTIONS[scope](ctx)
@@ -150,7 +148,7 @@ export const login = atom(null, "login").pipe(
 
           loginState.qr.url(ctx, pdUrl.href);
           loginState.qr.token(ctx, res.token)
-          
+
           login.qr.events(ctx, res.token)
         }, `${name}.generate`).pipe(
           withStatusesAtom(),
@@ -175,8 +173,8 @@ export const login = atom(null, "login").pipe(
             loginState.qr.socket(ctx, null)
           }
 
-          const wsUrl = createWsUrl({ 
-            host: API_HOST, 
+          const wsUrl = createWsUrl({
+            host: API_HOST,
             isSecure: import.meta.env.PROD,
             path: `auth/login/qr/events?token=${token}`
           })
@@ -207,13 +205,13 @@ export const login = atom(null, "login").pipe(
           withAssign((_, name) => ({
             validateToken: reatomAsync(async (ctx, token: string) => {
               const result = await ctx.schedule(() =>
-                client<false | QRValidateTokenPayload>("auth/login/qr/validate", { searchParams: { token } }).exec(),
+                client<QRValidateTokenPayload>("auth/login/qr/validate", { searchParams: { token } }).exec(),
               );
 
-              return { result, params: { token }}
+              return { result, params: { token } }
             }, {
               name: `${name}.validateToken`,
-              onFulfill: (ctx, { result, params: { token }}) => {
+              onFulfill: (ctx, { result, params: { token } }) => {
                 loginState.qr.verify.status(ctx, "idle")
                 loginState.qr.verify.token(ctx, token)
               }
@@ -267,7 +265,7 @@ export const login = atom(null, "login").pipe(
             .post<GameGeneratePayload>("auth/login/game/generate", { json: { visitorId } })
             .exec();
 
-          loginState.game.code(ctx, res.payload);
+          loginState.game.code(ctx, res.code);
         }, `${name}.generate`).pipe(
           withStatusesAtom(),
           withErrorAtom()
@@ -297,14 +295,7 @@ export const authLoginQRIsErrorAtom = atom((ctx) =>
   ctx.spy(login.qr.verify.confirm.errorAtom) || ctx.spy(login.qr.verify.decline.errorAtom),
 );
 
-export const authSubmitIsDisabledAtom = atom((ctx) => {
-  const isPending = ctx.spy(login.basic.submit.statusesAtom).isPending;
-  const isInvalid = !ctx.spy(authIsValidAtom);
-  const isPofActive = ctx.spy(isPofActiveAtom)
-  return isPofActive || isPending || isInvalid;
-}, "authSubmitIsDisabled");
-
-export const authIsValidAtom = atom<boolean>((ctx) => {
+const authIsValidAtom = atom<boolean>((ctx) => {
   const type = ctx.spy(authState.type);
 
   const { nickname, password, findout, acceptRules } = {
@@ -321,3 +312,10 @@ export const authIsValidAtom = atom<boolean>((ctx) => {
 
   return !!findout && !!acceptRules;
 }, "authIsValid");
+
+export const authSubmitIsDisabledAtom = atom((ctx) => {
+  const isPending = ctx.spy(login.basic.submit.statusesAtom).isPending;
+  const isInvalid = !ctx.spy(authIsValidAtom);
+  const isPofActive = ctx.spy(isPofActiveAtom)
+  return isPofActive || isPending || isInvalid;
+}, "authSubmitIsDisabled");
