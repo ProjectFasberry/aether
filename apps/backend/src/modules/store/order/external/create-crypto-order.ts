@@ -1,5 +1,5 @@
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import type { ExchangeRate } from "#/shared/types/payment/payment-types";
 import { logger } from "#/utils/config/logger";
 import type { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema";

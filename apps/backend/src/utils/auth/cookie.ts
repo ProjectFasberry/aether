@@ -1,5 +1,5 @@
 import { invariant } from "#/helpers/invariant"
-import { getUrls } from "#/shared/constants/urls"
+import { urls } from "#/shared/constants/urls"
 import { isProduction } from "#/shared/env"
 import type { Context } from "elysia"
 
@@ -17,8 +17,8 @@ const FALLBACK_DOMAIN = "127.0.0.1";
 export const SESSION_KEY = "session";
 
 function getDomain() {
-  const urls = getUrls()
-  const domain = urls.get("domain")
+  const list = urls.get()
+  const domain = list.get("domain")
   invariant(domain, "Domain is not defined");
 
   if (!isProduction) {

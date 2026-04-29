@@ -10,7 +10,7 @@ import {
 } from "./create-crypto-order";
 import { logger } from "#/utils/config/logger";
 import type { CreateOrderTopUpSchema, OrderInputPayload, OutputPayload } from "@repo/shared/schemas/payment";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";

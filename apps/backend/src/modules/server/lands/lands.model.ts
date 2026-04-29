@@ -419,6 +419,11 @@ export async function getLands({ cursor }: Static<typeof landsSchema>): Promise<
 
   const nameMap = new Map(playersList.map(p => [p.uuid, p.nickname]));
 
+  if (!parsedLands.length) return {
+    data: [],
+    meta: wrapMeta(result)
+  }
+
   const lands = await Promise.all(
     parsedLands.map(async (land) => {
       const members = await Promise.all(

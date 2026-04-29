@@ -16,45 +16,47 @@ async function fetchChatIds() {
 	return rows.map((d) => d.chat_id);
 }
 
-async function updateChatsInternal() {
-	const prev = CHATS?.length ?? 0;
-	const newData = await fetchChatIds();
-	CHATS = Object.freeze(newData);
-	return { prev, current: CHATS.length };
-}
+export const chats = {
+	async init() {
+		if (CHATS !== null) return;
 
-export async function initChats() {
-	if (CHATS !== null) return;
+		try {
+			const { current } = await chats.updateChatsInternal();
+			appLogger.success(`Telegram chats initialized. Loaded ${current} chats.`);
+		} catch (e) {
+			appLogger.error(e);
+			throw e;
+		}
+	},
+	get() {
+		invariant(CHATS, "Chats are not defined. Call initChats() first.");
+		if (CHATS.length === 0) appLogger.warn("Chats list is empty");
+		return CHATS;
+	},
+	async updateChatsInternal() {
+		const prev = CHATS?.length ?? 0;
+		const newData = await fetchChatIds();
 
-	try {
-		const { current } = await updateChatsInternal();
-		appLogger.success(`Telegram chats initialized. Loaded ${current} chats.`);
-	} catch (e) {
-		appLogger.error(e);
-		throw e;
-	}
-}
+		CHATS = Object.freeze(newData);
 
-export async function revalidateChats(): Promise<
-	{ ok: true; data: { upd: number; prev: number } } | { ok: false; error: Error | unknown }
-> {
-	if (isRefreshing) return { ok: false, error: new Error("Refresh already in progress") };
+		return { prev, current: CHATS.length };
+	},
+	async revalidate(): Promise<
+		{ ok: true; data: { upd: number; prev: number } } | { ok: false; error: Error | unknown }
+	> {
+		if (isRefreshing) {
+			return { ok: false, error: new Error("Refresh already in progress") };
+		}
 
-	isRefreshing = true;
+		isRefreshing = true;
 
-	try {
-		const { prev, current } = await updateChatsInternal();
-		return { ok: true as const, data: { upd: current, prev } };
-	} catch (e) {
-		appLogger.error("Revalidation failed:", e);
-		return { ok: false as const, error: e };
-	} finally {
-		isRefreshing = false;
-	}
-}
-
-export function getChats() {
-	invariant(CHATS, "Chats are not defined. Call initChats() first.");
-	if (CHATS.length === 0) appLogger.warn("Chats list is empty");
-	return CHATS;
-}
+		try {
+			const { prev, current } = await chats.updateChatsInternal();
+			return { ok: true as const, data: { upd: current, prev } };
+		} catch (e) {
+			return { ok: false as const, error: e };
+		} finally {
+			isRefreshing = false;
+		}
+	},
+};

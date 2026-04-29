@@ -1,22 +1,20 @@
-import { getGuardBot } from "#/shared/bot";
-import { getChats } from "#/shared/constants/chats";
-import { getNats, natsLogger } from "#/shared/nats/client";
+import { getNats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
-import { bold, format } from "gramio";
+import { natsLogger } from "#/utils/config/logger";
 
-async function sendLogs(subject: string, message: string) {
-  try {
-    const bot = getGuardBot()
-    const chats = getChats();
-    const text = format`${bold(subject)} ${message}`
+// async function sendLogs(subject: string, message: string) {
+//   try {
+//     const bot = {}
+//     const chats = getChats();
+//     const text = format`${bold(subject)} ${message}`
 
-    for (const chat_id of chats) {
-      bot.api.sendMessage({ chat_id,  text })
-    }
-  } catch (e) {
-    console.error(e)
-  }
-}
+//     for (const chat_id of chats) {
+//       bot.api.sendMessage({ chat_id, text })
+//     }
+//   } catch (e) {
+//     console.error(e)
+//   }
+// }
 
 const A_SUBJECTS = [
   SUBJECTS.EVENTS.AUTHORIZATION.LOGIN,
@@ -30,7 +28,7 @@ export const subscribePostHook = (subject: string) => {
     callback: (err, msg) => {
       if (err) {
         natsLogger.error(err)
-        throw err
+        return;
       }
 
       const subject = msg.subject;
@@ -38,7 +36,7 @@ export const subscribePostHook = (subject: string) => {
       const message = decoder.decode(msg.data)
 
       if (A_SUBJECTS.includes(subject)) {
-        void sendLogs(subject, message)
+        // sendLogs(subject, message)
       }
     }
   })

@@ -1,10 +1,9 @@
 import Elysia from "elysia";
-import { isProduction } from "../shared/env";
-import type { Context } from "elysia";
 import { general } from "../shared/database";
-import { getRedis } from "../shared/redis";
+import { redis } from "../shared/redis/client";
 import { logger } from "../shared/logger";
 import { safeJsonParse } from "@repo/shared/lib/utils";
+import { bearer } from "@elysia/bearer";
 
 type UserSessionPayload = {
 	nickname: string;
@@ -15,11 +14,10 @@ type UserSessionPayload = {
 	created_at: string | Date;
 };
 
-export const validateLogger = logger.withTag("Validation");
 export const getUserKey = (token: string) => `session:${token}`;
 export const SESSION_KEY = "session";
 
-export async function getPermissions(nickname: string, role_id: number): Promise<string[]> {
+async function getPermissions(nickname: string, role_id: number): Promise<string[]> {
 	const effectivePermissions = await general
 		.selectFrom("permissions as p")
 		.select(["p.name"])
@@ -42,9 +40,9 @@ export async function getPermissions(nickname: string, role_id: number): Promise
 }
 
 export async function getUserNickname(token: string): Promise<string | null> {
-	const redis = getRedis();
+	const client = redis.get();
 
-	const data = await redis.get(getUserKey(token));
+	const data = await client.get(getUserKey(token));
 	if (!data) return null;
 
 	const result = safeJsonParse<UserSessionPayload>(data);
@@ -53,11 +51,10 @@ export async function getUserNickname(token: string): Promise<string | null> {
 	return result.value.nickname ?? null;
 }
 
-export async function handleAuthedByApiUser(headers: Context["headers"]): Promise<{ nickname: string } | null> {
-	const apiKeyRaw = headers["authorization"];
-	const apiKey = apiKeyRaw?.replace("Bearer", "").trim();
+async function handleAuthedByApiUser(apiKey: string | undefined): Promise<{ nickname: string } | null> {
+	if (!apiKey) return null;
 
-	if (!!apiKey && apiKey.trim().length !== 0) {
+	if (apiKey.trim().length !== 0) {
 		const query = await general
 			.selectFrom("api_keys")
 			.select(["key", "nickname"])
@@ -73,21 +70,13 @@ export async function handleAuthedByApiUser(headers: Context["headers"]): Promis
 }
 
 export const defineSession = () =>
-	new Elysia()
-		.derive(({ cookie }) => {
-			const sessionCookie = cookie[SESSION_KEY];
-			const session = sessionCookie.value as string | undefined;
-			return { session };
-		})
-		.as("global");
+	new Elysia().derive(({ cookie }) => ({ session: cookie[SESSION_KEY]?.value as string | undefined })).as("global");
 
 export const validatePermission = (permission: string) =>
 	new Elysia()
 		.use(defineUserRole())
 		.derive(async ({ role, nickname, status }) => {
-			if (!isProduction) {
-				validateLogger.log("validatePermission");
-			}
+			if (!Bun.env.PROD) logger.log("validatePermission");
 
 			const perms = await getPermissions(nickname, role.id);
 
@@ -101,13 +90,12 @@ export const validatePermission = (permission: string) =>
 export const defineUser = () =>
 	new Elysia()
 		.use(defineSession())
-		.derive(async ({ session, status, headers }) => {
-			const result = await handleAuthedByApiUser(headers);
-			if (result) return result;
+		.use(bearer())
+		.derive(async ({ session, status, bearer }) => {
+			if (!Bun.env.PROD) logger.log("defineUser");
 
-			if (!isProduction) {
-				validateLogger.log("defineUser");
-			}
+			const result = await handleAuthedByApiUser(bearer);
+			if (result) return result;
 
 			if (!session) throw status(401);
 
@@ -121,19 +109,17 @@ export const defineUser = () =>
 export const defineUserRole = () =>
 	new Elysia()
 		.use(defineUser())
-		.derive(async ({ nickname, status, headers }) => {
+		.derive(async ({ nickname, status, bearer }) => {
+			if (!Bun.env.PROD) logger.log("defineUserRole");
+
 			let role: { id: number; name: string } | null = null;
 
-			const result = await handleAuthedByApiUser(headers);
+			const result = await handleAuthedByApiUser(bearer);
 
-			if (result) {
+			if (result?.nickname) {
 				// todo: impl correct way for define the highest role
 				role = { id: 3, name: "admin" };
 				return { role };
-			}
-
-			if (!isProduction) {
-				validateLogger.log("defineUserRole");
 			}
 
 			role = await general

@@ -3,75 +3,64 @@ import "../declare.d.ts";
 
 import { handleFatalError } from "./utils/config/handle-log";
 import { checkDatabasesHealth } from "./shared/database/init";
-import { initURLS } from "./shared/constants/urls";
-import { initChats } from "./shared/constants/chats";
-import { initPermissions } from "./shared/constants/permissions";
-import { startMinio } from "./shared/minio/init";
-import { config, initRedis } from "./shared/redis/init";
-import { startNats } from "./shared/nats/init";
+import { urls } from "./shared/constants/urls";
+import { permissions } from "./shared/constants/permissions";
+import { minio } from "./shared/minio/client";
+import { redis } from "./shared/redis/client";
 import { startJobs } from "./shared/cron/init";
-import { connectToRcon } from "./shared/rcon/init";
-import { isProduction } from "./shared/env";
-import { getNats } from "./shared/nats/client";
-import Redis from "ioredis";
-import { loginQR } from "./modules/auth/login.model";
+import { rcon } from "./shared/rcon/client";
+import { psubscribe } from "./shared/redis/subscribers";
+import { nats } from "./shared/nats/client";
+import { appLogger } from "./utils/config/logger";
 
-async function entrypoint() {
-	await checkDatabasesHealth();
-	await initURLS();
-	await initChats();
-	await initPermissions();
-	await connectToRcon();
+type BootstrapStep = {
+	name: string;
+	run: () => Promise<void> | void;
 }
 
-async function services() {
-	await startNats();
-	await startMinio();
-	await initRedis();
-}
+const bootstrapPipeline: BootstrapStep[] = [
+	{ name: "db-health", run: () => checkDatabasesHealth() },
+	{ name: "urls", run: () => urls.init() },
+	{ name: "permissions", run: () => permissions.init() },
+	{ name: "rcon", run: () => rcon.connect() },
+	{ name: "nats", run: () => nats.start() },
+	{ name: "minio", run: () => minio.start() },
+	{ name: "redis", run: () => redis.start() },
+	{ name: "psubscribe", run: () => psubscribe() },
+	{ name: "jobs", run: () => startJobs() }
+];
 
-async function startBridge() {
-	const nc = getNats();
-	const redisSub = new Redis(config)
-	
-	await redisSub.psubscribe('__keyevent@0__:expired');
+async function bootstrap() {
+	const start = Date.now();
 
-	redisSub.on('pmessage', (pattern, channel, key) => {
-		if (!key) return;
-		
-		if (!isProduction) {
-			console.log(pattern, channel, key)
-		}
-
-		if (key.startsWith('auth:qr:')) {
-			const qrToken = key.split(':')[2]
-
-			const subject = loginQR.createAuthQRSubject("expired", qrToken)
-			nc.publish(subject, JSON.stringify({ data: qrToken }));
-		}
-	});
-}
-
-async function startServices() {
-	await entrypoint();
-	await services();
-	startBridge()
-	
-	startJobs();
-
-	if (isProduction) {
-		const { startGuardBot } = await import("./shared/bot");
-		startGuardBot();
+	for (const step of bootstrapPipeline) {
+		appLogger.withTag("Bootstrap").log(`Executing: ${step.name}`);
+		await step.run();
 	}
+
+	appLogger.success(`Bootstrap finished in ${Date.now() - start}ms`);
 }
 
-async function start() {
-	await startServices();
+const shutdown = async (signal: string) => {
+	appLogger.log(`Received ${signal}. Starting graceful shutdown...`);
 
-	const { startApp } = await import("./app");
-	startApp();
-}
+	await Promise.allSettled([
+		nats.close(),
+		redis.close(),
+		rcon.disconnect(),
+	]);
 
-start();
+	appLogger.log("All connections closed. Bye!");
+	process.exit(0);
+};
 
-process.on("uncaughtException", handleFatalError).on("unhandledRejection", handleFatalError);
+await bootstrap();
+
+const { startApp } = await import("./app");
+startApp();
+
+process
+	.on("uncaughtException", handleFatalError)
+	.on("unhandledRejection", handleFatalError)
+	.on("SIGTERM", () => shutdown("SIGTERM"))
+	.on("SIGINT", () => shutdown("SIGINT"))

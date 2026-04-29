@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
-import { getNats, natsLogger } from "#/shared/nats/client"
+import { getNats } from "#/shared/nats/client"
 import { SUBJECTS } from "#/shared/nats/subjects"
 import * as z from "zod/v4"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from '#/shared/database/general-db';
 import { safeJsonParse } from '#/utils/config/transforms';
 import type { Msg } from '@nats-io/nats-core';
-import { logger } from '#/utils/config/logger';
+import { logger, natsLogger } from '#/utils/config/logger';
 
 const userJoinSchema = z.object({
   date: z.string(),

@@ -1,6 +1,6 @@
 import { getRedisKey } from "#/helpers/redis"
 import { general } from "#/shared/database/general-db"
-import { getRedis } from "#/shared/redis/init"
+import { getRedis } from "#/shared/redis/client"
 
 export const getPlayerUUIDCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:uuids:${nickname}`)
 

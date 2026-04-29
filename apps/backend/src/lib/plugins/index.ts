@@ -1,5 +1,5 @@
-import cors from "@elysiajs/cors";
 import Elysia from "elysia";
+import { cors } from "@elysia/cors";
 import { logger } from "@tqman/nice-logger";
 import { ip } from "elysia-ip"
 

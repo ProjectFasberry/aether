@@ -1,43 +1,42 @@
-import { Bot, TelegramError } from "gramio";
-import { BOT_GUARD_TOKEN as token } from "../env";
-import { logger } from "../logger";
+import { Bot } from "gramio";
+import { env } from "../env";
 import { invariant } from "@repo/shared/lib/utils";
+import { initCommands } from "./cmds";
+import { botLogger } from "../logger";
 
-export const botLogger = logger.withTag("Bot").withTag("Guard");
+let instance: Bot | null = null;
 
-let guardBot: Bot | null = null;
+export const bot = {
+	get(): Bot {
+		invariant(instance, "Guard bot is not defined. Call startGuardBot() first.");
+		return instance;
+	},
+	async start(): Promise<void> {
+		const conn = new Bot(env.BOT_GUARD_TOKEN)
+			.onStart(async (ctx) => {
+				botLogger.success("Started");
+				botLogger.log(ctx.updatesFrom, ctx.plugins, ctx.info);
+			})
+			.onError((ctx) => {
+				botLogger.error("Update Error:", ctx.error);
+			});
 
-export function getGuardBot(): Bot {
-	invariant(guardBot, "Guard bot is not defined. Call startGuardBot() first.");
-	return guardBot;
-}
+		await conn.start();
+		instance = conn;
 
-export async function startGuardBot() {
-	if (guardBot) {
-		botLogger.warn("Guard bot is already initialized");
-		return guardBot;
-	}
+		await this.init(instance);
+	},
+	async init(instance: Bot) {
+		try {
+			instance.api
+				.setMyCommands({
+					commands: [{ command: "start", description: "Начать" }],
+				})
+				.catch((e) => botLogger.error(e));
 
-	const bot = new Bot(token)
-		.onStart((ctx) => {
-			botLogger.success(`Bot @${ctx.info.username} started`);
-		})
-		.onError((ctx) => {
-			botLogger.error("Update Error:", ctx.error);
-		});
-
-	try {
-		await bot.init();
-
-		guardBot = bot;
-		botLogger.info("Guard bot successfully inited");
-	} catch (e) {
-		if (e instanceof TelegramError) {
-			botLogger.error(`Telegram API Error [${e.code}]: ${e.message}`);
-		} else {
-			botLogger.error("Unknown error during bot init:", e);
+			initCommands(instance);
+		} catch (e) {
+			botLogger.error("Bot initialization failed:", e);
 		}
-
-		throw e;
-	}
-}
+	},
+};

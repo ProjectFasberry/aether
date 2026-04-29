@@ -33,9 +33,17 @@ ENV STAGE=$STAGE
 
 WORKDIR /
 
+COPY --from=build /package.json /bun.lock ./
+COPY --from=build /apps/panel/package.json ./apps/panel/package.json
+COPY --from=build /packages ./packages
+
+RUN bun install --production
+
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh
-COPY --from=build /apps/panel/dist ./dist
+COPY --from=build /apps/panel/dist ./apps/panel/dist
+
+WORKDIR /apps/panel
 
 ENV NODE_ENV=production
 USER bun

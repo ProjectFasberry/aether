@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { textSets } from "#/utils/minio/load-internal-files";

@@ -1,7 +1,7 @@
 import { getRedisKey } from "#/helpers/redis";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { safeJsonParse } from "#/utils/config/transforms";
 import type { SeemsLikePlayer, SeemsLikePlayersPayload } from "@repo/shared/types/entities/other";
 import { isProduction } from "elysia/error";

@@ -48,8 +48,6 @@ declare global {
 
       RCON_PASSWORD: string;
 
-      BOT_GUARD_TOKEN: string;
-
       PORT: string;
 
       MINESKIN_API_KEY: string;

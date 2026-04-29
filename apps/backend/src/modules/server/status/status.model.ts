@@ -2,10 +2,10 @@ import { invariant } from "#/helpers/invariant";
 import { getRedisKey } from "#/helpers/redis";
 import { getStaticUrl } from "#/helpers/volume";
 import { client as rootClient } from "#/shared/api/client";
-import { getUrls } from "#/shared/constants/urls";
+import { urls } from "#/shared/constants/urls";
 import { general } from "#/shared/database/general-db";
 import { PANEL_PASSWORD, PANEL_USER } from "#/shared/env";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
 import type { DB } from "@repo/shared/types/db/general-database-types";
@@ -54,8 +54,8 @@ const INITIAL_PROXY_DATA: StatusPayload["proxy"] = {
 };
 
 function getClient() {
-	const urls = getUrls();
-	const panelUrl = urls.get("panel");
+	const list = urls.get();
+	const panelUrl = list.get("panel");
 	invariant(panelUrl, "Panel url is not defined");
 	return rootClient.extend((opts) => ({ ...opts, prefixUrl: `https://${panelUrl}` }));
 }

@@ -15,15 +15,11 @@ TAG = latest
 FULL_IMAGE_NAME := $(REGISTRY)/$(STAGE)/$(NAME):$(TAG)
 
 build:
-	docker build \
+	docker buildx build \
+	--push \
 	--platform linux/amd64 \
 	--build-arg STAGE=$(STAGE) \
-	-t $(NAME):$(TAG) -f $(abspath Dockerfile) $(abspath ../..)
+	-t $(FULL_IMAGE_NAME) \
+	-f $(abspath Dockerfile) $(abspath ../..)
 
-tag: build
-	docker tag $(NAME):$(TAG) $(FULL_IMAGE_NAME)
-
-push: tag
-	docker push $(FULL_IMAGE_NAME)
-
-all: push
+all: build

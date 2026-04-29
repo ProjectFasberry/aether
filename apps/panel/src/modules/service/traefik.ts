@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { getRedis } from "../../shared/redis";
+import { redis } from "../../shared/redis/client";
 import { flatten, unflatten } from "../../helpers/flat";
 import { parse, stringify } from "yaml";
 import { wrapError } from "@repo/shared/lib/utils";
@@ -7,14 +7,14 @@ import { wrapError } from "@repo/shared/lib/utils";
 const ROOT_KEY = "traefik";
 
 const traefikConfig = new Elysia().get("/", async () => {
-	const redis = getRedis();
+	const client = redis.get();
 
-	const keys = await redis.keys(`${ROOT_KEY}*`);
+	const keys = await client.keys(`${ROOT_KEY}*`);
 	if (keys.length === 0) return { data: { yaml: "" } };
 
 	const flatConfig: Record<string, string> = {};
 
-	const pipeline = redis.pipeline();
+	const pipeline = client.pipeline();
 	keys.forEach((k) => {
 		pipeline.get(k);
 	});
@@ -42,7 +42,7 @@ const traefikConfig = new Elysia().get("/", async () => {
 });
 
 const traefikConfigUpdate = new Elysia().post("/", async ({ body, ...ctx }) => {
-	const redis = getRedis();
+	const client = redis.get();
 
 	try {
 		const { yaml } = body as { yaml: string };
@@ -53,9 +53,9 @@ const traefikConfigUpdate = new Elysia().post("/", async ({ body, ...ctx }) => {
 		}
 
 		const flatConfig = flatten(configObject, ROOT_KEY);
-		const pipeline = redis.pipeline();
+		const pipeline = client.pipeline();
 
-		const oldKeys = await redis.keys(`${ROOT_KEY}*`);
+		const oldKeys = await client.keys(`${ROOT_KEY}*`);
 		if (oldKeys.length > 0) {
 			pipeline.del(...oldKeys);
 		}

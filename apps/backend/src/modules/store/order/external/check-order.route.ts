@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import { wrapError } from "#/helpers/wrap-error";
 import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { getOrderKey } from "./create-crypto-order";
 import { CRYPTO_PAY_TESTNET_TOKEN } from "#/shared/env";
 import { safeJsonParse } from "#/utils/config/transforms";

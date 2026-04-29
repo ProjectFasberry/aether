@@ -1,5 +1,5 @@
 import { getOrderKey } from "./create-crypto-order";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { general } from "#/shared/database/general-db";
 import { type Static, t } from "elysia";

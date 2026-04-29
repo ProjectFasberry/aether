@@ -1,17 +1,15 @@
 import { skins } from "#/shared/database/skins-db";
 import { getAvatarName, getStaticUrl } from "#/helpers/volume";
 import { getPlayerUUID } from "#/utils/player/uuid";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { safeJsonParse } from "#/utils/config/transforms";
 import pLimit from "p-limit";
 import { general } from "#/shared/database/general-db";
 import type { SkinsHistory } from "@repo/shared/types/entities/other";
 import { sql } from "kysely";
-import { AVATARS_BUCKET, getMinio } from "#/shared/minio/init";
+import { BUCKETS, minio } from "#/shared/minio/client";
 import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } from "#/shared/env";
 import { logger } from "#/utils/config/logger";
-import { getGuardBot } from "#/shared/bot";
-import { getChats } from "#/shared/constants/chats";
 import * as z from "zod/v4";
 import {
   createCipheriv,
@@ -30,6 +28,8 @@ import type { Context } from "elysia";
 import { nanoid } from "nanoid";
 import { getRedisKey } from "#/helpers/redis";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { getNats } from "#/shared/nats/client";
+import { SUBJECTS } from "#/shared/nats/subjects";
 
 export type Skin = {
   textures: {
@@ -86,7 +86,7 @@ export async function getSkinsHistory({ nickname }: { nickname: string }) {
 }
 
 const getDefaultSkinHead = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
-const getCustomHead = (nickname: string, identifier: string) => `${VOLUME_URL}/${AVATARS_BUCKET}/${getAvatarName(nickname, identifier)}`
+const getCustomHead = (nickname: string, identifier: string) => `${VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
 
 function isCustomSkin(identifier: string) {
   return identifier.startsWith("sr")
@@ -128,7 +128,7 @@ async function performHead(data: SkinsHistory[], nickname: string) {
 
   if (!state.length) return;
 
-  const minio = getMinio()
+  const client = minio.get()
 
   const performResult = await Promise.all(
     state.map(async (c) => {
@@ -136,7 +136,7 @@ async function performHead(data: SkinsHistory[], nickname: string) {
         ? await getHeadFromSkin(c.skin_url)
         : getStaticUrl(DEFAULT_HEAD)
 
-      return minio.putObject(AVATARS_BUCKET, getAvatarName(nickname, c.skin_identifier), target);
+      return client.putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
     })
   )
 
@@ -389,14 +389,10 @@ export async function updatePlayersSkins(concurrency = 50, batchSize = 1000) {
 
   const end = performance.now();
 
-  const bot = getGuardBot();
-
-  const chat = getChats()[0];
-
-  bot.api.sendMessage({
-    chat_id: chat,
-    text: `Finished for ${(end - start).toFixed(2)}ms. Updated ${results.size} users.`
-  });
+  const nc = getNats();
+  nc.publish(SUBJECTS.EVENTS.SKINS.UPDATE, JSON.stringify({
+    data: `Finished for ${(end - start).toFixed(2)}ms. Updated ${results.size} users.`
+  }))
 
   return results;
 }
@@ -1094,10 +1090,10 @@ export async function deleteOldSkins({
         .execute()
     ])
 
-    const minio = getMinio();
+    const client = minio.get();
 
     for (const identifier of ids) {
-      await minio.removeObject(AVATARS_BUCKET, getAvatarName(nickname, identifier))
+      await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
     }
   }
 }

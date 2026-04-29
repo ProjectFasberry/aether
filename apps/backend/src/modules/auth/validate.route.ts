@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { session as sessionService } from "./login.model";
+import { session } from "./login.model";
 import { defineSession } from "#/lib/middlewares/define";
 import { withData } from "#/shared/schemas";
 
@@ -12,7 +12,7 @@ export const validate = new Elysia()
   .get("/validate-session", async ({ session: sessionToken }) => {
     if (!sessionToken) return { data: false };
     
-    const data = await sessionService.getIsExistsSession(sessionToken);
+    const data = await session.getIsExistsSession(sessionToken);
     return { data }
   }, {
     response: {

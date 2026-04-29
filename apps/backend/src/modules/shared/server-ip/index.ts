@@ -1,4 +1,4 @@
-import { getUrls } from "#/shared/constants/urls";
+import { urls } from "#/shared/constants/urls";
 import { MAP_URL } from "#/shared/env";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
@@ -31,8 +31,8 @@ export const serversWithMap = new Elysia()
 
 export const serverip = new Elysia()
   .get("/server-ip", async ({ set }) => {
-    const urls = getUrls();
-    const ip = urls.get("server_proxy")
+    const list = urls.get();
+    const ip = list.get("server_proxy")
 
     set.headers["Cache-Control"] = "public, max-age=600, s-maxage=600"
     set.headers["vary"] = "Origin";

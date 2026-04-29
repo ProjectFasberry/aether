@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { authLogger, auth } from "./auth.model";
 import { invariant } from "@repo/shared/lib/utils";
 import Bowser from "bowser";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
 import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/schemas/auth/login";

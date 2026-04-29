@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db"
 import * as z from "zod/v4"
-import { getRcon } from "#/shared/rcon/init";
+import { rcon } from "#/shared/rcon/client";
 import { invariant } from "#/helpers/invariant";
 
 type ControlPayload = {
@@ -104,7 +104,7 @@ function getStackTrace() {
 async function execCmd({
   type, nicknames, args: rawArgs
 }: ExecCmd) {
-  const client = getRcon()
+  const client = rcon.get()
 
   function stripMinecraftColors(text: string): string {
     return text.replace(/§./g, '');
@@ -141,7 +141,7 @@ async function execCmd({
 type Nicknames = UsersControlSchema["nicknames"]
 
 async function alert(msg: string) {
-  const client = getRcon()
+  const client = rcon.get()
   await client.send(`alert ${msg}`)
 }
 

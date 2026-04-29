@@ -1,6 +1,6 @@
 import { invariant } from "#/helpers/invariant";
 import { EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY } from "#/modules/server/events/events.model";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import type { EventPayload } from "@repo/shared/types/entities/other";
 
 export async function deleteEvent(id: string) {

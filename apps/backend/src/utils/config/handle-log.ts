@@ -1,31 +1,26 @@
-import { getGuardBot } from "#/shared/bot";
-import { getChats } from "#/shared/constants/chats";
+import { SERVICE_NAME } from "#/shared/constants/internal";
 import { isProduction } from "#/shared/env";
+import { getNats } from "#/shared/nats/client";
+import { SUBJECTS } from "#/shared/nats/subjects";
 
 export async function handleFatalError(error: Error | unknown) {
   if (!isProduction) return;
 
-  let message: string = ""
+  let msg: string = ""
   
   if (error instanceof Error) {
-    message = error.message
+    msg = error.message
   } else {
-    message = `Unhandled Rejection: ${error}`
+    msg = `UNHANDLED REJECTION: ${error}`
   }
 
-  console.error('Unhandled Rejection:', error);
+  const nc = getNats()
 
-  try {
-    const bot = getGuardBot();
-
-    for (const chat_id of getChats()) {
-      bot
-        .api
-        .sendMessage({ chat_id, text: message })
-    }
-  } catch (e) {
-    console.error(e);
-  }
+  nc.publish(SUBJECTS.INTERNAL.HEALTH, JSON.stringify({
+    data: msg,
+    type: "error",
+    service: SERVICE_NAME,
+  }))
 
   process.exit(1);
 }

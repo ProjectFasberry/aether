@@ -20,13 +20,14 @@
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
 		"skipLibCheck": true,
+		"noEmit": true,
 		"outDir": "dist",
 		"paths": {
 			"#/*": ["./src/*"],
 			"@repo/shared/*": ["../../packages/shared/*"]
 		}
 	},
-	"include": ["src/**/*", "imports.ts", "drizzle.config.ts", "env.d.ts", "declare.d.ts"],
+	"include": ["src/**/*", "scripts/**/*", "imports.ts", "drizzle.config.ts", "env.d.ts", "declare.d.ts"],
 	"exclude": ["node_modules", "dist", "./src/drizzle"],
 	"references": [
 		{ 

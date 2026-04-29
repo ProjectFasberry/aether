@@ -5,7 +5,7 @@ import { ordersList as externalOrderList } from "./external/orders-list.route";
 import { createOrder as externalCreateOrder } from "./external/create-top-up-order.route";
 import { methodsList as externalPaymentMethods } from "./external/order-methods.route";
 import { currencies as externalCurrencies } from "./external/currencies.route";
-import { exchangeRates as externalExchangeRates } from "./external/exchange-rates.route";
+import { exchangeRatesRoute as externalExchangeRates } from "./external/exchange-rates.route";
 import { createOrder as internalCreateOrder } from "./internal/create-order.route";
 import { ordersList as internalOrderList } from "./internal/order-list.route"
 import { methodsCurrencies as externalMethodCurrencies } from "./external/order-methods.route"

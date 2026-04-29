@@ -69,18 +69,20 @@ function analyzePermissions(obj: Record<string, any>): PermissionStats {
   return stats;
 }
 
-export async function initPermissions() {
-  const query = await general
-    .selectFrom("permissions")
-    .selectAll()
-    .orderBy("name", "asc")
-    .execute()
+export const permissions = {
+  async init() {
+    const query = await general
+      .selectFrom("permissions")
+      .selectAll()
+      .orderBy("name", "asc")
+      .execute()
 
-  PERMISSIONS = buildPermissions(query)
+    PERMISSIONS = buildPermissions(query)
 
-  const stats = analyzePermissions(PERMISSIONS);
+    const stats = analyzePermissions(PERMISSIONS);
 
-  appLogger.success(
-    `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
-  );
+    appLogger.success(
+      `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
+    );  
+  }
 }

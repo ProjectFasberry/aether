@@ -1,14 +1,16 @@
-import { logger } from "#/utils/config/logger";
+import { appLogger, natsLogger } from "#/utils/config/logger";
 import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
-import { NATS_HOST as host, NATS_PASSWORD, NATS_USER } from "#/shared/env"
+import { NATS_HOST, NATS_PASSWORD, NATS_USER } from "#/shared/env"
 import { invariant } from "#/helpers/invariant";
-
-export const natsLogger = logger.withTag("Nats")
+import { NATS_SUBCRIBERS } from "./subscribers";
+import { NATS_CONSUMERS, NATS_JS_STREAMS } from "./cons";
+import { startOrderConsumer } from "#/utils/server/call-command";
+import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 
 const config: ConnectionOptions = {
   servers: [
-    `nats://${host}`
+    `nats://${NATS_HOST}`
   ],
   user: NATS_USER,
   pass: NATS_PASSWORD,
@@ -17,31 +19,73 @@ const config: ConnectionOptions = {
   reconnectTimeWait: 2000,
 }
 
-let nats: NatsConnection | null = null;
+let client: NatsConnection | null = null;
 
-export async function initNats(): Promise<void> {
-  try {
-    nats = await connect(config);
-    natsLogger.success(`Connected to ${config.servers}`)
-  } catch (e) {
-    natsLogger.error(e)
-    process.exit(1)
+export const nats = {
+  async _init(): Promise<void> {
+    try {
+      client = await connect(config);
+      natsLogger.success(`Connected to ${config.servers}`)
+    } catch (e) {
+      natsLogger.error(e)
+      process.exit(1)
+    }
+  },
+  get(): NatsConnection {
+    invariant(client, 'NATS client is not initialized')
+    return client;
+  },
+  async close(): Promise<void> {
+    if (!client) return;
+
+    try {
+      await client.drain();
+      natsLogger.log('NATS connection closed.')
+    } catch (e) {
+      natsLogger.error('Error closing NATS connection:', e)
+      process.exit(1)
+    }
+  },
+  async start() {
+    appLogger.log(`Starting NATS...`);
+
+    await this._init();
+
+    try {
+      for (const { fn, name, subject } of NATS_SUBCRIBERS) {
+        fn(subject);
+        natsLogger.success(`${name} subscribed to ${subject}`);
+      }
+    } catch (e) {
+      natsLogger.log(e);
+    }
+
+    const nc = getNats();
+
+    const js = jetstream(nc);
+    const jsm = await jetstreamManager(nc);
+
+    for (const { name, subjects } of NATS_JS_STREAMS) {
+      try {
+        await jsm.streams.add({ name, subjects });
+        natsLogger.log(`Stream ${name} with ${subjects.map((d) => d).join(",")} added`);
+      } catch (e) {
+        natsLogger.log(`Stream ${name} with ${subjects.map((d) => d).join(",")} exists`);
+      }
+    }
+
+    for (const { name, stream_name } of Object.entries(NATS_CONSUMERS).flatMap(([_, arr]) => arr)) {
+      try {
+        const ec = await js.consumers.get(stream_name, name);
+        natsLogger.log(`Consumer ${name} exists `);
+      } catch (e) {
+        const c = await jsm.consumers.add(stream_name, { name });
+        natsLogger.log(`Consumer ${name} added`);
+      }
+    }
+
+    startOrderConsumer();
   }
 }
 
-export function getNats(): NatsConnection {
-  invariant(nats, 'NATS client is not initialized' )
-  return nats;
-}
-
-export async function closeNats(): Promise<void> {
-  if (!nats) return;
-
-  try {
-    await nats.drain();
-    natsLogger.log('NATS connection closed.')
-  } catch (e) {
-    natsLogger.error('Error closing NATS connection:', e)
-    process.exit(1)
-  }
-}
+export const getNats = () => nats.get()

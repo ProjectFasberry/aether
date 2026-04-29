@@ -1,0 +1,3839 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.AUTH": {
+      "name": "AUTH",
+      "schema": "",
+      "columns": {
+        "NICKNAME": {
+          "name": "NICKNAME",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "LOWERCASENICKNAME": {
+          "name": "LOWERCASENICKNAME",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "HASH": {
+          "name": "HASH",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "IP": {
+          "name": "IP",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTPTOKEN": {
+          "name": "TOTPTOKEN",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "REGDATE": {
+          "name": "REGDATE",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UUID": {
+          "name": "UUID",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PREMIUMUUID": {
+          "name": "PREMIUMUUID",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LOGINIP": {
+          "name": "LOGINIP",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LOGINDATE": {
+          "name": "LOGINDATE",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ISSUEDTIME": {
+          "name": "ISSUEDTIME",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "AUTH_IP_idx": {
+          "name": "AUTH_IP_idx",
+          "columns": [
+            {
+              "expression": "IP",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "AUTH_PREMIUMUUID_idx": {
+          "name": "AUTH_PREMIUMUUID_idx",
+          "columns": [
+            {
+              "expression": "PREMIUMUUID",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "AUTH_NICKNAME_not_null": {
+          "name": "AUTH_NICKNAME_not_null",
+          "value": "NOT NULL \"NICKNAME\""
+        },
+        "AUTH_LOWERCASENICKNAME_not_null": {
+          "name": "AUTH_LOWERCASENICKNAME_not_null",
+          "value": "NOT NULL \"LOWERCASENICKNAME\""
+        },
+        "AUTH_HASH_not_null": {
+          "name": "AUTH_HASH_not_null",
+          "value": "NOT NULL \"HASH\""
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.currencies": {
+      "name": "currencies",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "currencies_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isPublic": {
+          "name": "isPublic",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "isAvailable": {
+          "name": "isAvailable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "currencies_id_not_null": {
+          "name": "currencies_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "currencies_imageUrl_not_null": {
+          "name": "currencies_imageUrl_not_null",
+          "value": "NOT NULL \"imageUrl\""
+        },
+        "currencies_isPublic_not_null": {
+          "name": "currencies_isPublic_not_null",
+          "value": "NOT NULL \"isPublic\""
+        },
+        "currencies_isAvailable_not_null": {
+          "name": "currencies_isAvailable_not_null",
+          "value": "NOT NULL \"isAvailable\""
+        },
+        "currencies_title_not_null": {
+          "name": "currencies_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "currencies_value_not_null": {
+          "name": "currencies_value_not_null",
+          "value": "NOT NULL value"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.events": {
+      "name": "events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "events_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "reward": {
+          "name": "reward",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "events_id_not_null": {
+          "name": "events_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "events_title_not_null": {
+          "name": "events_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "events_description_not_null": {
+          "name": "events_description_not_null",
+          "value": "NOT NULL description"
+        },
+        "events_origin_not_null": {
+          "name": "events_origin_not_null",
+          "value": "NOT NULL origin"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.events_original": {
+      "name": "events_original",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "events_original_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "events_original_id_not_null": {
+          "name": "events_original_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "events_original_type_not_null": {
+          "name": "events_original_type_not_null",
+          "value": "NOT NULL type"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.facts": {
+      "name": "facts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "facts_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "fact": {
+          "name": "fact",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "facts_id_not_null": {
+          "name": "facts_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "facts_fact_not_null": {
+          "name": "facts_fact_not_null",
+          "value": "NOT NULL fact"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.findout": {
+      "name": "findout",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "findout_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "findout_id_not_null": {
+          "name": "findout_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "findout_nickname_not_null": {
+          "name": "findout_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "findout_value_not_null": {
+          "name": "findout_value_not_null",
+          "value": "NOT NULL value"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.SOCIAL": {
+      "name": "SOCIAL",
+      "schema": "",
+      "columns": {
+        "LOWERCASENICKNAME": {
+          "name": "LOWERCASENICKNAME",
+          "type": "varchar(255)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "VK_ID": {
+          "name": "VK_ID",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TELEGRAM_ID": {
+          "name": "TELEGRAM_ID",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DISCORD_ID": {
+          "name": "DISCORD_ID",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BLOCKED": {
+          "name": "BLOCKED",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TOTP_ENABLED": {
+          "name": "TOTP_ENABLED",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NOTIFY_ENABLED": {
+          "name": "NOTIFY_ENABLED",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "SOCIAL_LOWERCASENICKNAME_not_null": {
+          "name": "SOCIAL_LOWERCASENICKNAME_not_null",
+          "value": "NOT NULL \"LOWERCASENICKNAME\""
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.ip_list": {
+      "name": "ip_list",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "ip_list_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "ip": {
+          "name": "ip",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ip_list_id_not_null": {
+          "name": "ip_list_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "ip_list_ip_not_null": {
+          "name": "ip_list_ip_not_null",
+          "value": "NOT NULL ip"
+        },
+        "ip_list_name_not_null": {
+          "name": "ip_list_name_not_null",
+          "value": "NOT NULL name"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.items": {
+      "name": "items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "items_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image": {
+          "name": "image",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "items_id_not_null": {
+          "name": "items_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "items_title_not_null": {
+          "name": "items_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "items_image_not_null": {
+          "name": "items_image_not_null",
+          "value": "NOT NULL image"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.likes": {
+      "name": "likes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "likes_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "likes_id_not_null": {
+          "name": "likes_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "likes_created_at_not_null": {
+          "name": "likes_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "likes_initiator_not_null": {
+          "name": "likes_initiator_not_null",
+          "value": "NOT NULL initiator"
+        },
+        "likes_recipient_not_null": {
+          "name": "likes_recipient_not_null",
+          "value": "NOT NULL recipient"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.modpacks": {
+      "name": "modpacks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "modpacks_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "client": {
+          "name": "client",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mods": {
+          "name": "mods",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shaders": {
+          "name": "shaders",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "modpacks_id_not_null": {
+          "name": "modpacks_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "modpacks_imageUrl_not_null": {
+          "name": "modpacks_imageUrl_not_null",
+          "value": "NOT NULL \"imageUrl\""
+        },
+        "modpacks_created_at_not_null": {
+          "name": "modpacks_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "modpacks_client_not_null": {
+          "name": "modpacks_client_not_null",
+          "value": "NOT NULL client"
+        },
+        "modpacks_mods_not_null": {
+          "name": "modpacks_mods_not_null",
+          "value": "NOT NULL mods"
+        },
+        "modpacks_name_not_null": {
+          "name": "modpacks_name_not_null",
+          "value": "NOT NULL name"
+        },
+        "modpacks_version_not_null": {
+          "name": "modpacks_version_not_null",
+          "value": "NOT NULL version"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.news": {
+      "name": "news",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "news_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creator": {
+          "name": "creator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "news_id_not_null": {
+          "name": "news_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "news_created_at_not_null": {
+          "name": "news_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "news_title_not_null": {
+          "name": "news_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "news_description_not_null": {
+          "name": "news_description_not_null",
+          "value": "NOT NULL description"
+        },
+        "news_imageUrl_not_null": {
+          "name": "news_imageUrl_not_null",
+          "value": "NOT NULL \"imageUrl\""
+        },
+        "news_creator_not_null": {
+          "name": "news_creator_not_null",
+          "value": "NOT NULL creator"
+        },
+        "news_content_not_null": {
+          "name": "news_content_not_null",
+          "value": "NOT NULL content"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.news_views": {
+      "name": "news_views",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "news_views_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "news_id": {
+          "name": "news_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "news_views_news_id_initiator_uniq": {
+          "columns": [
+            "initiator",
+            "news_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "news_views_news_id_initiator_uniq"
+        }
+      },
+      "checkConstraints": {
+        "news_views_id_not_null": {
+          "name": "news_views_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "news_views_initiator_not_null": {
+          "name": "news_views_initiator_not_null",
+          "value": "NOT NULL initiator"
+        },
+        "news_views_news_id_not_null": {
+          "name": "news_views_news_id_not_null",
+          "value": "NOT NULL news_id"
+        },
+        "news_views_initiator_length": {
+          "name": "news_views_initiator_length",
+          "value": "char_length(initiator) >= 2"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.referrals": {
+      "name": "referrals",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "referrals_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed": {
+          "name": "completed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "referrer": {
+          "name": "referrer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referral": {
+          "name": "referral",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "referrals_constraint_key_2": {
+          "name": "referrals_constraint_key_2",
+          "tableFrom": "referrals",
+          "tableTo": "players",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "referrer"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "referrals_constraint_key_3": {
+          "name": "referrals_constraint_key_3",
+          "tableFrom": "referrals",
+          "tableTo": "players",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "referral"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "referrals_id_not_null": {
+          "name": "referrals_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "referrals_created_at_not_null": {
+          "name": "referrals_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "referrals_completed_not_null": {
+          "name": "referrals_completed_not_null",
+          "value": "NOT NULL completed"
+        },
+        "referrals_initiator_not_null": {
+          "name": "referrals_initiator_not_null",
+          "value": "NOT NULL referrer"
+        },
+        "referrals_recipient_not_null": {
+          "name": "referrals_recipient_not_null",
+          "value": "NOT NULL referral"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.store_cart_items": {
+      "name": "store_cart_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "store_cart_items_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_snapshot": {
+          "name": "price_snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "selected": {
+          "name": "selected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "product_id_initiator": {
+          "columns": [
+            "initiator",
+            "product_id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "product_id_initiator"
+        }
+      },
+      "checkConstraints": {
+        "store_cart_items_id_not_null": {
+          "name": "store_cart_items_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "store_cart_items_initiator_not_null": {
+          "name": "store_cart_items_initiator_not_null",
+          "value": "NOT NULL initiator"
+        },
+        "store_cart_items_product_id_not_null": {
+          "name": "store_cart_items_product_id_not_null",
+          "value": "NOT NULL product_id"
+        },
+        "store_cart_items_price_snapshot_not_null": {
+          "name": "store_cart_items_price_snapshot_not_null",
+          "value": "NOT NULL price_snapshot"
+        },
+        "store_cart_items_created_at_not_null": {
+          "name": "store_cart_items_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "store_cart_items_quantity_not_null": {
+          "name": "store_cart_items_quantity_not_null",
+          "value": "NOT NULL quantity"
+        },
+        "store_cart_items_selected_not_null": {
+          "name": "store_cart_items_selected_not_null",
+          "value": "NOT NULL selected"
+        },
+        "store_cart_items_recipient_not_null": {
+          "name": "store_cart_items_recipient_not_null",
+          "value": "NOT NULL recipient"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.store_economy": {
+      "name": "store_economy",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "store_economy_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "store_economy_id_not_null": {
+          "name": "store_economy_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "store_economy_type_not_null": {
+          "name": "store_economy_type_not_null",
+          "value": "NOT NULL type"
+        },
+        "store_economy_value_not_null": {
+          "name": "store_economy_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "store_economy_title_not_null": {
+          "name": "store_economy_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "store_economy_description_not_null": {
+          "name": "store_economy_description_not_null",
+          "value": "NOT NULL description"
+        },
+        "store_economy_imageUrl_not_null": {
+          "name": "store_economy_imageUrl_not_null",
+          "value": "NOT NULL \"imageUrl\""
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.store_promotion_styles": {
+      "name": "store_promotion_styles",
+      "schema": "",
+      "columns": {
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "name": "color",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon": {
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "store_promotion_styles_type_not_null": {
+          "name": "store_promotion_styles_type_not_null",
+          "value": "NOT NULL type"
+        },
+        "store_promotion_styles_color_not_null": {
+          "name": "store_promotion_styles_color_not_null",
+          "value": "NOT NULL color"
+        },
+        "store_promotion_styles_icon_not_null": {
+          "name": "store_promotion_styles_icon_not_null",
+          "value": "NOT NULL icon"
+        },
+        "store_promotion_styles_label_not_null": {
+          "name": "store_promotion_styles_label_not_null",
+          "value": "NOT NULL label"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.store_promotions": {
+      "name": "store_promotions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "priority": {
+          "name": "priority",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "store_promotions_id_not_null": {
+          "name": "store_promotions_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "store_promotions_item_id_not_null": {
+          "name": "store_promotions_item_id_not_null",
+          "value": "NOT NULL item_id"
+        },
+        "store_promotions_type_not_null": {
+          "name": "store_promotions_type_not_null",
+          "value": "NOT NULL type"
+        },
+        "store_promotions_value_not_null": {
+          "name": "store_promotions_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "store_promotions_starts_at_not_null": {
+          "name": "store_promotions_starts_at_not_null",
+          "value": "NOT NULL starts_at"
+        },
+        "store_promotions_title_not_null": {
+          "name": "store_promotions_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "store_promotions_priority_not_null": {
+          "name": "store_promotions_priority_not_null",
+          "value": "NOT NULL priority"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.voted_users": {
+      "name": "voted_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "voted_users_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "voted_users_id_not_null": {
+          "name": "voted_users_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "voted_users_nickname_not_null": {
+          "name": "voted_users_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "voted_users_created_at_not_null": {
+          "name": "voted_users_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.store_items": {
+      "name": "store_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "stpre_items_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price": {
+          "name": "price",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "currency": {
+          "name": "currency",
+          "type": "store_currency",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "command": {
+          "name": "command",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "items_title_trgm": {
+          "name": "items_title_trgm",
+          "columns": [
+            {
+              "expression": "title",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "gin_trgm_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "store_items_id_not_null": {
+          "name": "store_items_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "store_items_title_not_null": {
+          "name": "store_items_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "store_items_price_not_null": {
+          "name": "store_items_price_not_null",
+          "value": "NOT NULL price"
+        },
+        "store_items_type_not_null": {
+          "name": "store_items_type_not_null",
+          "value": "NOT NULL type"
+        },
+        "store_items_value_not_null": {
+          "name": "store_items_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "store_items_currency_not_null": {
+          "name": "store_items_currency_not_null",
+          "value": "NOT NULL currency"
+        },
+        "store_items_content_not_null": {
+          "name": "store_items_content_not_null",
+          "value": "NOT NULL content"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.options": {
+      "name": "options",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "options_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "options_id_not_null": {
+          "name": "options_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "options_name_not_null": {
+          "name": "options_name_not_null",
+          "value": "NOT NULL name"
+        },
+        "options_value_not_null": {
+          "name": "options_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "options_title_not_null": {
+          "name": "options_title_not_null",
+          "value": "NOT NULL title"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.activity_users": {
+      "name": "activity_users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event": {
+          "name": "event",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "player_activity_event",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "activity_users_id_not_null": {
+          "name": "activity_users_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "activity_users_nickname_not_null": {
+          "name": "activity_users_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "activity_users_type_not_null": {
+          "name": "activity_users_type_not_null",
+          "value": "NOT NULL type"
+        },
+        "activity_users_event_not_null": {
+          "name": "activity_users_event_not_null",
+          "value": "NOT NULL event"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.fv_items": {
+      "name": "fv_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "fv_items_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_id": {
+          "name": "item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "fv_items_id_not_null": {
+          "name": "fv_items_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "fv_items_nickname_not_null": {
+          "name": "fv_items_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "fv_items_item_id_not_null": {
+          "name": "fv_items_item_id_not_null",
+          "value": "NOT NULL item_id"
+        },
+        "fv_items_created_at_not_null": {
+          "name": "fv_items_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.roles": {
+      "name": "roles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "roles_name_not_null": {
+          "name": "roles_name_not_null",
+          "value": "NOT NULL name"
+        },
+        "roles_id_not_null": {
+          "name": "roles_id_not_null",
+          "value": "NOT NULL id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.permissions": {
+      "name": "permissions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "permissions_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "permissions_name_key": {
+          "columns": [
+            "name"
+          ],
+          "nullsNotDistinct": false,
+          "name": "permissions_name_key"
+        }
+      },
+      "checkConstraints": {
+        "permissions_id_not_null": {
+          "name": "permissions_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "permissions_name_not_null": {
+          "name": "permissions_name_not_null",
+          "value": "NOT NULL name"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.payment_methods": {
+      "name": "payment_methods",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "payment_methods_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "imageUrl": {
+          "name": "imageUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isAvailable": {
+          "name": "isAvailable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "payment_methods_id_not_null": {
+          "name": "payment_methods_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "payment_methods_title_not_null": {
+          "name": "payment_methods_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "payment_methods_value_not_null": {
+          "name": "payment_methods_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "payment_methods_imageUrl_not_null": {
+          "name": "payment_methods_imageUrl_not_null",
+          "value": "NOT NULL \"imageUrl\""
+        },
+        "payment_methods_isAvailable_not_null": {
+          "name": "payment_methods_isAvailable_not_null",
+          "value": "NOT NULL \"isAvailable\""
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.banners_views": {
+      "name": "banners_views",
+      "schema": "",
+      "columns": {
+        "banner_id": {
+          "name": "banner_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "banners_views_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "banners_views_constraint_1": {
+          "name": "banners_views_constraint_1",
+          "tableFrom": "banners_views",
+          "tableTo": "banners",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "banner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "banners_views_constraint_2": {
+          "name": "banners_views_constraint_2",
+          "tableFrom": "banners_views",
+          "tableTo": "players",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "nickname"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "banners_views_id_key": {
+          "columns": [
+            "id"
+          ],
+          "nullsNotDistinct": false,
+          "name": "banners_views_id_key"
+        }
+      },
+      "checkConstraints": {
+        "banners_views_nickname_not_null": {
+          "name": "banners_views_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "banners_views_id_not_null": {
+          "name": "banners_views_id_not_null",
+          "value": "NOT NULL id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.banners": {
+      "name": "banners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "banners_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "href_title": {
+          "name": "href_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "href_value": {
+          "name": "href_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "banners_id_not_null": {
+          "name": "banners_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "banners_title_not_null": {
+          "name": "banners_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "banners_href_title_not_null": {
+          "name": "banners_href_title_not_null",
+          "value": "NOT NULL href_title"
+        },
+        "banners_href_value_not_null": {
+          "name": "banners_href_value_not_null",
+          "value": "NOT NULL href_value"
+        },
+        "banners_created_at_not_null": {
+          "name": "banners_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.players": {
+      "name": "players",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "users_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "role_id": {
+          "name": "role_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "uuid": {
+          "name": "uuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "premium_uuid": {
+          "name": "premium_uuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lower_case_nickname": {
+          "name": "lower_case_nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nickname_tsv": {
+          "name": "nickname_tsv",
+          "type": "tsvector",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_players_lower_case_nickname": {
+          "name": "idx_players_lower_case_nickname",
+          "columns": [
+            {
+              "expression": "lower_case_nickname",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_players_nickname_tsv": {
+          "name": "idx_players_nickname_tsv",
+          "columns": [
+            {
+              "expression": "nickname_tsv",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "tsvector_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "idx_players_uuid": {
+          "name": "idx_players_uuid",
+          "columns": [
+            {
+              "expression": "uuid",
+              "asc": true,
+              "nulls": "last",
+              "opclass": "text_ops",
+              "isExpression": false
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "constraint_1": {
+          "name": "constraint_1",
+          "tableFrom": "players",
+          "tableTo": "roles",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "role_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "players_uuid_key": {
+          "columns": [
+            "uuid"
+          ],
+          "nullsNotDistinct": false,
+          "name": "players_uuid_key"
+        },
+        "players_lowercasenickname_key": {
+          "columns": [
+            "lower_case_nickname"
+          ],
+          "nullsNotDistinct": false,
+          "name": "players_lowercasenickname_key"
+        },
+        "players_lower_case_nickname_key": {
+          "columns": [
+            "lower_case_nickname"
+          ],
+          "nullsNotDistinct": false,
+          "name": "players_lower_case_nickname_key"
+        }
+      },
+      "checkConstraints": {
+        "users_id_not_null": {
+          "name": "users_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "users_nickname_not_null": {
+          "name": "users_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "users_role_id_not_null": {
+          "name": "users_role_id_not_null",
+          "value": "NOT NULL role_id"
+        },
+        "players_created_at_not_null": {
+          "name": "players_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "players_uuid_not_null": {
+          "name": "players_uuid_not_null",
+          "value": "NOT NULL uuid"
+        },
+        "players_lowercasenickname_not_null": {
+          "name": "players_lowercasenickname_not_null",
+          "value": "NOT NULL lower_case_nickname"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.tasks": {
+      "name": "tasks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tasks_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reward_value": {
+          "name": "reward_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reward_currency": {
+          "name": "reward_currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "expires": {
+          "name": "expires",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action_type": {
+          "name": "action_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "action_value": {
+          "name": "action_value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tasks_id_not_null": {
+          "name": "tasks_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "tasks_title_not_null": {
+          "name": "tasks_title_not_null",
+          "value": "NOT NULL title"
+        },
+        "tasks_description_not_null": {
+          "name": "tasks_description_not_null",
+          "value": "NOT NULL description"
+        },
+        "tasks_reward_value_not_null": {
+          "name": "tasks_reward_value_not_null",
+          "value": "NOT NULL reward_value"
+        },
+        "tasks_reward_currency_not_null": {
+          "name": "tasks_reward_currency_not_null",
+          "value": "NOT NULL reward_currency"
+        },
+        "tasks_created_at_not_null": {
+          "name": "tasks_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "tasks_action_type_not_null": {
+          "name": "tasks_action_type_not_null",
+          "value": "NOT NULL action_type"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.admin_activity_log": {
+      "name": "admin_activity_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "admin_activity_log_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "event": {
+          "name": "event",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "admin_activity_log_id_not_null": {
+          "name": "admin_activity_log_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "admin_activity_log_initiator_not_null": {
+          "name": "admin_activity_log_initiator_not_null",
+          "value": "NOT NULL initiator"
+        },
+        "admin_activity_log_created_at_not_null": {
+          "name": "admin_activity_log_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "admin_activity_log_event_not_null": {
+          "name": "admin_activity_log_event_not_null",
+          "value": "NOT NULL event"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.privated_chat": {
+      "name": "privated_chat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "privated_chat_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "edited": {
+          "name": "edited",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "edited_at": {
+          "name": "edited_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "privated_chat_id_not_null": {
+          "name": "privated_chat_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "privated_chat_created_at_not_null": {
+          "name": "privated_chat_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "privated_chat_nickname_not_null": {
+          "name": "privated_chat_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "privated_chat_message_not_null": {
+          "name": "privated_chat_message_not_null",
+          "value": "NOT NULL message"
+        },
+        "privated_chat_edited_not_null": {
+          "name": "privated_chat_edited_not_null",
+          "value": "NOT NULL edited"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.dictionaries": {
+      "name": "dictionaries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "dictionaries_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "dictionaries_id_not_null": {
+          "name": "dictionaries_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "dictionaries_key_not_null": {
+          "name": "dictionaries_key_not_null",
+          "value": "NOT NULL key"
+        },
+        "dictionaries_value_not_null": {
+          "name": "dictionaries_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "dictionaries_created_at_not_null": {
+          "name": "dictionaries_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.chat_views": {
+      "name": "chat_views",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "chat_views_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "message_id": {
+          "name": "message_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "chat_views_constraint_1": {
+          "columns": [
+            "message_id",
+            "nickname"
+          ],
+          "nullsNotDistinct": false,
+          "name": "chat_views_constraint_1"
+        }
+      },
+      "checkConstraints": {
+        "chat_views_id_not_null": {
+          "name": "chat_views_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "chat_views_message_id_not_null": {
+          "name": "chat_views_message_id_not_null",
+          "value": "NOT NULL message_id"
+        },
+        "chat_views_nickname_not_null": {
+          "name": "chat_views_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "chat_views_created_at_not_null": {
+          "name": "chat_views_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.rules": {
+      "name": "rules",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "rules_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "rules_category_key": {
+          "columns": [
+            "category"
+          ],
+          "nullsNotDistinct": false,
+          "name": "rules_category_key"
+        }
+      },
+      "checkConstraints": {
+        "rules_id_not_null": {
+          "name": "rules_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "rules_content_not_null": {
+          "name": "rules_content_not_null",
+          "value": "NOT NULL content"
+        },
+        "rules_category_not_null": {
+          "name": "rules_category_not_null",
+          "value": "NOT NULL category"
+        },
+        "rules_created_at_not_null": {
+          "name": "rules_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.wiki_groups": {
+      "name": "wiki_groups",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "wiki_groups_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "wiki_groups_id_not_null": {
+          "name": "wiki_groups_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "wiki_groups_name_not_null": {
+          "name": "wiki_groups_name_not_null",
+          "value": "NOT NULL name"
+        },
+        "wiki_groups_title_not_null": {
+          "name": "wiki_groups_title_not_null",
+          "value": "NOT NULL title"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.wiki": {
+      "name": "wiki",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "wiki_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category_title": {
+          "name": "category_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "name": "group_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "wiki_category_key": {
+          "columns": [
+            "category"
+          ],
+          "nullsNotDistinct": false,
+          "name": "wiki_category_key"
+        }
+      },
+      "checkConstraints": {
+        "wiki_id_not_null": {
+          "name": "wiki_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "wiki_category_not_null": {
+          "name": "wiki_category_not_null",
+          "value": "NOT NULL category"
+        },
+        "wiki_content_not_null": {
+          "name": "wiki_content_not_null",
+          "value": "NOT NULL content"
+        },
+        "wiki_category_title_not_null": {
+          "name": "wiki_category_title_not_null",
+          "value": "NOT NULL category_title"
+        },
+        "wiki_group_id_not_null": {
+          "name": "wiki_group_id_not_null",
+          "value": "NOT NULL group_id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.players_socials": {
+      "name": "players_socials",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "players_socials_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "social": {
+          "name": "social",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "name": "value",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "players_socials_id_not_null": {
+          "name": "players_socials_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "players_socials_nickname_not_null": {
+          "name": "players_socials_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "players_socials_social_not_null": {
+          "name": "players_socials_social_not_null",
+          "value": "NOT NULL social"
+        },
+        "players_socials_value_not_null": {
+          "name": "players_socials_value_not_null",
+          "value": "NOT NULL value"
+        },
+        "players_socials_created_at_not_null": {
+          "name": "players_socials_created_at_not_null",
+          "value": "NOT NULL created_at"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.api_keys": {
+      "name": "api_keys",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "api_keys_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "key": {
+          "name": "key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "api_keys_id_not_null": {
+          "name": "api_keys_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "api_keys_key_not_null": {
+          "name": "api_keys_key_not_null",
+          "value": "NOT NULL key"
+        },
+        "api_keys_created_at_not_null": {
+          "name": "api_keys_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "api_keys_nickname_not_null": {
+          "name": "api_keys_nickname_not_null",
+          "value": "NOT NULL nickname"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.payments_game_childs": {
+      "name": "payments_game_childs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "payments_game_childs_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "store_item_id": {
+          "name": "store_item_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "recipient": {
+          "name": "recipient",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "payments_game_childs_id_not_null": {
+          "name": "payments_game_childs_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "payments_game_childs_store_item_id_not_null": {
+          "name": "payments_game_childs_store_item_id_not_null",
+          "value": "NOT NULL store_item_id"
+        },
+        "payments_game_childs_created_at_not_null": {
+          "name": "payments_game_childs_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "payments_game_childs_recipient_not_null": {
+          "name": "payments_game_childs_recipient_not_null",
+          "value": "NOT NULL recipient"
+        },
+        "payments_game_childs_order_id_not_null": {
+          "name": "payments_game_childs_order_id_not_null",
+          "value": "NOT NULL order_id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.tg_logs_chats": {
+      "name": "tg_logs_chats",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tg_logs_chats_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "chat_id": {
+          "name": "chat_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "tg_logs_chats_id_not_null": {
+          "name": "tg_logs_chats_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "tg_logs_chats_chat_id_not_null": {
+          "name": "tg_logs_chats_chat_id_not_null",
+          "value": "NOT NULL chat_id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.players_socials_available": {
+      "name": "players_socials_available",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "players_socials_available_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "value": {
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isAvailable": {
+          "name": "isAvailable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "players_socials_available_id_not_null": {
+          "name": "players_socials_available_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "players_socials_available_value_not_null": {
+          "name": "players_socials_available_value_not_null",
+          "value": "NOT NULL value"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.payments": {
+      "name": "payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "status": {
+          "name": "status",
+          "type": "payment_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload": {
+          "name": "payload",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price": {
+          "name": "price",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "invoice_id": {
+          "name": "invoice_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unique_id": {
+          "name": "unique_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pay_url": {
+          "name": "pay_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "asset": {
+          "name": "asset",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "payments_id_not_null": {
+          "name": "payments_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "payments_order_id_not_null": {
+          "name": "payments_order_id_not_null",
+          "value": "NOT NULL order_id"
+        },
+        "payments_created_at_not_null": {
+          "name": "payments_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "payments_status_not_null": {
+          "name": "payments_status_not_null",
+          "value": "NOT NULL status"
+        },
+        "payments_payload_not_null": {
+          "name": "payments_payload_not_null",
+          "value": "NOT NULL payload"
+        },
+        "payments_price_not_null": {
+          "name": "payments_price_not_null",
+          "value": "NOT NULL price"
+        },
+        "payments_invoice_id_not_null": {
+          "name": "payments_invoice_id_not_null",
+          "value": "NOT NULL invoice_id"
+        },
+        "payments_unique_id_not_null": {
+          "name": "payments_unique_id_not_null",
+          "value": "NOT NULL unique_id"
+        },
+        "payments_pay_url_not_null": {
+          "name": "payments_pay_url_not_null",
+          "value": "NOT NULL pay_url"
+        },
+        "payments_asset_not_null": {
+          "name": "payments_asset_not_null",
+          "value": "NOT NULL asset"
+        },
+        "payments_initiator_not_null": {
+          "name": "payments_initiator_not_null",
+          "value": "NOT NULL initiator"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.payments_game": {
+      "name": "payments_game",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "te_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "unique_id": {
+          "name": "unique_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "initiator": {
+          "name": "initiator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "te_id_not_null": {
+          "name": "te_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "te_unique_id_not_null": {
+          "name": "te_unique_id_not_null",
+          "value": "NOT NULL unique_id"
+        },
+        "te_created_at_not_null": {
+          "name": "te_created_at_not_null",
+          "value": "NOT NULL created_at"
+        },
+        "payments_game_initiator_not_null": {
+          "name": "payments_game_initiator_not_null",
+          "value": "NOT NULL initiator"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.servers": {
+      "name": "servers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "servers_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "fullname": {
+          "name": "fullname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "available": {
+          "name": "available",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "excluded": {
+          "name": "excluded",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "thumbnail": {
+          "name": "thumbnail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "servers_id_not_null": {
+          "name": "servers_id_not_null",
+          "value": "NOT NULL id"
+        },
+        "servers_fullname_not_null": {
+          "name": "servers_fullname_not_null",
+          "value": "NOT NULL fullname"
+        },
+        "servers_available_not_null": {
+          "name": "servers_available_not_null",
+          "value": "NOT NULL available"
+        },
+        "servers_excluded_not_null": {
+          "name": "servers_excluded_not_null",
+          "value": "NOT NULL excluded"
+        },
+        "servers_thumbnail_not_null": {
+          "name": "servers_thumbnail_not_null",
+          "value": "NOT NULL thumbnail"
+        },
+        "servers_origin_not_null": {
+          "name": "servers_origin_not_null",
+          "value": "NOT NULL origin"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.role_permissions": {
+      "name": "role_permissions",
+      "schema": "",
+      "columns": {
+        "role_id": {
+          "name": "role_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission_id": {
+          "name": "permission_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "role_perms_constraint_2": {
+          "name": "role_perms_constraint_2",
+          "tableFrom": "role_permissions",
+          "tableTo": "roles",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "role_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "role_perms_constraint_3": {
+          "name": "role_perms_constraint_3",
+          "tableFrom": "role_permissions",
+          "tableTo": "permissions",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "permission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "role_perms_constraint_1": {
+          "name": "role_perms_constraint_1",
+          "columns": [
+            "permission_id",
+            "role_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "role_permissions_role_id_not_null": {
+          "name": "role_permissions_role_id_not_null",
+          "value": "NOT NULL role_id"
+        },
+        "role_permissions_permission_id_not_null": {
+          "name": "role_permissions_permission_id_not_null",
+          "value": "NOT NULL permission_id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.players_permissions": {
+      "name": "players_permissions",
+      "schema": "",
+      "columns": {
+        "nickname": {
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission_id": {
+          "name": "permission_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "players_permissions_constraint_1": {
+          "name": "players_permissions_constraint_1",
+          "tableFrom": "players_permissions",
+          "tableTo": "permissions",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "permission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        },
+        "players_permissions_constraint_2": {
+          "name": "players_permissions_constraint_2",
+          "tableFrom": "players_permissions",
+          "tableTo": "players",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "nickname"
+          ],
+          "columnsTo": [
+            "nickname"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {
+        "players_permissions_constraint_3": {
+          "name": "players_permissions_constraint_3",
+          "columns": [
+            "nickname",
+            "permission_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "players_permissions_nickname_not_null": {
+          "name": "players_permissions_nickname_not_null",
+          "value": "NOT NULL nickname"
+        },
+        "players_permissions_permission_id_not_null": {
+          "name": "players_permissions_permission_id_not_null",
+          "value": "NOT NULL permission_id"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.activity_heatmap": {
+      "name": "activity_heatmap",
+      "schema": "",
+      "columns": {
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hour": {
+          "name": "hour",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active_players": {
+          "name": "active_players",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "constraint_1": {
+          "name": "constraint_1",
+          "columns": [
+            "date",
+            "hour"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "activity_heatmap_date_not_null": {
+          "name": "activity_heatmap_date_not_null",
+          "value": "NOT NULL date"
+        },
+        "activity_heatmap_hour_not_null": {
+          "name": "activity_heatmap_hour_not_null",
+          "value": "NOT NULL hour"
+        },
+        "activity_heatmap_active_players_not_null": {
+          "name": "activity_heatmap_active_players_not_null",
+          "value": "NOT NULL active_players"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {
+    "public.donation_type": {
+      "name": "donation_type",
+      "values": [
+        "authentic",
+        "loyal",
+        "arkhont"
+      ],
+      "schema": "public"
+    },
+    "public.payment_crypto_ton_status": {
+      "name": "payment_crypto_ton_status",
+      "values": [
+        "created",
+        "received",
+        "captured",
+        "cancelled",
+        "failed"
+      ],
+      "schema": "public"
+    },
+    "public.payment_status": {
+      "name": "payment_status",
+      "values": [
+        "pending",
+        "waitingForCapture",
+        "succeeded",
+        "canceled"
+      ],
+      "schema": "public"
+    },
+    "public.player_activity_event": {
+      "name": "player_activity_event",
+      "values": [
+        "join",
+        "quit"
+      ],
+      "schema": "public"
+    },
+    "public.store_currency": {
+      "name": "store_currency",
+      "values": [
+        "CHARISM",
+        "BELKOIN"
+      ],
+      "schema": "public"
+    }
+  },
+  "schemas": {},
+  "sequences": {
+    "public.libertybans_punishment_ids": {
+      "name": "libertybans_punishment_ids",
+      "schema": "public",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775806",
+      "increment": "1",
+      "cycle": false,
+      "cache": "1"
+    },
+    "public.libertybans_victim_ids": {
+      "name": "libertybans_victim_ids",
+      "schema": "public",
+      "startWith": "-2147483648",
+      "minValue": "-2147483648",
+      "maxValue": "2147483647",
+      "increment": "1",
+      "cycle": false,
+      "cache": "1"
+    },
+    "public.libertybans_track_ids": {
+      "name": "libertybans_track_ids",
+      "schema": "public",
+      "startWith": "1",
+      "minValue": "-2147483648",
+      "maxValue": "2147483647",
+      "increment": "1",
+      "cycle": false,
+      "cache": "1"
+    },
+    "public.libertybans_scope_ids": {
+      "name": "libertybans_scope_ids",
+      "schema": "public",
+      "startWith": "1",
+      "minValue": "-2147483648",
+      "maxValue": "2147483647",
+      "increment": "1",
+      "cycle": false,
+      "cache": "1"
+    }
+  },
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}

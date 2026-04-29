@@ -29,7 +29,8 @@ FULL_IMAGE_NAME := $(REGISTRY)/$(STAGE)/$(NAME):$(TAG)
 CACHEBUST := $(shell bun -e "console.log(Date.now())")
 
 build:
-	docker build \
+	docker buildx build \
+	--push \
 	--platform linux/amd64 \
 	--secret id=INFISICAL_ID,env=INFISICAL_CLIENT_ID \
 	--secret id=INFISICAL_SECRET,env=INFISICAL_CLIENT_SECRET \
@@ -37,12 +38,7 @@ build:
 	--secret id=INFISICAL_API_URL,env=INFISICAL_API_URL \
 	--build-arg STAGE=$(STAGE) \
 	--build-arg CACHEBUST=$(CACHEBUST) \
-	-t $(NAME):$(TAG) -f $(abspath Dockerfile) $(abspath ../..)
+	-t $(FULL_IMAGE_NAME) \
+	-f $(abspath Dockerfile) $(abspath ../..)
 
-tag: build
-	docker tag $(NAME):$(TAG) $(FULL_IMAGE_NAME)
-
-push: tag
-	docker push $(FULL_IMAGE_NAME)
-
-all: push
+all: build

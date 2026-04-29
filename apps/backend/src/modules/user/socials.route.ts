@@ -3,7 +3,7 @@ import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
 import { defineUser } from "#/lib/middlewares/define";
 import * as z from "zod/v4";
-import { getRedis } from "#/shared/redis/init";
+import { getRedis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
 

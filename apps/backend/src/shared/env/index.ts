@@ -5,8 +5,6 @@ export const NATS_HOST = Bun.env.NATS_HOST;
 export const NATS_PASSWORD = Bun.env.NATS_PASSWORD;
 export const NATS_USER = Bun.env.NATS_USER;
 
-export const BOT_GUARD_TOKEN = Bun.env.BOT_GUARD_TOKEN;
-
 export const SQLITE_DATABASE_URL = Bun.env.SQLITE_DATABASE_URL;
 export const SKINS_MYSQL_URI = Bun.env.SKINS_MYSQL_URI;
 export const REPUTATION_MYSQL_URI = Bun.env.REPUTATION_MYSQL_URI;
@@ -48,5 +46,3 @@ export const MINESKIN_API_KEY = Bun.env.MINESKIN_API_KEY;
 export const MINESKIN_AES_SECRET_KEY = Bun.env.MINESKIN_AES_SECRET_KEY;
 
 export const PROD_HOST = Bun.env.PROD_HOST;
-export const WATCHTOWER_PORT = Bun.env.WATCHTOWER_PORT;
-export const WATCHTOWER_API_TOKEN = Bun.env.WATCHTOWER_API_TOKEN;
