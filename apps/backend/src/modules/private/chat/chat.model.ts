@@ -3,6 +3,7 @@ import { general } from "#/shared/database/general-db"
 import { metaSchema } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
+import { type Static, t } from "elysia";
 import { executeWithCursorPagination } from "kysely-paginate";
 import * as z from "zod/v4"
 
@@ -36,11 +37,11 @@ export const chatEditMessageSchema = z.object({
   message: z.string().min(1).max(2025)
 })
 
-export const chatDataSchema = metaSchema.pick({ asc: true, endCursor: true })
-export const chatMessageViewsSchema = metaSchema.pick({ endCursor: true })
+export const chatDataSchema = t.Pick(metaSchema, ["asc", "endCursor"])
+export const chatMessageViewsSchema = t.Pick(metaSchema, ["endCursor"])
 
 export const chat = {
-  async getHistory({ asc, endCursor, nickname }: z.infer<typeof chatDataSchema> & { nickname: string }) {
+  async getHistory({ asc, endCursor, nickname }: Static<typeof chatDataSchema> & { nickname: string }) {
     const baseQuery = general
       .selectFrom("privated_chat")
       .leftJoin("chat_views", "chat_views.message_id", "privated_chat.id")
@@ -125,7 +126,7 @@ export const chat = {
 
     return query;
   },
-  async getViews(id: number, { endCursor }: z.infer<typeof chatMessageViewsSchema>) {
+  async getViews(id: number, { endCursor }: Static<typeof chatMessageViewsSchema>) {
     const views = await general
       .selectFrom("chat_views")
       .select("id")

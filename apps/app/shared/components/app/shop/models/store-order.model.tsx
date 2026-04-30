@@ -9,6 +9,8 @@ import { client } from "@/shared/lib/client-wrapper";
 import { OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
 import { TopUpButton } from "../components/wallet/top-up-button";
 import { navigate } from "vike/client/router";
+import { ReactNode } from "react";
+import { Action as ToasterAction } from "sonner"
 
 export const orderState = atom(null, "orderState").pipe(
   withAssign((_, name) => ({
@@ -22,54 +24,44 @@ export const orderState = atom(null, "orderState").pipe(
   }))
 )
 
+const ERRORS_MAP: Record<string, string> = {
+  "INTERNAL_SERVER_ERROR": "Произошла ошибка при создании заказа",
+  "ITEMS_NOT_FOUND": "Товары не найдены или устарели",
+  "INSUFFICIENT": "Недостаточно баланса",
+}
+
+const ERRORS_EVENTS: Record<string, { cb: () => ToasterAction | ReactNode }> = {
+  "INSUFFICIENT": { cb: () => <TopUpButton /> }
+}
+
 export const order = atom(null, "order").pipe(
   withAssign((_, name) => ({
-    connect: reatomAsync(async (ctx, orderId: string) => {
-      const url = `${API_PREFIX_URL}/store/order/${orderId}/events`;
+    connect: action((ctx, orderId: string) => {
       orderState.id(ctx, orderId);
-      return orderState.es(ctx, es(url))
-    }, {
-      name: `${name}.connect`,
-      onReject: (_, e) => logError(e, { type: "toast" })
+      orderState.es(ctx, es(getOrderEventsUrl(orderId)))
     }),
-    create: reatomAsync(async (ctx) => {
-      return await ctx.schedule(() =>
-        client
-          .post<CreateOrderRoutePayload>("store/order/internal/create", {
-            throwHttpErrors: false,
-            retry: 1
-          })
-          .exec()
-      )
+    create: reatomAsync(async () => {
+      return await client
+        .post<CreateOrderRoutePayload>("store/order/internal/create", {
+          retry: 1
+        })
+        .exec()
     }, {
       name: `${name}.create`,
       onFulfill: (ctx, res) => {
-        if (!res) return;
-
-        ctx.schedule(() => {
-          createdOrderDataAtom(ctx, res);
-          navigate(
-            getOrderUrl(res.purchase.uniqueId, "default")
-          )
-        })
+        createdOrderDataAtom(ctx, res);
+        ctx.schedule(() => navigate(getOrderUrl(res.purchase.uniqueId, "default")))
       },
-      onReject: (ctx, e) => {
+      onReject: (_, e) => {
         logError(e);
 
         if (e instanceof Error) {
-          if (e.message === 'insufficient') {
-            toast.error("Недостаточно баланса", {
-              action: <TopUpButton />
-            })
-            return;
-          }
+          const msg = ERRORS_MAP[e.message] ?? Object.entries(ERRORS_MAP)?.[0]?.[1]
+          const event = ERRORS_EVENTS[e.message];
 
-          if (e.message === 'items-not-found') {
-            toast.error("Товары не найдены или устарели")
-            return;
-          }
-
-          toast.error("Произошла ошибка при создании заказа", { description: "Повтори попытку позже" })
+          toast.error(msg, { 
+            action: event ? event.cb() : {} as ToasterAction 
+          })
         }
       }
     }).pipe(
@@ -84,11 +76,11 @@ const MESSAGE_ACTIONS: Record<OrderEventPayload["type"], Action<[], void>> = {
   "invoice_paid": action((ctx) => {
     orderState.data(ctx, (state) => state ? ({ ...state, status: "succeeded" }) : null)
 
-    const source = ctx.get(orderState.es)
-    if (!source) return;
+    const es = ctx.get(orderState.es)
+    if (!es) return;
 
     orderState.disconnectReason(ctx, "invoice_paid")
-    source.close()
+    es.close()
   }),
   "canceled": action((ctx) => {
     orderState.data(ctx, (state) => state ? ({ ...state, status: "canceled" }) : null)
@@ -99,18 +91,15 @@ orderState.msg.onChange((ctx, target) => {
   if (!target) return;
 
   const action = MESSAGE_ACTIONS[target.type];
-
-  orderState.requestEvent(ctx, target.type)
   action(ctx)
+  orderState.requestEvent(ctx, target.type)
 })
 
 orderState.es.onChange((ctx, target) => {
   if (!target) return;
 
   target.onopen = () => {
-    if (import.meta.env.DEV) {
-      toast.success("Connected to order events")
-    }
+    import.meta.env.DEV && toast.success("Connected to order events")
   }
 
   target.addEventListener("config", (event) => {
@@ -118,10 +107,7 @@ orderState.es.onChange((ctx, target) => {
   })
 
   target.addEventListener("ping", (event) => {
-    if (import.meta.env.DEV) {
-      toast.info("Ping")
-      console.log(event)
-    }
+    import.meta.env.DEV && toast.info("Ping")
   })
 
   target.addEventListener("payload", (event) => {
@@ -136,15 +122,12 @@ orderState.es.onChange((ctx, target) => {
 export async function getOrder(id: string, init: RequestInit, type: string = "default") {
   return client
     .get<OrderSinglePayload>(`store/order/external/${id}`, {
-      ...init,
-      searchParams: {
-        type
-      }
+      ...init, searchParams: { type }
     })
     .exec()
 }
 
+export const getOrderEventsUrl = (orderId: string) => `${API_PREFIX_URL}/store/order/${orderId}/events`
 export const createdOrderDataAtom = atom<CreateOrderRoutePayload | null>(null)
-export const getOrderUrl = (uniqueId: string, t: string = "default") =>
-  `/store/order/status/${uniqueId}?type=${t}`
+export const getOrderUrl = (uniqueId: string, t: string = "default") => `/store/order/status/${uniqueId}?type=${t}`
 export const loaderIsActiveAtom = atom((ctx) => ctx.spy(order.create.statusesAtom).isPending)

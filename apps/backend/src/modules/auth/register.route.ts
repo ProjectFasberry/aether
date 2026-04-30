@@ -17,7 +17,7 @@ const registerValidator = () => new Elysia()
       .executeTakeFirst()
 
     const isEnabled = Boolean(query?.value)
-    if (!isEnabled) throw status(400, "authorization-disabled")
+    if (!isEnabled) throw status(400, "AUTHORIZATION_DISABLED")
   })
   .as("scoped")
 
@@ -38,12 +38,12 @@ export const registerRoute = new Elysia()
     .post("/", async ({ status, body: { findout, hash, nickname, password: inputPass, findoutType }, ip }) => {
       const existsUser = await auth.getExistsUser(nickname)
       if (existsUser.result) {
-        throw status(400, wrapError("exists"))
+        throw status(400, wrapError("USER_EXISTS"))
       }
 
       const passIsSafe = auth.validatePasswordSafe(inputPass)
       if (!passIsSafe) {
-        throw status(400, wrapError("unsafe"))
+        throw status(400, wrapError("PASSWORD_IS_UNSAFE"))
       }
 
       const passHash = Bun.password.hashSync(inputPass, {
@@ -63,8 +63,15 @@ export const registerRoute = new Elysia()
             nickname: t.String()
           })
         ),
-        409: withError,
-        400: withError,
+        400: withError(
+          t.UnionEnum([
+            "USER_EXISTS",
+            "PASSWORD_IS_UNSAFE",
+            "AUTHORIZATION_DISABLED",
+            "IP_RESTRICTIONS"
+          ])
+        ),
+        500: withError()
       }
     })
   )

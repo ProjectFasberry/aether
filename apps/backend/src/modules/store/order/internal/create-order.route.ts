@@ -92,7 +92,7 @@ export const createOrder = new Elysia()
     }
   }, {
     response: {
-      500: withError,
-      400: withError,
+      500: withError(),
+      400: withError(),
     }
   })

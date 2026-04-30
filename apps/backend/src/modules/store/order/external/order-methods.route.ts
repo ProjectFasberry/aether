@@ -11,7 +11,13 @@ const methodPayload = t.Object({
   imageUrl: t.String(),
   title: t.String(),
   value: t.String(),
+  currencies: t.Array(
+    t.String()
+  )
 })
+
+const CRYPTO_METHODS = ["cryptobot", "heleket"];
+const SBP_METHODS = ["sbp"];
 
 async function getMethods(): Promise<Static<typeof methodPayload>[]> {
   const query = await general
@@ -20,7 +26,15 @@ async function getMethods(): Promise<Static<typeof methodPayload>[]> {
     .where("isAvailable", "=", true)
     .execute()
 
-  return query.map((method) => ({ ...method, imageUrl: getStaticUrl(method.imageUrl) }))
+  return query.map((method) => ({
+    ...method,
+    imageUrl: getStaticUrl(method.imageUrl),
+    currencies: CRYPTO_METHODS.includes(method.value)
+      ? currencyCryptoSchema.options
+      : SBP_METHODS.includes(method.value)
+        ? z.enum(['RUB']).options
+        : []
+  }))
 }
 
 export const methodsList = new Elysia()
@@ -32,22 +46,5 @@ export const methodsList = new Elysia()
       200: withData(
         t.Array(methodPayload)
       )
-    }
-  })
-
-export const methodsCurrencies = new Elysia()
-  .get("/currencies/:method", async ({ params: { method }, ...ctx }) => {
-    if (method === 'cryptobot' || method === 'heleket') {
-      return { data: currencyCryptoSchema.options }
-    }
-
-    if (method === 'sbp') {
-      return { data: z.enum(['RUB']).options }
-    }
-
-    return { data: [] }
-  }, {
-    response: {
-      200: withData(t.Array(t.String()))
     }
   })

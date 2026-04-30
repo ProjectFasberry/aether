@@ -31,8 +31,16 @@ const cartAddItem = new Elysia()
       200: withData(
         t.Number()
       ),
-      400: withError,
-      404: withError
+      400: withError(
+        t.UnionEnum([
+          "RECIPIENT_NOT_FOUND"
+        ])
+      ),
+      404: withError(
+        t.UnionEnum([
+          "ITEM_NOT_FOUND"
+        ])
+      )
     }
   })
 

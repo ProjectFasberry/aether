@@ -8,18 +8,18 @@ import { wrapMeta } from "#/utils/config/transforms";
 import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types";
 import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import * as z from "zod/v4";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation-database-types";
 import { getPlayerAvatar } from "../skin/skin.model";
 import { type Static, t, type TSchema } from "elysia";
 import { invariant } from "#/helpers/invariant";
 import { general } from "#/shared/database/general-db";
 
-export const ratingSchema = z.intersection(
-	metaSchema.pick({ asc: true, limit: true, endCursor: true }),
-	z.object({
-		server: z.string().min(1).optional(),
+export const ratingSchema = t.Intersect([
+	t.Pick(metaSchema, ["asc", "limit", "endCursor"]),
+	t.Object({
+		server: t.Optional(t.String({ minLength: 1 })),
 	}),
+]
 );
 
 function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
@@ -142,7 +142,7 @@ const allSchemas = configValues.map(item => item.schema);
 
 export const ratingPayload = t.Union(allSchemas);
 
-async function getBelkoinRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.belkoin.schema>> {
+async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.belkoin.schema>> {
 	const direction = getDirection(asc);
 
 	const belkoinQuery = playerpoints
@@ -173,7 +173,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: z.infer<typeof rating
 	return { data, meta: wrapMeta(belkoinRes) };
 }
 
-async function getParkourRating({ asc, limit, endCursor }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.parkour.schema>> {
+async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.parkour.schema>> {
 	const direction = getDirection(asc);
 
 	const parkourQuery = lobby
@@ -209,7 +209,7 @@ async function getParkourRating({ asc, limit, endCursor }: z.infer<typeof rating
 	return { data, meta: wrapMeta(parkourRes) };
 }
 
-async function getLandsRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.lands.schema>> {
+async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.lands.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
@@ -273,7 +273,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: z.infer<typeof 
 	return { data, meta: wrapMeta(landsRes) };
 }
 
-async function getCharismRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.charism.schema>> {
+async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.charism.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
@@ -309,7 +309,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: z.infer<typeo
 	return { data, meta: wrapMeta(charismRes) };
 }
 
-async function getReputationRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.reputation.schema>> {
+async function getReputationRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.reputation.schema>> {
 	const dbs: Record<string, Kysely<reputationDB> | null> = {
 		bisquite: reputation,
 		muffin: null,
@@ -356,7 +356,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: z.infer<ty
 	return { data, meta: wrapMeta(reputationRes) };
 }
 
-async function getPlaytimeRating({ asc, limit, endCursor, server }: z.infer<typeof ratingSchema>): Promise<Static<typeof ratingConfig.playtime.schema>> {
+async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.playtime.schema>> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
@@ -389,7 +389,7 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: z.infer<type
 	return { data, meta: wrapMeta(playtimeRes) };
 }
 
-export async function getRating(by: AllowedKeys, query: z.infer<typeof ratingSchema>) {
+export async function getRating(by: AllowedKeys, query: Static<typeof ratingSchema>) {
 	return ratingConfig[by].fn?.(query)
 }
 

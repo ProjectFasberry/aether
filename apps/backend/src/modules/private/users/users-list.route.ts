@@ -1,27 +1,26 @@
-import Elysia from "elysia";
+import Elysia, { type Static, t } from "elysia";
 import type { PrivatedUsersPayload } from "@repo/shared/types/entities/other";
 import { getDirection } from "#/utils/config/paginate";
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { wrapMeta } from "#/utils/config/transforms";
-import * as z from "zod/v4";
 import { metaSchema, searchQuerySchema } from "#/shared/schemas";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { getPlayerAvatar } from "#/modules/server/skin/skin.model";
 
-const USER_SORT = ["abc", "created_at", "role"]
+const USER_SORT = ["abc", "created_at", "role"] as const
 
-const userListSchema = z.intersection(
+const userListSchema = t.Intersect([
   metaSchema,
-  z.object({
-    sort: z.enum(USER_SORT).optional().default(USER_SORT[0]),
+  t.Object({
+    sort: t.Optional(t.UnionEnum(USER_SORT, { default: USER_SORT[0] })),
     searchQuery: searchQuerySchema
   })
-)
+])
 
-type UserListSchema = z.infer<typeof userListSchema>
+type UserListSchema = Static<typeof userListSchema>
 type RequestedFields = "created_at" | "nickname" | "role_id"
 
 const EXPRESSIONS: Record<UserListSchema["sort"], RequestedFields> = {
@@ -62,12 +61,12 @@ async function getPlayersList({ asc, startCursor, searchQuery, endCursor, limit,
       );
   }
 
-  const expression = EXPRESSIONS[sort];
+  const expression = EXPRESSIONS[sort!];
 
   const config = {
-    after: endCursor,
-    before: startCursor,
-    perPage: limit,
+    after: endCursor!,
+    before: startCursor!,
+    perPage: limit!,
   }
 
   const result = await executeWithCursorPagination(query, {

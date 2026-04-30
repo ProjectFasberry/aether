@@ -36,8 +36,13 @@ const set = new Elysia()
     }),
     response: {
       200: withData(t.Literal("OK")),
-      400: withError,
-      500: withError
+      400: withError(),
+      500: withError(
+        t.UnionEnum([
+          "THIRDPARTY_ERROR",
+          "INTERNAL_SERVER_ERROR"
+        ])
+      )
     }
   })
 

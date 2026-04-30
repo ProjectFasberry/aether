@@ -21,6 +21,6 @@ export const invalidate = new Elysia()
 			200: withData(
 				t.Literal("OK")
 			),
-			500: withError,
+			500: withError(),
 		},
 	});

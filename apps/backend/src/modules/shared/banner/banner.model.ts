@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { metaSchema } from "#/shared/schemas";
-import * as z from "zod/v4";
+import { t } from "elysia";
 
 export async function bannerExists(nickname: string | null) {
   if (!nickname) return false;
@@ -27,8 +27,8 @@ export async function bannerExists(nickname: string | null) {
   return !result.viewed;
 }
 
-export const bannerSoloSchema = metaSchema.pick({ asc: true })
+export const bannerSoloSchema = t.Pick(metaSchema, ["asc"])
 
-export const bannerSchema = z.object({
-  id: z.coerce.number()
+export const bannerSchema = t.Object({
+  id: t.Number()
 })

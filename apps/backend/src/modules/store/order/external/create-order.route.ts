@@ -62,7 +62,15 @@ export const createOrder = new Elysia()
       200: withData(
         outputSchema
       ),
-      400: withError,
-      500: withError
+      400: withError(
+        t.UnionEnum([
+          "INCORRECT_PAYMENT_METHOD",
+        ])
+      ),
+      500: withError(
+        t.UnionEnum([
+          "INTERNAL_ERROR"
+        ])
+      )
     }
   })

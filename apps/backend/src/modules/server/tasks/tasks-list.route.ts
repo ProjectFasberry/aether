@@ -3,14 +3,13 @@ import { metaSchema, withData, withMeta } from "#/shared/schemas"
 import { getDirection } from "#/utils/config/paginate"
 import { wrapMeta } from "#/utils/config/transforms"
 import type { TasksPayload } from "@repo/shared/types/entities/other"
-import Elysia, { t } from "elysia"
+import Elysia, { type Static, t } from "elysia"
 import { executeWithCursorPagination } from "kysely-paginate"
-import type * as z from "zod/v4"
 import { taskPayload } from "./tasks.model"
 
-const tasksListSchema = metaSchema.pick({ asc: true, endCursor: true })
+const tasksListSchema = t.Pick(metaSchema, ["asc", "endCursor"])
 
-async function getTasks({ asc, endCursor }: z.infer<typeof tasksListSchema>) {
+async function getTasks({ asc, endCursor }: Static<typeof tasksListSchema>) {
   const baseQuery = general
     .selectFrom("tasks")
     .select([

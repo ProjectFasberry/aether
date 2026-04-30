@@ -1,21 +1,20 @@
-import Elysia, { t } from "elysia";
+import Elysia, { type Static, t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, withData, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import type { BannersPayload } from "@repo/shared/types/entities/banner";
 import { executeWithCursorPagination } from "kysely-paginate";
-import * as z from "zod/v4";
 
-const bannersListSchema = z.intersection(
-  metaSchema.pick({ asc: true, endCursor: true }),
-  z.object({
-    searchQuery: z.string().min(1).max(256).optional()
+const bannersListSchema = t.Intersect([
+  t.Pick(metaSchema, ["asc", "endCursor"]),
+  t.Object({
+    searchQuery: t.Optional(t.String({ minLength: 1, maxLength: 256 }))
   })
-)
+])
 
 async function getBanners(
-  { asc, endCursor, searchQuery }: z.infer<typeof bannersListSchema>
+  { asc, endCursor, searchQuery }: Static<typeof bannersListSchema>
 ): Promise<BannersPayload> {
   const direction = getDirection(asc);
 

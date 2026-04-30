@@ -1,7 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import * as z from "zod/v4";
 
 type Payload = {
   [key: string]: {
@@ -11,7 +10,7 @@ type Payload = {
 }
 
 const wikiCategories = new Elysia()
-  .get("/categories", async (ctx) => {
+  .get("/categories", async () => {
     const categories = await general
       .selectFrom("wiki")
       .innerJoin("wiki_groups", "wiki_groups.id", "wiki.group_id")
@@ -79,8 +78,8 @@ const wikiCategory = new Elysia()
 
     return { data }
   }, {
-    params: z.object({
-      name: z.string().min(1)
+    params: t.Object({
+      name: t.String({ minLength: 1 })
     }),
     response: {
       200: withData(

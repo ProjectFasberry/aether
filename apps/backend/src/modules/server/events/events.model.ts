@@ -1,15 +1,14 @@
 import { getRedisKey } from "#/helpers/redis"
 import { getRedis } from "#/shared/redis/client"
 import type { EventPayload } from "@repo/shared/types/entities/other"
-import { t } from "elysia"
+import { type Static, t } from "elysia"
 import { nanoid } from "nanoid"
-import * as z from "zod/v4"
 
 export const EVENTS_ALL_KEY = getRedisKey("internal", "events:all:data")
 export const EVENTS_TARGET_KEY = (id: string) => getRedisKey("internal", `events:event:${id}`)
 export const EVENTS_TYPE_KEY = (type: string) => getRedisKey("internal", `events:type:${type}`)
 
-export const eventTypeSchema = z.enum(["game", "log", "system"])
+export const eventTypeSchema = t.UnionEnum(["game", "log", "system"])
 
 export const eventPayload = t.Object({
   id: t.String(),
@@ -22,15 +21,22 @@ export const eventPayload = t.Object({
   })
 })
 
-export const createEventSchema = z.object({
+export const createEventSchema = t.Object({
   type: eventTypeSchema,
-  title: z.string().min(1).max(64),
-  initiator: z.string().min(1).max(32),
-  description: z.string().max(128).transform((v) => (v.trim().length === 0 ? null : v)).nullable().default(null)
-})
+  title: t.String({ minLength: 1, maxLength: 64 }),
+  initiator: t.String({ minLength: 1, maxLength: 32 }),
+  description: t.Transform(
+    t.Nullable(t.String({ maxLength: 128 }), { default: null })
+  )
+    .Decode((v) => {
+      if (v === null) return null;
+      return v.trim().length === 0 ? null : v;
+    })
+    .Encode((v) => v)
+});
 
 export async function createEvent(
-  { title, type, initiator, description }: z.infer<typeof createEventSchema>
+  { title, type, initiator, description }: Static<typeof createEventSchema>
 ) {
   const redis = getRedis();
 

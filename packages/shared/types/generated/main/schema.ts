@@ -1268,6 +1268,38 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
+	"/store/item/{id}": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreItemById"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
+	"/store/items": {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		get: operations["getStoreItems"];
+		put?: never;
+		post?: never;
+		delete?: never;
+		options?: never;
+		head?: never;
+		patch?: never;
+		trace?: never;
+	};
 	"/store/cart/list": {
 		parameters: {
 			query?: never;
@@ -1348,38 +1380,6 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/store/item/{id}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreItemById"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/items": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreItems"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
 	"/store/order/external/create": {
 		parameters: {
 			query?: never;
@@ -1420,22 +1420,6 @@ export interface paths {
 			cookie?: never;
 		};
 		get: operations["getStoreOrderExternalMethodsList"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/store/order/external/methods/currencies/{method}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getStoreOrderExternalMethodsCurrenciesByMethod"];
 		put?: never;
 		post?: never;
 		delete?: never;
@@ -3774,6 +3758,28 @@ export interface operations {
 		requestBody?: never;
 		responses: never;
 	};
+	getStoreItemById: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path: {
+				id: number;
+			};
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
+	getStoreItems: {
+		parameters: {
+			query?: never;
+			header?: never;
+			path?: never;
+			cookie?: never;
+		};
+		requestBody?: never;
+		responses: never;
+	};
 	getStoreCartList: {
 		parameters: {
 			query?: never;
@@ -3872,7 +3878,7 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						data: (number | null) | null;
+						data: number;
 					};
 				};
 			};
@@ -3965,28 +3971,6 @@ export interface operations {
 				};
 			};
 		};
-	};
-	getStoreItemById: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				id: number;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
-	};
-	getStoreItems: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: never;
 	};
 	postStoreOrderExternalCreate: {
 		parameters: {
@@ -4104,31 +4088,8 @@ export interface operations {
 							imageUrl: string;
 							title: string;
 							value: string;
+							currencies: string[];
 						}[];
-					};
-				};
-			};
-		};
-	};
-	getStoreOrderExternalMethodsCurrenciesByMethod: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				method: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 200 */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"application/json": {
-						data: string[];
 					};
 				};
 			};

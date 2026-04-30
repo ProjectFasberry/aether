@@ -5,20 +5,24 @@ import { wrapMeta } from "#/utils/config/transforms";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers";
 import { GAME_CURRENCIES } from "@repo/shared/schemas/payment";
 import type { StoreItem, StoreItemsPayload } from "@repo/shared/types/entities/store";
+import { type Static, t } from "elysia";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import * as z from "zod/v4";
 
 const STORE_LIST_TYPE = ["all", "donate", "event"] as const;
 
-export const storeListSchema = z.intersection(
-  metaSchema.pick({ endCursor: true }),
-  z.object({
-    category: z.enum(STORE_LIST_TYPE).optional().default("all"),
-    wallet: z.enum([...GAME_CURRENCIES, "ALL"]).default("ALL"),
+export const storeListSchema = t.Intersect([
+  t.Pick(metaSchema, ["endCursor"]),
+  t.Object({
+    category: t.Transform(t.Optional(t.UnionEnum(STORE_LIST_TYPE, { default: "all" })))
+      .Decode(v => v ?? "all")
+      .Encode(v => v),
+    wallet: t.Transform(t.UnionEnum([...GAME_CURRENCIES, "ALL"], { default: "ALL" }))
+      .Decode(v => v ?? "ALL")
+      .Encode(v => v),
     searchQuery: searchQuerySchema
   })
-)
+])
 
 export const store = {
   async getItem(id: number): Promise<StoreItem | null> {
@@ -50,7 +54,7 @@ export const store = {
     return data
   },
   async getItems(
-    { wallet, category, endCursor, searchQuery }: z.infer<typeof storeListSchema>
+    { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>
   ): Promise<StoreItemsPayload> {
     let storeQuery = general
       .selectFrom("store_items")

@@ -2,12 +2,13 @@ import { normalizeIp } from "#/helpers/normalize-ip";
 import { getStaticUrl } from "#/helpers/volume";
 import { DEFAULT_HEAD, getPlayerAvatar } from "#/modules/server/skin/skin.model";
 import { general } from "#/shared/database/general-db";
-import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
+import { metaSchema, searchQuerySchema, createStringBoolSchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
+import type { DB } from "@repo/shared/types/db/general-database-types";
 import { type Static, t } from "elysia";
+import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import * as z from "zod/v4";
 
 export const newsSingleSchema = t.Object({
   id: t.Number(),
@@ -20,7 +21,7 @@ export const newsSingleSchema = t.Object({
     nickname: t.String(),
     avatar: t.String()
   }),
-  content: t.Any()
+  content: t.Optional(t.Any())
 })
 
 export const newsPayloadSchema = t.Object({
@@ -28,16 +29,15 @@ export const newsPayloadSchema = t.Object({
   meta: withMeta
 })
 
-type News = Static<typeof newsSingleSchema>
-type NewsPayload = Static<typeof newsPayloadSchema>
-
-export const newsSchema = z.intersection(
-  metaSchema.pick({ asc: true, endCursor: true, limit: true }),
-  z.object({
-    searchQuery: searchQuerySchema,
-    content: z.stringbool().optional().default(false)
-  })
-)
+export const newsSchema = t.Composite([
+  t.Pick(metaSchema, ["asc", "endCursor", "limit"]),
+  t.Partial(
+    t.Object({
+      searchQuery: searchQuerySchema,
+      content: createStringBoolSchema(true)
+    })
+  )
+])
 
 export async function createNewsViews(target: { ids: number[], ip: string | null }) {
   if (target.ids.length === 0) return;
@@ -59,32 +59,41 @@ export async function createNewsViews(target: { ids: number[], ip: string | null
     .execute()
 }
 
-export async function getNewsList({ 
-  asc, limit, endCursor, searchQuery, content 
-}: z.infer<typeof newsSchema>) {
+export async function getNewsList({
+  asc, limit, endCursor, searchQuery, content
+}: Static<typeof newsSchema>): Promise<Static<typeof newsPayloadSchema> | null> {
+  const fields: SelectExpression<DB, 'news' | 'news_views'>[] = [
+    'news.id',
+    'news.created_at',
+    'news.title',
+    'news.description',
+    'news.imageUrl',
+    'news.creator',
+  ];
+
+  const grouped: ReferenceExpression<DB, 'news' | 'news_views'>[] = [
+    'news.id',
+    'news.created_at',
+    'news.title',
+    'news.description',
+    'news.imageUrl',
+    'news.creator',
+  ];
+
+  if (content) {
+    fields.push("news.content");
+    grouped.push("news.content");
+  }
+
   let query = general
     .selectFrom('news')
     .leftJoin('news_views', 'news_views.news_id', 'news.id')
     .select(eb => [
-      'news.id',
-      'news.created_at',
-      'news.title',
-      'news.description',
-      'news.imageUrl',
-      'news.content',
-      'news.creator',
+      ...fields,
       eb.fn.countAll().as('views')
     ])
-    .groupBy([
-      'news.id',
-      'news.created_at',
-      'news.title',
-      'news.description',
-      'news.imageUrl',
-      'news.content',
-      'news.creator'
-    ])
-  
+    .groupBy(grouped)
+
   if (searchQuery) {
     query = query.where("title", "like", `%${searchQuery}%`)
   }
@@ -104,6 +113,7 @@ export async function getNewsList({
 
   const data = res.rows.map((news) => ({
     ...news,
+    id: news.id!,
     views: Number(news.views),
     created_at: news.created_at.toString(),
     creator: {
@@ -113,15 +123,15 @@ export async function getNewsList({
     imageUrl: getStaticUrl(news.imageUrl)
   }))
 
-  const response: NewsPayload = {
+  return {
     data,
     meta: wrapMeta(res)
   }
-
-  return response
 }
 
-export async function getNewsSingle(id: number): Promise<News | null> {
+export async function getNewsSingle(
+  id: number
+): Promise<Static<typeof newsSingleSchema> | null> {
   const query = await general
     .selectFrom("news")
     .leftJoin('news_views', 'news_views.news_id', 'news.id')
@@ -157,13 +167,11 @@ export async function getNewsSingle(id: number): Promise<News | null> {
     avatar: await getPlayerAvatar(newsCreator)
   }
 
-  const item = {
+  return {
     ...base,
     views: Number(query.views),
     creator,
     created_at: query.created_at.toString(),
     imageUrl: getStaticUrl(query.imageUrl)
   }
-
-  return item
 }

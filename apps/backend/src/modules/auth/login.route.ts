@@ -47,8 +47,13 @@ const withPassword = new Elysia()
 					nickname: t.String() 
 				})
 			),
-			400: withError,
-			404: withError,
+			400: withError(
+				t.UnionEnum([
+					"NOT_EXISTS",
+					"PASSWORD_OR_LOGIN_INCORRECT"
+				])
+			),
+			404: withError(),
 		},
 	});
 
@@ -86,7 +91,11 @@ export const withQR = new Elysia()
 					token: t.String()
 				})
 			),
-			403: withError
+			403: withError(
+				t.UnionEnum([
+					"INVALID_REQUEST"
+				])
+			)
 		}
 	})
 	.ws("/events", {
@@ -168,7 +177,11 @@ export const withQR = new Elysia()
 				200: withData(
 					t.Literal("OK")
 				),
-				400: withError
+				400: withError(
+					t.UnionEnum([
+						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
+					])
+				)
 			}
 		})
 		.post("/decline", async ({ query: { token }, status }) => {
@@ -186,7 +199,11 @@ export const withQR = new Elysia()
 				200: withData(
 					t.Literal("OK")
 				),
-				400: withError
+				400: withError(
+					t.UnionEnum([
+						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
+					])
+				)
 			}
 		})
 		.get("/callback", async ({ query: { e, token }, status }) => {
@@ -214,7 +231,11 @@ export const withQR = new Elysia()
 			]),
 			response: {
 				200: withData(t.String()),
-				400: withError
+				400: withError(
+					t.UnionEnum([
+						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
+					])
+				)
 			}
 		})
 	)
@@ -245,7 +266,12 @@ export const withQR = new Elysia()
 					nickname: t.String()
 				})
 			),
-			400: withError
+			400: withError(
+				t.UnionEnum([
+					"LOGIN_NOT_VERIFIED"
+				])
+			),
+			500: withError()
 		}
 	})
 	.get("/validate", async ({ query: { token } }) => {
@@ -288,7 +314,7 @@ export const withQR = new Elysia()
 					t.Boolean()
 				])
 			),
-			500: withError
+			500: withError()
 		}
 	});
 
@@ -307,7 +333,11 @@ export const withGame = new Elysia()
 					code: t.String()
 				})
 			),
-			403: withError
+			403: withError(
+				t.UnionEnum([
+					"INCORRECT_REQUEST"
+				])
+			)
 		}
 	});
 

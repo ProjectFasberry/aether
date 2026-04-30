@@ -5,7 +5,7 @@ import { topup, topupErrorAtom, TopupMethodListPayload, topupNavigationModel, to
 import { Button } from "@repo/ui/button";
 import { Skeleton } from "@repo/ui/skeleton";
 import { TARGET_TITLE } from "../cart/cart-price";
-import { IconCheck, IconExchange } from "@tabler/icons-react";
+import { IconCheck, IconExchange, IconX } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { isEmptyArray } from "@/shared/lib/utils";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@repo/ui/select";
@@ -39,11 +39,12 @@ const TopUpError = reatomComponent(({ ctx }) => {
 
 const TopUpMethod = reatomComponent<{ method: TopupMethodListPayload[number] }>(({ ctx, method }) => {
   const current = ctx.spy(topupState.method.type);
+  if (!current) return null;
 
   return (
     <Button
-      background={current === method.value ? "white" : "default"}
-      onClick={() => topupState.method.type(ctx, method.value)}
+      background={current.value === method.value ? "white" : "default"}
+      onClick={() => topupState.method.type(ctx, method)}
       className="gap-2 h-12"
     >
       <img src={method.imageUrl} className="min-h-6 min-w-6 rounded-lg h-6 w-6 object-cover" alt="" />
@@ -75,11 +76,11 @@ const TopUpRecipient = reatomComponent(({ ctx }) => {
 }, "TopUpRecipient")
 
 const TopUpCurrencies = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(topup.fetchCurrencies.dataAtom);
+  const data = ctx.spy(topupState.method.type)?.currencies;
 
   return (
     <Select
-      disabled={ctx.spy(topup.fetchCurrencies.statusesAtom).isPending}
+      disabled={ctx.spy(topup.fetchMethods.statusesAtom).isPending}
       value={ctx.spy(topupState.method.currency) ?? ""}
       onValueChange={(v) => topupState.method.currency(ctx, v)}
     >
@@ -94,17 +95,17 @@ const TopUpCurrencies = reatomComponent(({ ctx }) => {
 }, "TopUpCurrencies")
 
 const BUTTONS = [
-  { 
-    label: "Назад", 
+  {
+    label: "Назад",
     bgVariant: "default",
-    cdAtom: topupNavigationModel.canGoBackAtom, 
-    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.back(spawnCtx)) 
+    cdAtom: topupNavigationModel.canGoBackAtom,
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.back(spawnCtx))
   },
-  { 
-    label: "Продолжить", 
-    bgVariant: "positive", 
-    cdAtom: topupNavigationModel.canGoNextAtom, 
-    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx)) 
+  {
+    label: "Продолжить",
+    bgVariant: "positive",
+    cdAtom: topupNavigationModel.canGoNextAtom,
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx))
   }
 ] as const
 
@@ -129,34 +130,35 @@ const TopupNavigation = reatomComponent(({ ctx }) => {
   )
 }, "TopUpSubmit")
 
+const ExchangeItem = ({ type, values }: { type: string, values: Record<string, number> }) => {
+  return (
+    <div className="flex flex-col w-full gap-2">
+      <div className="flex bg-neutral-800 justify-between px-4 h-10 rounded-lg cursor-pointer items-center gap-2 w-full">
+        <Typography className="text-lg leading-5">
+          {TARGET_TITLE[type as keyof typeof TARGET_TITLE]}
+        </Typography>
+        <IconExchange size={16} className="text-neutral-400" />
+      </div>
+      <div className="flex flex-col gap-2 w-full h-full">
+        <Typography color="gray">Курс на текущий момент</Typography>
+        <div className='flex flex-col gap-1 w-full'>
+          {Object.entries(values).map(([currency, value]) => (
+            <div key={currency}>~ {value.toFixed(2)} {currency}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 export const TopUpExchanges = reatomComponent(({ ctx }) => {
-  if (ctx.spy(topup.fetchExchange.statusesAtom).isPending) return <IconLoader />
+  if (ctx.spy(topup.fetchExchange.statusesAtom).isPending) {
+    return Array.from({ length: 3 }).map((_, idx) => <Skeleton key={idx} className="h-12 w-full" />)
+  }
 
   const data = ctx.spy(topup.fetchExchange.dataAtom);
   if (!data || isEmptyArray(data)) return null;
 
-  return (
-    <div className="flex items-center justify-between w-full h-full gap-2">
-      {data.map((entry) => (
-        <div key={entry.type} className="flex flex-col w-full gap-2">
-          <div className="flex bg-neutral-800 justify-between px-4 h-10 rounded-lg cursor-pointer items-center gap-2 w-full">
-            <Typography className="text-lg leading-5">
-              {TARGET_TITLE[entry.type as keyof typeof TARGET_TITLE]}
-            </Typography>
-            <IconExchange size={16} className="text-neutral-400" />
-          </div>
-          <div className="flex flex-col gap-2 w-full h-full">
-            <Typography color="gray">Курс на текущий момент</Typography>
-            <div className='flex flex-col gap-1 w-full'>
-              {Object.entries(entry.values).map(([currency, value]) => (
-                <div key={currency}>~ {value.toFixed(2)} {currency}</div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
+  return data.map((entry) => <ExchangeItem key={entry.type} {...entry} />)
 }, "TopUpExchanges")
 
 const WALLETS_IMGS: Record<string, string> = { "CHARISM": charismImage, "BELKOIN": belkoinImage }
@@ -191,36 +193,39 @@ const TopupConfirm = reatomComponent(({ ctx }) => {
   if (ctx.spy(topup.submit.statusesAtom).isPending) return <IconLoader />
 
   const error = ctx.spy(topupErrorAtom)
-
-  if (error) {
-    return (
-      <Button
-        background="default"
-        className='px-4 w-fit font-semibold'
-        onClick={() => topup.resetAll(ctx)}
-      >
-        Вернуться
-      </Button>
-    )
-  }
-
   const data = ctx.spy(topup.submit.dataAtom)
-  if (!data) return null;
+  const isSuccess = data && !error;
+
+  const title = isSuccess ? `Заказ был создан` : `Заказ не был создан`
 
   return (
     <div className="flex flex-col items-center justify-center w-full gap-4">
-      <div className="flex flex-col gap-2 items-center justify-center">
-        <IconCheck size={36} className='text-green-400' />
-        <Typography className="text-lg font-semibold">Заказ создан</Typography>
+      <div className="flex flex-col gap-2 bg-neutral-900 min-h-36 rounded-xl w-full h-full items-center justify-center">
+        {isSuccess ? (
+          <IconCheck size={36} className='text-green-400' />
+        ) : (
+          <IconX size={36} className="text-red" />
+        )}
+        <Typography className="text-lg font-semibold">{title}</Typography>
       </div>
-      <Button
-        type="button"
-        background="default"
-        onClick={() => topup.toOrder(ctx, data.uniqueId)}
-        className="font-semibold"
-      >
-        К заказу
-      </Button>
+      {isSuccess ? (
+        <Button
+          type="button"
+          background="default"
+          onClick={() => topup.toOrder(ctx, data.uniqueId)}
+          className="font-semibold"
+        >
+          К заказу
+        </Button>
+      ) : (
+        <Button
+          background="default"
+          className='px-4 w-fit font-semibold'
+          onClick={() => topup.resetAll(ctx)}
+        >
+          Вернуться
+        </Button>
+      )}
     </div>
   )
 }, "TopupConfirm")
@@ -258,7 +263,9 @@ export const TopupForm = reatomComponent(({ ctx }) => {
 
   return (
     <form className="flex flex-col gap-8 w-full sm:w-[60%] h-full" onSubmit={handleSubmit}>
-      <TopupFormContent />
+      <div className="flex items-center justify-center w-full h-full">
+        <TopupFormContent />
+      </div>
       <TopUpError />
       <TopupNavigation />
     </form>

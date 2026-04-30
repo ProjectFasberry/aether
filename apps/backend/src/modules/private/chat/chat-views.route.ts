@@ -1,5 +1,4 @@
-import Elysia from "elysia";
-import * as z from "zod/v4";
+import Elysia, { t } from "elysia";
 import { chat, chatMessageViewsSchema } from "./chat.model";
 
 export const chatMessageViews = new Elysia()
@@ -7,8 +6,8 @@ export const chatMessageViews = new Elysia()
     const data = await chat.getViews(id, query)
     return { data }
   }, {
-    params: z.object({
-      id: z.coerce.number()
+    params: t.Object({
+      id: t.Number()
     }),
     query: chatMessageViewsSchema
   })

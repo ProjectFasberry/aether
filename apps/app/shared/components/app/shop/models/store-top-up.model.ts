@@ -12,11 +12,10 @@ import { validateNumber } from "@/shared/lib/utils"
 import React from "react"
 
 type OutputPayload = ExtractApiData<"postStoreOrderExternalCreate">["data"]
-type StoreExchangeRatesPayload = ExtractApiData<"getStoreOrderExternalExchange-rates">["data"]
+export type StoreExchangeRatesPayload = ExtractApiData<"getStoreOrderExternalExchange-rates">["data"]
 type Schema = z.infer<typeof createOrderTopUpSchema>
 type TopUpSearch = "recipient" | "target"
 export type TopupMethodListPayload = ExtractApiData<"getStoreOrderExternalMethodsList">["data"]
-export type TopupMethodCurrenciesPayload = ExtractApiData<"getStoreOrderExternalMethodsCurrenciesByMethod">["data"]
 
 export type TopupType = "start-input" | "select-method" | "confirm"
 
@@ -30,7 +29,7 @@ export const topupState = atom(null, "topupState").pipe(
     ),
     method: atom(null, `${name}.method`).pipe(
       withAssign(() => ({
-        type: atom<string | null>(null, "topUpMethod").pipe(withReset()),
+        type: atom<TopupMethodListPayload[number] | null>(null, "topUpMethod").pipe(withReset()),
         currency: atom<string | null>(null, "topUpMethod").pipe(withReset())
       }))
     ),
@@ -68,7 +67,6 @@ topupState.search.onChange((ctx, state) => {
 })
 
 topupState.method.type.onChange((ctx) => topupState.method.currency.reset(ctx))
-topupState.method.type.onChange((ctx, state) => state && topup.fetchCurrencies(ctx, state))
 topupState.wallet.onChange((ctx) => topupState.value.reset(ctx))
 
 export const topup = atom(null, "topup").pipe(
@@ -92,7 +90,7 @@ export const topup = atom(null, "topup").pipe(
       name: `${name}.fetchMethods`,
       onFulfill: (ctx, res) => {
         if (res.length >= 1) {
-          topupState.method.type(ctx, res[0]?.value)
+          topupState.method.type(ctx, res[0])
         }
       }
     }).pipe(
@@ -109,15 +107,6 @@ export const topup = atom(null, "topup").pipe(
       withStatusesAtom(),
       withCache({ swr: false })
     ),
-    fetchCurrencies: reatomAsync(async (ctx, method: string) => {
-      return await ctx.schedule(() =>
-        client<TopupMethodCurrenciesPayload>(`store/order/external/methods/currencies/${method}`).exec()
-      )
-    }, `${name}.fetchCurrencies`).pipe(
-      withStatusesAtom(),
-      withDataAtom(),
-      withCache({ swr: false })
-    ),
     toOrder: action((ctx, uniqueId: string) => {
       navigate(`/store/order/${uniqueId}`);
       topup.resetAll(ctx);
@@ -125,7 +114,7 @@ export const topup = atom(null, "topup").pipe(
     submit: reatomAsync(async (ctx) => {
       const raw: Schema = {
         method: {
-          type: ctx.get(topupState.method.type) as Schema["method"]["type"],
+          type: ctx.get(topupState.method.type)?.value as Schema["method"]["type"],
           currency: ctx.get(topupState.method.currency) as Schema["method"]["currency"]
         },
         recipient: ctx.get(topupState.recipient),
@@ -173,7 +162,7 @@ export const topup = atom(null, "topup").pipe(
         selectMethod: atom((ctx) => {
           const raw: Pick<Schema, "method"> = {
             method: {
-              type: ctx.spy(topupState.method.type) as Schema["method"]["type"],
+              type: ctx.spy(topupState.method.type)?.value as Schema["method"]["type"],
               currency: ctx.spy(topupState.method.currency) as Schema["method"]["currency"]
             }
           }

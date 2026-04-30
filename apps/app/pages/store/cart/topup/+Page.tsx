@@ -33,7 +33,9 @@ export default function Page() {
       <div className="flex items-start justify-between gap-6 sm:flex-row flex-col w-full">
         <TopupForm />
         <div className="flex w-full sm:w-[40%] h-full">
-          <TopUpExchanges />
+          <div className="flex items-center justify-between w-full h-full gap-2">
+            <TopUpExchanges />
+          </div>
         </div>
       </div>
     </div>

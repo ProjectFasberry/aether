@@ -1,19 +1,18 @@
 import { getRedis } from "#/shared/redis/client";
 import type { EventPayload } from "@repo/shared/types/entities/other";
-import Elysia, { t } from "elysia";
-import * as z from "zod/v4";
+import Elysia, { type Static, t } from "elysia";
 import { eventPayload, EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
 
-const eventsListSchema = z.intersection(
-  metaSchema.pick({ limit: true }),
-  z.object({
-    type: eventTypeSchema.optional()
+const eventsListSchema = t.Intersect([
+  t.Required(t.Pick(metaSchema, ["limit"])),
+  t.Object({
+    type: t.Optional(eventTypeSchema)
   })
-)
+])
 
 async function getEvents(
-  { type, limit }: z.infer<typeof eventsListSchema>
+  { type, limit }: Static<typeof eventsListSchema>
 ): Promise<EventPayload[]> {
   const redis = getRedis();
 

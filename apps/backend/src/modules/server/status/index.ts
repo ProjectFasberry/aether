@@ -9,7 +9,7 @@ export const status = new Elysia()
 	}, {
 		response: {
 			200: withData(t.Nullable(statusSchema)),
-			500: withError,
+			500: withError(),
 		},
 		query: statusQuerySchema,
 	});

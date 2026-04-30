@@ -35,6 +35,11 @@ export const exchangeRatesRoute = new Elysia()
           )
         )
       ),
-      500: withError
+      500: withError(
+        t.UnionEnum([
+          "EXCHANGES_NOT_FOUND",
+          "STRUCTURE_INCORRECT"
+        ])
+      )
     }
   })

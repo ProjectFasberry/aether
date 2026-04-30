@@ -1,8 +1,7 @@
-import Elysia from "elysia";
+import Elysia, { type Static } from "elysia";
 import { ipPlugin } from "#/lib/plugins/index";
 import { withData } from "#/shared/schemas";
 import { createNewsViews, getNewsList, newsPayloadSchema, newsSchema } from "./news.model";
-import type { NewsPayload } from "@repo/shared/types/entities/news";
 
 export const newsList = new Elysia()
   .use(ipPlugin())
@@ -19,7 +18,7 @@ export const newsList = new Elysia()
     afterResponse: ({ responseValue, ip }) => {
       if (!responseValue) return;
 
-      const responseData = responseValue as { data: NewsPayload } | undefined
+      const responseData = responseValue as { data: Static<typeof newsPayloadSchema> } | undefined
       if (!responseData) return
 
       const { data } = responseData.data
