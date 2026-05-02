@@ -3,7 +3,6 @@ import { logError } from "@/shared/lib/log";
 import { action, atom, AtomState, batch } from "@reatom/core";
 import { reatomAsync, reatomRecord, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { getStoreItems, StoreItemsParams } from "../../shop/models/store.model";
-import { StoreItemsPayload } from "@repo/shared/types/entities/store";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
@@ -12,6 +11,7 @@ import * as z from "zod/v4";
 import type { JSONContent } from "@tiptap/react";
 import { navigate } from "vike/client/router";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
+import { StoreItem } from '../../shop/models/store-item.model';
 
 type CreateItemStoreSchema = z.infer<typeof storeItemCreateSchema>
 
@@ -39,8 +39,6 @@ export const createStoreItem = atom(null, "createStoreItem").pipe(
   }))
 )
 
-type StoreItem = StoreItemsPayload["data"][number]
-
 export const createStoreItemAction = reatomAsync(async (ctx) => {
   const body = {
     title: ctx.get(createStoreItemTitleAtom),
@@ -53,12 +51,10 @@ export const createStoreItemAction = reatomAsync(async (ctx) => {
     type: ctx.get(createStoreItemTypeAtom)
   }
 
-  return await ctx.schedule(() =>
-    client
-      .post<StoreItem>("privated/store/item/create")
-      .pipe(withJsonBody(body))
-      .exec()
-  )
+  return await client
+    .post<StoreItem>("privated/store/item/create")
+    .pipe(withJsonBody(body))
+    .exec()
 }, {
   name: "createStoreItemAction",
   onFulfill: (ctx, res) => {
@@ -170,7 +166,7 @@ searchParamsAtom.onChange(async (ctx, state) => {
     const data = ctx.get(storeItemsAction.dataAtom)?.data;
     const id = state["id"];
 
-    let item: StoreItemsPayload["data"][number] | null = null;
+    let item: StoreItem | null = null;
 
     if (!data) {
       const requestedData = await storeItemsAction(ctx);

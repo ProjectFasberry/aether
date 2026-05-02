@@ -40,6 +40,15 @@
 	},
 	"overrides": [
 		{
+			"includes": ["packages/ui/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["apps/app/**"],
 			"javascript": {
 				"jsxRuntime": "reactClassic"

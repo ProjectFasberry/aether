@@ -1,13 +1,12 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { createLink, Link } from "@/shared/components/config/link"
-import { Avatar } from "@/shared/components/app/avatar/components/avatar"
+import { Avatar } from "@/shared/ui/avatar"
 import { Skeleton } from "@repo/ui/skeleton"
 import { anotherLandsByOwnerAction } from "../models/land.model"
 import { Typography } from "@repo/ui/typography"
 
 const List = reatomComponent(({ ctx }) => {
   const data = ctx.spy(anotherLandsByOwnerAction.dataAtom)?.data
-
   if (!data) return null;
 
   return (

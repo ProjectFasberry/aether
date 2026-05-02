@@ -1,6 +1,6 @@
 import { Skeleton } from "@repo/ui/skeleton";
 import { tv } from "tailwind-variants";
-import { Avatar } from "../../avatar/components/avatar";
+import { Avatar } from "../../../../ui/avatar";
 import { reatomComponent } from "@reatom/npm-react";
 import { createLink, Link } from "@/shared/components/config/link";
 import { atom, onConnect } from "@reatom/framework";

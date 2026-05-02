@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { metaSchema, searchQuerySchema } from "#/shared/schemas";
+import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers";
@@ -11,7 +11,7 @@ import { executeWithCursorPagination } from "kysely-paginate";
 
 const STORE_LIST_TYPE = ["all", "donate", "event"] as const;
 
-export const storeListSchema = t.Intersect([
+export const storeListSchema = t.Composite([
   t.Pick(metaSchema, ["endCursor"]),
   t.Object({
     category: t.Transform(t.Optional(t.UnionEnum(STORE_LIST_TYPE, { default: "all" })))
@@ -23,6 +23,26 @@ export const storeListSchema = t.Intersect([
     searchQuery: searchQuerySchema
   })
 ])
+
+export const storeItemsItemSchema = t.Object({
+  id: t.Number(),
+  title: t.String(),
+  description: t.Nullable(t.String()),
+  imageUrl: t.String(),
+  type: t.String(),
+  command: t.Nullable(t.String()),
+  value: t.String(),
+  currency: t.String(),
+  price: t.Number(),
+  content: t.Any()
+})
+
+export const storeItemsSchema = t.Object({
+  data: t.Array(
+    storeItemsItemSchema
+  ),
+  meta: withMeta
+})
 
 export const store = {
   async getItem(id: number): Promise<StoreItem | null> {
@@ -55,7 +75,7 @@ export const store = {
   },
   async getItems(
     { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>
-  ): Promise<StoreItemsPayload> {
+  ): Promise<Static<typeof storeItemsSchema>> {
     let storeQuery = general
       .selectFrom("store_items")
       .select([
@@ -128,5 +148,4 @@ export const store = {
       meta: wrapMeta(result)
     }
   }
-
 }

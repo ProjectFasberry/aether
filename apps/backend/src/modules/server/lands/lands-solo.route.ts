@@ -1,6 +1,7 @@
 import Elysia, { t } from "elysia";
 import { defineOptionalUser } from "#/lib/middlewares/define";
-import { getLand } from "./lands.model";
+import { getLand, landPayload } from "./lands.model";
+import { withData } from "#/shared/schemas";
 
 export const landsSolo = new Elysia()
   .use(defineOptionalUser())
@@ -10,5 +11,10 @@ export const landsSolo = new Elysia()
   }, {
     params: t.Object({
       ulid: t.String({ min: 3 })
-    })
+    }),
+    response: {
+      200: withData(
+        landPayload
+      )
+    }
   })

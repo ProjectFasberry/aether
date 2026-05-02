@@ -12,7 +12,6 @@ import { editorExtensions, EditorMenuBar } from "@/shared/components/config/edit
 import { createLink } from "@/shared/components/config/link"
 import { atom, AtomState } from "@reatom/core"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { StoreItem as StoreItemType } from "@repo/shared/types/entities/store"
 import { Button } from "@repo/ui/button"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
@@ -23,6 +22,7 @@ import { EditorContent, useEditor, type JSONContent } from "@tiptap/react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { appState } from "@/shared/models/app.model"
 import { CreateItem } from "./store.create"
+import { StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
 
 const titles: Record<AtomState<typeof searchParamTargetAtom>, string> = {
   "create": "Создание товара",
@@ -33,7 +33,7 @@ const titles: Record<AtomState<typeof searchParamTargetAtom>, string> = {
 const headerTitleAtom = atom((ctx) => titles[ctx.spy(searchParamTargetAtom)], "headerTitle")
 const backIsVisibleAtom = atom((ctx) => !!ctx.spy(searchParamTargetAtom), "backIsVisible")
 
-const StoreItem = reatomComponent<StoreItemType>(({ ctx, imageUrl, description, title, id, ...base }) => {
+const StoreItem = reatomComponent<StoreItemProps>(({ ctx, imageUrl, description, title, id, ...base }) => {
   const item = { imageUrl, description, title, id, ...base }
 
   return (

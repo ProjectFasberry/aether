@@ -82,9 +82,7 @@ export const news = atom(null, "news").pipe(
           newsState.allMeta(ctx, res.meta)
         })
       },
-      onReject: (_, e) => {
-        logError(e)
-      }
+      onReject: (_, e) => logError(e)
     }).pipe(
       withDataAtom(null),
       withStatusesAtom(),

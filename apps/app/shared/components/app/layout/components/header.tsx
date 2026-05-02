@@ -2,7 +2,7 @@ import { IconBuildingStore, IconChevronUp } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
 import { currentUserState } from "@/shared/models/current-user.model";
-import { Avatar } from "@/shared/components/app/avatar/components/avatar";
+import { Avatar } from "@/shared/ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { Separator } from "@repo/ui/separator";
 import { Fragment } from "react/jsx-runtime";

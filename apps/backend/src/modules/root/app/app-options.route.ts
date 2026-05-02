@@ -1,20 +1,24 @@
-import Elysia, { t } from "elysia";
+import Elysia, { type Static, t } from "elysia";
 import { defineOptionalUser } from "#/lib/middlewares/define";
 import { withData } from "#/shared/schemas";
 import { bannerExists } from "../../shared/banner/banner.model";
-import type { AppOptionsPayload } from "@repo/shared/types/entities/other";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
 import { ipPlugin } from "#/lib/plugins/index";
+import { general } from "#/shared/database/general-db";
 
 function getWhitelist(ip: string) {
   const whitelist = getWhitelistIpList()
   return whitelist.includes(ip);
 }
 
-export async function getBan(nickname: string | null) {
-  if (!nickname) return null;
+export const banSchema = t.Object({
+  created_at: t.Date(),
+  nickname: t.String(),
+  reason: t.Nullable(t.String())
+})
 
+export async function getBan(nickname: string) {
   const query = await libertybans
     .selectFrom("libertybans_victims")
     .innerJoin("libertybans_names", "libertybans_names.uuid", "libertybans_victims.uuid")
@@ -28,34 +32,54 @@ export async function getBan(nickname: string | null) {
     .where("libertybans_names.lower_name", "=", nickname.toLowerCase())
     .executeTakeFirst()
 
-  return query ?? null
+  return query
+}
+
+const appOptionsSchema = t.Object({
+  bannerIsExists: t.Boolean(),
+  isBanned: t.Boolean(),
+  isWl: t.Boolean(),
+  isAuth: t.Boolean(),
+  pofEnabled: t.Boolean()
+});
+
+type AppOptionsPayload = Static<typeof appOptionsSchema>;
+
+async function getPofStatus(): Promise<boolean> {
+  const query = await general
+    .selectFrom("options")
+    .select("value")
+    .where("name", "=", "botCheckEnabled")
+    .executeTakeFirstOrThrow()
+
+  return query.value
 }
 
 export const appOptionsList = new Elysia()
   .use(defineOptionalUser())
   .use(ipPlugin())
   .get("/options", async ({ nickname, ip }) => {
-    const bannerIsExists = await bannerExists(nickname)
-    const isBanned = await getBan(nickname);
+    const [bannerIsExists, isBanned, pofEnabled] = await Promise.all([
+      nickname ? bannerExists(nickname) : false,
+      nickname ? getBan(nickname) : null,
+      getPofStatus()
+    ])
+
     const isWl = getWhitelist(ip)
 
     const data: AppOptionsPayload = {
       bannerIsExists,
       isBanned: Boolean(isBanned),
       isWl,
-      isAuth: Boolean(nickname)
+      isAuth: Boolean(nickname),
+      pofEnabled
     }
 
     return { data }
   }, {
     response: {
       200: withData(
-        t.Object({
-          bannerIsExists: t.Boolean(),
-          isBanned: t.Boolean(),
-          isWl: t.Boolean(),
-          isAuth: t.Boolean()
-        })
+        appOptionsSchema
       )
     }
   })

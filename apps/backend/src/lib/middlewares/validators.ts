@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { defineOptionalUser, defineSession, defineUserRole, validateLogger } from "./define";
+import { defineOptionalUser, defineSession, defineUserRole } from "./define";
 import { general } from "#/shared/database/general-db";
 import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
@@ -12,6 +12,7 @@ import { logErrorMsg } from "#/utils/config/log-utils";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
+import { validateLogger } from "#/utils/config/logger";
 
 export const toLog = (name: string) => new Elysia()
   .onAfterResponse(() => {
@@ -79,8 +80,7 @@ export const validateBannedStatus = () => new Elysia()
   .as("scoped")
 
 const capClient = client.extend((opts) => ({
-  ...opts,
-  prefixUrl: `${CAP_URL}/${CAP_SITE_KEY}`
+  ...opts, baseUrl: `${CAP_URL}/${CAP_SITE_KEY}`
 }))
 
 const ERRORS: Record<string, string> = {

@@ -110,9 +110,11 @@ async function getRandomPlayers(limit: number) {
 		.execute();
 }
 
+type RawSeemsLikePlayer = Omit<SeemsLikePlayer, "avatar">
+
 export async function processSeemsLikePlayersBatch(
 	batch: { nickname: string; uuid: string }[],
-): Promise<Record<string, SeemsLikePlayer[]>> {
+): Promise<Record<string, RawSeemsLikePlayer[]>> {
 	const batchNicknames = batch.map((p) => p.nickname);
 
 	const lands = await bisquite
@@ -171,11 +173,11 @@ export async function processSeemsLikePlayersBatch(
 			fullPlayersMap[p.nickname] = p;
 		});
 	}
-
-	const result: Record<string, SeemsLikePlayer[]> = {};
+	
+	const result: Record<string, RawSeemsLikePlayer[]> = {};
 
 	for (const player of batch) {
-		const data: SeemsLikePlayer[] = [];
+		const data: RawSeemsLikePlayer[] = [];
 		const members = playerToMembersMap[player.nickname] ?? new Set();
 
 		members.delete(player.nickname);

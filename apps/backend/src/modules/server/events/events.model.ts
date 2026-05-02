@@ -75,7 +75,7 @@ export async function createEvent(
 
 export async function cleanOldEvents(bs = 100) {
   const redis = getRedis();
-  const types = eventTypeSchema.options
+  const types = eventTypeSchema.enum
 
   for (const type of types) {
     let start = 0;

@@ -932,38 +932,6 @@ export interface paths {
 		patch?: never;
 		trace?: never;
 	};
-	"/server/skin/head/{nickname}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getServerSkinHeadByNickname"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
-	"/server/skin/full/{nickname}": {
-		parameters: {
-			query?: never;
-			header?: never;
-			path?: never;
-			cookie?: never;
-		};
-		get: operations["getServerSkinFullByNickname"];
-		put?: never;
-		post?: never;
-		delete?: never;
-		options?: never;
-		head?: never;
-		patch?: never;
-		trace?: never;
-	};
 	"/server/referrals/list": {
 		parameters: {
 			query?: never;
@@ -1599,6 +1567,7 @@ export interface operations {
 							isBanned: boolean;
 							isWl: boolean;
 							isAuth: boolean;
+							pofEnabled: boolean;
 						};
 					};
 				};
@@ -1613,7 +1582,23 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data:
+							| ({
+									[key: string]: string;
+							  } | null)
+							| null;
+					};
+				};
+			};
+		};
 	};
 	getAppLibrary: {
 		parameters: {
@@ -1662,7 +1647,7 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						data: (string | null) | null;
+						data: "OK" | null;
 					};
 				};
 			};
@@ -1750,7 +1735,13 @@ export interface operations {
 	};
 	getSharedNewsList: {
 		parameters: {
-			query?: never;
+			query: {
+				asc?: boolean | string;
+				endCursor?: string;
+				limit: number;
+				searchQuery?: string;
+				content?: boolean | string;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -1776,7 +1767,7 @@ export interface operations {
 									nickname: string;
 									avatar: string;
 								};
-								content: unknown;
+								content?: unknown;
 							}[];
 							meta: {
 								hasNextPage: boolean;
@@ -1819,7 +1810,7 @@ export interface operations {
 								nickname: string;
 								avatar: string;
 							};
-							content: unknown;
+							content?: unknown;
 						};
 					};
 				};
@@ -2022,7 +2013,11 @@ export interface operations {
 	};
 	getSharedBannerList: {
 		parameters: {
-			query?: never;
+			query?: {
+				asc?: boolean | string;
+				endCursor?: string;
+				searchQuery?: string;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -2258,7 +2253,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default NOT_EXISTS
+						 * @enum {string}
+						 */
+						error: "NOT_EXISTS" | "PASSWORD_OR_LOGIN_INCORRECT";
 					};
 				};
 			};
@@ -2310,7 +2309,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default INVALID_REQUEST
+						 * @enum {string}
+						 */
+						error: "INVALID_REQUEST";
 					};
 				};
 			};
@@ -2346,7 +2349,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default Token is expired or not found
+						 * @enum {string}
+						 */
+						error: "Token is expired or not found";
 					};
 				};
 			};
@@ -2382,7 +2389,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default Token is expired or not found
+						 * @enum {string}
+						 */
+						error: "Token is expired or not found";
 					};
 				};
 			};
@@ -2390,7 +2401,10 @@ export interface operations {
 	};
 	getAuthLoginQrCallback: {
 		parameters: {
-			query?: never;
+			query: {
+				token: string;
+				e: "verify";
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -2415,7 +2429,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default Token is expired or not found
+						 * @enum {string}
+						 */
+						error: "Token is expired or not found";
 					};
 				};
 			};
@@ -2447,6 +2465,21 @@ export interface operations {
 			};
 			/** @description Response for status 400 */
 			400: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						/**
+						 * @default LOGIN_NOT_VERIFIED
+						 * @enum {string}
+						 */
+						error: "LOGIN_NOT_VERIFIED";
+					};
+				};
+			};
+			/** @description Response for status 500 */
+			500: {
 				headers: {
 					[name: string]: unknown;
 				};
@@ -2537,7 +2570,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default INCORRECT_REQUEST
+						 * @enum {string}
+						 */
+						error: "INCORRECT_REQUEST";
 					};
 				};
 			};
@@ -2633,12 +2670,16 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default USER_EXISTS
+						 * @enum {string}
+						 */
+						error: "USER_EXISTS" | "PASSWORD_IS_UNSAFE" | "AUTHORIZATION_DISABLED" | "IP_RESTRICTIONS";
 					};
 				};
 			};
-			/** @description Response for status 409 */
-			409: {
+			/** @description Response for status 500 */
+			500: {
 				headers: {
 					[name: string]: unknown;
 				};
@@ -2805,7 +2846,12 @@ export interface operations {
 	};
 	getServerRatingByBy: {
 		parameters: {
-			query?: never;
+			query: {
+				asc?: boolean | string;
+				limit: number;
+				endCursor?: string;
+				server?: string;
+			};
 			header?: never;
 			path: {
 				by: "belkoin" | "charism" | "lands" | "reputation" | "playtime" | "parkour";
@@ -2985,7 +3031,65 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							area:
+								| ({
+										ulid: string;
+										holder: {
+											roles: unknown[];
+											trusted: string[];
+										};
+										settings: string[];
+										invites: unknown[];
+										tax: {
+											current: number;
+											time: number;
+											before: number;
+										};
+										banned: unknown[];
+								  } | null)
+								| null;
+							created_at: string | (Record<string, never> | string | number);
+							details: {
+								banner: (string | null) | null;
+								gallery: string[];
+							};
+							type: string;
+							title: (string | null) | null;
+							name: string;
+							level: number;
+							limits: (string[] | null) | null;
+							stats: {
+								kills: number;
+								deaths: number;
+								wins: number;
+								defeats: number;
+								captures: number;
+							};
+							balance: number;
+							chunks_amount: (number | null) | null;
+							areas_amount: (number | null) | null;
+							ulid: string;
+							spawn: (string | null) | null;
+							members: {
+								nickname: string;
+								uuid: string;
+								role: number;
+								avatar: string;
+							}[];
+						};
+					};
+				};
+			};
+		};
 	};
 	getServerLandsListByNickname: {
 		parameters: {
@@ -3092,7 +3196,10 @@ export interface operations {
 	};
 	getServerEventsList: {
 		parameters: {
-			query?: never;
+			query: {
+				limit: number;
+				type?: "game" | "log" | "system";
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
@@ -3185,8 +3292,8 @@ export interface operations {
 	};
 	getServerTaskList: {
 		parameters: {
-			query: {
-				asc: boolean;
+			query?: {
+				asc?: boolean | string;
 				endCursor?: string;
 			};
 			header?: never;
@@ -3337,7 +3444,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default THIRDPARTY_ERROR
+						 * @enum {string}
+						 */
+						error: "THIRDPARTY_ERROR" | "INTERNAL_SERVER_ERROR";
 					};
 				};
 			};
@@ -3353,18 +3464,6 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
-	};
-	getServerSkinHeadByNickname: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				nickname: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
 		responses: {
 			/** @description Response for status 200 */
 			200: {
@@ -3372,29 +3471,20 @@ export interface operations {
 					[name: string]: unknown;
 				};
 				content: {
-					"text/plain": string;
-				};
-			};
-		};
-	};
-	getServerSkinFullByNickname: {
-		parameters: {
-			query?: never;
-			header?: never;
-			path: {
-				nickname: string;
-			};
-			cookie?: never;
-		};
-		requestBody?: never;
-		responses: {
-			/** @description Response for status 200 */
-			200: {
-				headers: {
-					[name: string]: unknown;
-				};
-				content: {
-					"text/plain": string;
+					"application/json": {
+						data:
+							| (
+									| {
+											skin_identifier: string;
+											skin_variant: (string | null) | null;
+											timestamp: number;
+											skin_url: (string | null) | null;
+											skin_head_url: (string | null) | null;
+									  }[]
+									| null
+							  )
+							| null;
+					};
 				};
 			};
 		};
@@ -3407,7 +3497,27 @@ export interface operations {
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							id: number;
+							created_at: string;
+							completed: boolean;
+							referral: {
+								nickname: string;
+								avatar: string;
+							};
+						}[];
+					};
+				};
+			};
+		};
 	};
 	getServerPlayerByNickname: {
 		parameters: {
@@ -3772,13 +3882,49 @@ export interface operations {
 	};
 	getStoreItems: {
 		parameters: {
-			query?: never;
+			query: {
+				endCursor?: string;
+				category?: "all" | "donate" | "event";
+				wallet: "CHARISM" | "BELKOIN" | "ALL";
+				searchQuery?: string;
+			};
 			header?: never;
 			path?: never;
 			cookie?: never;
 		};
 		requestBody?: never;
-		responses: never;
+		responses: {
+			/** @description Response for status 200 */
+			200: {
+				headers: {
+					[name: string]: unknown;
+				};
+				content: {
+					"application/json": {
+						data: {
+							data: {
+								id: number;
+								title: string;
+								description: (string | null) | null;
+								imageUrl: string;
+								type: string;
+								command: (string | null) | null;
+								value: string;
+								currency: string;
+								price: number;
+								content: unknown;
+							}[];
+							meta: {
+								hasNextPage: boolean;
+								hasPrevPage: boolean;
+								startCursor?: string;
+								endCursor?: string;
+							};
+						};
+					};
+				};
+			};
+		};
 	};
 	getStoreCartList: {
 		parameters: {
@@ -3889,7 +4035,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default RECIPIENT_NOT_FOUND
+						 * @enum {string}
+						 */
+						error: "RECIPIENT_NOT_FOUND";
 					};
 				};
 			};
@@ -3900,7 +4050,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default ITEM_NOT_FOUND
+						 * @enum {string}
+						 */
+						error: "ITEM_NOT_FOUND";
 					};
 				};
 			};
@@ -4005,7 +4159,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default INCORRECT_PAYMENT_METHOD
+						 * @enum {string}
+						 */
+						error: "INCORRECT_PAYMENT_METHOD";
 					};
 				};
 			};
@@ -4016,7 +4174,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default INTERNAL_ERROR
+						 * @enum {string}
+						 */
+						error: "INTERNAL_ERROR";
 					};
 				};
 			};
@@ -4154,7 +4316,11 @@ export interface operations {
 				};
 				content: {
 					"application/json": {
-						error: string;
+						/**
+						 * @default EXCHANGES_NOT_FOUND
+						 * @enum {string}
+						 */
+						error: "EXCHANGES_NOT_FOUND" | "STRUCTURE_INCORRECT";
 					};
 				};
 			};

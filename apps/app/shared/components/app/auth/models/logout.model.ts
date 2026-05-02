@@ -7,16 +7,10 @@ import { withAssign } from "@reatom/framework";
 
 export const logout = atom(null, "logout").pipe(
 	withAssign((_, name) => ({
-		exec: reatomAsync(async (ctx) => {
-			return await ctx.schedule(() =>
-				client.post("auth/invalidate-session").exec()
-			);
-		}, {
+		exec: reatomAsync(() => client.post("auth/invalidate-session").exec(), {
 			name: `${name}.withoutConfirm`,
 			onFulfill: (ctx) => ctx.schedule(() => window.location.reload()),
-			onReject: (ctx, e) => {
-				logError(e);
-			},
+			onReject: (_, e) => logError(e),
 		}).pipe(
 			withStatusesAtom(),
 			withErrorAtom()

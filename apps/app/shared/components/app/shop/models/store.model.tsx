@@ -2,7 +2,6 @@ import { reatomAsync, withStatusesAtom } from "@reatom/async"
 import { action, atom, AtomMut, createCtx, Ctx } from "@reatom/core"
 import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
 import type { Selectable } from "kysely"
-import type { StoreItemsPayload } from "@repo/shared/types/entities/store"
 import { Payments } from "@repo/shared/types/db/payments-database-types"
 import { logError } from '@/shared/lib/log';
 import { mergeSnapshot } from '@/shared/lib/snapshot';
@@ -27,6 +26,8 @@ export type StoreItemsParams = {
   wallet: StoreWallet,
   searchQuery: string | undefined
 }
+
+export type StoreItemsPayload = ExtractApiData<"getStoreItems">["data"]
 
 export async function getStoreItems(params: StoreItemsParams, init?: RequestInit) {
   return client

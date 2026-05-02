@@ -5,11 +5,13 @@ import { reatomAsync, sleep, withAssign, withInit, withReset, withStatusesAtom }
 import { logError } from "@/shared/lib/log";
 import { toast } from "sonner";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { CartItem } from "@repo/shared/types/entities/store";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { nicknameSchema } from "@repo/shared/schemas/auth";
 import { DIALOG_DELAY } from "@/shared/consts/index";
 import { makeChangeValidator } from "@/shared/lib/utils";
+import { getExistNickname } from "@/shared/models/shared.model";
+
+export type CartItem = ExtractApiData<"getStoreCartList">["data"]["data"][number]
 
 export function getRecipient(ctx: Ctx): string {
   const custom = ctx.get(storeGlobalRecipientAtom)
@@ -26,10 +28,6 @@ export function getRecipient(ctx: Ctx): string {
 export const storeGlobalRecipientAtom = atom<string | null>(null, "storeGlobalRecipient").pipe(
   withLocalStorage({ key: "store-recipient" })
 );
-
-async function getExistNickname(nickname: string) {
-  return client<string | null>(`validate/nickname/${nickname}`).exec()
-}
 
 const ERRORS: Record<string, string> = {
   "NOT_FOUND": "Такой игрок не зарегистрирован"

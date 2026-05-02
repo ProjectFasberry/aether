@@ -17,13 +17,17 @@
 		"types": ["vite/client", "vike-react"],
 		"paths": {
 			"@/*": ["./*"],
-			"@repo/ui/*": ["../../packages/ui/src/components/*"],
-			"@ui-styles/*": ["../../packages/ui/src/styles/*"]
+			"@repo/ui/*": ["../../packages/ui/components/*"],
+			"@ui-styles/*": ["../../packages/ui/styles/*"]
 		}
 	},
 	"include": [
-		"./vite.config.ts", "./declare.d.ts", "./env.d.ts", "./**/*.ts", "./**/*.tsx"
-, "shared/components/app/shop/models/store-order.model.tsч"	],
+		"./vite.config.ts", 
+		"./declare.d.ts", 
+		"./env.d.ts", 
+		"./**/*.ts", 
+		"./**/*.tsx"
+	],
 	"exclude": ["dist", "node_modules"],
 	"references": [
 		{ 

@@ -15,6 +15,7 @@ import { logger } from "#/utils/config/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/schemas/auth/login"
 import { isProduction } from "#/shared/env";
+import { nanoid } from "nanoid";
 
 const loginSchema = authSchema;
 
@@ -43,8 +44,8 @@ const withPassword = new Elysia()
 		body: loginSchema,
 		response: {
 			200: withData(
-				t.Object({ 
-					nickname: t.String() 
+				t.Object({
+					nickname: t.String()
 				})
 			),
 			400: withError(
@@ -223,7 +224,7 @@ export const withQR = new Elysia()
 
 			return { data }
 		}, {
-			query: t.Intersect([
+			query: t.Composite([
 				tokenSchema,
 				t.Object({
 					e: t.UnionEnum(["verify"])
@@ -323,7 +324,13 @@ export const withGame = new Elysia()
 	.post("/generate", async ({ ua, status, body: { visitorId } }) => {
 		if (!ua) throw status(403, wrapError("INCORRECT_REQUEST"));
 
-		return { data: null };
+		const code = nanoid(6)
+
+		return {
+			data: {
+				code: code
+			}
+		};
 	}, {
 		parse: "json",
 		body: visitorSchema,

@@ -14,13 +14,12 @@ import { type Static, t, type TSchema } from "elysia";
 import { invariant } from "#/helpers/invariant";
 import { general } from "#/shared/database/general-db";
 
-export const ratingSchema = t.Intersect([
+export const ratingSchema = t.Composite([
 	t.Pick(metaSchema, ["asc", "limit", "endCursor"]),
 	t.Object({
 		server: t.Optional(t.String({ minLength: 1 })),
 	}),
-]
-);
+]);
 
 function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
 	invariant(server, "Server is not defined")

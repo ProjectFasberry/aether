@@ -1,4 +1,4 @@
-import { Avatar } from "@/shared/components/app/avatar/components/avatar";
+import { Avatar } from "@/shared/ui/avatar";
 import { playerRate, RateUser } from "@/shared/components/app/player/models/rate.model";
 import { createLink, Link } from "@/shared/components/config/link";
 import { isEmptyArray } from "@/shared/lib/utils";

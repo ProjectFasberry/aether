@@ -99,13 +99,13 @@ const BUTTONS = [
     label: "Назад",
     bgVariant: "default",
     cdAtom: topupNavigationModel.canGoBackAtom,
-    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.back(spawnCtx))
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.back(spawnCtx))
   },
   {
     label: "Продолжить",
     bgVariant: "positive",
     cdAtom: topupNavigationModel.canGoNextAtom,
-    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx))
+    cb: (ctx: Ctx) => spawn(ctx, (spawnCtx) => topupNavigationModel.next(spawnCtx))
   }
 ] as const
 
@@ -258,7 +258,7 @@ const TopupFormContent = reatomComponent(({ ctx }) => COMPONENTS[ctx.spy(topupSt
 export const TopupForm = reatomComponent(({ ctx }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    spawn(ctx, (spawnCtx) => topupNavigationModel.events.continue(spawnCtx))
+    spawn(ctx, (spawnCtx) => topupNavigationModel.next(spawnCtx))
   }
 
   return (

@@ -1,15 +1,16 @@
 import { action, atom, AtomMut, reatomAsync, withAssign, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { invariant } from "@/shared/lib/invariant";
-import * as z from "zod/v4";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
 import { auth, authState, ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
-import { pof } from "./pof.model";
+import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import { isEmptyArray } from "@/shared/lib/utils";
 import { createPhraseModel } from "./seed-phrase.model";
 import { createNavigationModel } from "./navigation.model";
 import { authSecurity } from "./auth-security.model";
+import { getExistNickname } from "@/shared/models/shared.model";
+import { appState } from "@/shared/models/app.model";
 
 export type AuthRegisterType = |
   "start-input" |
@@ -36,13 +37,13 @@ export const register = atom(null, "register").pipe(
           const acceptRules = ctx.spy(authState.fields.acceptRules)
           if (!acceptRules) return false
 
-          const validationRes = z.safeParse(fieldsOnlyRegisterSchema, {
+          const validationRes = fieldsOnlyRegisterSchema.safeParse({
             nickname: ctx.spy(authState.fields.nickname),
             password: ctx.spy(authState.fields.password),
             findout: ctx.spy(authState.fields.findout),
             findoutType: ctx.spy(authState.fields.findoutType)
           })
-
+          
           return validationRes.success
         }),
         seedPhraseConfirmValidate: atom((ctx): boolean => false),
@@ -63,7 +64,7 @@ export const register = atom(null, "register").pipe(
             return false;
           }
 
-          const pofIsActive = ctx.get(pof.isActive);
+          const pofIsActive = ctx.get(appState.options).pofEnabled;
           const token = ctx.get(pof.token);
 
           if (pofIsActive && !token) {
@@ -76,8 +77,17 @@ export const register = atom(null, "register").pipe(
           register.submit(ctx, token);
           return true
         }),
-        seedPhraseSaveGenerate: action((ctx): boolean => {
-          const mn = authSecurity.generateMnemonic(ctx)
+        seedPhraseSaveGenerate: reatomAsync(async (ctx) => {
+          const isExist = await getExistNickname(ctx.get(authState.fields.nickname))
+
+          if (isExist) {
+            authState.globalError(ctx, "Такой игрок уже зарегистрирован")
+            return false;
+          }
+
+          authState.globalError.reset(ctx);
+
+          const mn = authSecurity.generateMnemonic()
 
           registerSeedPhraseModel.state.words(ctx, mn.split(" "))
           registerState.mn(ctx, mn)
@@ -111,7 +121,7 @@ export const register = atom(null, "register").pipe(
       const mn = ctx.get(registerState.mn)
       invariant(mn, 'Mn is not defined')
 
-      const hash = await authSecurity.mnToHash(ctx, mn)
+      const hash = await authSecurity.mnToHash(mn)
 
       const pd = {
         hash,
@@ -121,7 +131,7 @@ export const register = atom(null, "register").pipe(
         findoutType
       }
 
-      const { success, error, data } = z.safeParse(registerSchema, pd);
+      const { success, error, data } = registerSchema.safeParse(pd);
       if (!success) return error;
 
       const res = await client
@@ -215,6 +225,5 @@ export const registerNavigationModel = createNavigationModel({
       }
     }
   ],
-  name: "authRegister",
   typeAtom: registerState.type as AtomMut<string>
 })

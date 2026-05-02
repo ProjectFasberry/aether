@@ -2,9 +2,7 @@ import { general } from "#/shared/database/general-db";
 import { metaSchema } from "#/shared/schemas";
 import { t } from "elysia";
 
-export async function bannerExists(nickname: string | null) {
-  if (!nickname) return false;
-
+export async function bannerExists(nickname: string) {
   const result = await general
     .selectFrom("banners as b")
     .select((eb) => [

@@ -202,7 +202,7 @@ export async function getLandsByNickname(
 
 const { transformBanner, transformGallery } = landHelpers
 
-const landPayload = t.Intersect([
+export const landPayload = t.Composite([
   t.Pick(
     landSchema,
     [

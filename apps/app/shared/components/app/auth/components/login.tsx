@@ -11,43 +11,34 @@ import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { authState } from "../models/auth.model"
 
-const LoginVariants = reatomComponent(({ ctx }) => {
-  const variants = ctx.spy(authLoginVariantAtom.filterVariants(LOGIN_VARIANTS))
+const LoginVariants = reatomComponent(({ ctx }) => (
+  <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
+    {ctx.spy(authLoginVariantAtom.filterVariants(LOGIN_VARIANTS)).map((variant) => (
+      <Button
+        key={variant.value}
+        type="button"
+        onClick={() => spawn(ctx, (spawnCtx) => authLoginVariantAtom.select(spawnCtx, variant.value))}
+      >
+        {variant.title}
+      </Button>
+    ))}
+  </div>
+), "LoginVariants")
 
-  return (
-    <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
-      {variants.map((variant) => (
-        <Button
-          key={variant.value}
-          type="button"
-          onClick={() => spawn(ctx, (spawnCtx) => authLoginVariantAtom.select(spawnCtx, variant.value))}
-        >
-          {variant.title}
-        </Button>
-      ))}
-    </div>
-  )
-}, "LoginVariants")
-
-const LoginPasswordSubmit = reatomComponent(({ ctx }) => {
-  const isDisabled = ctx.spy(authSubmitIsDisabledAtom)
-  const text = ctx.spy(authState.type) === 'register' ? "Зарегистрироваться" : "Войти";
-
-  return (
-    <Button
-      className="w-full bg-green-600 h-10 font-semibold"
-      disabled={isDisabled}
-      type="submit"
-    >
-      {text}
-    </Button>
-  )
-}, "LoginPasswordSubmit")
+const LoginPasswordSubmit = reatomComponent(({ ctx }) => (
+  <Button
+    className="w-full bg-green-600 h-10 font-semibold"
+    disabled={ctx.spy(authSubmitIsDisabledAtom)}
+    type="submit"
+  >
+    {ctx.spy(authState.type) === 'register' ? "Зарегистрироваться" : "Войти"}
+  </Button>
+), "LoginPasswordSubmit")
 
 const LoginPassword = reatomComponent(({ ctx }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    login.basic.submit(ctx)
+    spawn(ctx, (spawnCtx) => login.basic.submit(spawnCtx))
   }
 
   return (
@@ -105,9 +96,7 @@ const LoginQRRetry = reatomComponent(({ ctx }) => {
 const LoginQRConnected = reatomComponent(({ ctx }) => {
   const isPending = ctx.spy(login.qr.generate.statusesAtom).isPending
   const url = ctx.spy(loginState.qr.url)
-
-  const isLoading = isPending || !url
-  if (isLoading) return <IconLoader />
+  if (isPending || !url) return <IconLoader />
 
   return (
     <QRCode
@@ -130,21 +119,16 @@ const LoginQRConnected = reatomComponent(({ ctx }) => {
   )
 }, "LoginQRConnected")
 
-const LoginQRDeclined = () => {
-  return (
-    <div className="flex flex-col w-full items-center justify-center gap-4">
-      <IconHandStop size={32} className="text-red-600" />
-    </div>
-  )
-}
-
-const LoginVerified = () => {
-  return (
-    <div className="flex flex-col w-full items-center justify-center gap-4">
-      <IconCheck size={32} className="text-green-600" />
-    </div>
-  )
-}
+const LoginQRDeclined = () => (
+  <div className="flex flex-col w-full items-center justify-center gap-4">
+    <IconHandStop size={32} className="text-red-600" />
+  </div>
+)
+const LoginVerified = () => (
+  <div className="flex flex-col w-full items-center justify-center gap-4">
+    <IconCheck size={32} className="text-green-600" />
+  </div>
+)
 
 const LOGIN_QR_COMPONENTS: Partial<Record<AuthLoginQRStatus, ReactNode>> = {
   "expired": <LoginQRRetry />,
@@ -154,8 +138,7 @@ const LOGIN_QR_COMPONENTS: Partial<Record<AuthLoginQRStatus, ReactNode>> = {
 }
 
 const LoginQRContent = reatomComponent(({ ctx }) =>
-  LOGIN_QR_COMPONENTS[ctx.spy(loginState.qr.status)],
-  "LoginQRContent"
+  LOGIN_QR_COMPONENTS[ctx.spy(loginState.qr.status)], "LoginQRContent"
 )
 
 const LoginQR = () => {
@@ -186,11 +169,7 @@ const LoginGame = reatomComponent(({ ctx }) => {
         </p>
         <p className="font-semibold">Никому не сообщай его!</p>
       </div>
-      {isLoading ? (
-        <IconLoader />
-      ) : (
-        <Copy code={`/verify ${code}`} />
-      )}
+      {isLoading ? <IconLoader /> : <Copy code={`/verify ${code}`} />}
     </div>
   )
 }, "LoginGame")
@@ -202,8 +181,7 @@ const LOGIN_VARIANTS: { title: string, value: AuthLoginVariant, component: React
 ]
 
 export const LoginFormComponent = reatomComponent(({ ctx }) =>
-  LOGIN_VARIANTS.find(d => d.value === ctx.spy(authLoginVariantAtom))?.component,
-  "LoginFormComponent"
+  LOGIN_VARIANTS.find(d => d.value === ctx.spy(authLoginVariantAtom))?.component, "LoginFormComponent"
 )
 
 export const LoginForm = () => {

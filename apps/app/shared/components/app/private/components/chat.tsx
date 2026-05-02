@@ -28,7 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { Input } from "@repo/ui/input";
 import { isEmptyArray } from "@/shared/lib/utils";
-import { Avatar } from "../../avatar/components/avatar";
+import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Skeleton } from "@repo/ui/skeleton";

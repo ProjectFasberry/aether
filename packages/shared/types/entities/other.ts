@@ -35,6 +35,7 @@ export type AppOptionsPayload = {
 	isBanned: boolean;
 	isAuth: boolean;
 	isWl: boolean;
+	pofEnabled: boolean;
 };
 
 export type SeemsLikePlayer = {

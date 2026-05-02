@@ -11,7 +11,7 @@
 		"start": "infisical run --env=prod --path=/app -- bun run ./dist/server/index.mjs",
 		"----------------": "",
 		"lint": "bunx biome lint",
-		"type-check": "tsc --build",
+		"type-check": "bun scripts/fix-sprite.ts && tsc --build",
 		"------------------": "",
 		"build:image:prod": "make build",
 		"build:image:tag": "make tag",

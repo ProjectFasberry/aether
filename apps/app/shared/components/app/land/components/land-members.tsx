@@ -1,7 +1,7 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { landAtom } from "../models/land.model";
 import { createLink, Link } from "@/shared/components/config/link";
-import { Avatar } from "@/shared/components/app/avatar/components/avatar";
+import { Avatar } from "@/shared/ui/avatar";
 
 export const LandMembers = reatomComponent(({ ctx }) => {
   const land = ctx.spy(landAtom)

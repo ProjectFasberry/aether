@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/table"
-import { Avatar } from "../../avatar/components/avatar";
+import { Avatar } from "../../../../ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import dayjs from "@/shared/lib/create-dayjs"
 import { PageLoader } from "@/shared/ui/page-loader";

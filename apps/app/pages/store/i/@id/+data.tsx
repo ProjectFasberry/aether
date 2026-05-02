@@ -2,10 +2,9 @@ import { PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { render } from "vike/abort";
-import { StoreItem } from "@repo/shared/types/entities/store";
 import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
-import { getStoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
+import { getStoreItem, StoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
 import { createCtx } from "@reatom/core";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 

@@ -1,14 +1,13 @@
 import { createLink, Link } from "@/shared/components/config/link"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { Typography } from "@repo/ui/typography"
-import { getItemStatus, storeItem } from "../../models/store-item.model"
+import { getItemStatus, StoreItem as StoreItemProps, storeItem } from "../../models/store-item.model"
 import { Skeleton } from "@repo/ui/skeleton"
 import { isClientAtom } from "@/shared/models/page-context.model"
 import { reatomComponent } from "@reatom/npm-react"
 import { CURRENCIES } from "../cart/cart-price"
 import { tv } from "tailwind-variants"
 import { Button } from "@repo/ui/button"
-import { StoreItem as StoreItemProps } from "@repo/shared/types/entities/store"
 
 const buyButtonVariants = tv({
   base: `group gap-2 duration-150 h-10 *:duration-150 px-6 w-full rounded-xl`,

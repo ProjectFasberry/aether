@@ -1,4 +1,4 @@
-import { Avatar } from "@/shared/components/app/avatar/components/avatar"
+import { Avatar } from "@/shared/ui/avatar"
 import { referrals } from "@/shared/components/app/referrals/models/referrals.model"
 import { createLink, Link } from "@/shared/components/config/link"
 import { LANDING_URL } from "@/shared/env"

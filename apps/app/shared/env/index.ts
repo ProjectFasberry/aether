@@ -17,9 +17,3 @@ export const CAP_INSTANCE_URL = import.meta.env.VITE_CAP_URL;
 export const CAP_SITEKEY = import.meta.env.VITE_CAP_SITE_KEY;
 
 export const APAY_TAG = import.meta.env.VITE_APAY_TAG;
-
-export const POF_IS_ACTIVE: boolean = import.meta.env.VITE_POF_IS_ACTIVE
-	? import.meta.env.VITE_POF_IS_ACTIVE === "true"
-		? true
-		: false
-	: true;

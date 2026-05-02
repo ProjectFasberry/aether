@@ -4,7 +4,7 @@ import Elysia, { type Static, t } from "elysia";
 import { eventPayload, EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
 
-const eventsListSchema = t.Intersect([
+const eventsListSchema = t.Composite([
   t.Required(t.Pick(metaSchema, ["limit"])),
   t.Object({
     type: t.Optional(eventTypeSchema)

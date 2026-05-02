@@ -2,7 +2,7 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { Button } from "@repo/ui/button";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { IconPencil, IconPlus, IconSettings } from "@tabler/icons-react";
+import { IconPlus, IconSettings } from "@tabler/icons-react";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-card";
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";

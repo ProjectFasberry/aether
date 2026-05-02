@@ -6,7 +6,7 @@ import { wrapMeta } from "#/utils/config/transforms";
 import type { BannersPayload } from "@repo/shared/types/entities/banner";
 import { executeWithCursorPagination } from "kysely-paginate";
 
-const bannersListSchema = t.Intersect([
+const bannersListSchema = t.Composite([
   t.Pick(metaSchema, ["asc", "endCursor"]),
   t.Object({
     searchQuery: t.Optional(t.String({ minLength: 1, maxLength: 256 }))

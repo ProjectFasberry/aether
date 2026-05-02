@@ -26,7 +26,7 @@ function SelectTrigger({ className, size = "default", children, ...props }: Comp
         `data-[placeholder]:text-neutral-400 bg-neutral-800 [&_svg:not([class*='text-'])]:text-neutral-400 
         focus-visible:border-green focus-visible:ring-green aria-invalid:ring-red/40 
         aria-invalid:border-red flex w-full items-center justify-between gap-2 rounded-xl
-        text-base whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[1px] 
+        text-sm sm:text-base whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[1px]
         disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-10 data-[size=sm]:h-8 
         *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center 
         *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 px-4`,

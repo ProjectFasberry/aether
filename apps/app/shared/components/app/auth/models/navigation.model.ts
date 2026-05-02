@@ -1,5 +1,5 @@
-import { action, atom, Atom, AtomMut, Ctx, isAtom } from "@reatom/core";
-import { AsyncCtx, withAssign } from "@reatom/framework";
+import { Action, atom, Atom, AtomMut, isAtom } from "@reatom/core";
+import { AsyncAction, reatomAsync, withStatusesAtom } from "@reatom/framework";
 
 export type NavigationSteps = {
   id: string,
@@ -7,97 +7,95 @@ export type NavigationSteps = {
     toNext?: Atom<boolean> | boolean,
     toBack?: Atom<boolean> | boolean
   }
-  cb?: (ctx: Ctx | AsyncCtx) => unknown,
+  cb?: AsyncAction<[], boolean> | Action<[], boolean>,
+}
+
+type NavigationParams = {
+  steps: NavigationSteps[],
+  name?: string,
+  typeAtom: AtomMut<string>,
+  opts?: Partial<{
+    fallbackBack: () => void,
+    depsWithLast: boolean,
+    withLog: boolean
+  }>
 }
 
 export const createNavigationModel = ({
-  steps,
-  name,
-  typeAtom,
+  steps, name, typeAtom,
   opts = {
     depsWithLast: true,
     withLog: false
   }
-}: {
-  steps: NavigationSteps[],
-  name: string,
-  typeAtom: AtomMut<string>,
-  opts?: Partial<{
-    fallbackNext: () => void,
-    depsWithLast: boolean,
-    withLog: boolean
-  }>
-}) => {
+}: NavigationParams) => {
   const currentIdx = atom((ctx) => steps.findIndex(s => s.id === ctx.spy(typeAtom)));
+
   const isLastStepAtom = atom((ctx) => ctx.spy(currentIdx) === steps.length - 1)
   const isFirstStepAtom = atom((ctx) => ctx.spy(currentIdx) === 0);
-  const modelName = opts.withLog ? name : `_${name}`
 
   const createValidator = (type: "toNext" | "toBack") => atom((ctx) => {
-    const step = steps[ctx.spy(currentIdx)];
-    const validator = step?.validators?.[type];
+    const currStep = steps[ctx.spy(currentIdx)];
+    const validator = currStep?.validators?.[type];
 
     if (validator == null) return true;
+    if (isAtom(validator)) return ctx.spy(validator)
 
-    return isAtom(validator) ? ctx.spy(validator) : validator;
-  }, `${modelName}.isStep${type === "toNext" ? "Next" : "Back"}Valid`);
+    return validator
+  });
 
   const isStepNextValidAtom = createValidator("toNext");
   const isStepBackValidAtom = createValidator("toBack");
-
+  
   const canGoBackAtom = atom((ctx) => {
-    const isFirst = ctx.spy(isFirstStepAtom);
     const isValid = ctx.spy(isStepBackValidAtom);
+    if (opts?.fallbackBack) return isValid
 
-    if (opts?.fallbackNext) {
-      return isValid
-    }
-
+    const isFirst = ctx.spy(isFirstStepAtom);
     return isValid && !isFirst
-  }, `${modelName}.canGoBack`);
+  });
 
-  const canGoNextAtom = atom((ctx) => {
-    const isLast = ctx.spy(isLastStepAtom)
+  const canGoNextAtom = atom((ctx) => {    
     const isValid = ctx.spy(isStepNextValidAtom);
+    if (!opts?.depsWithLast) return isValid;
 
-    if (!opts?.depsWithLast) {
-      return isValid
+    const isLast = ctx.spy(isLastStepAtom)
+    return isValid && !isLast
+  });
+
+  const back = reatomAsync(async (ctx) => {
+    const isFirst = ctx.get(isFirstStepAtom)
+    if (isFirst && opts?.fallbackBack) {
+      return opts.fallbackBack()
     }
 
-    return isValid && !isLast
-  }, `${modelName}.canGoNext`);
+    const currIdx = ctx.get(currentIdx);
+    const prev = steps[currIdx - 1]
+    if (!prev) return;
 
-  const events = atom(null, `${modelName}.nav`).pipe(
-    withAssign((_, name) => ({
-      back: action((ctx): void => {
-        const isFirst = ctx.get(isFirstStepAtom)
-        if (isFirst) {
-          opts?.fallbackNext?.()
-          return;
-        }
+    typeAtom(ctx, prev.id)
+  }).pipe(
+    withStatusesAtom()
+  );
 
-        const currIdx = ctx.get(currentIdx);
-        const prev = steps[currIdx - 1]
-        if (!prev) return;
+  const next = reatomAsync(async (ctx) => {
+    const canGoNext = ctx.get(canGoNextAtom)
+    if (!canGoNext) return false;
 
-        typeAtom(ctx, prev.id)
-      }, `${name}.back`),
-      continue: action((ctx): boolean => {
-        const canGoNext = ctx.get(canGoNextAtom)
-        if (!canGoNext) return false;
+    const currIdx = ctx.get(currentIdx);
+    const next = steps[currIdx + 1];
+    if (!next) return false;
 
-        const currIdx = ctx.get(currentIdx);
+    const curr = steps[currIdx];
 
-        const next = steps[currIdx + 1];
-        if (!next) return false;
+    if (curr?.cb) {      
+      const result = await curr.cb(ctx);
+      if (!result) return false;
+    }
 
-        const curr = steps[currIdx]
-        if (curr.cb && curr.cb(ctx) === false) return false;
-
-        typeAtom(ctx, next.id)
-        return true;
-      }, `${name}.continue`),
-    }))
+    typeAtom(ctx, next.id)
+    return true;
+  }).pipe(
+    withStatusesAtom()
   )
 
   return {
@@ -105,7 +103,8 @@ export const createNavigationModel = ({
     isStepBackValidAtom,
     canGoBackAtom,
     canGoNextAtom,
-    events,
+    back, 
+    next,
     isLastStepAtom,
     isFirstStepAtom
   };

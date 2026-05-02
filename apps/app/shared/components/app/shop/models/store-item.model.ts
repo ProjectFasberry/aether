@@ -2,12 +2,13 @@ import { reatomAsync, withStatusesAtom } from "@reatom/async";
 import { action, atom } from "@reatom/core";
 import { cart, cartState } from "./store-cart.model";
 import { logError } from "@/shared/lib/log";
-import type { StoreItem } from "@repo/shared/types/entities/store"
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 import { withAssign } from "@reatom/framework";
 import { SelectItemToCartOptions, storeItemsState } from "./store.model";
 import { invariant } from "@/shared/lib/invariant";
+
+export type StoreItem = ExtractApiData<"getStoreItems">["data"]["data"][number]
 
 export async function getStoreItem(id: string, init: RequestInit) {
   return client

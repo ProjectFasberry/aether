@@ -1,84 +1,64 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { auth, authState } from "../models/auth.model";
 import { Input } from "@repo/ui/input"
-import { Typography } from "@repo/ui/typography";
 import { CAP_INSTANCE_URL, CAP_SITEKEY } from "@/shared/env";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
-import { pof } from "../models/pof.model";
+import { pof } from "../../../../models/shared.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { ErrorBlock } from "@/shared/ui/error-block";
 
-export const NicknameInput = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(authState.errorsType).includes("nickname") ? "danger" : "default"
-  const value = ctx.spy(authState.fields.nickname);
+export const NicknameInput = reatomComponent(({ ctx }) => (
+  <Input
+    id="nickname"
+    autoCorrect="off"
+    autoCapitalize="off"
+    spellCheck="false"
+    className="w-full"
+    variant={ctx.spy(authState.errorsType).includes("nickname") ? "danger" : "default"}
+    value={ctx.spy(authState.fields.nickname)}
+    autoComplete="nickname"
+    onClick={() => auth.resetError(ctx)}
+    onChange={e => authState.fields.nickname(ctx, e.target.value)}
+    placeholder="Никнейм"
+    maxLength={32}
+  />
+), "Nickname")
 
-  return (
+const PasswordVisibility = reatomComponent(({ ctx }) => (
+  <div
+    className="flex *:m-auto text-neutral-400 absolute p-1 right-0 top-1/2 -translate-1/2"
+    onClick={() => authState.settings.showPassword(ctx, (state) => !state)}
+  >
+    {ctx.spy(authState.settings.showPassword) ? <IconEye size={18} /> : <IconEyeOff size={18} />}
+  </div>
+), "PasswordVisibility")
+
+export const PasswordInput = reatomComponent(({ ctx }) => (
+  <div className="flex relative items-center justify-between w-full">
     <Input
-      id="nickname"
-      autoCorrect="off"
-      autoCapitalize="off"
-      spellCheck="false"
+      id="password"
       className="w-full"
-      variant={variant}
-      value={value}
-      autoComplete="nickname"
+      variant={ctx.spy(authState.errorsType).includes("password") ? "danger" : "default"}
+      value={ctx.spy(authState.fields.password)}
+      autoComplete="password"
       onClick={() => auth.resetError(ctx)}
-      onChange={e => authState.fields.nickname(ctx, e.target.value)}
-      placeholder="Никнейм"
-      maxLength={32}
+      onChange={e => authState.fields.password(ctx, e.target.value)}
+      placeholder="Пароль"
+      maxLength={64}
+      type={ctx.spy(authState.settings.showPassword) ? "text" : "password"}
     />
-  )
-}, "Nickname")
-
-const PasswordVisibility = reatomComponent(({ ctx }) => {
-  const show = ctx.spy(authState.settings.showPassword)
-
-  return (
-    <div
-      className="flex *:m-auto text-neutral-400 absolute p-1 right-0 top-1/2 -translate-1/2"
-      onClick={() => authState.settings.showPassword(ctx, (state) => !state)}
-    >
-      {show ? <IconEye size={18} /> : <IconEyeOff size={18} />}
-    </div>
-  )
-}, "PasswordVisibility")
-
-export const PasswordInput = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(authState.errorsType).includes("password") ? "danger" : "default"
-  const show = ctx.spy(authState.settings.showPassword)
-  const value = ctx.spy(authState.fields.password);
-
-  return (
-    <div className="flex relative items-center justify-between w-full">
-      <Input
-        id="passw"
-        className="w-full"
-        variant={variant}
-        value={value}
-        autoComplete="password"
-        onClick={() => auth.resetError(ctx)}
-        onChange={e => authState.fields.password(ctx, e.target.value)}
-        placeholder="Пароль"
-        maxLength={64}
-        type={show ? "text" : "password"}
-      />
-      <PasswordVisibility />
-    </div>
-  )
-}, "Password")
+    <PasswordVisibility />
+  </div>
+), "Password")
 
 export const AuthError = reatomComponent(({ ctx }) => {
   const error = ctx.spy(authState.globalError)
   if (!error) return null;
-
-  return (
-    <ErrorBlock title={error} />
-  )
+  return <ErrorBlock title={error} />
 }, "AuthError")
 
 export const Verify = reatomComponent(({ ctx }) => {
-  const isVisible = ctx.spy(pof.showTokenVerifySectionAtom)
-  if (!isVisible) return null;
+  if (!ctx.spy(pof.showTokenVerifySectionAtom)) return null;
 
   return (
     <CapWidget

@@ -14,45 +14,37 @@ import { type AuthRegisterType, registerNavigationModel, register, registerSeedP
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { spawn } from "@reatom/framework"
 
-const FindoutReferrerInput = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"
+const FindoutReferrerInput = reatomComponent(({ ctx }) => (
+  <Input
+    autoCorrect="off"
+    autoCapitalize="off"
+    spellCheck="false"
+    autoComplete="new-referrer"
+    placeholder="Никнейм"
+    variant={ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"}
+    className="w-full"
+    value={ctx.spy(authState.fields.findout) ?? ""}
+    onClick={() => auth.resetError(ctx)}
+    onChange={e => authState.fields.findout(ctx, e.target.value)}
+    maxLength={32}
+  />
+), "FindoutReferrerInput")
 
-  return (
-    <Input
-      autoCorrect="off"
-      autoCapitalize="off"
-      spellCheck="false"
-      autoComplete="new-referrer"
-      placeholder="Никнейм"
-      variant={variant}
-      className="w-full"
-      value={ctx.spy(authState.fields.findout) ?? ""}
-      onClick={() => auth.resetError(ctx)}
-      onChange={e => authState.fields.findout(ctx, e.target.value)}
-      maxLength={32}
-    />
-  )
-}, "FindoutReferrerInput")
-
-const FindoutOtherInput = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"
-
-  return (
-    <Input
-      autoCorrect="off"
-      autoCapitalize="off"
-      spellCheck="false"
-      autoComplete="new-other"
-      placeholder="Например: Telegram-канал"
-      className="w-full"
-      variant={variant}
-      value={ctx.spy(authState.fields.findout) ?? ""}
-      onClick={() => auth.resetError(ctx)}
-      onChange={e => authState.fields.findout(ctx, e.target.value)}
-      maxLength={128}
-    />
-  )
-}, "FindoutOtherInput")
+const FindoutOtherInput = reatomComponent(({ ctx }) => (
+  <Input
+    autoCorrect="off"
+    autoCapitalize="off"
+    spellCheck="false"
+    autoComplete="new-other"
+    placeholder="Например: Telegram-канал"
+    className="w-full"
+    variant={ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"}
+    value={ctx.spy(authState.fields.findout) ?? ""}
+    onClick={() => auth.resetError(ctx)}
+    onChange={e => authState.fields.findout(ctx, e.target.value)}
+    maxLength={128}
+  />
+), "FindoutOtherInput")
 
 const FINDOUT_COMPONENTS: Record<AuthFindoutType, ReactNode> = {
   "referrer": <FindoutReferrerInput />,
@@ -76,9 +68,7 @@ const FindoutOptions = reatomComponent(({ ctx }) => {
       </SelectTrigger>
       <SelectContent>
         {FINDOUT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>
-            {option.title}
-          </SelectItem>
+          <SelectItem key={option.value} value={option.value}>{option.title}</SelectItem>
         ))}
       </SelectContent>
     </Select>
@@ -120,21 +110,19 @@ const PrivacyTerms = reatomComponent(({ ctx }) => {
   )
 }, "PrivacyTerms")
 
-const RegisterStartInput = () => {
-  return (
-    <>
+const RegisterStartInput = () => (
+  <>
+    <div className="flex flex-col gap-2 w-full">
+      <NicknameInput />
+      <PasswordInput />
       <div className="flex flex-col gap-2 w-full">
-        <NicknameInput />
-        <PasswordInput />
-        <div className="flex flex-col gap-2 w-full">
-          <FindoutOptions />
-          <FindoutComponent />
-        </div>
+        <FindoutOptions />
+        <FindoutComponent />
       </div>
-      <PrivacyTerms />
-    </>
-  )
-}
+    </div>
+    <PrivacyTerms />
+  </>
+)
 
 const RegisterSeedPhraseConfirm = reatomComponent(({ ctx }) => {
   const words = ctx.spy(registerSeedPhraseModel.state.repeatWords)
@@ -199,9 +187,7 @@ const RegisterSeedPhraseSave = reatomComponent(({ ctx }) => {
 }, "RegisterSeedPhraseSave")
 
 const RegisterConfirm = reatomComponent(({ ctx }) => {
-  if (ctx.spy(register.submit.statusesAtom).isPending) {
-    return <IconLoader />
-  }
+  if (ctx.spy(register.submit.statusesAtom).isPending) return <IconLoader />
 
   const error = ctx.spy(authState.globalError)
 
@@ -216,9 +202,7 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
     )
   }
 
-  if (!ctx.spy(register.submit.dataAtom)) {
-    return <IconLoader />
-  }
+  if (!ctx.spy(register.submit.dataAtom)) return <IconLoader />
 
   return (
     <div className="flex flex-col gap-6 w-full items-center justify-center">
@@ -240,13 +224,13 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
 }, "RegisterConfirm")
 
 const RegisterBack = reatomComponent(({ ctx }) => {
-  const canGoBack = ctx.spy(registerNavigationModel.canGoBackAtom)
+  const canGoBack = ctx.spy(registerNavigationModel.canGoBackAtom);
 
   return (
     <Button
       type="button"
-      disabled={!canGoBack}
-      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.events.back(spawnCtx))}
+      disabled={!canGoBack || ctx.spy(registerNavigationModel.back.statusesAtom).isPending}
+      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.back(spawnCtx))}
       background="default"
       className="transition-none"
     >
@@ -256,14 +240,14 @@ const RegisterBack = reatomComponent(({ ctx }) => {
 }, "RegisterBack")
 
 const RegisterContinue = reatomComponent(({ ctx }) => {
-  const canGoNext = ctx.spy(registerNavigationModel.canGoNextAtom);
+  const canGoNext = ctx.spy(registerNavigationModel.canGoNextAtom)
 
   return (
     <Button
       type="button"
       className="w-full bg-green-600 font-semibold transition-none"
-      disabled={!canGoNext}
-      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.events.continue(spawnCtx))}
+      disabled={!canGoNext || ctx.spy(registerNavigationModel.next.statusesAtom).isPending}
+      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.next(spawnCtx))}
     >
       Продолжить
     </Button>
@@ -271,8 +255,7 @@ const RegisterContinue = reatomComponent(({ ctx }) => {
 }, "RegisterContinue")
 
 const RegisterNavigation = reatomComponent(({ ctx }) => {
-  const isLast = ctx.spy(registerNavigationModel.isLastStepAtom)
-  if (isLast) return null;
+  if (ctx.spy(registerNavigationModel.isLastStepAtom)) return null;
 
   return (
     <div className="flex sm:flex-row flex-col items-center gap-2 justify-center w-full *:w-full">
@@ -290,14 +273,13 @@ const STEP_COMPONENTS: Record<AuthRegisterType, ReactNode> = {
 };
 
 const RegisterContent = reatomComponent(({ ctx }) =>
-  STEP_COMPONENTS[ctx.spy(registerState.type)],
-  "RegisterContent"
+  STEP_COMPONENTS[ctx.spy(registerState.type)], "RegisterContent"
 )
 
 export const RegisterForm = reatomComponent(({ ctx }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    spawn(ctx, (spawnCtx) => registerNavigationModel.events.continue(spawnCtx))
+    spawn(ctx, (spawnCtx) => registerNavigationModel.next(spawnCtx))
   }
 
   return (

@@ -2,27 +2,21 @@ import Elysia from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
-import { logger } from "#/utils/config/logger";
 import { toLog } from "./validators";
 import { bearer } from "@elysia/bearer";
 
-export const validateLogger = logger.withTag("Validation")
-
 async function handleAuthedByApiUser(apiKey: string | undefined): Promise<{ nickname: string } | null> {
-  if (!!apiKey && apiKey.trim().length !== 0) {
-    const query = await general
-      .selectFrom("api_keys")
-      .select(["key", "nickname"])
-      .where("key", "=", apiKey)
-      .executeTakeFirst()
+  if (!apiKey || apiKey.trim().length === 0) return null;
 
-    if (query) {
-      const { nickname } = query;
-      return { nickname }
-    }
-  }
+  const query = await general
+    .selectFrom("api_keys")
+    .select(["key", "nickname"])
+    .where("key", "=", apiKey)
+    .executeTakeFirst()
 
-  return null;
+  if (!query) return null;
+
+  return { nickname: query.nickname }
 }
 
 export const defineOptionalUser = () => new Elysia()
@@ -62,11 +56,7 @@ export const defineUser = () => new Elysia()
 
 export const defineSession = () => new Elysia()
   .use(toLog("defineSession"))
-  .derive(({ cookie }) => {
-    const sessionCookie = cookie[SESSION_KEY];
-    const session = sessionCookie.value as string | undefined;
-    return { session }
-  })
+  .derive(({ cookie }) => ({ session: cookie[SESSION_KEY].value as string | undefined }))
   .as("global")
 
 export const defineUserRole = () => new Elysia()

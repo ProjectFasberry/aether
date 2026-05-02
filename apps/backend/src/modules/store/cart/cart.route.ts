@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
-import { cartItem, cartListPayload, cartPricePayload, editItemToBasketSchema } from "./cart.model";
+import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData, withError } from "#/shared/schemas";
 import { defineUser } from "#/lib/middlewares/define";
@@ -86,7 +86,7 @@ const cartPrice = new Elysia()
     return { data }
   }, {
     response: {
-      200: withData(cartPricePayload)
+      200: withData(cartPriceSchema)
     }
   })
 
@@ -106,7 +106,7 @@ const cartList = new Elysia()
     }
   }, {
     response: {
-      200: withData(cartListPayload)
+      200: withData(cartListSchema)
     }
   })
 

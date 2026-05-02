@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { landAtom, landBannerAtom, landGalleryAtom, landIsOwnerAtom, landOwnerAtom } from "../models/land.model"
-import { Avatar } from "@/shared/components/app/avatar/components/avatar"
+import { Avatar } from "@/shared/ui/avatar"
 import { Typography } from "@repo/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
 import useEmblaCarousel from 'embla-carousel-react'
@@ -49,11 +49,11 @@ const LandToggleMode = reatomComponent(({ ctx }) => {
       <Button
         name="Toggle mode"
         className="bg-neutral-50 px-2"
-        onClick={() => landMode.toggle(ctx)}
+        onClick={() => landMode(ctx, (state) => state === 0 ? 1 : 0)}
         disabled={ctx.spy(saveChanges.statusesAtom).isPending}
       >
         <Typography className='text-neutral-950 font-semibold text-nowrap truncate'>
-          {ctx.spy(landMode) === 'watch' ? "Режим редактирования" : "Режим просмотра"}
+          {ctx.spy(landMode) === 0 ? "Режим редактирования" : "Режим просмотра"}
         </Typography>
       </Button>
       {ctx.spy(changesIsExist) && (
@@ -164,6 +164,7 @@ export const Land = reatomComponent(({ ctx }) => {
                   <Avatar
                     nickname={member.nickname}
                     className="h-8 w-8"
+                    url={member.avatar}
                   />
                   <Typography className="text-lg">
                     {member.nickname}

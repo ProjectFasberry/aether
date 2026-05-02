@@ -10,9 +10,7 @@ type BannerPayload = {
 }
 
 export const bannedAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<BannerPayload>("validate/ban").exec()
-  )
+  return await client<BannerPayload>("validate/ban").exec()
 }).pipe(
   withDataAtom(),
   withStatusesAtom(),

@@ -24,7 +24,7 @@ import type { DB } from "@repo/shared/types/db/skins-database-types";
 import { client as inheritClient } from "#/shared/api/client";
 import { wrapError } from "#/helpers/wrap-error";
 import type { KyInstance } from "ky";
-import type { Context } from "elysia";
+import { type Static, t, type Context } from "elysia";
 import { nanoid } from "nanoid";
 import { getRedisKey } from "#/helpers/redis";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
@@ -78,7 +78,17 @@ export async function getPlayerAvatar(nickname: string): Promise<string> {
 
 export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:skins:${nickname}`) 
 
-export type SkinsHistoryPayload = SkinsHistory[]
+export type SkinsHistoryPayload = Static<typeof skinsHistorySchema>
+
+export const skinsHistorySchema = t.Array(
+  t.Object({
+    skin_identifier: t.String(),
+    skin_variant: t.Nullable(t.String()),
+    timestamp: t.Number(),
+    skin_url: t.Nullable(t.String()),
+    skin_head_url: t.Nullable(t.String())
+  })
+)
 
 export async function getSkinsHistory({ nickname }: { nickname: string }) {
   const result = await getCachedSkinPayload(nickname)

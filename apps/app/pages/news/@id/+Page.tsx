@@ -7,7 +7,7 @@ import { renderToHTMLString } from '@tiptap/static-renderer'
 import type { JSONContent } from "@tiptap/react";
 import { onDisconnect } from "@reatom/framework";
 import { editorExtensions } from "@/shared/components/config/editor";
-import { Avatar } from "@/shared/components/app/avatar/components/avatar";
+import { Avatar } from "@/shared/ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { usePageContext } from "vike-react/usePageContext";
 import { CURRENT_USER_KEY } from "@/shared/models/current-user.model";

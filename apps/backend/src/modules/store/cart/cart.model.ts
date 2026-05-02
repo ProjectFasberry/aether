@@ -14,7 +14,7 @@ export const editItemToBasketSchema = z.object({
   )
 })
 
-export const cartListDataPayload = t.Object({
+export const cartListItemSchema = t.Object({
   id: t.Number(),
   title: t.String(),
   description: t.Nullable(t.String()),
@@ -29,13 +29,13 @@ export const cartListDataPayload = t.Object({
   currency: t.String(),
 })
 
-export const cartPricePayload = t.Object({
+export const cartPriceSchema = t.Object({
   CHARISM: t.Number(),
   BELKOIN: t.Number()
 })
 
-export const cartListPayload = t.Object({
-  data: t.Array(cartListDataPayload),
+export const cartListSchema = t.Object({
+  data: t.Array(cartListItemSchema),
   meta: withMeta
 });
 

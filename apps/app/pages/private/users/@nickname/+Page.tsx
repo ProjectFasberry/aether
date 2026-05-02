@@ -1,4 +1,4 @@
-import { Avatar } from "@/shared/components/app/avatar/components/avatar"
+import { Avatar } from "@/shared/ui/avatar"
 import { logError } from "@/shared/lib/log"
 import { pageContextAtom } from "@/shared/models/page-context.model"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"

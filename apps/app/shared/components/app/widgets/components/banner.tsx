@@ -20,17 +20,6 @@ const BannerView = reatomComponent<{ id: number }>(({ ctx, id }) => {
   )
 }, "BannerView")
 
-export const Banner = reatomComponent(({ ctx }) => {
-  const isExist = ctx.spy(bannerIsExistsAtom);
-  if (!isExist) return null;
-
-  return (
-    <div className="flex px-2 sm:px-6 items-center justify-center w-full h-[6vh] border-t border-neutral-800">
-      <BannerInfo />
-    </div>
-  )
-}, "Banner")
-
 const bannerItemVariant = tv({
   slots: {
     base: 'relative w-full h-full flex items-center justify-center',
@@ -64,25 +53,35 @@ const BannerItem = ({ title, description, href, id }: BannerPayload) => {
   )
 }
 
-export const BannerInfo = reatomComponent(({ ctx }) => {
+const BannerSkeleton = () => (
+  <div className={bannerItemVariant().base()}>
+    <div className={bannerItemVariant().wrapper()}>
+      <div className={bannerItemVariant().content()}>
+        <Skeleton className={bannerItemVariant().title({ className: "h-5 w-40" })} />
+        <Skeleton className={bannerItemVariant().description({ className: "h-5 w-40" })} />
+      </div>
+      <Skeleton className={bannerItemVariant().linkLabel()} />
+    </div>
+    <Skeleton className={bannerItemVariant().aside({ className: "h-5 w-5" })} />
+  </div>
+)
+
+const BannerInfo = reatomComponent(({ ctx }) => {
   const data = ctx.spy(banner.fetch.dataAtom);
 
-  if (ctx.spy(banner.fetch.statusesAtom).isPending) {
-    return (
-      <div className={bannerItemVariant().base()}>
-        <div className={bannerItemVariant().wrapper()}>
-          <div className={bannerItemVariant().content()}>
-            <Skeleton className={bannerItemVariant().title({ className: "h-5 w-40" })} />
-            <Skeleton className={bannerItemVariant().description({ className: "h-5 w-40" })} />
-          </div>
-          <Skeleton className={bannerItemVariant().linkLabel()} />
-        </div>
-        <Skeleton className={bannerItemVariant().aside({ className: "h-5 w-5" })} />
-      </div>
-    )
-  }
+  if (ctx.spy(banner.fetch.statusesAtom).isPending) return <BannerSkeleton />
 
   if (!data) return;
 
   return <BannerItem {...data} />
 }, 'BannerInfo')
+
+export const Banner = reatomComponent(({ ctx }) => {
+  if (!ctx.spy(bannerIsExistsAtom)) return null;
+
+  return (
+    <div className="flex px-2 sm:px-6 items-center justify-center w-full h-[6vh] border-t border-neutral-800">
+      <BannerInfo />
+    </div>
+  )
+}, "Banner")

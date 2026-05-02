@@ -46,7 +46,7 @@ export const DefaultBanner = reatomComponent<DefaultBannerProps>(({ ctx, banner,
 
 export const LandBanner = reatomComponent(({ ctx }) => {
   const ref = useRef<HTMLInputElement | null>(null);
-  const isEdit = ctx.spy(landMode) === 'edit'
+  const isEdit = ctx.spy(landMode) === 1
   const currentBanner = ctx.spy(landBannerAtom)
   const newBanner = ctx.spy(newBannerUrl)
   const editIsAllow = isEdit && !newBanner

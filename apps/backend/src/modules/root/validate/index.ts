@@ -2,7 +2,7 @@ import { defineUser } from "#/lib/middlewares/define";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import { getBan } from "../app/app-options.route";
+import { banSchema, getBan } from "../app/app-options.route";
 
 const validateNickname = new Elysia()
   .get("/nickname/:nickname", async ({ params: { nickname } }) => {
@@ -12,13 +12,12 @@ const validateNickname = new Elysia()
       .where("nickname", "=", nickname)
       .executeTakeFirst()
 
-    const data = query?.nickname ?? null
-
+    const data = query?.nickname ? "OK" : null
     return { data }
   }, {
     response: {
       200: withData(
-        t.Nullable(t.String())
+        t.Union([t.Literal("OK"), t.Null()])
       )
     }
   })
@@ -31,13 +30,7 @@ const banStatus = new Elysia()
   }, {
     response: {
       200: withData(
-        t.Nullable(
-          t.Object({
-            created_at: t.Date(),
-            nickname: t.String(),
-            reason: t.Nullable(t.String())
-          })
-        )
+        t.Nullable(banSchema)
       )
     }
   })

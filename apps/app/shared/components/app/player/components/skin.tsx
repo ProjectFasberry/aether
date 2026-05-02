@@ -14,10 +14,11 @@ import {
   getIsSelectSkinAtom, getIsUploadAvailableAtom, getSkinVariantIsActiveAtom, skins, skinsState, skinSubmitIsDisabledAtom,
   SkinVariant, skinAnimation,  SKIN_ANIMATIONS, hardwareAccIsEnabledAtom
 } from "../models/skin.model";
-import { SkinsHistory } from "@repo/shared/types/entities/other";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { ReactSkinview3d } from "react-skinview3d"
 import { ClientOnly } from "vike-react/ClientOnly"
+
+export type SkinsHistory = NonNullable<ExtractApiData<"getServerSkinHistoryByNickname">["data"]>[number]
 
 const SkinRenderSkeleton = () => {
   return (

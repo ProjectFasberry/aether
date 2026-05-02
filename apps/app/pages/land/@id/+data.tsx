@@ -24,7 +24,7 @@ function metadata(
   pageContext: PageContextServer
 ) {
   const title = wrapTitle(land.name.slice(0, 64))
-  const created_at = dayjs(land.created_at).format("DD MMM YYYY");
+  const created_at = dayjs(land.created_at.toString()).format("DD MMM YYYY");
   const description = `Территория ${land.name}. Создана ${created_at}. ${land.members.length} участников`
   const keywords = `${land.name}, fasberry, fasberry page, территория ${land.name}, land, fasberry land, fasberry ${land.name}`
 
@@ -53,20 +53,19 @@ async function loadLand(ulid: string, headers?: Record<string, string>): Promise
   }
 }
 
-export async function data(pageContext: PageContextServer) {
-  logRouting(pageContext.urlPathname, "data");
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data");
 
   const config = useConfig()
-  const headers = pageContext.headers ?? undefined
-  const ulid = pageContext.routeParams.id;
+  const headers = pageCtx.headers ?? undefined
+  const ulid = pageCtx.routeParams.id;
 
   const land = await loadLand(ulid, headers)
   if (!land) throw render("/not-exist?type=land")
 
-  config(metadata(land, pageContext))
+  config(metadata(land, pageCtx))
 
   const ctx = createCtx()
-  
   landAtom(ctx, land)
-  pageContext.snapshot = mergeSnapshot(ctx, pageContext)
+  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
 }

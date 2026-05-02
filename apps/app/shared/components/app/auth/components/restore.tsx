@@ -99,7 +99,7 @@ const RestoreBack = reatomComponent(({ ctx }) => {
     <Button
       type="button"
       disabled={!canGoBack}
-      onClick={() => spawn(ctx, (spawnCtx) => restoreNavigationModel.events.back(spawnCtx))}
+      onClick={() => spawn(ctx, (spawnCtx) => restoreNavigationModel.back(spawnCtx))}
       background="default"
       className="transition-none"
     >
@@ -117,7 +117,7 @@ const RestoreContinue = reatomComponent(({ ctx }) => {
       className="font-semibold"
       background="white"
       disabled={!canGoNext}
-      onClick={() => spawn(ctx, (spawnCtx) => restoreNavigationModel.events.continue(spawnCtx))}
+      onClick={() => spawn(ctx, (spawnCtx) => restoreNavigationModel.next(spawnCtx))}
     >
       Подтвердить
     </Button>
@@ -136,7 +136,7 @@ const RestoreNavigation = reatomComponent(({ ctx }) => {
 export const RestoreForm = reatomComponent(({ ctx }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    spawn(ctx, (spawnCtx) => restoreNavigationModel.events.continue(spawnCtx))
+    spawn(ctx, (spawnCtx) => restoreNavigationModel.next(spawnCtx))
   }
 
   return (

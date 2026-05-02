@@ -1,11 +1,8 @@
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { getObjectUrl } from "@/shared/lib/volume-helpers";
-import { clientInstance } from "@/shared/api/client";
 import { action, atom, batch } from "@reatom/core";
 import { sleep, withAssign, withInit, withReset } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { SkinsHistory } from "@repo/shared/types/entities/other";
 import { isIdentityAtom, playerParamAtom } from "./player.model";
 import { toast } from "sonner";
 import { DIALOG_DELAY } from "@/shared/consts";
@@ -14,6 +11,7 @@ import { IconButterfly, TablerIcon } from "@tabler/icons-react";
 import { IconRun } from "@tabler/icons-react";
 import { IconManFilled } from "@tabler/icons-react";
 import { hardwareAccelerationIsActive } from "@/shared/lib/utils";
+import { SkinsHistory } from "../components/skin";
 
 type SkinAnimationType = "idle" | "run" | "flying";
 type SkinAnimation = typeof FlyingAnimation | typeof IdleAnimation | typeof RunningAnimation
@@ -54,24 +52,6 @@ skinAnimation.type.onChange((ctx, state) => {
   viewer.animation = new animationClasses[state]();
   skinAnimation.viewer(ctx, viewer)
 })
-
-export async function getSkinDetails(
-  { type, nickname }: { type: "head" | "skin", nickname: string }, init?: RequestInit
-) {
-  const fallback = getObjectUrl(
-    "static",
-    type === 'skin' ? "steve_skin.png" : "steve_head.png"
-  )
-
-  const res = await clientInstance(`server/skin/${type}/${nickname}`, {
-    ...init,
-    credentials: "omit"
-  })
-
-  if (!res.ok) return fallback;
-
-  return await res.text()
-}
 
 type SkinSelected = {
   skin_head_url: string | null,

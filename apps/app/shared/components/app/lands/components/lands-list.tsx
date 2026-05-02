@@ -7,7 +7,7 @@ import { Typography } from '@repo/ui/typography'
 import { useState } from "react"
 import { FormattedText } from "../../land/components/land-title"
 import { DefaultBanner } from "../../land/components/land-banner"
-import { Avatar } from "../../avatar/components/avatar"
+import { Avatar } from "../../../../ui/avatar"
 import { IconCircleFilled } from "@tabler/icons-react"
 import { MasonryGrid } from "@repo/ui/masonry-grid"
 import { NotFound } from "@/shared/ui/not-found"

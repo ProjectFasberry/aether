@@ -23,7 +23,9 @@ const Global = reatomComponent(({ ctx }) => {
 
   return (
     <>
-      <Widgets />
+      <ClientOnly>
+        <Widgets />
+      </ClientOnly>
       <AlertDialog />
       <ClientOnly>
         {isAuthed && <SettingsDialog />}

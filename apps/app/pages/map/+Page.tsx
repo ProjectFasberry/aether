@@ -11,16 +11,10 @@ import { IconExternalLink } from "@tabler/icons-react"
 
 const mapImage = getStaticImage("arts/6.jpg")
 
-type AvServer = { name: string, value: string, href: string, img: string }
-
-const avServersAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<AvServer[]>("shared/servers-with-map").exec()
-  )
+const avServersAction = reatomAsync(async () => {
+  return await client<ExtractApiData<"getSharedServers-with-map">["data"]>("shared/servers-with-map").exec()
 }, "avServersAction").pipe(
-  withDataAtom(null),
-  withCache({ swr: false }),
-  withStatusesAtom()
+  withDataAtom(null), withCache({ swr: false }), withStatusesAtom()
 )
 
 const ServersList = reatomComponent(({ ctx }) => {

@@ -16,7 +16,7 @@ import { currentUserState } from "@/shared/models/current-user.model";
 import { action, Atom, atom, reatomMap, withAssign } from "@reatom/framework";
 import { Checkbox } from "@repo/ui/checkbox";
 import { createLink, Link } from "@/shared/components/config/link";
-import { Avatar } from "../../avatar/components/avatar";
+import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { ActionButton, ToLink } from "./ui";
 import { IconLayoutBottombarInactive } from "@tabler/icons-react";

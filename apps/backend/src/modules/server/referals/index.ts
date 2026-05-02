@@ -1,9 +1,22 @@
 import { defineUser } from "#/lib/middlewares/define"
 import { general } from "#/shared/database/general-db"
-import Elysia from "elysia"
+import Elysia, { type Static, t } from "elysia"
 import { getPlayerAvatar } from "../skin/skin.model"
+import { withData } from "#/shared/schemas"
 
-async function getReferals(nickname: string) {
+const referralsListSchema = t.Array(
+  t.Object({
+    id: t.Number(),
+    created_at: t.String(),
+    completed: t.Boolean(),
+    referral: t.Object({
+      nickname: t.String(),
+      avatar: t.String()
+    })
+  })
+)
+
+async function getReferals(nickname: string): Promise<Static<typeof referralsListSchema>> {
   const query = await general
     .selectFrom("referrals")
     .select([
@@ -18,7 +31,7 @@ async function getReferals(nickname: string) {
   const data = await Promise.all(
     query.map(async (row) => ({
       id: row.id,
-      created_at: row.created_at,
+      created_at: row.created_at.toString(),
       completed: row.completed,
       referral: {
         nickname: row.referral,
@@ -35,6 +48,10 @@ const referralsList = new Elysia()
   .get("/list", async ({ nickname }) => {
     const data = await getReferals(nickname)
     return { data }
+  }, {
+    response: {
+      200: withData(referralsListSchema)
+    }
   })
 
 export const referrals = new Elysia()

@@ -12,10 +12,12 @@ import { getPlayerAvatar } from "#/modules/server/skin/skin.model";
 
 const USER_SORT = ["abc", "created_at", "role"] as const
 
-const userListSchema = t.Intersect([
+const sortSchema = t.UnionEnum(USER_SORT, { default: USER_SORT[0] });
+
+const userListSchema = t.Composite([
   metaSchema,
   t.Object({
-    sort: t.Optional(t.UnionEnum(USER_SORT, { default: USER_SORT[0] })),
+    sort: t.Optional(sortSchema),
     searchQuery: searchQuerySchema
   })
 ])
@@ -23,7 +25,7 @@ const userListSchema = t.Intersect([
 type UserListSchema = Static<typeof userListSchema>
 type RequestedFields = "created_at" | "nickname" | "role_id"
 
-const EXPRESSIONS: Record<UserListSchema["sort"], RequestedFields> = {
+const EXPRESSIONS: Record<Static<typeof sortSchema>, RequestedFields> = {
   "abc": "nickname",
   "created_at": "created_at",
   "role": "role_id"

@@ -5,7 +5,7 @@ import {
   deleteNewsBeforeAction
 } from "../models/news.model";
 import { Skeleton } from "@repo/ui/skeleton";
-import { Avatar } from "../../avatar/components/avatar";
+import { Avatar } from "../../../../ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Typography } from "@repo/ui/typography";
 import { ReactNode } from "react";

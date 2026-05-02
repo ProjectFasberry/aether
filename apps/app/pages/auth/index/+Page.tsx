@@ -13,34 +13,25 @@ import { useEffect } from "react";
 import { register } from "@/shared/components/app/auth/models/register.model";
 
 const ResetPassword = reatomComponent(({ ctx }) => {
-  const showResetPassword = ctx.spy(showResetPasswordAtom)
-  if (!showResetPassword) return null;
+  if (!ctx.spy(showResetPasswordAtom)) return null;
 
   return (
-    <Link
-      href="/auth/restore"
-      className='flex items-center justify-center w-full text-sm text-neutral-400'
-    >
+    <Link href="/auth/restore" className='flex items-center justify-center w-full text-sm text-neutral-400'>
       Я забыл пароль
     </Link>
   )
 }, "ResetPassword")
 
 const Auth = reatomComponent(({ ctx }) => {
-  const type = ctx.spy(authState.type)
-
-  const isDisabled = ctx.spy(authIsDisabledAtom)
-  const triggerIsDisabled = ctx.spy(authTriggerIsDisabledAtom)
-
   return (
     <Tabs
       onValueChange={value => authState.type(ctx, value as AuthType)}
-      value={type}
-      inert={isDisabled}
+      value={ctx.spy(authState.type)}
+      inert={ctx.spy(authIsDisabledAtom)}
       className="flex flex-col gap-4 w-full p-3 sm:p-4 lg:p-6 max-w-lg rounded-lg bg-neutral-900 inert:opacity-70 inert:pointer-events-none"
     >
       <TabsList
-        data-disabled={triggerIsDisabled}
+        data-disabled={ctx.spy(authTriggerIsDisabledAtom)}
         className="flex flex-col sm:flex-row min-h-24 h-24 sm:min-h-fit sm:h-fit w-full gap-2 *:h-10 *:w-full"
       >
         <TabsTrigger value="login">Вход</TabsTrigger>

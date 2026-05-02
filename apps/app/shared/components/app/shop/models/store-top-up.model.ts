@@ -176,21 +176,20 @@ export const topup = atom(null, "topup").pipe(
 )
 
 export const topupNavigationModel = createNavigationModel({
-  name: "topup",
   steps: [
     {
       id: "start-input",
       validators: {
         toNext: topup.validators.startInput
       },
-      cb: topup.fetchMethods
+      cb: action((ctx) => { topup.fetchMethods(ctx); return true })
     },
     {
       id: "select-method",
       validators: {
         toNext: topup.validators.selectMethod
       },
-      cb: topup.submit
+      cb: action((ctx) => { topup.submit(ctx); return true })
     },
     {
       id: "confirm"

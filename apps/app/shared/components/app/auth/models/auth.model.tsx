@@ -1,8 +1,9 @@
 import { withHistory } from "@/shared/lib/reatom-helpers";
-import { action, atom, batch, Ctx } from "@reatom/core";
-import { reatomRecord, sleep, withAssign, withReset } from "@reatom/framework";
+import { action, atom, Ctx } from "@reatom/core";
+import { reatomRecord, withAssign, withReset } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
-import { pof } from "./pof.model";
+import { pof } from "../../../../models/shared.model";
+import { appState } from "@/shared/models/app.model";
 
 export type AuthType = "register" | "login";
 export type AuthErrorType = "nickname" | "password" | "findout";
@@ -43,7 +44,6 @@ export const FINDOUT_OPTIONS: { title: string; value: AuthFindoutType }[] = [
 
 export const findoutSelectedTypeAtom = atom((ctx) =>
 	FINDOUT_OPTIONS.find((d) => d.value === ctx.spy(authState.fields.findoutType)) ?? null,
-	"findoutSelected",
 );
 
 authState.searchParams.onChange((ctx, state) => {
@@ -56,27 +56,21 @@ authState.searchParams.onChange((ctx, state) => {
 });
 
 authState.type.onChange((ctx) => auth.resetErrors(ctx));
-
 pof.token.onChange((ctx, state) => state !== null && pof.showTokenVerifySectionAtom.reset(ctx))
 
 export const isPofActiveAtom = atom((ctx) =>
-	ctx.spy(pof.isActive) ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
-	"isPofActive"
+	ctx.spy(appState.options).pofEnabled ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
 );
 
 export const authIsDisabledAtom = atom((ctx) =>
-	ctx.spy(isPofActiveAtom) ||
-	ctx.spy(authState.isProcessing),
-	"authIsDisabled"
+	ctx.spy(isPofActiveAtom) || ctx.spy(authState.isProcessing),
 );
 
 export const auth = atom(null, "auth").pipe(
 	withAssign((_, name) => ({
 		resetErrors: action((ctx) => {
-			batch(ctx, () => {
-				authState.globalError.reset(ctx);
-				authState.errorsType.reset(ctx);
-			})
+			authState.globalError.reset(ctx);
+			authState.errorsType.reset(ctx);
 		}),
 		resetError: action((ctx) => {
 			const errors = ctx.get(authState.errorsType);
@@ -85,22 +79,17 @@ export const auth = atom(null, "auth").pipe(
 				authState.errorsType(ctx, (state) => state.filter((error) => error !== target));
 			}
 		}, `${name}.resetError`),
-		solve: action(async (ctx, value: string) => {
-			await ctx.schedule(() => sleep(1200));
-			pof.token(ctx, value);
-		}, `${name}.solve`),
+		solve: action((ctx, value: string) => pof.token(ctx, value)),
 		resetAuthState: action((ctx) => {
-			batch(ctx, () => {
-				authState.fields.nickname.reset(ctx);
-				authState.fields.password.reset(ctx);
-				authState.fields.findout.reset(ctx);
-				authState.fields.findoutType.reset(ctx);
-				authState.fields.acceptRules.reset(ctx);
-				authState.globalError.reset(ctx);
-				authState.errorsType.reset(ctx);
-				authState.isProcessing.reset(ctx)
-				authState.settings.showPassword.reset(ctx)
-			})
+			authState.fields.nickname.reset(ctx);
+			authState.fields.password.reset(ctx);
+			authState.fields.findout.reset(ctx);
+			authState.fields.findoutType.reset(ctx);
+			authState.fields.acceptRules.reset(ctx);
+			authState.globalError.reset(ctx);
+			authState.errorsType.reset(ctx);
+			authState.isProcessing.reset(ctx)
+			authState.settings.showPassword.reset(ctx)
 
 			pof.resetState(ctx)
 		})
@@ -108,8 +97,7 @@ export const auth = atom(null, "auth").pipe(
 );
 
 export const authTriggerIsDisabledAtom = atom((ctx) =>
-	ctx.spy(pof.isActive) ? Boolean(ctx.spy(pof.token)) : false,
-	"authTriggerIsDisabled"
+	ctx.spy(appState.options).pofEnabled ? Boolean(ctx.spy(pof.token)) : false,
 );
 
 const ERRORS_RECORDS = {

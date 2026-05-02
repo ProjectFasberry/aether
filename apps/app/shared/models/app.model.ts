@@ -23,6 +23,7 @@ export const appOptionsInit: AppOptionsPayloadExtend = {
 	locale: "ru",
 	country: null,
 	isWl: false,
+	pofEnabled: true
 };
 
 export const APP_OPTIONS_KEY = "appState.options";

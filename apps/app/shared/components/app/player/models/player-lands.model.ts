@@ -32,7 +32,7 @@ export const playerLands = atom(null, "playerLands").pipe(
       onFulfill: (ctx, res) => {
         playerLandsState.data(ctx, isEmptyArray(res.data) ? null : res)
       },
-      onReject: (ctx, e) => logError(e)
+      onReject: (_, e) => logError(e)
     }).pipe(
       withStatusesAtom()
     )

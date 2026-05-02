@@ -11,15 +11,7 @@ export const landChangesAtom = atom<Record<NewLandChangesKeys | string, string[]
 export const newBannerUrl = atom("", "newBannerUrl").pipe(withReset())
 export const newGalleryUrls = atom<string[]>([], "newGalleryUrls").pipe(withReset())
 
-export const landMode = atom<"watch" | "edit">("watch", "landMode").pipe(
-  withAssign((target) => ({
-    toggle: action((ctx) => ctx.get(target) === 'watch' ? target(ctx, "edit") : target(ctx, "watch"))
-  }))
-).pipe(withReset())
-
-landMode.onChange((_, target) =>
-  toast.info(`Режим редактирования региона ${target === 'edit' ? "" : "де"}активирован`)
-)
+export const landMode = atom<0 | 1>(0, "landMode").pipe(withReset())
 
 landChangesAtom.onChange((ctx, state) => {
   const keys = Object.keys(state)
@@ -65,7 +57,5 @@ export const saveChanges = reatomAsync(async (ctx) => {
     landChangesAtom.reset(ctx)
     newBannerUrl.reset(ctx)
   },
-  onReject: (ctx, e) => {
-    logError(e)
-  }
+  onReject: (ctx, e) => logError(e)
 }).pipe(withStatusesAtom())

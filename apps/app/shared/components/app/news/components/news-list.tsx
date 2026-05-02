@@ -17,8 +17,7 @@ const newsNotFoundTitleAtom = atom((ctx) => {
 }, "newsNotFoundTitle")
 
 const NewsListNotFound = reatomComponent(({ ctx }) =>
-  <NotFound title={ctx.spy(newsNotFoundTitleAtom)} />,
-  "NewsListNotFound"
+  <NotFound title={ctx.spy(newsNotFoundTitleAtom)} />
 )
 
 const NewsList = reatomComponent(({ ctx }) => {

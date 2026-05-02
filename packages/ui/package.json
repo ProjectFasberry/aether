@@ -9,7 +9,7 @@
 		"type-check": "tsc --build"
 	},
 	"exports": {
-		"./*": "./src/components/*"
+		"./*": "./components/*"
 	},
 	"sideEffects": [
 		"**/*.css"
