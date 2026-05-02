@@ -3,7 +3,7 @@ import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
-import { PLAY_IP } from "@/shared/env";
+import { env } from "@/shared/env";
 import { getNews, newsState } from "@/shared/components/app/news/models/news.model";
 import { createCtx } from "@reatom/core";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
@@ -12,7 +12,7 @@ import { eventsState, getEvents } from "@/shared/components/app/events/models/ev
 const previewImage = getStaticImage("arts/8332de192322939.webp")
 
 const title = wrapTitle("Главная")
-const description = `Официальное приложение майнкрафт-проекта Fasberry. Жанр: RP, RPG, полу-ванила. 1.20.1+. Играть: ${PLAY_IP}.`
+const description = `Официальное приложение майнкрафт-проекта Fasberry. Жанр: RP, RPG, полу-ванила. 1.20.1+. Играть: ${`play.${env.VITE_MAIN_DOMAIN}`}.`
 
 function metadata(pageContext: PageContextServer) {
   return {

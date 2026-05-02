@@ -5,7 +5,7 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/table"
 import { action, atom } from "@reatom/core"
-import { API_PREFIX_URL } from "@/shared/env"
+import { env } from "@/shared/env"
 import { startPageEvents } from "@/shared/lib/events"
 import { toast } from "sonner"
 import { onDisconnect, reatomMap, sleep, withReset } from "@reatom/framework"
@@ -66,7 +66,7 @@ esAtom.onChange((ctx, state) => {
 })
 
 const events = action((ctx) => {
-  const es = new EventSource(`${API_PREFIX_URL}/privated/history/events`, { withCredentials: true })
+  const es = new EventSource(`${env.VITE_API_URL}/privated/history/events`, { withCredentials: true })
   if (!es) return null;
 
   const current = ctx.get(esAtom)

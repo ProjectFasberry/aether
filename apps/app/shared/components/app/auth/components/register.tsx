@@ -2,7 +2,7 @@ import { NicknameInput, PasswordInput } from "./auth"
 import { reatomComponent } from "@reatom/npm-react"
 import { auth, type AuthFindoutType, authState, FINDOUT_OPTIONS, findoutSelectedTypeAtom } from "../models/auth.model"
 import { Typography } from "@repo/ui/typography"
-import { LANDING_URL } from "@/shared/env"
+import { env } from "@/shared/env"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select"
 import { Input } from "@repo/ui/input"
 import { ReactNode, useState } from "react"
@@ -101,7 +101,7 @@ const PrivacyTerms = reatomComponent(({ ctx }) => {
             &nbsp;политикой конфиденциальности&nbsp;
           </a>
           и
-          <a href={`${LANDING_URL}/rules`} target="_blank">
+          <a href={`${env.VITE_LANDING_URL}/rules`} target="_blank">
             &nbsp;правилами проекта
           </a>.
         </Typography>

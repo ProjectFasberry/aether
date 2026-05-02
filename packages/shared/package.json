@@ -10,8 +10,11 @@
 		"types:gen:openapi": "bun run openapi-typescript --redocly=./redocly.yml"
 	},
 	"dependencies": {
+		"clsx": "2.1.1",
 		"kysely": "0.28.2",
-		"zod": "4.2.1"
+		"tailwind-merge": "3.5.0",
+		"zod": "4.2.1",
+		"consola": "3.4.2"
 	},
 	"devDependencies": {
 		"@repo/config-typescript": "workspace:*",

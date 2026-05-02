@@ -1,6 +1,6 @@
 import { reatomComponent, useUpdate } from '@reatom/npm-react';
 import { Toaster } from '@/shared/components/config/toaster';
-import { connectLogger, createCtx, Ctx } from '@reatom/framework'
+import { createCtx, Ctx } from '@reatom/framework'
 import { reatomContext } from '@reatom/npm-react'
 import { lazy, PropsWithChildren, useRef } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
@@ -66,8 +66,13 @@ const ReatomProvider = ({ children }: PropsWithChildren) => {
   const ctx = useCreateCtx((ctx) => {
     snapshotAtom(ctx, snapshot)
 
-    if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    async function logger() {
+      const { connectLogger } = await import("@reatom/framework")
       connectLogger(ctx)
+    }
+
+    if (typeof window !== 'undefined' && import.meta.env.DEV) {
+      logger()
     }
   })
 
@@ -87,12 +92,13 @@ function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
         <span>Мы уже работаем над исправлением!</span>
       </div>
       <Button
-        className="text-lg font-semibold px-4 bg-neutral-50 text-neutral-950"
+        background='white'
+        className="font-semibold"
         onClick={() => resetErrorBoundary()}
       >
         Обновить
       </Button>
-      {import.meta.env.DEV && <pre style={{ color: "red" }}>{error.message}</pre>}
+      {import.meta.env.DEV && <pre className='text-red text-sm truncate text-wrap'>{error.message}</pre>}
     </div>
   );
 }

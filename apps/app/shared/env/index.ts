@@ -1,19 +1,35 @@
-export const HOST = import.meta.env.VITE_APP_HOST;
-export const PORT = import.meta.env.VITE_APP_PORT;
+// import * as z from "zod/v4";
 
-export const API_PREFIX_URL = import.meta.env.VITE_API_URL;
-export const PANEL_API_PREFIX_URL = import.meta.env.VITE_PANEL_API_PREFIX_URL;
-export const API_HOST = import.meta.env.VITE_API_HOST;
+// const envSchema = z.object({
+//   VITE_APP_HOST: z.string(),
+//   VITE_APP_PORT: z.string().transform(v => Number(v)),
+//   VITE_API_URL: z.url(),
+//   VITE_PANEL_API_PREFIX_URL: z.url(),
+//   VITE_API_HOST: z.string(),
+//   VITE_LANDING_URL: z.url(),
+//   VITE_MAIN_DOMAIN: z.string(),
+//   VITE_STATUS_URL: z.url(),
+//   VITE_APP_URL: z.url(),
+//   VITE_VOLUME_URL: z.url(),
+//   VITE_CAP_URL: z.url(),
+//   VITE_CAP_SITE_KEY: z.string(),
+//   VITE_APAY_TAG: z.string()
+// })
 
-export const LANDING_URL = import.meta.env.VITE_LANDING_URL!;
-export const MAIN_DOMAIN = import.meta.env.VITE_MAIN_DOMAIN;
-export const PLAY_IP = `play.${MAIN_DOMAIN}`;
-export const STATUS_URL = import.meta.env.VITE_STATUS_URL;
-export const APP_URL = import.meta.env.VITE_APP_URL;
+// export const env = envSchema.safeParse(process.env).data
 
-export const VOLUME_URL = import.meta.env.VITE_VOLUME_URL;
-
-export const CAP_INSTANCE_URL = import.meta.env.VITE_CAP_URL;
-export const CAP_SITEKEY = import.meta.env.VITE_CAP_SITE_KEY;
-
-export const APAY_TAG = import.meta.env.VITE_APAY_TAG;
+export const env = {
+  VITE_APP_HOST: import.meta.env.VITE_APP_HOST,
+  VITE_APP_PORT: import.meta.env.VITE_APP_PORT,
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  VITE_PANEL_API_PREFIX_URL: import.meta.env.VITE_PANEL_API_PREFIX_URL,
+  VITE_API_HOST: import.meta.env.VITE_API_HOST,
+  VITE_LANDING_URL: import.meta.env.VITE_LANDING_URL,
+  VITE_MAIN_DOMAIN: import.meta.env.VITE_MAIN_DOMAIN,
+  VITE_STATUS_URL: import.meta.env.VITE_STATUS_URL,
+  VITE_APP_URL: import.meta.env.VITE_APP_URL,
+  VITE_VOLUME_URL: import.meta.env.VITE_VOLUME_URL,
+  VITE_CAP_URL: import.meta.env.VITE_CAP_URL,
+  VITE_CAP_SITE_KEY: import.meta.env.VITE_CAP_SITE_KEY,
+  VITE_APAY_TAG: import.meta.env.VITE_APAY_TAG,
+}

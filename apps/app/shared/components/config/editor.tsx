@@ -10,7 +10,7 @@ import { withAssign } from "@reatom/framework"
 import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import Image from '@tiptap/extension-image'
-import { MAIN_DOMAIN } from "@/shared/env"
+import { env } from "@/shared/env"
 
 export const editorExtensions = [
   TextStyleKit,
@@ -500,7 +500,7 @@ const ALLOWED_DOMAINS = [
   'apple.com',
   'amazon.com',
   'linkedin.com',
-  `${MAIN_DOMAIN}`,
+  `${env.VITE_MAIN_DOMAIN}`,
   'discord.gg'
 ];
 

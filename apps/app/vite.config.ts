@@ -46,7 +46,7 @@ export default defineConfig(({ mode }) => {
 
   const stage = process.env["STAGE"] as Stage | undefined
   const target: Partial<StageOpts> = stage ? STAGES[stage] : {};
-  
+
   let isSSR = false;
 
   return {
@@ -73,7 +73,7 @@ export default defineConfig(({ mode }) => {
           isSSR = !!resolvedConfig.build.ssr;
         },
         buildStart() {
-          if (!isSSR) {
+          if (!isSSR && process.env.NODE_ENV === 'production') {
             console.log(`Build for stage: ${stage}`, target)
           }
         }
@@ -89,9 +89,21 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         output: {
           manualChunks(id) {
-            if (id.includes('node_modules')) {
-              return id.toString().split('node_modules/')[1].split('/')[0].toString();
+            if (!id.includes('node_modules')) return;
+
+            if (id.includes('reatom') || id.includes('zod') || id.includes('ky')) {
+              return "lib-vendor";
             }
+
+            const parts = id.split('node_modules/');
+            const lastPart = parts[parts.length - 1];
+
+            if (lastPart.startsWith('@')) {
+              const [scope, name] = lastPart.split('/');
+              return `${scope}-${name}`.split('@')[0];
+            }
+
+            return lastPart.split('/')[0].split('@')[0];
           }
         }
       }

@@ -5,7 +5,7 @@ import { Button } from "@repo/ui/button";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import { serverStatus } from "../models/intro.model";
-import { LANDING_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 import { expImage } from "@/shared/consts/images";
 import { isClientAtom } from "@/shared/models/page-context.model";
 
@@ -69,7 +69,7 @@ export const Intro = () => {
             </Typography>
           </div>
           <div className="flex gap-4 w-full items-center">
-            <a href={`${LANDING_URL}/start`} target="_blank">
+            <a href={`${env.VITE_LANDING_URL}/start`} target="_blank">
               <Button background="white">
                 <Typography className="truncate text-nowrap text-lg font-semibold">
                   Начать играть

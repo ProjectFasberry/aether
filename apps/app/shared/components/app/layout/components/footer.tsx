@@ -2,13 +2,13 @@ import { IconBrandDiscordFilled, IconBrandTelegram } from "@tabler/icons-react"
 import { Link } from "../../../config/link"
 import { Typography } from "@repo/ui/typography"
 import { CONTACTS } from "../../../../consts/contacts"
-import { LANDING_URL } from "@/shared/env"
+import { env } from "@/shared/env"
 import { Logotype } from "./logotype"
 
 const telegramHref = CONTACTS.find(t => t.value === 'tg')?.href as string
 const discordHref = CONTACTS.find(t => t.value === 'ds')?.href as string
 
-const createLandingUrl = (path: string) => `${LANDING_URL}${path}`
+const createLandingUrl = (path: string) => `${env.VITE_LANDING_URL}${path}`
 
 export const Footer = () => {
   return (

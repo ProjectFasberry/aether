@@ -1,5 +1,5 @@
 import ky, { Options } from "ky";
-import { API_PREFIX_URL, PANEL_API_PREFIX_URL } from "../env";
+import { env } from "../env";
 
 const baseConfig: Options = {
 	credentials: "include",
@@ -41,12 +41,12 @@ const hooksConfig: Options = {
 
 export const clientInstance = ky.create({
 	...baseConfig,
-	baseUrl: API_PREFIX_URL,
+	baseUrl: env.VITE_API_URL,
 	...hooksConfig,
 });
 
 export const panelClientInstance = ky.create({
 	...baseConfig,
-	baseUrl: PANEL_API_PREFIX_URL,
+	baseUrl: env.VITE_PANEL_API_PREFIX_URL,
 	...hooksConfig,
 });

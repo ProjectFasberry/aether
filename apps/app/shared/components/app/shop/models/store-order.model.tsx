@@ -3,7 +3,7 @@ import { action, Action, atom } from "@reatom/core";
 import { CreateOrderRoutePayload, OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
 import { withAssign, withReset } from "@reatom/framework";
-import { API_PREFIX_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
@@ -127,7 +127,7 @@ export async function getOrder(id: string, init: RequestInit, type: string = "de
     .exec()
 }
 
-export const getOrderEventsUrl = (orderId: string) => `${API_PREFIX_URL}/store/order/${orderId}/events`
+export const getOrderEventsUrl = (orderId: string) => `${env.VITE_API_URL}/store/order/${orderId}/events`
 export const createdOrderDataAtom = atom<CreateOrderRoutePayload | null>(null)
 export const getOrderUrl = (uniqueId: string, t: string = "default") => `/store/order/status/${uniqueId}?type=${t}`
 export const loaderIsActiveAtom = atom((ctx) => ctx.spy(order.create.statusesAtom).isPending)

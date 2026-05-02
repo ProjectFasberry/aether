@@ -1,4 +1,4 @@
-import { APP_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 import { client } from "@/shared/lib/client-wrapper";
 import { atom } from "@reatom/core";
 import { reatomAsync, withAssign, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
@@ -18,6 +18,6 @@ export const referrals = atom(null, "referrals").pipe(
       withCache({ swr: false }),
       withStatusesAtom()
     ),
-    getReferralIp: (v: string) => `${APP_URL}/auth?type=register&referrer=${v}`
+    getReferralIp: (v: string) => `${env.VITE_APP_URL}/auth?type=register&referrer=${v}`
   }))
 )

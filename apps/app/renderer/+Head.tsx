@@ -1,4 +1,4 @@
-import { APAY_TAG, API_PREFIX_URL, VOLUME_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 
 export default function HeadDefault() {
   return (
@@ -9,8 +9,8 @@ export default function HeadDefault() {
       <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
       <meta name="apple-mobile-web-app-title" content="Fasberry" />
       <link rel="manifest" href="/site.webmanifest" />
-      <link rel="preconnect" href={API_PREFIX_URL} />
-      <link rel="preconnect" href={VOLUME_URL} />
+      <link rel="preconnect" href={env.VITE_API_URL} />
+      <link rel="preconnect" href={env.VITE_VOLUME_URL} />
       <meta name="keywords" content="fasberry, minecraft, фасберри, фесберри, фесберри проект, майнкрафт сервер,
       майнкрафт, майнкрафт играть, minecraft play, сервера майнкрафт бесплатно, список серверов майнкрафта,
       полу-ванильные сервера майнкрафта, полуванила майнкрафт, rp сервер майнкрафт, rpg сервер майнкрафт,
@@ -49,7 +49,7 @@ export default function HeadDefault() {
           }
         `}
       </style>
-      <meta name="apay-tag" content={APAY_TAG} />
+      <meta name="apay-tag" content={env.VITE_APAY_TAG} />
       <script>0</script>
     </>
   );

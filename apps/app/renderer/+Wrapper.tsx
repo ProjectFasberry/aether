@@ -1,3 +1,4 @@
+// @ts-expect-error
 import '@bprogress/core/css';
 import "@/shared/styles/tailwind.css";
 import "@/shared/styles/editor.css"

@@ -1,7 +1,7 @@
 import { Avatar } from "@/shared/ui/avatar"
 import { referrals } from "@/shared/components/app/referrals/models/referrals.model"
 import { createLink, Link } from "@/shared/components/config/link"
-import { LANDING_URL } from "@/shared/env"
+import { env } from "@/shared/env"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { currentUserState } from "@/shared/models/current-user.model"
 import { PageHeaderImage } from "@/shared/ui/header-image"
@@ -33,7 +33,7 @@ const ReferralsLink = reatomComponent(({ ctx }) => {
         Пригласить игрока
       </Button>
       <a
-        href={`${LANDING_URL}/wiki/referals`}
+        href={`${env.VITE_LANDING_URL}/wiki/referals`}
         target="_blank"
         className="flex min-w-0 sm:w-fit w-full"
       >

@@ -1,4 +1,4 @@
-import { API_PREFIX_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/async";
@@ -36,7 +36,7 @@ export const chatWs = atom(null, "chatWs").pipe(
     init: action((ctx) => {
       chatWs.closeWs(ctx)
 
-      const socket = new WebSocket(`${API_PREFIX_URL!.replace(/^http/, 'ws') + '/privated/chat/subscribe'}`)
+      const socket = new WebSocket(`${env.VITE_API_URL!.replace(/^http/, 'ws') + '/privated/chat/subscribe'}`)
       chatWsAtom(ctx, socket)
     }, `${name}.init`),
     closeWs: action((ctx) => {

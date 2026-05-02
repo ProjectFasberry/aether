@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 /// <reference lib="dom" />
 /* eslint-disable */

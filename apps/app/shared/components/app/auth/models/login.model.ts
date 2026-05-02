@@ -7,7 +7,7 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { AuthErrorType, authState, ErrorKey, getError, isPofActiveAtom, SCOPE_ACTIONS } from "./auth.model";
 import type { QREventsPayload, QREventsEvent } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
-import { API_HOST, API_PREFIX_URL } from "@/shared/env";
+import { env } from "@/shared/env";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod/v4";
@@ -144,7 +144,7 @@ export const login = atom(null, "login").pipe(
             .post<QRGeneratePayload>("auth/login/qr/generate", { json: { visitorId } })
             .exec();
 
-          const pdUrl = new URL(`${API_PREFIX_URL}/auth/login/qr/verify`)
+          const pdUrl = new URL(`${env.VITE_API_URL}/auth/login/qr/verify`)
           pdUrl.searchParams.append("token", res.token)
 
           loginState.qr.url(ctx, pdUrl.href);
@@ -175,7 +175,7 @@ export const login = atom(null, "login").pipe(
           }
 
           const wsUrl = createWsUrl({
-            host: API_HOST,
+            host: env.VITE_API_HOST,
             isSecure: import.meta.env.PROD,
             path: `auth/login/qr/events?token=${token}`
           })

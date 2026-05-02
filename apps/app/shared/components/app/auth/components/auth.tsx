@@ -1,7 +1,7 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { auth, authState } from "../models/auth.model";
 import { Input } from "@repo/ui/input"
-import { CAP_INSTANCE_URL, CAP_SITEKEY } from "@/shared/env";
+import { env } from "@/shared/env";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../../../../models/shared.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
@@ -62,7 +62,7 @@ export const Verify = reatomComponent(({ ctx }) => {
 
   return (
     <CapWidget
-      endpoint={`${CAP_INSTANCE_URL}/${CAP_SITEKEY}/`}
+      endpoint={`${env.VITE_CAP_URL}/${env.VITE_CAP_SITE_KEY}/`}
       options={{
         i18nInitialState: "Я человек",
         i18nVerifyingLabel: "Проверка...",

@@ -3,7 +3,7 @@
 
 @source "../../../../packages/ui/**/*.{ts,tsx}";
 
-@import "../../../../packages/ui/src/styles/index.css";
+@import "../../../../packages/ui/styles/index.css";
 
 @plugin 'tailwind-scrollbar' {
   nocompatible: true;
