@@ -4,6 +4,7 @@ import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, TablerIcon 
 import { settingsState } from "../../settings/models/settings.model";
 import { logout } from "../../auth/models/logout.model";
 import { isAuthedAtom, pageContextAtom } from "@/shared/models/page-context.model";
+import { translate } from "@/shared/locales/helpers";
 
 const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
   ({ title, icon, label, href })
@@ -11,18 +12,18 @@ const makeMenuLink = (title: string, href: string, permission: string | null, ty
   ({ title, href, permission, type })
 
 export const HEADERS_LINKS = [
-  makeHeaderLink("Главная", IconCategory, "Перейти на главную", "/"),
-  makeHeaderLink("Рейтинг", IconStars, "Перейти к рейтингу", "/ratings"),
-  makeHeaderLink("Магазин", IconBasket, "Перейти к магазину", "/store"),
-  makeHeaderLink("Карта", IconMap, "Перейти к карте мира", "/map"),
-  makeHeaderLink("Регионы", IconMountain, "Перейти к регионам", "/lands")
+  makeHeaderLink(translate["shared.header.links.main.value"](), IconCategory, translate["shared.header.links.main.label"](), "/"),
+  makeHeaderLink(translate["shared.header.links.ratings.value"](), IconStars, translate["shared.header.links.ratings.value"](), "/ratings"),
+  makeHeaderLink(translate["shared.header.links.store.value"](), IconBasket, translate["shared.header.links.store.value"](), "/store"),
+  makeHeaderLink(translate["shared.header.links.map.value"](), IconMap, translate["shared.header.links.map.value"](), "/map"),
+  makeHeaderLink(translate["shared.header.links.lands.value"](), IconMountain, translate["shared.header.links.lands.value"](), "/lands")
 ]
 export const HEADER_MENU_LINKS = [
-  makeMenuLink("Корзина", "/store/cart", null, "default"),
-  makeMenuLink("Покупки", "/store/cart/orders", null, "default"),
-  makeMenuLink("Задания", "/tasks", null, "default"),
-  makeMenuLink("Рефералы", "/referrals", null, "default"),
-  makeMenuLink("Системная панель", "/private", CONFIG_PANEL_READ_PERMISSION, "privated")
+  makeMenuLink(translate["shared.header.menu.cart"](), "/store/cart", null, "default"),
+  makeMenuLink(translate["shared.header.menu.orders"](), "/store/cart/orders", null, "default"),
+  makeMenuLink(translate["shared.header.menu.tasks"](), "/tasks", null, "default"),
+  makeMenuLink(translate["shared.header.menu.referrals"](), "/referrals", null, "default"),
+  makeMenuLink(translate["shared.header.menu.private"](), "/private", CONFIG_PANEL_READ_PERMISSION, "privated")
 ];
 
 export type MenuLink = typeof HEADER_MENU_LINKS[number]
@@ -49,11 +50,11 @@ export type MenuActionItem = {
 
 export const MENU_ACTIONS: MenuActionItem[] = [
   {
-    label: "Настройки",
+    label: translate["shared.header.menu.settings"](),
     cb: action((ctx) => void settingsState.dialogIsOpen(ctx, true))
   },
   {
-    label: "Выйти", 
+    label: translate["shared.header.menu.logout"](), 
     className: "text-red hover:bg-red/60!",
     disabled: (ctx) => ctx.spy(logout.exec.statusesAtom).isPending,
     cb: logout.withConfirm

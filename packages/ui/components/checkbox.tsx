@@ -1,4 +1,4 @@
-import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { Checkbox as CheckboxPrimitive } from "radix-ui"
 import type { ComponentProps } from "react";
 import { tv, type VariantProps } from "tailwind-variants";
 import { IconCheck } from "@tabler/icons-react";

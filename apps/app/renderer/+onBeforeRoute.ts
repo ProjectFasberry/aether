@@ -1,6 +1,7 @@
 import { Locale, localeDefault, locales } from '@/shared/locales'
-import { modifyUrl } from 'vike/modifyUrl'
 import { PageContext } from 'vike/types'
+import { setLocale } from "@/paraglide/runtime.js";
+import { modifyUrl } from 'vike/modifyUrl'
 
 function extractLocale(pathname: string) {
   let locale: Locale = localeDefault
@@ -19,23 +20,16 @@ function extractLocale(pathname: string) {
   return { locale, pathnameWithoutLocale }
 }
 
-export function onBeforeRoute(pageContext: PageContext) {
-  const url = pageContext.urlParsed
-  const { locale, pathnameWithoutLocale } = extractLocale(url.pathname)
+export function onBeforeRoute(pageCtx: PageContext) {
+  const { urlParsed } = pageCtx
+  const { locale, pathnameWithoutLocale } = extractLocale(urlParsed.pathname)
 
-  const searchObj = url.search as Record<string, string>
-  const search =
-    searchObj && Object.keys(searchObj).length > 0
-      ? '?' +
-      Object.entries(searchObj)
-        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
-        .join('&')
-      : ''
+  console.log(locale);
 
-  const urlWithoutLocale =
-    (pathnameWithoutLocale.startsWith('/') ? pathnameWithoutLocale : '/' + pathnameWithoutLocale) +
-    search
-    
+  setLocale(locale, { reload: false })
+
+  const urlWithoutLocale = modifyUrl(urlParsed.href, { pathname: pathnameWithoutLocale })
+
   return {
     pageContext: {
       locale,

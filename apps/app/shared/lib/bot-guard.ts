@@ -20,7 +20,7 @@ export function isBotRequest(headers: Record<string, string | undefined>, pathna
 
   const result = isBotUA || missingCommonHeaders
 
-  if (result) {
+  if (result && import.meta.env.DEV) {
     if (pathname) {
       console.warn(`Prevented bot request at ${pathname}`);
     }

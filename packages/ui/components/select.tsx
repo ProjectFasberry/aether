@@ -1,4 +1,4 @@
-import * as SelectPrimitive from "@radix-ui/react-select"
+import { Select as SelectPrimitive } from "radix-ui"
 import { cn } from '../lib/cn';
 import { IconCheck, IconChevronDown, IconChevronUp } from "@tabler/icons-react";
 import type { ComponentProps } from "react";

@@ -4,6 +4,7 @@ import { Typography } from "@repo/ui/typography"
 import { CONTACTS } from "../../../../consts/contacts"
 import { env } from "@/shared/env"
 import { Logotype } from "./logotype"
+import { translate } from "@/shared/locales/helpers"
 
 const telegramHref = CONTACTS.find(t => t.value === 'tg')?.href as string
 const discordHref = CONTACTS.find(t => t.value === 'ds')?.href as string
@@ -32,55 +33,55 @@ export const Footer = () => {
                 *:flex *:items-center *:justify-center *:p-2 *:rounded-full
               "
             >
-              <Link href={discordHref} aria-label="Дискорд">
+              <a href={discordHref} aria-label="Дискорд">
                 <IconBrandDiscordFilled size={18} />
-              </Link>
-              <Link href={telegramHref} aria-label="Телеграм">
+              </a>
+              <a href={telegramHref} aria-label="Телеграм">
                 <IconBrandTelegram size={18} />
-              </Link>
+              </a>
             </div>
           </div>
           <div className="grid auto-rows-auto grid-cols-1 lg:grid-rows-none lg:grid-cols-3 gap-4 w-full lg:w-2/3">
             <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
-                О проекте
+                {translate["shared.footer.about.title"]()}
               </Typography>
               <div className="flex flex-col gap-1 min-w-0 *:truncate">
                 <Link href="/news">
-                  Новости
+                  {translate["shared.footer.about.news"]()}
                 </Link>
               </div>
             </div>
             <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
-                Информация
+                {translate["shared.footer.info.title"]()}
               </Typography>
               <div className="flex flex-col gap-1 min-w-0 *:truncate">
-                <Link href={createLandingUrl("/info/contacts")}>
-                  Контакты
-                </Link>
-                <Link href={createLandingUrl("/info/privacy")}>
-                  Конфиденциальность
-                </Link>
+                <a href={createLandingUrl("/info/contacts")}>
+                  {translate["shared.footer.info.contacts"]()}
+                </a>
+                <a href={createLandingUrl("/info/privacy")}>
+                  {translate["shared.footer.info.privacy"]()}
+                </a>
               </div>
             </div>
             <div className="flex flex-col min-w-0 gap-1 *:w-fit">
               <Typography className="font-semibold truncate">
-                Ресурсы
+                {translate["shared.footer.resources.title"]()}
               </Typography>
               <div className="flex flex-col gap-1 min-w-0 *:truncate">
-                <Link href={createLandingUrl("/status")}>
-                  Статус
-                </Link>
-                <Link href={createLandingUrl("/wiki")}>
-                  FAQ
-                </Link>
+                <a href={createLandingUrl("/status")}>
+                  {translate["shared.footer.resources.status"]()}
+                </a>
+                <a href={createLandingUrl("/wiki")}>
+                  {translate["shared.footer.resources.faq"]()}
+                </a>
               </div>
             </div>
           </div>
         </div>
         <Typography className="text-neutral-400 text-sm truncate text-wrap">
-          НЕ ЯВЛЯЕТСЯ ОФИЦИАЛЬНЫМ СЕРВИСОМ MINECRAFT. НЕ ОДОБРЕНО И НЕ СВЯЗАНО С MOJANG ИЛИ MICROSOFT.
+          {translate["shared.footer.warning"]()}
         </Typography>
       </div>
     </div>

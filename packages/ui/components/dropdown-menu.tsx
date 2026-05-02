@@ -1,4 +1,4 @@
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { cn } from '../lib/cn';
 import { IconCheck, IconChevronRight, IconCircle } from "@tabler/icons-react"
 import type { ComponentProps } from "react";

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "shared": {
+    "404.title": "Страница не найдена",
+    "500.title": "Что-то пошло не так",
+    "change-lang": {
+      "title": "Сменить язык"
+    },
+    "header": {
+      "links": {
+        "main": {
+          "value": "Главная",
+          "label": "Перейти на главную"
+        },
+        "ratings": {
+          "value": "Рейтинг",
+          "label": "Перейти к рейтингу"
+        },
+        "store": {
+          "value": "Магазин",
+          "label": "Перейти к магазину"
+        },
+        "map": {
+          "value": "Карта",
+          "label": "Перейти к карте мира"
+        },
+        "lands": {
+          "value": "Регионы",
+          "label": "Перейти к регионам"
+        }
+      },
+      "menu": {
+        "cart": "Корзина",
+        "orders": "Покупки",
+        "tasks": "Задания",
+        "referrals": "Рефералы",
+        "private": "Системная панель",
+        "settings": "Настройки",
+        "logout": "Выйти"
+      }
+    },
+    "footer": {
+      "about": {
+        "title": "О проекте",
+        "news": "Новости"
+      },
+      "info": {
+        "title": "Информация",
+        "contacts": "Контакты",
+        "privacy": "Конфиденциальность"
+      },
+      "resources": {
+        "title": "Ресурсы",
+        "status": "Статус",
+        "faq": "FAQ"
+      },
+      "warning": "НЕ ЯВЛЯЕТСЯ ОФИЦИАЛЬНЫМ СЕРВИСОМ MINECRAFT. НЕ ОДОБРЕНО И НЕ СВЯЗАНО С MOJANG ИЛИ MICROSOFT."
+    }
+  },
+  "index": {
+    "news": "Новости",
+    "latest-events": "Последние события",
+    "lands": "Территории сервера",
+    "intro": {
+      "title": "Добро пожаловать!",
+      "subtitle": "Fasberry Project",
+      "description": "Присоединяйтесь к сообществу Fasberry, развивайтесь и проводите время в теплой и уютной компании!",
+      "actionButton": "Начать играть",
+      "statusLabel": "играют сейчас"
+    }
+  },
+  "land": {
+    "not-found": "Похоже этого региона уже нет"
+  },
+  "default": {
+    "not-found": "Ресурс не найден"
+  },
+  "player": {
+    "not-found": "Игрок не найден"
+  },
+  "store": {
+    "item": {
+      "not-found": "Товар не найден"
+    }
+  }
+}

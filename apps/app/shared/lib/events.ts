@@ -6,13 +6,13 @@ export function startPageEvents(
   events: Action,
   opts: { urlTarget?: string, key?: string } = {}
 ) {
-  const pageContext = ctx.get(pageContextAtom);
-  if (!pageContext) return;
+  const pageCtx = ctx.get(pageContextAtom);
+  if (!pageCtx) return;
 
   const key = opts.key ?? opts.urlTarget ?? 'page';
 
   if (opts.urlTarget) {
-    const urlPathname = pageContext.urlPathname ?? '';
+    const urlPathname = pageCtx.urlPathname ?? '';
     
     if (!urlPathname.includes(`/${opts.urlTarget}`)) {
       if (import.meta.env.DEV) console.log(`[${key}] Skip: URL not matching target`);

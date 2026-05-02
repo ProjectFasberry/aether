@@ -1,43 +1,16 @@
-import { PageContext, PageContextServer } from "vike/types";
-import { Locale, localeDefault } from ".";
-import { translations } from "./translations";
-import { localeAtom } from "../models/page-context.model";
-import { CtxSpy } from "@reatom/core";
+import { PageContext } from "vike/types";
+import { localeDefault } from ".";
+import { m } from "@/paraglide/messages.js";
 
-export function getUrlWithLocale(pageContext: PageContext, pathname: string) {
-  const locale = pageContext.locale
+export function getUrlWithLocale(pageCtx: PageContext, pathname: string) {
+  const locale = pageCtx.locale
   let url;
   if (locale === localeDefault) {
     url = pathname
   } else {
-    url = `/${pageContext.locale}${pathname}`
+    url = `/${pageCtx.locale}${pathname}`
   }
   return url
 }
 
-export function translate(text: string, locale: Locale) {
-  if (locale === localeDefault) {
-    return text
-  }
-
-  // @ts-expect-error
-  const textTranslations = translations[text]
-
-  if (!textTranslations) {
-    console.error('No translation found for: `' + text + '`');
-    return text
-  }
-
-  const result = textTranslations[locale]
-
-  return result
-}
-
-export function getServerLocale(pageContext: PageContextServer) {
-  const locale = pageContext.locale;
-  return locale
-}
-
-export function getClientLocale(ctx: CtxSpy) {
-  return ctx.spy(localeAtom)
-}
+export const translate = m;

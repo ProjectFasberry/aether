@@ -87,3 +87,4 @@ web_modules/
 
 # Sentry Vite Plugin
 .env.sentry-build-plugin
+/shared/sprite.gen.ts

@@ -12,13 +12,15 @@
 		"----------------": "",
 		"lint": "bunx biome lint",
 		"type-check": "bun scripts/fix-sprite.ts && tsc --build",
+		"circular-check": "bunx madge --circular ./",
 		"------------------": "",
-		"build:image:prod": "make build",
-		"build:image:tag": "make tag",
-		"build:image:push": "make push",
+		"build:image:prod": "infisical run --env=common --path=/root --make build",
+		"build:image:tag": "infisical run --env=common --path=/root --make tag",
+		"build:image:push": "infisical run --env=common --path=/root --make push",
 		"--------------------": "",
-		"release:prod": "make all STAGE=prod NAME=frontend-main",
-		"release:staging": "make all STAGE=staging NAME=frontend-main"
+		"release:prod": "infisical run --env=common --path=/root --make all STAGE=prod NAME=frontend-main",
+		"release:staging": "infisical run --env=common --path=/root -- make all STAGE=staging NAME=frontend-main",
+		"machine-translate": "inlang machine translate --project project.inlang"
 	},
 	"sideEffects": [
 		"**/*.css"
@@ -27,6 +29,7 @@
 		"@better-captcha/react": "0.7.0",
 		"@bprogress/core": "1.3.4",
 		"@fingerprintjs/fingerprintjs": "5.2.0",
+		"@inlang/paraglide-js": "^2.18.0",
 		"@monaco-editor/react": "4.7.0",
 		"@number-flow/react": "0.6.0",
 		"@reatom/async": "3.16.10",
@@ -92,6 +95,8 @@
 		"typescript": "~5.8.3",
 		"vite": "7.2.7",
 		"vite-bundle-analyzer": "1.2.3",
-		"vite-tsconfig-paths": "5.1.4"
+		"vite-tsconfig-paths": "5.1.4",
+		"@inlang/paraglide-js": "2.18.0",
+		"@inlang/cli": "3.0.0"
 	}
 }

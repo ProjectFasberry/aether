@@ -7,6 +7,7 @@
 		"dev": "bun scripts/run dev",
 		"lint": "bun scripts/run lint",
 		"type-check": "bun scripts/run type-check",
+		"circular-check": "bun run scripts/run circlular-check",
 		"_postinstall": "[ \"$NODE_ENV\" != \"production\" ] && lefthook install || true",
 		"--------------------------": "",
 		"docker-infra:up": "docker compose -f './infra/docker-compose.yml' up -d",
@@ -14,19 +15,7 @@
 		"docker:up": "docker compose up -d",
 		"docker:down": "docker compose down",
 		"docker-start": "bun run docker-infra:up && bun run docker:up",
-		"docker-down": "bun run docker-infra:down && bun run docker:down",
-		"---------------------------": "",
-		"app:build": "NODE_ENV=production bun --filter=app run build:prod",
-		"app:release": "bun --filter=app run release",
-		"----------------------------": "",
-		"backend:build": "NODE_ENV=production bun --filter=backend run build:prod",
-		"backend:release": "bun --filter=backend run release",
-		"-----------------------------": "",
-		"panel:build": "NODE_ENV=production bun --filter=panel run build:prod",
-		"panel:release": "bun --filter=panel run release",
-		"------------------------------": "",
-		"landing:build": "NODE_ENV=production bun --filter=landing run build",
-		"landing:release": "bun --filter=landing run deploy"
+		"docker-down": "bun run docker-infra:down && bun run docker:down"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",

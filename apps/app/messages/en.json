@@ -1,0 +1,86 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "shared": {
+    "404.title": "Page not found",
+    "500.title": "Something went wrong",
+    "change-lang": {
+      "title": "Change language"
+    },
+    "header": {
+      "links": {
+        "main": {
+          "value": "Main",
+          "label": "Go to main"
+        },
+        "ratings": {
+          "value": "Ratings",
+          "label": "Go to ratings"
+        },
+        "store": {
+          "value": "Store",
+          "label": "Go to store"
+        },
+        "map": {
+          "value": "Map",
+          "label": "Go to map"
+        },
+        "lands": {
+          "value": "Lands",
+          "label": "Go to lands"
+        }
+      },
+      "menu": {
+        "cart": "Cart",
+        "orders": "Orders",
+        "tasks": "Tasks",
+        "referrals": "Referrals",
+        "private": "System panel",
+        "settings": "Settings",
+        "logout": "Log out"
+      }
+    },
+    "footer": {
+      "about": {
+        "title": "About project",
+        "news": "News"
+      },
+      "info": {
+        "title": "Info",
+        "contacts": "Contacts",
+        "privacy": "Privacy"
+      },
+      "resources": {
+        "title": "Resources",
+        "status": "Status",
+        "faq": "FAQ"
+      },
+      "warning": "NOT AN OFFICIAL MINECRAFT SERVICE. NOT ENDORSED OR ASSOCIATED WITH MOJANG OR MICROSOFT."
+    }
+  },
+  "index": {
+    "news": "News",
+    "latest-events": "Latest events",
+    "lands": "Server lands",
+    "intro": {
+      "title": "Welcome",
+      "subtitle": "Fasberry Project",
+      "description": "Join the Fasberry community, grow, and spend time in warm and cozy company!",
+      "actionButton": "Start play",
+      "statusLabel": "playing now"
+    }
+  },
+  "land": {
+    "not-found": "It looks like this region no longer exists"
+  },
+  "default": {
+    "not-found": "Resource not found"
+  },
+  "player": {
+    "not-found": "Player not found"
+  },
+  "store": {
+    "item": {
+      "not-found": "Store item not found"
+    }
+  }
+}

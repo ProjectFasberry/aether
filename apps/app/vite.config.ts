@@ -6,6 +6,7 @@ import { analyzer } from 'vite-bundle-analyzer';
 import svg from '@neodx/svg/vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
 import path from "node:path"
+import { paraglideVitePlugin } from "@inlang/paraglide-js";
 
 type Stage = "staging" | "prod"
 
@@ -77,7 +78,11 @@ export default defineConfig(({ mode }) => {
             console.log(`Build for stage: ${stage}`, target)
           }
         }
-      }
+      },
+      paraglideVitePlugin({
+        project: "./project.inlang",
+        outdir: "./paraglide",
+      })
     ],
     ssr: {
       noExternal: process.env.NODE_ENV === 'production' || undefined

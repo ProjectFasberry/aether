@@ -1,16 +1,17 @@
 import { EditorTest } from "@/shared/components/config/editor"
 import { Link } from "@/shared/components/config/link"
 import { locales } from "@/shared/locales"
-import { getClientLocale, translate } from "@/shared/locales/helpers"
+import { translate } from "@/shared/locales/helpers"
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
 import { usePageContext } from "vike-react/usePageContext"
 
 const ChangeLanguage = reatomComponent(({ ctx }) => {
-  const currentLocale = getClientLocale(ctx)
-  const textLocalized = translate("Сменить язык", currentLocale);
-  const pathname = usePageContext().urlPathname;
-
+  const textLocalized = translate["shared.change-lang.title"]()
+  const pageCtx = usePageContext()
+  const pathname = pageCtx.urlPathname;
+  const currentLocale = pageCtx.locale
+  
   return (
     <>
       <Typography>

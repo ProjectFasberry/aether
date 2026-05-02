@@ -1,7 +1,7 @@
 import * as z from "zod/v4";
 import { action, atom, AtomMut } from "@reatom/core";
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
-import { createNewsSchema } from "@repo/shared/schemas/news";
+import { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
 import { toast } from "sonner";
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper";
 import { devLog, logError } from "@/shared/lib/log";
@@ -9,7 +9,6 @@ import { generateHTML, type JSONContent } from "@tiptap/react"
 import { actionsTargetAtom, collectChanges, compareChanges, notifyAboutRestrictRole } from "./actions.model";
 import { editorExtensions } from "@/shared/components/config/editor";
 import { withUndo } from "@reatom/undo";
-import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { alertDialog } from "@/shared/components/config/alert-dialog.model";
 import { navigate } from "vike/client/router";
 

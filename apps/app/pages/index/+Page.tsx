@@ -9,6 +9,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { LandsListShorted } from "@/shared/components/app/lands/components/lands-list";
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { NewsList } from "@/shared/components/app/news/components/news";
+import { translate } from "@/shared/locales/helpers";
 
 const ruAttr = ['ru-RU', 'RU', 'ru'];
 
@@ -54,7 +55,7 @@ export default function Page() {
       <Intro />
       <div id="news" className="flex flex-col gap-4 w-full h-full">
         <Typography variant="title">
-          Новости
+          {translate["index.news"]()}
         </Typography>
         <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
           <NewsList />
@@ -62,7 +63,7 @@ export default function Page() {
       </div>
       <div id="last-events" className="flex flex-col gap-4 w-full h-full">
         <Typography variant="title">
-          Последние события
+          {translate["index.latest-events"]()}
         </Typography>
         <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
           <EventsList />
@@ -70,7 +71,7 @@ export default function Page() {
       </div>
       <div id="last-lands" className="flex flex-col gap-4 h-full w-full">
         <Typography variant="title">
-          Территории сервера
+          {translate["index.lands"]()}
         </Typography>
         <LandsListShorted />
       </div>

@@ -1,9 +1,7 @@
 import { toast } from "sonner";
 import { logger } from "./logger";
 
-export function logError(
-  e: unknown, { type = 'console' }: { type?: 'console' | 'toast' | 'combined' } = {}
-) {
+export function logError(e: unknown, { type = 'console' }: { type?: 'console' | 'toast' | 'combined' } = {}) {
   if (!(e instanceof Error)) return;
   const msg = e.message;
 

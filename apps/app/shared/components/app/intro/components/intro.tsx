@@ -8,6 +8,7 @@ import { serverStatus } from "../models/intro.model";
 import { env } from "@/shared/env";
 import { expImage } from "@/shared/consts/images";
 import { isClientAtom } from "@/shared/models/page-context.model";
+import { translate } from "@/shared/locales/helpers";
 
 onConnect(serverStatus.fetch.dataAtom, serverStatus.fetch)
 
@@ -51,13 +52,13 @@ export const Intro = () => {
       <div className="flex flex-col z-6 justify-between p-3 md:p-4 grow lg:p-6 h-full w-full relative">
         <div className="flex flex-col items-start gap-4 w-full">
           <Typography className="text-xl font-semibold">
-            Добро пожаловать!
+            {translate["index.intro.title"]()}
           </Typography>
           <Typography className="text-3xl font-[PIXY] leading-[1.1]">
-            Fasberry Project
+            {translate["index.intro.subtitle"]()}
           </Typography>
           <Typography className="text-base leading-tight truncate md:max-w-2/3 xl:max-w-2/5 text-wrap">
-            Присоединяйтесь к сообществу Fasberry, развивайтесь и проводите время в теплой и уютной компании!
+            {translate["index.intro.description"]()}
           </Typography>
         </div>
         <div className="flex flex-col gap-2 sm:gap-4 w-full items-start justify-end h-full">
@@ -65,14 +66,14 @@ export const Intro = () => {
             <img src={expImage} width={20} height={20} alt="" />
             <IntroStatus />
             <Typography className="text-lg">
-              играют сейчас
+              {translate["index.intro.statusLabel"]()}
             </Typography>
           </div>
           <div className="flex gap-4 w-full items-center">
             <a href={`${env.VITE_LANDING_URL}/start`} target="_blank">
               <Button background="white">
                 <Typography className="truncate text-nowrap text-lg font-semibold">
-                  Начать играть
+                  {translate["index.intro.actionButton"]()}
                 </Typography>
               </Button>
             </a>

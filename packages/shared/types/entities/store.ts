@@ -1,21 +1,6 @@
-import type { CreateOrderTopUpSchema, STORE_TYPES, storeItemSchema } from "../../schemas/payment";
-import type * as z from "zod/v4";
-import type { JsonValue } from "@repo/shared/types/db/general-database-types";
+import type { CreateOrderTopUpSchema } from "../../schemas/payment";
+import type { JsonValue } from "../db/general-database-types";
 import type { PaymentStatus } from "../db/payments-database-types";
-
-export type StoreItem = z.infer<typeof storeItemSchema> & {
-	type: (typeof STORE_TYPES)[number] | string;
-};
-
-export type StoreItemsPayload = {
-	data: StoreItem[];
-	meta: PaginatedMeta;
-};
-
-export type CartFinalPrice = {
-	CHARISM: number;
-	BELKOIN: number;
-};
 
 export type CartItem = {
 	imageUrl: string;
@@ -32,13 +17,6 @@ export type CartItem = {
 	content: JsonValue;
 	title: string;
 };
-
-export type CartListPayload = {
-	data: CartItem[];
-	meta: PaginatedMeta;
-};
-
-export type BalancePayload = CartFinalPrice;
 
 export type OrderSingleGamePayload = {
 	unique_id: string;

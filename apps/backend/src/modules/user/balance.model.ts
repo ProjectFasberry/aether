@@ -2,7 +2,6 @@ import { bisquite } from "#/shared/database/bisquite-db"
 import { playerpoints } from "#/shared/database/playerpoints-db"
 import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types"
 import { DB as playerpointsDB } from "@repo/shared/types/db/player-points-database-types"
-import type { CartFinalPrice } from "@repo/shared/types/entities/store"
 import type { Kysely } from "kysely"
 import * as z from "zod/v4"
 
@@ -41,7 +40,10 @@ export async function getCharism(nickname: string, server: Server) {
   return query?.data ?? 0
 }
 
-export async function getBalance(nickname: string, { server }: z.infer<typeof balanceSchema>): Promise<CartFinalPrice> {
+export async function getBalance(nickname: string, { server }: z.infer<typeof balanceSchema>): Promise<{
+  CHARISM: number;
+  BELKOIN: number;
+}> {
   const [charism, belkoin] = await Promise.all([
     getCharism(nickname, server), getBelkoin(nickname)
   ])

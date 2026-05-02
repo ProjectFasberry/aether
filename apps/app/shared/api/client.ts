@@ -4,7 +4,7 @@ import { env } from "../env";
 const baseConfig: Options = {
 	credentials: "include",
 	timeout: 4000,
-	headers: import.meta.env.DEV ? { "x-forwarded-for": import.meta.env.VITE_FORWARDED_FOR } : {},
+	headers: import.meta.env.DEV ? { "x-forwarded-for": env.VITE_FORWARDED_FOR } : {},
 };
 
 export const SKIP_HOOK_HEADER = "X-Skip-Error-Handling";

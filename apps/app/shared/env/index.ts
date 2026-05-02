@@ -32,4 +32,8 @@ export const env = {
   VITE_CAP_URL: import.meta.env.VITE_CAP_URL,
   VITE_CAP_SITE_KEY: import.meta.env.VITE_CAP_SITE_KEY,
   VITE_APAY_TAG: import.meta.env.VITE_APAY_TAG,
+  VITE_FORWARDED_FOR: import.meta.env.VITE_FORWARDED_FOR,
+  VITE_SOCIAL_TG_URL: import.meta.env.VITE_SOCIAL_TG_URL,
+  VITE_SOCIAL_VK_URL: import.meta.env.VITE_SOCIAL_VK_URL,
+  VITE_SOCIAL_DISCORD_URL: import.meta.env.VITE_SOCIAL_DISCORD_URL
 }

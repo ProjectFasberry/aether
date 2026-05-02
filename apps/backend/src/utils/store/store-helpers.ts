@@ -1,7 +1,6 @@
 import { getStaticUrl } from "#/helpers/volume";
 import { general } from "#/shared/database/general-db";
 import type { GameCurrency } from "@repo/shared/schemas/payment";
-import type { CartFinalPrice } from "@repo/shared/types/entities/store";
 
 export function processImageUrl(target?: string | null) {
   if (!target) {
@@ -34,7 +33,10 @@ export function convertRubToTarget(rubPrice: number, exchangeRate: number): numb
   return parseFloat(priceInTargetCurrency.toFixed(8));
 }
 
-export async function defineGlobalPrice(initiator: string): Promise<CartFinalPrice> {
+export async function defineGlobalPrice(initiator: string): Promise<{
+  CHARISM: number;
+  BELKOIN: number;
+}> {
   const query = general
     .selectFrom("store_cart_items")
     .innerJoin("store_items", "store_items.id", "store_cart_items.product_id")
