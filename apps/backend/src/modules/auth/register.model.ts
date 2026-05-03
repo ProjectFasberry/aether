@@ -26,12 +26,12 @@ type CreateUser = Omit<z.infer<typeof registerSchema>, "token"> & {
   ip: string;
 };
 
+type RegisterParams = {
+  referrer: string; referral: string; trx: Transaction<DB>;
+}
+
 const referral = {
-  async register({
-    referrer, referral, trx,
-  }: {
-    referrer: string; referral: string; trx: Transaction<DB>;
-  }) {
+  async register({ referrer, referral, trx }: RegisterParams) {
     const isExist = await trx
       .selectFrom("players")
       .select("nickname")
@@ -73,19 +73,14 @@ const MOJANG_API_URL = "https://api.ashcon.app/mojang/v2/user";
 
 export const register = {
   async registrationEvents({ nickname }: { nickname: string }) {
-    const eventsRec = {
+    const REGISTRATION_EVENTS = {
       skin: initPlayerSkin,
     };
 
-    const events = Object.entries(eventsRec);
-
     const eventsExec = await Promise.all(
-      events.map(async ([key, fn]) => {
-        const val = await fn(nickname);
+      Object.entries(REGISTRATION_EVENTS).map(async ([key, cb]) => {
+        const val = await cb(nickname);
         invariant(val, `${key} for ${nickname} error inited`);
-
-        registerLogger.log(`${key} for ${nickname} inited`);
-
         return { val, key };
       }),
     );
@@ -94,11 +89,13 @@ export const register = {
   },
   async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
     const { trx, ip, nickname, password, hash } = args;
-    const dbInstance: Kysely<DB> = trx ?? general;
+    const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
-    const uuid = await this.getUserUUID(nickname);
-    const regDateMs = Date.now();
-    const lowerCaseNickname = nickname.toLowerCase();
+    const base = {
+      uuid: await this.getUserUUID(nickname),
+      regDateMs: Date.now(),
+      lowerCaseNickname: nickname.toLowerCase()
+    }
 
     registerLogger.log(`Starting register player ${nickname}`);
 
@@ -107,11 +104,11 @@ export const register = {
         .insertInto("AUTH")
         .values({
           NICKNAME: nickname,
-          LOWERCASENICKNAME: lowerCaseNickname,
+          LOWERCASENICKNAME: base.lowerCaseNickname,
           IP: normalizeIp(ip),
           HASH: password,
-          UUID: uuid,
-          REGDATE: regDateMs,
+          UUID: base.uuid,
+          REGDATE: base.regDateMs,
         })
         .onConflict((oc) => oc.column("LOWERCASENICKNAME").doNothing())
         .returning(["NICKNAME", "REGDATE"])
@@ -122,44 +119,28 @@ export const register = {
       return instance
         .insertInto("players")
         .values({
-          nickname,
-          lower_case_nickname: lowerCaseNickname,
-          uuid,
+          nickname, lower_case_nickname: base.lowerCaseNickname, uuid: base.uuid,
         })
         .returning(["nickname", "created_at"])
         .executeTakeFirstOrThrow();
     }
 
     try {
-      const registerScope = this;
-
       async function register() {
         if (dbInstance.isTransaction) {
           const [players, _] = await Promise.all([
-            registerPlayers(dbInstance),
-            registerAUTH(dbInstance)
+            registerPlayers(dbInstance), registerAUTH(dbInstance)
           ]);
-
-          if (isProduction) {
-            await registerScope.registrationEvents({ nickname });
-          }
 
           return players;
         } else {
-          const result = await dbInstance
-            .transaction()
-            .execute(async (trx) => {
-              const [players, _] = await Promise.all([
-                registerPlayers(dbInstance),
-                registerAUTH(dbInstance)
-              ]);
+          const result = await dbInstance.transaction().execute(async (trx) => {
+            const [players, _] = await Promise.all([
+              registerPlayers(dbInstance), registerAUTH(dbInstance)
+            ]);
 
-              return players;
-            });
-
-          if (isProduction) {
-            await registerScope.registrationEvents({ nickname });
-          }
+            return players;
+          });
 
           return result;
         }
@@ -167,8 +148,9 @@ export const register = {
 
       const result = await register();
 
-      const formattedDate = dayjs(result.created_at).format("DD.HH.MM hh:mm:ss");
-      registerLogger.log(`Player ${nickname} in ${formattedDate}`);
+      if (isProduction) {
+        await this.registrationEvents({ nickname });
+      }
 
       if (isProduction) {
         this.afterRegistrationEvents({ nickname });
@@ -176,41 +158,42 @@ export const register = {
 
       return result;
     } catch (e) {
+      registerLogger.error(e)
       throw e;
     }
   },
-  async createUser(args: Omit<CreateUser, "uuid">): Promise<{ nickname: string }> {
+  async createUser(args: Omit<CreateUser, "uuid">): Promise<{ nickname: string, created_at: string }> {
     const { nickname, findout, password, ip, findoutType, hash } = args;
 
-    const result = await general
-      .transaction()
-      .execute(async (trx) => {
-        const registeredUser = await this.create({
-          trx, hash, nickname, password, ip
-        });
+    return await general.transaction().execute(async (trx) => {
+      const registeredUser = await this.create({
+        trx, hash, nickname, password, ip
+      });
 
-        if (findoutType === "referrer") {
-          const referrerNickname = findout;
-          const referralNickname = nickname;
-
+      const REFERRAL_EVENTS = {
+        "referrer": async () => {
           const result = await referral.register({
-            trx, referral: referralNickname, referrer: referrerNickname
+            trx, referral: nickname, referrer: findout
           });
-
           console.log(result)
-        } else if (findoutType === "custom") {
+        },
+        "custom": async () => {
           const val = await trx
             .insertInto("findout")
             .values({ nickname, value: findout })
             .executeTakeFirstOrThrow();
-
           console.log(val)
         }
+      }
 
-        return registeredUser;
-      });
+      const referralEvent = REFERRAL_EVENTS[findoutType]
+      await referralEvent();
 
-    return result;
+      return {
+        nickname: registeredUser.nickname,
+        created_at: registeredUser.created_at.toString()
+      };
+    });
   },
   afterRegistrationEvents({ nickname }: { nickname: string }) {
     createEvent({
@@ -295,7 +278,8 @@ export const register = {
     { reason: string; error: string };
 
     const result = await client
-      .get(`${MOJANG_API_URL}/${nickname}`, {
+      .get(`/${nickname}`, {
+        baseUrl: MOJANG_API_URL,
         throwHttpErrors: false,
         timeout: 5000
       })
@@ -304,39 +288,37 @@ export const register = {
     return result;
   },
   async unregister({
-    nickname, strict = false,
+    nickname, isStrict = false,
   }: {
-    nickname: string; strict?: boolean;
+    nickname: string; isStrict?: boolean;
   }): Promise<{ nickname: string }> {
     const localLogger = authLogger.withTag("Unregister");
-    localLogger.log(`Starting unregistering player ${nickname}. Strict: ${strict}`);
+    localLogger.log(`Starting unregistering player ${nickname}. Strict: ${isStrict}`);
 
-    const result = await general
-      .transaction()
-      .execute(async (trx) => {
-        const auth = await trx
-          .deleteFrom("AUTH")
-          .where("LOWERCASENICKNAME", "=", nickname.toLowerCase())
+    const result = await general.transaction().execute(async (trx) => {
+      const auth = await trx
+        .deleteFrom("AUTH")
+        .where("LOWERCASENICKNAME", "=", nickname.toLowerCase())
+        .executeTakeFirstOrThrow();
+
+      if (!auth.numDeletedRows) {
+        invariant(isStrict, "Error for deleting from auth");
+      }
+
+      localLogger.log(`Player ${nickname} from auth`);
+
+      if (isStrict) {
+        const players = await trx
+          .deleteFrom("players")
+          .where("nickname", "=", nickname)
           .executeTakeFirstOrThrow();
 
-        if (!auth.numDeletedRows) {
-          invariant(strict, "Error for deleting from auth");
-        }
+        invariant(players.numDeletedRows, "Error for deleting from players");
+        localLogger.log(`Player ${nickname} from players`);
+      }
 
-        localLogger.log(`Player ${nickname} from auth`);
-
-        if (strict) {
-          const players = await trx
-            .deleteFrom("players")
-            .where("nickname", "=", nickname)
-            .executeTakeFirstOrThrow();
-
-          invariant(players.numDeletedRows, "Error for deleting from players");
-          localLogger.log(`Player ${nickname} from players`);
-        }
-
-        return { nickname };
-      });
+      return { nickname };
+    });
 
     return result;
   }

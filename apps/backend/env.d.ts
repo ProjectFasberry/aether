@@ -11,7 +11,9 @@ declare global {
       PLAN_MYSQL_URI: string;
       LIBERTYBANS_POSTGRES_URI: string;
       SQLITE_DATABASE_URL: string;
-    
+      LIBERTYBANS_DATABASE_URL: string;
+      SKINS_DATABASE_URL: string;
+      
       NATS_HOST: string;
       NATS_USER: string;
       NATS_PASSWORD: string;

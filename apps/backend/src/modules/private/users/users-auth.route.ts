@@ -31,7 +31,7 @@ const playersAuthReg = new Elysia()
 
 const playersAuthUnreg = new Elysia()
   .post("/unregister", async ({ body: { nickname, strict } }) => {
-    const query = await register.unregister({ nickname, strict });
+    const query = await register.unregister({ nickname, isStrict: strict });
     return { data: query }
   }, {
     body: z.object({

@@ -1,5 +1,6 @@
 import Elysia, { t } from "elysia";
-import { store } from "./store-items.model";
+import { store, storeItemsItemSchema } from "./store-items.model";
+import { withData } from "#/shared/schemas";
 
 export const storeItem = new Elysia()
   .get("/item/:id", async ({ params: { id } }) => {
@@ -8,5 +9,10 @@ export const storeItem = new Elysia()
   }, {
     params: t.Object({
       id: t.Number()
-    })
+    }),
+    response: {
+      200: withData(
+        t.Nullable(storeItemsItemSchema)
+      )
+    }
   })

@@ -316,9 +316,8 @@ export async function initPlayerSkin(nickname: string): Promise<boolean> {
   initSkinLogger.log(`Start initing skin for ${nickname}`);
 
   try {
-    const payload = await loadSkinsHistoryFromDB(nickname)
-
     const redis = getRedis()
+    const payload = await loadSkinsHistoryFromDB(nickname)
 
     await redis.set(
       getSkinsHistoryCacheRedisKey(nickname), JSON.stringify(payload)

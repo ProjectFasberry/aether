@@ -4,10 +4,8 @@ import { safeJsonParse } from "#/utils/config/transforms";
 import { general } from "#/shared/database/general-db";
 import { type Static, t } from "elysia";
 
-const orderStatusSchema = t.UnionEnum(["pending", "succeeded", "all"])
+export const orderStatusSchema = t.UnionEnum(["pending", "succeeded", "all"], { default: "all" })
 const orderAssetSchema = t.UnionEnum(["USDT", "TON", "BTC", "ETH", "LTC", "BNB", "TRX", "USDC"])
-type OrderStatus = Static<typeof orderStatusSchema>;
-type OrderAsset = Static<typeof orderAssetSchema>;
 
 export const orderDefaultSingleSchema = t.Object({
 	unique_id: t.String(),
@@ -23,26 +21,31 @@ export const orderDefaultSingleSchema = t.Object({
 	comment: t.Nullable(t.String())
 })
 
-type OrderSingleDefault = Static<typeof orderDefaultSingleSchema>;
-type Orders = Static<typeof orderDefaultSingleSchema>;
+type OrdersSingleDefault = Static<typeof orderDefaultSingleSchema>;
+type OrdersAll = Static<typeof orderDefaultSingleSchema>;
 type OrdersDefault = Static<typeof orderDefaultSingleSchema>;
+type OrdersSingle = Static<typeof orderDefaultSingleSchema>;
 
-type ExternalOrderParams = { initiator: string, status: OrderStatus };
+type ExternalOrderParams = { 
+	initiator: string, status: Static<typeof orderStatusSchema> 
+};
+
+type OrderAsset = Static<typeof orderAssetSchema>;
 
 export const externalOrders = {
-	async getCache(uniqueId: string): Promise<OrderSingleDefault | null> {
+	async getCache(uniqueId: string): Promise<OrdersSingleDefault | null> {
 		const redis = getRedis();
 		const key = getOrderKey(uniqueId);
 
 		const dataStr = await redis.get(key);
 		if (!dataStr) return null;
 
-		const result = safeJsonParse<OrderSingleDefault>(dataStr);
+		const result = safeJsonParse<OrdersSingleDefault>(dataStr);
 		if (!result.ok) return null;
 
 		return result.value;
 	},
-	async getPersist(uniqueId: string): Promise<OrderSingleDefault | null> {
+	async getPersist(uniqueId: string): Promise<OrdersSingleDefault | null> {
 		const data = await general
 			.selectFrom("payments")
 			.select([
@@ -60,7 +63,7 @@ export const externalOrders = {
 			created_at: data.created_at.toString()
 		}
 	},
-	async getAllOrders({ initiator, status }: ExternalOrderParams): Promise<Orders[]> {
+	async getAllOrders({ initiator, status }: ExternalOrderParams): Promise<OrdersAll[]> {
 		const [defaultData, cachedOrders] = await Promise.all([
 			externalOrders.getDefault({ initiator, status }),
 			externalOrders.getCachedOrders({ initiator }),
@@ -68,7 +71,7 @@ export const externalOrders = {
 
 		return [...cachedOrders, ...defaultData];
 	},
-	async getSingle(uniqueId: string): Promise<Static<typeof orderDefaultSingleSchema> | null> {
+	async getSingle(uniqueId: string): Promise<OrdersSingle | null> {
 		const cache = await externalOrders.getCache(uniqueId);
 		if (cache) return cache;
 		const data = await externalOrders.getPersist(uniqueId);
@@ -78,7 +81,7 @@ export const externalOrders = {
 		const redis = getRedis();
 		const keys = await redis.smembers(`index:initiator:${initiator}`);
 
-		const orders: OrderSingleDefault[] = await Promise.all(
+		const orders: OrdersSingleDefault[] = await Promise.all(
 			keys.map((key) => redis.get(key).then((value) => JSON.parse(value!))),
 		);
 

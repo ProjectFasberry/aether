@@ -49,6 +49,15 @@
 			}
 		},
 		{
+			"includes": ["packages/shared/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["apps/app/**"],
 			"javascript": {
 				"jsxRuntime": "reactClassic"
@@ -86,6 +95,7 @@
 						"noUnknownAtRules": "off",
 						"noImplicitAnyLet": "off",
 						"noRedeclare": "off",
+						"noTsIgnore": "off",
 						"noExplicitAny": "off",
 						"noDocumentCookie": "off"
 					},

@@ -46,3 +46,6 @@ export const MINESKIN_API_KEY = Bun.env.MINESKIN_API_KEY;
 export const MINESKIN_AES_SECRET_KEY = Bun.env.MINESKIN_AES_SECRET_KEY;
 
 export const PROD_HOST = Bun.env.PROD_HOST;
+export const MERCHANT_KEY = Bun.env.HELEKET_MERCHANT_KEY;
+export const PAYMENT_KEY = Bun.env.HELEKET_PAYMENT_KEY;
+export const PAYOUT_KEY = Bun.env.HELEKET_PAYOUT_KEY;

@@ -1,16 +1,9 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  getIsCheckedAtom,
-  rolesAction,
-  selectUserAction,
-  updateAction,
-  usersAction,
-  usersDataArrAtom,
-  usersIsViewAtom,
-  usersSelectedOverAtom
+  getIsCheckedAtom, PrivatedUser, rolesAction, selectUserAction, updateAction, usersAction, 
+  usersDataArrAtom, usersIsViewAtom, usersSelectedOverAtom
 } from "../models/users.model";
 import { Skeleton } from "@repo/ui/skeleton";
-import { PrivatedUser } from "@repo/shared/types/entities/other";
 import { tv } from "tailwind-variants";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { action, Atom, atom, reatomMap, withAssign } from "@reatom/framework";
@@ -69,10 +62,7 @@ const isExpandedAtom = reatomMap<string, boolean>().pipe(
   })),
 )
 
-const getIsExpandedAtom = (nickname: string): Atom<boolean> => atom(
-  (ctx) => ctx.spy(isExpandedAtom).get(nickname) ?? false,
-  "getIsExpanded"
-)
+const getIsExpandedAtom = (nickname: string): Atom<boolean> => atom((ctx) => ctx.spy(isExpandedAtom).get(nickname) ?? false)
 
 type UserActionsProps = {
   nickname: string,
@@ -134,17 +124,14 @@ const User = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, role_na
 const UsersSkeleton = ({ length = 32 }: { length?: number }) => {
   return (
     <div className="flex flex-col gap-1 w-full h-full">
-      {Array.from({ length }).map((_, idx) => (
-        <Skeleton key={idx} className="h-12 w-full" />
-      ))}
+      {Array.from({ length }).map((_, idx) => <Skeleton key={idx} className="h-12 w-full" />)}
     </div>
   )
 }
 
-const UsersUpdatingSkeleton = reatomComponent(({ ctx }) => {
-  const isLoading = ctx.spy(updateAction.statusesAtom).isPending;
-  return isLoading ? <UsersSkeleton length={3} /> : null
-}, "UsersUpdatingSkeleton")
+const UsersUpdatingSkeleton = reatomComponent(({ ctx }) =>
+  ctx.spy(updateAction.statusesAtom).isPending ? <UsersSkeleton length={3} /> : null, "UsersUpdatingSkeleton"
+)
 
 export const Users = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => {
@@ -153,10 +140,7 @@ export const Users = reatomComponent(({ ctx }) => {
   }, []);
 
   const data = ctx.spy(usersDataArrAtom);
-
-  if (ctx.spy(usersAction.statusesAtom).isPending) {
-    return <UsersSkeleton />
-  }
+  if (ctx.spy(usersAction.statusesAtom).isPending) return <UsersSkeleton />
 
   if (!data) return null;
 

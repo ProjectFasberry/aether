@@ -13,7 +13,7 @@ export const client = ky.create({
         const id = ++counter
         request.headers.set("x-request-id", id.toString())
         timings.set(id, Date.now())
-        clientLogger.log(`[${request.method}] to ${request.url}`)
+        clientLogger.log(`${request.method} ${request.url}`)
       }
     ],
     afterResponse: [
@@ -23,7 +23,7 @@ export const client = ky.create({
 
         const start = id && timings.get(Number(id))
         const duration = start ? Date.now() - start : 0
-        clientLogger.log(`[${request.method}] ${request.url} — ${duration}ms`)
+        clientLogger.log(`${request.method} ${request.url} / ${duration}ms`)
 
         if (id) {
           timings.delete(Number(id))

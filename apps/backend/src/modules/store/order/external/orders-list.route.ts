@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia"
-import { externalOrders, orderDefaultSingleSchema } from "./external-order.model"
+import { externalOrders, orderDefaultSingleSchema, orderStatusSchema } from "./external-order.model"
 import { defineUser } from "#/lib/middlewares/define"
 import { withData } from "#/shared/schemas"
 
@@ -11,7 +11,7 @@ export const ordersList = new Elysia()
   }, {
     query: t.Optional(
       t.Object({
-        status: t.UnionEnum(["succeeded", "all", "pending"], { default: "all" }),
+        status: orderStatusSchema,
       })
     ),
     response: {

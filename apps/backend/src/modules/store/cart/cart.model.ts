@@ -2,15 +2,14 @@ import { general } from "#/shared/database/general-db"
 import { withMeta } from "#/shared/schemas";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers"
 import type { CartItem } from "@repo/shared/types/entities/store"
-import { t } from "elysia";
-import * as z from "zod/v4"
+import { type Static, t } from "elysia";
 
-export const editItemToBasketSchema = z.object({
-  key: z.enum(
+export const editItemToBasketSchema = t.Object({
+  key: t.UnionEnum(
     ["recipient", "selected"]
   ),
-  value: z.union(
-    [z.string(), z.boolean()]
+  value: t.Union(
+    [t.String(), t.Boolean()]
   )
 })
 
@@ -101,7 +100,7 @@ export const cartItem = {
   },
   async edit(
     initiator: string,
-    { key, value, id }: z.infer<typeof editItemToBasketSchema> & { id: number },
+    { key, value, id }: Static<typeof editItemToBasketSchema> & { id: number },
   ): Promise<string | boolean> {
     const query = await general
       .updateTable("store_cart_items")

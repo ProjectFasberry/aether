@@ -1,8 +1,7 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  deleteNewsAction,
+  deleteNews,
   newsListAction,
-  deleteNewsBeforeAction
 } from "../models/news.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Avatar } from "../../../../ui/avatar";
@@ -19,16 +18,12 @@ import {
 import { ToActionButtonX } from "./global";
 import {
   createNews,
-  createNewsAction,
   createNewsDescriptionAtom,
   createNewsImageAtom,
   createNewsTempContentAtom,
   createNewsTitleAtom,
   editNews,
-  editNewsAction,
-  editNewsDescAtom,
-  editNewsTempContentAtom,
-  editNewsTitleAtom
+  editNewsState
 } from "../models/news.model"
 import { Input } from "@repo/ui/input"
 import { Atom, AtomMut, Ctx } from "@reatom/core"
@@ -137,14 +132,14 @@ const NewsContent = reatomComponent<{
 // 
 const EditNewsSubmit = reatomComponent(({ ctx }) => {
   const isDisabled = !ctx.spy(editNews.isValid)
-    || ctx.spy(editNewsAction.statusesAtom).isPending
+    || ctx.spy(editNews.submit.statusesAtom).isPending
 
-  return <ButtonXSubmit title="Редактировать" isDisabled={isDisabled} action={() => editNewsAction(ctx)} />
+  return <ButtonXSubmit title="Редактировать" isDisabled={isDisabled} action={() => editNews.submit(ctx)} />
 }, "EditNewsSubmit")
 
 const EditNewsTitleInput = reatomComponent(({ ctx }) => {
-  const old = ctx.get(editNewsTitleAtom.historyAtom)[1]
-  const value = ctx.spy(editNewsTitleAtom)
+  const old = ctx.get(editNewsState.title.historyAtom)[1]
+  const value = ctx.spy(editNewsState.title)
 
   return (
     <Input
@@ -156,8 +151,8 @@ const EditNewsTitleInput = reatomComponent(({ ctx }) => {
 }, "EditNewsTitleInput")
 
 const EditNewsDescInput = reatomComponent(({ ctx }) => {
-  const old = ctx.get(editNewsDescAtom.historyAtom)[1]
-  const value = ctx.spy(editNewsDescAtom)
+  const old = ctx.get(editNewsState.description.historyAtom)[1]
+  const value = ctx.spy(editNewsState.description)
 
   return (
     <Input
@@ -180,7 +175,7 @@ const EditNewsForm = reatomComponent(({ ctx }) => {
         <NewsContent
           isValidAtom={editNews.isValid}
           initValue={item.content as JSONContent}
-          tempContentAtom={editNewsTempContentAtom}
+          tempContentAtom={editNewsState.tempContent}
           saveAction={editNews.saveContent}
         />
       </div>
@@ -221,9 +216,9 @@ const CreateNewsImage = reatomComponent(({ ctx }) => {
 
 const CreateNewsSubmit = reatomComponent(({ ctx }) => {
   const isDisabled = !ctx.spy(createNews.isValid)
-    || ctx.spy(createNewsAction.statusesAtom).isPending
+    || ctx.spy(createNews.submit.statusesAtom).isPending
 
-  return <ButtonXSubmit title="Создать" action={() => createNewsAction(ctx)} isDisabled={isDisabled} />
+  return <ButtonXSubmit title="Создать" action={() => createNews.submit(ctx)} isDisabled={isDisabled} />
 }, "CreateNewsSubmit")
 
 const CreateNewsForm = () => {
@@ -243,7 +238,6 @@ const CreateNewsForm = () => {
   )
 }
 
-// 
 const NewsListItem = reatomComponent<News>(({ ctx, id, title, imageUrl, creator }) => {
   return (
     <div
@@ -283,8 +277,8 @@ const NewsListItem = reatomComponent<News>(({ ctx, id, title, imageUrl, creator 
                 onClick={() => createActionsLinkAction(ctx, { parent: "news", type: "edit", target: id.toString() })}
               />
               <DeleteButton
-                onClick={() => deleteNewsBeforeAction(ctx, { id, title })}
-                disabled={ctx.spy(deleteNewsAction.statusesAtom).isPending}
+                onClick={() => deleteNews.deleteBefore(ctx, { id, title })}
+                disabled={ctx.spy(deleteNews.submit.statusesAtom).isPending}
               />
             </div>
           </div>

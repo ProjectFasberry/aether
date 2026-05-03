@@ -17,18 +17,9 @@ type CheckOrderBody = {
   update_type: string
 }
 
-export function validateSignatureCryptoPay(
-  body: string,
-  resSignature: string
-) {
-  const secret = createHash('sha256')
-    .update(CRYPTO_PAY_TESTNET_TOKEN)
-    .digest()
-
-  const hmac = createHmac('sha256', secret)
-    .update(body)
-    .digest('hex')
-
+function validateSignatureCryptoPay(body: string, resSignature: string) {
+  const secret = createHash('sha256').update(CRYPTO_PAY_TESTNET_TOKEN).digest()
+  const hmac = createHmac('sha256', secret).update(body).digest('hex')
   return hmac === resSignature
 }
 
@@ -36,10 +27,7 @@ export const checkOrderRoute = new Elysia()
   .post('/process-order', async ({ status, ...ctx }) => {
     const text = ctx.body as string;
     const signature = ctx.headers['crypto-pay-api-signature']
-
-    if (!signature || !text) {
-      throw status(400, wrapError("SIGNATURE_OR_BODY_IS_REQUIRED"))
-    }
+    if (!signature || !text) throw status(400, wrapError("SIGNATURE_OR_BODY_IS_REQUIRED"))
 
     const isValid = validateSignatureCryptoPay(text, signature);
     if (!isValid) throw status(400, wrapError("INVALID_SIGNATURE"))
@@ -84,7 +72,7 @@ export const checkOrderRoute = new Elysia()
           .executeTakeFirst()
 
         if (!query.numInsertedOrUpdatedRows) throw status(500, wrapError("PAYMENT_NOT_SAVED"))
-  
+
         await redis.del(getOrderKey(uniqueId));
       })
     }

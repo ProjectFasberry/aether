@@ -23,7 +23,7 @@ const OptionsListSkeleton = () => {
 const OptionItem = reatomComponent<Option>(({ ctx, name, title, value }) => {
   return (
     <div className="flex border border-neutral-800 p-2 rounded-lg items-center justify-between w-full gap-1">
-      <Typography className="text-lg font-semibold">
+      <Typography className="font-semibold">
         {title}
       </Typography>
       <Switch

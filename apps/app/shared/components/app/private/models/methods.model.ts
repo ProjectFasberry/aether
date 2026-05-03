@@ -2,7 +2,6 @@ import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
-import { logError } from "@/shared/lib/log";
 
 export type PrivatedMethodsPayload = {
   id: number;
@@ -15,20 +14,17 @@ export type PrivatedMethodsPayload = {
 
 export const methodsAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<PrivatedMethodsPayload>("privated/store/methods/list", { signal: ctx.controller.signal })
-      .exec()
+    client<PrivatedMethodsPayload>("privated/store/methods/list", { signal: ctx.controller.signal }).exec()
   )
 }).pipe(withDataAtom(), withStatusesAtom(), withCache({ swr: false }))
 
 export const editMethodAction = reatomAsync(async (ctx, method: string, key: string, value: boolean | string) => {
   const body = { key, value }
 
-  const result = await ctx.schedule(() =>
-    client
-      .post<{ [key: string]: string | boolean }>(`privated/store/methods/edit/${method}`)
-      .pipe(withJsonBody(body))
-      .exec()
-  )
+  const result = await client
+    .post<{ [key: string]: string | boolean }>(`privated/store/methods/edit/${method}`)
+    .pipe(withJsonBody(body))
+    .exec()
 
   return { method, result }
 }, {
@@ -37,7 +33,6 @@ export const editMethodAction = reatomAsync(async (ctx, method: string, key: str
     toast.success("Изменения применены");
 
     methodsAction.cacheAtom.reset(ctx);
-
     methodsAction.dataAtom(ctx, (state) => {
       if (!state) return undefined;
 
@@ -48,8 +43,5 @@ export const editMethodAction = reatomAsync(async (ctx, method: string, key: str
       );
     })
   },
-  onReject: (_, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-  }
+  onReject: (_, e) => notifyAboutRestrictRole(e)
 }).pipe(withStatusesAtom())

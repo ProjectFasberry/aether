@@ -6,12 +6,12 @@ import { tv } from "tailwind-variants";
 import { editMethodAction, methodsAction, PrivatedMethodsPayload } from "../models/methods.model";
 
 const methodVariant = tv({
-  base: `flex items-center justify-between gap-1 border border-neutral-800 rounded-lg p-2 h-14 sm:h-18 w-full`,
+  base: `flex items-center justify-between gap-1 border border-neutral-800 rounded-lg p-2 h-14 w-full`,
   slots: {
     first_parent: "flex items-center min-w-0 gap-1 sm:gap-2",
-    image: "h-8 w-8 sm:h-10 sm:w-10 rounded-lg",
+    image: "h-8 w-8 rounded-lg",
     second_parent: "flex items-center gap-2 h-full",
-    title: "truncate text-lg font-semibold"
+    title: "truncate font-semibold"
   }
 })
 

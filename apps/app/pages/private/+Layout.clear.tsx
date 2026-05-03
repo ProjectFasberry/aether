@@ -16,18 +16,18 @@ import {
 } from "@repo/ui/sidebar"
 import { Logotype } from "@/shared/components/app/layout/components/logotype";
 import { UserInfo } from "@/shared/components/app/private/components/user-info";
+import { Chat } from "@/shared/components/app/private/components/chat";
 
 const linkVariant = tv({
-  base: `flex justify-start items-center group h-10 border-2 border-neutral-800 rounded-lg px-4
-    data-[state=inactive]:bg-transparent data-[state=active]:bg-neutral-800`,
+  base: `flex justify-start items-center group h-10 rounded-xl px-4
+    data-[state=inactive]:bg-neutral-700 data-[state=inactive]:text-neutral-50 data-[state=active]:bg-neutral-50 data-[state=active]:text-neutral-950`,
   slots: {
-    text: "text-lg font-semibold text-nowrap text-neutral-50"
+    text: "font-semibold text-nowrap"
   }
 })
 
 const links = [
   { title: "Конфигурация", value: "/private/config" },
-  { title: "Аналитика", value: "/private/analytics" },
   { title: "Магазин", value: "/private/store" },
   { title: "Игрок", value: "/private/users" },
   { title: "История", value: "/private/history" },
@@ -38,20 +38,18 @@ const links = [
 const Navigation = () => {
   const { setOpen, isMobile } = useSidebar();
 
-  return (
-    links.map((link) => (
-      <Link
-        key={link.title}
-        href={link.value}
-        onClick={() => isMobile && setOpen(false)}
-        className={linkVariant().base()}
-      >
-        <Typography className={linkVariant().text()}>
-          {link.title}
-        </Typography>
-      </Link>
-    ))
-  )
+  return links.map((link) => (
+    <Link
+      key={link.title}
+      href={link.value}
+      onClick={() => isMobile && setOpen(false)}
+      className={linkVariant().base()}
+    >
+      <Typography className={linkVariant().text()}>
+        {link.title}
+      </Typography>
+    </Link>
+  ))
 }
 
 const AppSidebar = () => {
@@ -79,14 +77,17 @@ const AppSidebar = () => {
 
 export default function Layout({ children }: PropsWithChildren) {
   return (
-    <SidebarProvider >
-      <AppSidebar />
-      <div className="flex flex-col gap-2 min-h-dvh w-full p-2 sm:p-6">
-        <SidebarTrigger />
-        <div className="flex flex-col overflow-hidden w-full">
-          {children}
+    <>
+      <Chat />
+      <SidebarProvider >
+        <AppSidebar />
+        <div className="flex flex-col gap-2 min-h-dvh w-full p-2 sm:p-6">
+          <SidebarTrigger />
+          <div className="flex flex-col overflow-hidden w-full">
+            {children}
+          </div>
         </div>
-      </div>
-    </SidebarProvider >
+      </SidebarProvider >
+    </>
   )
 }

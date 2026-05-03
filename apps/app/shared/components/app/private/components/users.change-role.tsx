@@ -21,7 +21,8 @@ const UserActionsChangeRoleGlobalSubmit = reatomComponent(({ ctx }) => {
 
   return (
     <Button
-      className="bg-neutral-50 text-neutral-950 text-lg font-semibold"
+      background="white"
+      className="font-semibold"
       disabled={isDisabled}
       onClick={() => usersControlRolesBeforeAction(ctx, [], { type: "change_role" })}
     >
@@ -36,7 +37,8 @@ const UserActionsChangeRoleSubmit = reatomComponent<{ nickname: string }>(({ ctx
 
   return (
     <Button
-      className="bg-neutral-50 text-neutral-950 text-lg font-semibold"
+      background="white"
+      className="font-semibold"
       disabled={isDisabled}
       onClick={() => usersControlRolesBeforeAction(ctx, [nickname], { type: "change_role" })}
     >
@@ -47,7 +49,6 @@ const UserActionsChangeRoleSubmit = reatomComponent<{ nickname: string }>(({ ctx
 
 const Role = reatomComponent<RoleProps>(({ ctx, name, id, selectedId, onClick }) => {
   const title = appState.dict.get(ctx, name);
-
   const isSelected = selectedId === id;
 
   return (
@@ -78,10 +79,7 @@ type RoleProps = RoleType & {
 const Roles = reatomComponent<Pick<RoleProps, "onClick" | "selectedId">>(({ ctx, selectedId, onClick }) => {
   const data = ctx.spy(rolesAction.dataAtom)
 
-  if (ctx.spy(rolesAction.statusesAtom).isPending) {
-    return <RolesSkeleton />;
-  }
-
+  if (ctx.spy(rolesAction.statusesAtom).isPending)  return <RolesSkeleton />;
   if (!data) return null;
 
   return data.map((role) => (

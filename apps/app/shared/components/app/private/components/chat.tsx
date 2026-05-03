@@ -1,37 +1,17 @@
 import dayjs from "@/shared/lib/create-dayjs";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  chatCreateMessageAction,
-  chatCreateMessageAtom,
-  chatDataAction,
-  chatDataAtom,
-  chatDeleteMessageAction,
-  chatEditMessageAction,
-  chatEditNewMessageAtom,
-  chatEdit,
-  getChatItemIsEditAtom,
-  chatItemViewsAction,
-  getChatItemViews,
-  ChatItem,
-  chatDisabledAtom,
-  ChatItemViews,
-  chatWs
+  chatCreate, chatCreateMessageAtom, chatHistory, chatHistoryState, chatEditState,
+  chatEdit, getChatItemIsEditAtom, chatItemViewsAction, getChatItemViews, ChatItem, chatDisabledAtom,
+  ChatItemViews, chatWs, chatDelete
 } from "../models/chat.model";
 import { Button } from "@repo/ui/button";
-import {
-  IconBrandTelegram,
-  IconCheck,
-  IconDotsVertical,
-  IconEye,
-  IconPencil,
-  IconX
-} from "@tabler/icons-react";
+import { IconBrandTelegram, IconCheck, IconDotsVertical, IconEye, IconPencil, IconTrash, IconX } from "@tabler/icons-react";
 import { Input } from "@repo/ui/input";
 import { isEmptyArray } from "@/shared/lib/utils";
 import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { createLink, Link } from "@/shared/components/config/link";
-import { Skeleton } from "@repo/ui/skeleton";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { ActionButton, DeleteButton } from "./ui";
@@ -40,37 +20,23 @@ import { currentUserState } from "@/shared/models/current-user.model";
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="cursor-pointer">
-        <IconDotsVertical size={18} className="text-neutral-400" />
+      <DropdownMenuTrigger>
+        <IconDotsVertical size={14} className="text-neutral-400" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="left">
-        <div className="flex flex-col gap-2 w-full h-full">
-          <Typography className="text-neutral-400">
-            Действия
-          </Typography>
+        <div className="flex flex-col text-sm gap-2 w-full h-full">
+          <Typography className="text-neutral-400">Действия</Typography>
           <div className="flex flex-col gap-1 w-full">
-            <DropdownMenuItem asChild className="p-0">
-              <Button
-                className="w-full gap-2 bg-neutral-800"
-                disabled={ctx.spy(chatDeleteMessageAction.statusesAtom).isPending}
-                onClick={() => chatDeleteMessageAction(ctx, id)}
-              >
-                <IconX size={16} />
-                <Typography className="text-red">
-                  Удалить
-                </Typography>
-              </Button>
+            <DropdownMenuItem
+              disabled={ctx.spy(chatDelete.submit.statusesAtom).isPending}
+              onClick={() => chatDelete.submit(ctx, id)}
+            >
+              <IconTrash size={16} />
+              Удалить
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="p-0">
-              <Button
-                className="w-full gap-2 bg-neutral-800"
-                onClick={() => chatEdit.start(ctx, id)}
-              >
-                <IconPencil size={16} />
-                <Typography className="text-neutral-50">
-                  Изменить
-                </Typography>
-              </Button>
+            <DropdownMenuItem className="" onClick={() => chatEdit.start(ctx, id)}>
+              <IconPencil size={16} />
+              Изменить
             </DropdownMenuItem>
           </div>
         </div>
@@ -86,14 +52,12 @@ const ChatMessagesItemText = reatomComponent<Pick<ChatItem, "id" | "message">>((
     <div className="min-w-0 w-full">
       {isEdit ? (
         <Input
-          value={ctx.spy(chatEditNewMessageAtom) ?? message}
-          onChange={e => chatEditNewMessageAtom(ctx, e.target.value)}
+          value={ctx.spy(chatEditState.newMsg) ?? message}
+          onChange={e => chatEditState.newMsg(ctx, e.target.value)}
           className="focus-within:outline-none! p-0! text-base! w-full"
         />
       ) : (
-        <Typography className='truncate'>
-          {message}
-        </Typography>
+        <Typography className='truncate'>{message}</Typography>
       )}
     </div>
   )
@@ -103,7 +67,7 @@ const ChatMessagesItemEditActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx
   const isEdit = ctx.spy(getChatItemIsEditAtom(id))
   if (!isEdit) return null;
 
-  const isDisabled = !ctx.spy(chatEdit.isValid) || ctx.spy(chatEditMessageAction.statusesAtom).isPending
+  const isDisabled = !ctx.spy(chatEdit.isValid) || ctx.spy(chatEdit.submit.statusesAtom).isPending
 
   return (
     <div className="flex items-center gap-1">
@@ -111,29 +75,21 @@ const ChatMessagesItemEditActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx
         variant="selected"
         icon={IconCheck}
         disabled={isDisabled}
-        onClick={() => chatEditMessageAction(ctx)}
+        onClick={() => chatEdit.submit(ctx)}
       />
       <DeleteButton onClick={() => chatEdit.end(ctx)} />
     </div>
   )
 }, "ChatMessagesItemEditActions")
 
-const ChatMessagesItemViewsItem = reatomComponent<ChatItemViews>(({
-  ctx, id, nickname, created_at, avatar
-}) => {
+const ChatMessagesItemViewsItem = ({
+  id, nickname, created_at, avatar
+}: ChatItemViews) => {
   return (
-    <div
-      className="flex border border-neutral-800 gap-2 rounded-lg px-2 py-1 items-center"
-    >
-      <Avatar
-        url={avatar}
-        className="w-8 h-8"
-        nickname={nickname}
-      />
+    <div className="flex border border-neutral-800 gap-2 rounded-lg px-2 py-1 items-center">
+      <Avatar url={avatar} className="w-8 h-8" nickname={nickname} />
       <div className="flex flex-col">
-        <Typography className="text-neutral-50 text-base">
-          {nickname}
-        </Typography>
+        {nickname}
         <div className="flex items-center justify-start gap-1">
           <IconCheck size={14} className="text-neutral-400" />
           <span className="text-sm text-neutral-400">
@@ -143,15 +99,11 @@ const ChatMessagesItemViewsItem = reatomComponent<ChatItemViews>(({
       </div>
     </div>
   )
-}, "ChatMessagesItemViewsItem")
+}
 
-const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({
-  ctx, id, views
-}) => {
+const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({ ctx, id, views }) => {
   const [open, setOpen] = useState(false);
-
   useUpdate((ctx) => open && chatItemViewsAction(ctx, id), [open])
-
   const data = ctx.spy(getChatItemViews(id))
 
   return (
@@ -164,9 +116,7 @@ const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({
       </DropdownMenuTrigger>
       <DropdownMenuContent>
         <div className="flex flex-col gap-1 w-full">
-          {data.map((item) => (
-            <ChatMessagesItemViewsItem key={item.id} {...item} />
-          ))}
+          {data.map((item) => <ChatMessagesItemViewsItem key={item.id} {...item} />)}
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -186,15 +136,9 @@ const ChatMessagesItem = reatomComponent<ChatItem>(({
       <div className="flex items-center justify-between gap-1">
         <div className="flex items-center gap-1">
           <Link href={createLink("player", nickname)}>
-            <Avatar
-              nickname={nickname}
-              className="h-5 w-5"
-              url={avatar}
-            />
+            <Avatar nickname={nickname} className="h-5 w-5" url={avatar} />
           </Link>
-          <Link href={createLink("player", nickname)}>
-            <span>{nickname}</span>
-          </Link>
+          <Link href={createLink("player", nickname)}>{nickname}</Link>
           <span
             title={dayjs(created_at).format("DD.MM.YYYY hh:mm")}
             className="text-neutral-400 text-sm"
@@ -211,9 +155,7 @@ const ChatMessagesItem = reatomComponent<ChatItem>(({
       <div className="flex items-center text-neutral-400 text-sm justify-end gap-3">
         {edited && (
           <div className="flex items-center">
-            <span title={dayjs(edited_at).format("DD.HH.MM hh:mm")}>
-              изм.
-            </span>
+            <span title={dayjs(edited_at).format("DD.HH.MM hh:mm")}>изм.</span>
           </div>
         )}
         <ChatMessagesItemViews views={views} id={id} />
@@ -223,38 +165,30 @@ const ChatMessagesItem = reatomComponent<ChatItem>(({
 }, "ChatMessagesItem")
 
 export const ChatMessages = reatomComponent(({ ctx }) => {
-  useUpdate(chatDataAction, [])
+  useUpdate(chatHistory.fetch, [])
 
-  const data = ctx.spy(chatDataAtom)
-  const error = ctx.spy(chatDataAction.errorAtom);
-
-  if (ctx.spy(chatDataAction.statusesAtom).isPending) {
-    return (
-      <>
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-      </>
-    )
-  }
+  const data = ctx.spy(chatHistoryState.data)
+  const error = ctx.spy(chatHistory.fetch.errorAtom);
 
   if (error) {
     return <span className="text-red">Произошла ошибка. {error.message}</span>
   }
 
-  if (!data || isEmptyArray(data)) return <span>пусто</span>
+  if (!data || isEmptyArray(data)) return <span>Сообщений нет</span>
 
   return data.map((item) => <ChatMessagesItem key={item.id} {...item} />)
 }, "ChatMessages")
 
 const ChatCreateMessage = reatomComponent(({ ctx }) => {
-  const isDisabled = !ctx.spy(chatCreateMessageAtom)
-    || ctx.spy(chatCreateMessageAction.statusesAtom).isPending
+  const isDisabled = !ctx.spy(chatCreateMessageAtom) || ctx.spy(chatCreate.submit.statusesAtom).isPending
 
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => e.preventDefault();
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    chatCreate.submit(ctx)
+  }
 
   return (
-    <form onSubmit={onSubmit} className="flex items-center gap-2 justify-between w-full">
+    <form onSubmit={onSubmit} className="flex items-center gap-1 justify-between w-full">
       <Input
         value={ctx.spy(chatCreateMessageAtom)}
         onChange={e => chatCreateMessageAtom(ctx, e.target.value)}
@@ -264,38 +198,22 @@ const ChatCreateMessage = reatomComponent(({ ctx }) => {
       />
       <Button
         type="submit"
-        className="h-10 bg-neutral-800 w-10 p-0"
+        background="default"
         disabled={isDisabled}
-        onClick={() => chatCreateMessageAction(ctx)}
+        className="h-10 min-w-10 min-h-10 w-10 p-0"
       >
-        <IconBrandTelegram size={20} className="text-blue-500" />
+        <IconBrandTelegram size={20} className="text-neutral-300" />
       </Button>
     </form>
   )
 }, "ChatCreateMessage")
 
-const ChatShowButton = reatomComponent(({ ctx }) => {
-  return (
-    <Button
-      className="w-full bg-neutral-900 text-lg font-semibold"
-      onClick={() => chatDisabledAtom(ctx, false)}
-    >
-      Показать чат
-    </Button>
-  )
-}, "ChatShowButton")
-
 const Sync = reatomComponent(({ ctx }) => {
   const disabled = ctx.get(chatDisabledAtom);
 
   useEffect(() => {
-    if (!disabled) {
-      chatWs.init(ctx)
-    }
-
-    return () => {
-      chatWs.closeWs(ctx)
-    }
+    if (!disabled) chatWs.init(ctx)
+    return () => chatWs.closeWs(ctx)
   }, [])
 
   return null
@@ -304,22 +222,30 @@ const Sync = reatomComponent(({ ctx }) => {
 export const Chat = reatomComponent(({ ctx }) => {
   const disabled = ctx.spy(chatDisabledAtom)
 
-  if (disabled) return <ChatShowButton />
+  if (disabled) {
+    return (
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button background="default" className="w-full font-semibold" onClick={() => chatDisabledAtom(ctx, false)}>
+          Показать чат
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col relative gap-2 bg-neutral-900 rounded-xl w-full h-[400px] sm:h-[700px]">
+    <div className="flex fixed bottom-4 z-50 right-4 flex-col gap-2 bg-neutral-950 border border-neutral-900 rounded-xl w-[400px] h-2/4">
       <Sync />
-      <div className="flex items-center p-4 justify-between w-full">
-        <Typography className="text-xl font-semibold">Чат</Typography>
+      <div className="flex px-4 items-center py-2 justify-between w-full">
+        Чат
         <Button className="p-0" onClick={() => chatDisabledAtom(ctx, true)}>
-          <IconX size={16} />
+          <IconX size={14} />
         </Button>
       </div>
       <div className="flex flex-col flex-1 overflow-hidden w-full">
-        <div className="flex-1 overflow-y-auto px-4 gap-2 scrollbar scrollbar-thumb-neutral-800">
+        <div className="flex-1 overflow-y-auto p-2 gap-2 scrollbar scrollbar-thumb-neutral-800">
           <ChatMessages />
         </div>
-        <div className="flex-shrink-0 p-4">
+        <div className="flex-shrink-0 p-2">
           <ChatCreateMessage />
         </div>
       </div>

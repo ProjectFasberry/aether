@@ -1,11 +1,8 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Input } from "@repo/ui/input"
 import {
-  createEventAction,
-  createEventDescriptionAtom,
-  createEventInitiatorAtom,
-  createEventTitleAtom,
-  createEventTypeAtom,
+  createEvent,
+  createEventState,
   eventsListAction,
 } from "../models/event.model"
 import { AtomState } from "@reatom/core"
@@ -18,8 +15,8 @@ import { ButtonXSubmit, ToActionButtonX } from "./global"
 const CreateEventTitle = reatomComponent(({ ctx }) => {
   return (
     <Input
-      value={ctx.spy(createEventTitleAtom)}
-      onChange={e => createEventTitleAtom(ctx, e.target.value)}
+      value={ctx.spy(createEventState.title)}
+      onChange={e => createEventState.title(ctx, e.target.value)}
       placeholder="Заголовок"
     />
   )
@@ -28,8 +25,8 @@ const CreateEventTitle = reatomComponent(({ ctx }) => {
 const CreateEventType = reatomComponent(({ ctx }) => {
   return (
     <Input
-      value={ctx.spy(createEventTypeAtom)}
-      onChange={e => createEventTypeAtom(ctx, e.target.value)}
+      value={ctx.spy(createEventState.type)}
+      onChange={e => createEventState.type(ctx, e.target.value)}
       placeholder="Тип"
     />
   )
@@ -38,8 +35,8 @@ const CreateEventType = reatomComponent(({ ctx }) => {
 const CreateEventDesc = reatomComponent(({ ctx }) => {
   return (
     <Input
-      value={ctx.spy(createEventDescriptionAtom)}
-      onChange={e => createEventDescriptionAtom(ctx, e.target.value)}
+      value={ctx.spy(createEventState.description)}
+      onChange={e => createEventState.description(ctx, e.target.value)}
       placeholder="Описание"
     />
   )
@@ -48,8 +45,8 @@ const CreateEventDesc = reatomComponent(({ ctx }) => {
 const CreateEventInitiator = reatomComponent(({ ctx }) => {
   return (
     <Input
-      value={ctx.spy(createEventInitiatorAtom)}
-      onChange={e => createEventInitiatorAtom(ctx, e.target.value)}
+      value={ctx.spy(createEventState.initiator)}
+      onChange={e => createEventState.initiator(ctx, e.target.value)}
       placeholder="Инициатор"
     />
   )
@@ -59,8 +56,8 @@ const CreateEventSubmit = reatomComponent(({ ctx }) => {
   return (
     <ButtonXSubmit
       title="Создать"
-      action={() => createEventAction(ctx)}
-      isDisabled={ctx.spy(createEventAction.statusesAtom).isPending}
+      action={() => createEvent.submit(ctx)}
+      isDisabled={ctx.spy(createEvent.submit.statusesAtom).isPending}
     />
   )
 }, "CreateEventSubmit")

@@ -4,7 +4,6 @@ import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers";
 import { GAME_CURRENCIES } from "@repo/shared/schemas/payment";
-import type { StoreItem } from "@repo/shared/types/entities/store";
 import { type Static, t } from "elysia";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
@@ -45,7 +44,7 @@ export const storeItemsSchema = t.Object({
 })
 
 export const store = {
-  async getItem(id: number): Promise<StoreItem | null> {
+  async getItem(id: number): Promise<Static<typeof storeItemsItemSchema> | null> {
     const query = await general
       .selectFrom("store_items")
       .select([

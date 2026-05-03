@@ -1,8 +1,7 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import {
   bannersAction,
-  deleteBannerAction,
-  deleteBannerBeforeAction
+  deleteBanner
 } from "../models/banner.model"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Button } from "@repo/ui/button"
@@ -16,7 +15,7 @@ import { actionsTypeAtom, getSelectedParentAtom } from "../models/actions.model"
 import { ToActionButtonX } from "./global"
 import { ActionButton } from "./ui"
 import { 
-  createBannerAction, 
+  createBanner, 
   createBannerDescriptionAtom, 
   createBannerHrefTitleAtom, 
   createBannerHrefValueAtom, 
@@ -71,8 +70,8 @@ const CreateBannerSubmit = reatomComponent(({ ctx }) => {
   return (
     <ButtonXSubmit
       title="Создать"
-      action={() => createBannerAction(ctx)}
-      isDisabled={ctx.spy(createBannerAction.statusesAtom).isPending}
+      action={() => createBanner.submit(ctx)}
+      isDisabled={ctx.spy(createBanner.submit.statusesAtom).isPending}
     />
   )
 }, "CreateBanner")
@@ -144,8 +143,8 @@ const ShowBannerDialog = reatomComponent(({ ctx }) => {
 const DeleteBanner = reatomComponent<{ id: number, title: string }>(({ ctx, id, title }) => {
   return (
     <Button
-      onClick={() => deleteBannerBeforeAction(ctx, { id, title })}
-      disabled={ctx.spy(deleteBannerAction.statusesAtom).isPending}
+      onClick={() => deleteBanner.deleteBefore(ctx, { id, title })}
+      disabled={ctx.spy(deleteBanner.submit.statusesAtom).isPending}
       className="h-6 w-6 aspect-square p-0 bg-neutral-800"
     >
       <IconX size={18} />

@@ -1,12 +1,17 @@
 import { general } from "#/shared/database/general-db"
-import type { StoreExchangeRatesPayload } from "@repo/shared/schemas/payment"
 import Elysia, { t } from "elysia"
-import { exchangeRates } from "./create-crypto-order"
 import { safeJsonParse } from "#/utils/config/transforms"
 import type { ExchangeRate } from "#/shared/types/payment/payment-types"
 import { wrapError } from "#/helpers/wrap-error"
 import { withData, withError } from "#/shared/schemas"
-import { getExchangeRatesStore } from "./exchange-rates.model"
+import { exchangeRates, getExchangeRatesStore } from "./cryptobot.model"
+
+const exchangeRatesSchema = t.Record(
+  t.String(),
+  t.Record(
+    t.String(), t.Number()
+  )
+)
 
 export const exchangeRatesRoute = new Elysia()
   .get("/exchange-rates", async ({ status }) => {
@@ -21,20 +26,11 @@ export const exchangeRatesRoute = new Elysia()
     const parsed = safeJsonParse<ExchangeRate[]>(exchangeRatesStr)
     if (!parsed.ok) throw status(500, wrapError("STRUCTURE_INCORRECT"))
 
-    const exchangeRatesParsed = parsed.value
-    const data: StoreExchangeRatesPayload = await getExchangeRatesStore(query, exchangeRatesParsed)
-
+    const data = await getExchangeRatesStore(query, parsed.value)
     return { data }
   }, {
     response: {
-      200: withData(
-        t.Record(
-          t.String(),
-          t.Record(
-            t.String(), t.Number()
-          )
-        )
-      ),
+      200: withData(exchangeRatesSchema),
       500: withError(
         t.UnionEnum([
           "EXCHANGES_NOT_FOUND",

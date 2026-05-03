@@ -1,15 +1,6 @@
 import { currencyCryptoSchema } from "@repo/shared/constants/currencies";
-import { 
-  getEconomyByTarget, 
-  getOrderInitiatorIndexKey, 
-  getOrderKey, 
-  getOrderLink, 
-  getPriceInCurrency, 
-  rollbackOrder, 
-  validateOrderLimit 
-} from "./create-crypto-order";
-import { logger } from "#/utils/config/logger";
-import type { CreateOrderTopUpSchema, OrderInputPayload, OutputPayload } from "@repo/shared/schemas/payment";
+import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLink, getOrderRateKey } from "./create-crypto-order";
+import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/payment";
 import { getRedis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
@@ -17,6 +8,35 @@ import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-t
 import type * as z from "zod/v4"
 import { getRedisKey } from "#/helpers/redis";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
+import { invariant } from "#/helpers/invariant";
+import { type Static, t } from "elysia";
+
+export const exchangeRates = {
+  async getList() {
+    const redis = getRedis()
+    return redis.get(EXCHANGE_RATES_KEY)
+  }
+}
+
+async function getPriceInCurrency(input: number, currency: z.infer<typeof currencyCryptoSchema>): Promise<number> {
+  const data = await exchangeRates.getList()
+  invariant(data, "Exchange rates cache is not defined")
+
+  const rates: ExchangeRate[] = JSON.parse(data)
+
+  const target = rates.find(
+    t => t.source === currency && t.target === "RUB"
+  )
+
+  invariant(target, "Selected wallet is not corrected")
+
+  function extractDiff(rubPrice: number, exchangeRate: number): number {
+    const priceInTargetCurrency = rubPrice / exchangeRate;
+    return parseFloat(priceInTargetCurrency.toFixed(8));
+  }
+
+  return extractDiff(input, Number(target.rate));
+}
 
 type CreateInvoicePayload = Pick<InvoiceType,
   | "currency_type"
@@ -45,6 +65,52 @@ export type CryptoPayPayload<T> = { ok: boolean, result: T }
 
 const DEFAULT_EXPIRATION_DATE = 10 * 60
 
+async function validateOrderLimit(initiator: string): Promise<boolean> {
+  const ORDER_LIMIT = 64;
+  const WINDOW_SECONDS = 10 * 60;
+
+  const redis = getRedis();
+  const key = getOrderRateKey(initiator)
+
+  const count = await redis.incr(key);
+
+  if (count === 1) {
+    await redis.expire(key, WINDOW_SECONDS);
+  }
+
+  return count <= ORDER_LIMIT;
+}
+
+async function rollbackOrder({
+  invoiceId, uniqueId, initiator
+}: {
+  invoiceId: number, uniqueId: string, initiator: string
+}): Promise<void> {
+  const redis = getRedis();
+
+  const deleteInvoice = await CRYPTO_PAY_API
+    .post(`deleteInvoice`, { json: { invoice_id: invoiceId } })
+    .json<CryptoPayPayload<boolean>>()
+
+  if (!deleteInvoice.ok) {
+    throw new Error("Transaction is failed")
+  }
+
+  const results = await redis.multi()
+    .del(getOrderKey(uniqueId))
+    .del(getOrderInitiatorIndexKey(initiator))
+    .exec()
+
+  if (!results) {
+    return;
+  }
+
+  const [orderErr, orderInitiatorErr] = results
+
+  console.log(
+    orderErr, orderInitiatorErr
+  )
+}
 async function createCryptoOrder({
   totalPrice, asset, initiator, value, target, comment
 }: CreateCryptoOrder) {
@@ -121,33 +187,44 @@ async function createCryptoOrder({
   return data
 }
 
-export async function processStoreCryptoPurchaseCryptobot({
-  recipient, method: { currency }, comment, target, value, initiator
-}: OrderInputPayload): Promise<OutputPayload> {
-  const { success: isCrypto, data: asset } = currencyCryptoSchema.safeParse(currency);
-  if (!isCrypto) throw new Error("Incorrect currency. Should be from crypto list");
+export const createOrderPayloadSchema = t.Object({
+  url: t.String(),
+  orderId: t.String(),
+  invoiceId: t.Number(),
+  totalPrice: t.Number(),
+  uniqueId: t.String(),
+})
 
-  const economyTarget = await getEconomyByTarget(target);
+export type CreateOrderPayload = Static<typeof createOrderPayloadSchema>;
 
-  const totalValue = value * Number(economyTarget.value)
-  const totalPrice = await getPriceInCurrency(totalValue, asset)
+export const cryptobot = {
+  async start({
+    recipient, method: { currency }, comment, target, value, initiator
+  }: OrderInputPayload): Promise<CreateOrderPayload> {
+    const { success: isCrypto, data: asset } = currencyCryptoSchema.safeParse(currency);
+    if (!isCrypto) {
+      throw new Error("Incorrect currency");
+    }
 
-  const input = {
-    totalPrice, target, value, asset, recipient, initiator, comment
+    const economyTarget = await getEconomyByTarget(target);
+
+    const totalValue = value * Number(economyTarget.value)
+    const totalPrice = await getPriceInCurrency(totalValue, asset)
+
+    const input = {
+      totalPrice, target, value, asset, recipient, initiator, comment
+    }
+
+    const payment = await createCryptoOrder(input);
+    if (!payment.ok) {
+      throw new Error("Failed in creating order");
+    }
+
+    const { invoice_id: invoiceId, hash: orderId, pay_url: url, uniqueId } = payment.result
+
+    const data = { invoiceId, orderId, url, uniqueId, totalPrice };
+    return data
   }
-
-  logger.withTag("Order").log(input)
-
-  const payment = await createCryptoOrder(input);
-  if (!payment.ok) throw new Error("Incorrect creating order");
-
-  const { invoice_id: invoiceId, hash: orderId, pay_url: url, uniqueId } = payment.result
-
-  const data = { invoiceId, orderId, url, uniqueId, totalPrice };
-
-  logger.withTag("Order").log(data)
-
-  return data
 }
 
 export const EXCHANGE_RATES_KEY = getRedisKey("external", "exchange-rates:data");
@@ -157,11 +234,11 @@ export async function updateExchangeRates() {
   const redis = getRedis();
 
   try {
-    const data = await CRYPTO_PAY_API("getExchangeRates").json<CryptoPayPayload<ExchangeRate[]>>()
+    const data = await CRYPTO_PAY_API
+      .get("getExchangeRates")
+      .json<CryptoPayPayload<ExchangeRate[]>>()
 
-    if (!data.ok) {
-      throw new Error()
-    }
+    if (!data.ok) throw new Error()
 
     const value = JSON.stringify(data.result);
     const current = await redis.get(EXCHANGE_RATES_KEY);
@@ -179,10 +256,61 @@ export async function updateExchangeRates() {
 
       if (fallback) {
         await redis.set(EXCHANGE_RATES_KEY, fallback);
-        logger.warn(`Restored previous exchanges rates cache`);
-      } else {
-        logger.error(`No exchanges rates cache and no fallback available`);
       }
     }
   }
+}
+
+export async function getExchangeRatesStore(
+  storeRates: { type: string, value: string }[],
+  realExchangeRates: ExchangeRate[]
+): Promise<StoreExchangeRatesPayload> {
+  const TARGETS = ["RUB", "UAH", "KZT"] as const
+  type TargetFiat = typeof TARGETS[number]
+
+  function isTargetFiat(v: string): v is TargetFiat {
+    return (TARGETS as readonly string[]).includes(v)
+  }
+
+  const rateMap: Partial<Record<TargetFiat, number>> = {}
+
+  for (const r of realExchangeRates) {
+    if (r.source === "USDT" && isTargetFiat(r.target)) {
+      const parsedRate = Number(r.rate)
+      if (!Number.isFinite(parsedRate)) continue
+      rateMap[r.target] = parsedRate
+    }
+  }
+
+  for (const t of TARGETS) {
+    if (!rateMap[t]) {
+      throw new Error("Incorrect target")
+    }
+  }
+
+  const result = storeRates.reduce((acc, item) => {
+    const key = item.type as GameCurrency
+
+    const valueNum = Number(item.value)
+
+    if (!Number.isFinite(valueNum)) {
+      throw new Error("Incorrect number of store economy key")
+    }
+
+    const rubPerUsdt = rateMap.RUB as number
+    const uahPerUsdt = rateMap.UAH as number
+    const kztPerUsdt = rateMap.KZT as number
+
+    const per = {
+      USDT: valueNum / rubPerUsdt,
+      RUB: valueNum,
+      UAH: valueNum * (uahPerUsdt / rubPerUsdt),
+      KZT: valueNum * (kztPerUsdt / rubPerUsdt),
+    }
+
+    acc[key] = per
+    return acc
+  }, {} as StoreExchangeRatesPayload)
+
+  return result
 }

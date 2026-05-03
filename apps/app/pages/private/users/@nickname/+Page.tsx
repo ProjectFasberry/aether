@@ -8,9 +8,9 @@ import { Skeleton } from "@repo/ui/skeleton"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@repo/ui/tooltip"
 import { Typography } from "@repo/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
-import { PrivatedUser } from "@repo/shared/types/entities/other"
 import { client } from "@/shared/lib/client-wrapper"
 import { startPageEvents } from "@/shared/lib/events"
+import { PrivatedUser } from "@/shared/components/app/private/models/users.model"
 
 const targetPlayerNickname = atom<Nullable<string>>(null, "")
 

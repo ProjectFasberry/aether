@@ -3,9 +3,8 @@ import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/async";
 import { action, atom, batch, Ctx } from "@reatom/core";
-import { onDisconnect, reatomMap, withAssign, withReset } from "@reatom/framework";
+import { reatomMap, withAssign, withReset } from "@reatom/framework";
 import * as z from "zod/v4";
-import { toast } from "sonner";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 import { makeChangeValidator } from "@/shared/lib/utils";
 
@@ -28,42 +27,39 @@ type ChatEvent<T = unknown> = {
 }
 
 const chatDataMapAtom = reatomMap<number, ChatItem>();
-
-const chatWsAtom = atom<WebSocket | null>(null, "chatWs").pipe(withReset());
+const chatWsAtom = atom<WebSocket | null>(null).pipe(withReset());
 
 export const chatWs = atom(null, "chatWs").pipe(
-  withAssign((ctx, name) => ({
+  withAssign(() => ({
     init: action((ctx) => {
       chatWs.closeWs(ctx)
-
       const socket = new WebSocket(`${env.VITE_API_URL!.replace(/^http/, 'ws') + '/privated/chat/subscribe'}`)
       chatWsAtom(ctx, socket)
-    }, `${name}.init`),
+    }),
     closeWs: action((ctx) => {
       const current = ctx.get(chatWsAtom)
+      if (!current) return;
 
-      if (current) {
-        current.close()
-        chatWsAtom.reset(ctx)
-      }
-    }, `${name}.closeWs`),
+      current.close()
+      chatWsAtom.reset(ctx)
+    }),
     getSocket: action((ctx) => {
       const socket = ctx.get(chatWsAtom)
       if (!socket) throw new Error('Socket is not defined')
       return socket;
-    }, `${name}.getSocket`),
+    }),
     deleteItem: action((ctx, data: unknown) => {
       const di = data as { id: number }
       chatDataMapAtom.delete(ctx, di.id)
-    }, `${name}.deleteItem`),
+    }),
     addItem: action((ctx, data: unknown) => {
       const ci = data as ChatItem
       chatDataMapAtom.set(ctx, ci.id, ci)
-    }, `${name}.addItem`),
+    }),
     editItem: action((ctx, data: unknown) => {
       const ei = data as ChatItem
       chatDataMapAtom.set(ctx, ei.id, ei)
-    }, `${name}.editItem`)
+    })
   }))
 )
 
@@ -76,17 +72,8 @@ const EVENTS: Record<ChatEventVariant, (ctx: Ctx, data: unknown) => void> = {
 chatWsAtom.onChange((ctx, state) => {
   if (!state) return;
 
-  state.onopen = () => {
-    if (import.meta.env.DEV) {
-      toast.info("Connected to chat ws")
-    }
-  }
-
-  state.onclose = () => {
-    if (import.meta.env.DEV) {
-      toast.info("Disconnected from chat ws")
-    }
-  }
+  state.onopen = () => {}
+  state.onclose = () => {}
 
   state.onmessage = (event: MessageEvent<any>) => {
     const msg = JSON.parse(event.data) as ChatEvent
@@ -97,7 +84,6 @@ chatWsAtom.onChange((ctx, state) => {
   }
 })
 
-// 
 export type ChatItemViews = {
   created_at: Date;
   id: number;
@@ -107,7 +93,6 @@ export type ChatItemViews = {
 }
 
 export const chatItemViewsAtom = reatomMap<number, ChatItemViews[]>()
-
 export const getChatItemViews = (id: number) => atom((ctx) => ctx.spy(chatItemViewsAtom).get(id) ?? [])
 
 export const chatItemViewsAction = reatomAsync(async (ctx, id: number) => {
@@ -118,129 +103,148 @@ export const chatItemViewsAction = reatomAsync(async (ctx, id: number) => {
   name: "chatItemViewsAction",
   onFulfill: (ctx, res) => chatItemViewsAtom(ctx, new Map(res.data.map(e => [e.message_id, res.data]))),
   onReject: (_, e) => logError(e)
-}).pipe(withStatusesAtom(), withErrorAtom(), withCache({ swr: false }))
+}).pipe(
+  withStatusesAtom(), 
+  withErrorAtom(), 
+  withCache({ swr: false })
+)
 
-//
-export const chatMetaAtom = atom<PaginatedMeta | null>(null, "chatMeta")
-export const chatDataAtom = atom<ChatItem[] | null>((ctx) => Array.from(ctx.spy(chatDataMapAtom).values()), "chatData")
+export const chatHistoryState = atom(null, "chatHistoryState").pipe(
+  withAssign(() => ({
+    data: atom<ChatItem[] | null>((ctx) => Array.from(ctx.spy(chatDataMapAtom).values()), "chatData"),
+    meta: atom<PaginatedMeta | null>(null, "chatMeta")
+  }))
+)
+export const chatHistory = atom(null, "chatHistory").pipe(
+  withAssign(() => ({
+    fetch: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() =>
+        client<{ data: ChatItem[], meta: PaginatedMeta }>("privated/chat/list").exec()
+      )
+    }, {
+      name: "chatDataAction",
+      onFulfill: (ctx, res) => {
+        batch(ctx, () => {
+          chatDataMapAtom(ctx, new Map(res.data.map((e) => [e.id, e])))
+          chatHistoryState.meta(ctx, res.meta)
+        })
+      },
+      onReject: (_, e) => logError(e)
+    }).pipe(withStatusesAtom(), withErrorAtom())
+  }))
+)
 
-export const chatDataAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<{ data: ChatItem[], meta: PaginatedMeta }>("privated/chat/list").exec()
-  )
-}, {
-  name: "chatDataAction",
-  onFulfill: (ctx, res) => {
-    batch(ctx, () => {
-      chatDataMapAtom(ctx, new Map(res.data.map((e) => [e.id, e])))
-      chatMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => logError(e)
-}).pipe(withStatusesAtom(), withErrorAtom())
-
-// 
 export const chatCreateMessageAtom = atom<string>("", "chatCreateMessage").pipe(withReset())
+
+export const chatCreate = atom(null, "chatCraete").pipe(
+  withAssign((_, name) => ({
+    submit: reatomAsync(async (ctx) => {
+      const payload: ChatEvent<{ message: string }> = {
+        event: "create",
+        data: { message: ctx.get(chatCreateMessageAtom) }
+      }
+
+      const payloadStr = JSON.stringify(payload)
+      const socket = chatWs.getSocket(ctx)
+      socket.send(payloadStr)
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx) => chatDelete.atomsReset(ctx),
+      onReject: (_, e) => logError(e)
+    }).pipe(
+      withStatusesAtom(), 
+      withErrorAtom()
+    )
+  }))
+)
 
 export const chatDelete = atom(null, "chatDelete").pipe(
   withAssign((ctx, name) => ({
     atomsReset: action((ctx) => {
       chatCreateMessageAtom.reset(ctx)
-    }, `${name}.atomsReset`)
+    }, `${name}.atomsReset`),
+    submit: reatomAsync(async (ctx, id: number) => {
+      const payload: ChatEvent<{ id: number }> = {
+        event: "delete",
+        data: { id }
+      }
+
+      const socket = chatWs.getSocket(ctx)
+      const payloadStr = JSON.stringify(payload)
+      socket.send(payloadStr)
+    }, `${name}.submit`).pipe(
+      withStatusesAtom(), 
+      withErrorAtom()
+    )
   }))
 )
 
-export const chatCreateMessageAction = reatomAsync(async (ctx) => {
-  const payload: ChatEvent<{ message: string }> = {
-    event: "create",
-    data: { message: ctx.get(chatCreateMessageAtom) }
-  }
+export const chatEditState = atom(null, "chatEditState").pipe(
+  withAssign(() => ({
+    msgId: atom<Nullable<number>>(null, "chatEditMessageId").pipe(withReset()),
+    newMsg: atom<Nullable<string>>(null, "chatEditNewMessage").pipe(withReset()),
+    oldMsg: atom<string>("", "chatEditOldMessage").pipe(withReset())
+  }))
+)
 
-  const payloadStr = JSON.stringify(payload)
-  const socket = chatWs.getSocket(ctx)
-  socket.send(payloadStr)
-}, {
-  name: "chatCreateMessageAction",
-  onFulfill: (ctx) => chatDelete.atomsReset(ctx),
-  onReject: (_, e) => logError(e)
-}).pipe(withStatusesAtom(), withErrorAtom())
-
-export const chatDeleteMessageAction = reatomAsync(async (ctx, id: number) => {
-  const payload: ChatEvent<{ id: number }> = {
-    event: "delete",
-    data: { id }
-  }
-
-  const socket = chatWs.getSocket(ctx)
-  const payloadStr = JSON.stringify(payload)
-  socket.send(payloadStr)
-}, {
-  name: "chatDeleteMessageAction",
-  onReject: (_, e) => logError(e)
-}).pipe(withStatusesAtom(), withErrorAtom())
-
-// 
-export const chatEditMessageIdAtom = atom<Nullable<number>>(null, "chatEditMessageId").pipe(withReset())
-export const chatEditNewMessageAtom = atom<Nullable<string>>(null, "chatEditNewMessage").pipe(withReset())
-export const chatEditOldMessageAtom = atom<string>("", "chatEditOldMessage").pipe(withReset())
-
-export const getChatItemIsEditAtom = (id: number) => atom((ctx) => ctx.spy(chatEditMessageIdAtom) === id, "getChatItemIsEdit");
+export const getChatItemIsEditAtom = (id: number) => atom((ctx) => ctx.spy(chatEditState.msgId) === id);
 
 export const chatEdit = atom(null, "chatEdit").pipe(
-  withAssign((ctx, name) => ({
+  withAssign((_, name) => ({
     start: action((ctx, id) => {
-      const currentMessage = ctx.get(chatDataAtom)?.find(d => d.id === id)?.message
+      const currentMessage = ctx.get(chatHistoryState.data)?.find(d => d.id === id)?.message
       if (!currentMessage) throw new Error("current message is not defined")
 
-      chatEditMessageIdAtom(ctx, id)
-      chatEditOldMessageAtom(ctx, currentMessage)
-    }, `${name}.start`),
+      chatEditState.msgId(ctx, id)
+      chatEditState.oldMsg(ctx, currentMessage)
+    }),
     end: action((ctx) => {
-      chatEditMessageIdAtom.reset(ctx)
-      chatEditNewMessageAtom.reset(ctx)
-      chatEditOldMessageAtom.reset(ctx)
-    }, `${name}.end`),
+      chatEditState.msgId.reset(ctx)
+      chatEditState.newMsg.reset(ctx)
+      chatEditState.oldMsg.reset(ctx)
+    }),
     messageIsValid: atom<boolean>(
-      makeChangeValidator(chatEditOldMessageAtom, chatEditNewMessageAtom),
-      `${name}.messageIsValid`
+      makeChangeValidator(chatEditState.oldMsg, chatEditState.newMsg)
     ),
     isValid: atom((ctx) => {
       const isIdentity = ctx.spy(chatEdit.messageIsValid)
 
       if (!isIdentity) {
-        return z.safeParse(z.string().min(1), ctx.get(chatEditNewMessageAtom)).success
+        return z.safeParse(z.string().min(1), ctx.get(chatEditState.newMsg)).success
       }
 
       return false
-    }, `${name}.isValid`),
+    }),
     atomsReset: action((ctx) => {
-      chatEditMessageIdAtom.reset(ctx)
-      chatEditNewMessageAtom.reset(ctx)
-      chatEditOldMessageAtom.reset(ctx)
-    }, `${name}.atomsReset`)
+      chatEditState.msgId.reset(ctx)
+      chatEditState.newMsg.reset(ctx)
+      chatEditState.oldMsg.reset(ctx)
+    }),
+    submit: reatomAsync(async (ctx) => {
+      const id = ctx.get(chatEditState.msgId);
+      if (!id) throw new Error("Id is not defined");
+
+      const message = ctx.get(chatEditState.newMsg)
+      if (!message) throw new Error("message is not defined");
+
+      const payload: ChatEvent<{ id: number, message: string }> = {
+        event: "edit",
+        data: { id, message }
+      }
+
+      const payloadStr = JSON.stringify(payload)
+      const socket = chatWs.getSocket(ctx)
+      socket.send(payloadStr)
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx) => chatEdit.atomsReset(ctx),
+      onReject: (_, e) => logError(e)
+    }).pipe(
+      withStatusesAtom(), 
+      withErrorAtom()
+    )
   }))
 )
-
-export const chatEditMessageAction = reatomAsync(async (ctx) => {
-  const id = ctx.get(chatEditMessageIdAtom);
-  if (!id) throw new Error("Id is not defined");
-
-  const message = ctx.get(chatEditNewMessageAtom)
-  if (!message) throw new Error("message is not defined");
-
-  const payload: ChatEvent<{ id: number, message: string }> = {
-    event: "edit",
-    data: { id, message }
-  }
-
-  const payloadStr = JSON.stringify(payload)
-  const socket = chatWs.getSocket(ctx)
-  socket.send(payloadStr)
-}, {
-  name: "chatDeleteMessageAction",
-  onFulfill: (ctx) => chatEdit.atomsReset(ctx),
-  onReject: (_, e) => logError(e)
-}).pipe(withStatusesAtom(), withErrorAtom())
 
 export const chatDisabledAtom = atom(false, "chatDisabled").pipe(withLocalStorage({ key: "privated-chat-disabled" }))
 

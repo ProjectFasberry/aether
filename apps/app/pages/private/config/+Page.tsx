@@ -3,7 +3,6 @@ import { Typography } from "@repo/ui/typography";
 import { Methods } from "@/shared/components/app/private/components/methods";
 import { Roles } from "@/shared/components/app/private/components/roles";
 import { DictionariesWrapper, CreateDictionaries, ViewDictionaries } from "@/shared/components/app/private/components/dictionaries";
-import { Chat } from "@/shared/components/app/private/components/chat";
 import { action } from "@reatom/core";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { startPageEvents } from "@/shared/lib/events";
@@ -62,7 +61,6 @@ export default function Page() {
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">
-      <Chat />
       <div className="flex flex-col sm:flex-row sm:items-stretch gap-4 h-full w-full">
         <div className="flex flex-col gap-4 bg-neutral-900 rounded-xl p-4 w-full">
           <Typography className="text-xl font-bold">

@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { store } from "./modules/store";
 import { auth } from "./modules/auth";
 import { serverGroup } from "./modules/server";
@@ -11,6 +11,9 @@ import { force } from "./modules/root";
 import { appGroup } from "./modules/root/app";
 import { validateGroup } from "./modules/root/validate";
 import { processPlayerVote } from "./modules/server/votes/process-vote.route";
+import { withData, withError } from "./shared/schemas";
+import { wrapError } from "./helpers/wrap-error";
+import { checkDatabasesHealth } from "./shared/database/init";
 
 export const main = new Elysia()
 	.use(shared)
@@ -22,7 +25,47 @@ export const main = new Elysia()
 	.use(rate);
 
 export const root = new Elysia()
-	.get("/health", ({ status }) => status(200))
+	.get("/", ({ redirect }) => redirect(`/openapi`))
+	.group("/health", app => app
+		.get("/", () => ({ data: { status: "OK", uptime: process.uptime() } }), {
+			response: {
+				200: withData(
+					t.Object({
+						status: t.Literal("OK"),
+						uptime: t.Number()
+					})
+				)
+			}
+		})
+		.get("/ready", async ({ status }) => {
+			try {
+				const databases = await checkDatabasesHealth();
+				
+				const result = {
+					status: "OK",
+					timestamp: new Date().toISOString(),
+					services: { 
+						database: databases 
+					}
+				}
+
+				return { data: result }
+			} catch (e) {
+				return status(503, wrapError("DB connection failed"))
+			}
+		}, {
+			response: {
+				200: withData(
+					t.Object({
+						status: t.Literal("OK"),
+						timestamp: t.String(),
+						services: t.Record(t.String(), t.Any())
+					})
+				),
+				503: withError()
+			}
+		})
+	)
 	.use(appGroup)
 	.use(validateGroup)
 	.use(service)

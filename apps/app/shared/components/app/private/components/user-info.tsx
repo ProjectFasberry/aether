@@ -61,13 +61,11 @@ export const UserInfo = reatomComponent(({ ctx }) => {
 
   return (
     <Dialog>
-      <DialogTrigger>
-        <div className="flex rounded-lg h-10 overflow-hidden select-none px-4 gap-2 cursor-pointer bg-neutral-50/90 items-center">
-          <Typography className="font-semibold text-neutral-950">
-            Роль: <span className="text-blue-500">{roleTitle}</span>
-          </Typography>
-          <IconLayoutSidebarRightInactive className="text-neutral-950" size={18} />
-        </div>
+      <DialogTrigger className="flex justify-between rounded-lg bg-neutral-700 h-10 overflow-hidden select-none px-4 gap-2 items-center">
+        <Typography>
+          Роль: <span className="font-semibold">{roleTitle}</span>
+        </Typography>
+        <IconLayoutSidebarRightInactive className="text-neutral-400" size={18} />
       </DialogTrigger>
       <DialogContent className='flex flex-col w-full rounded-lg gap-1'>
         <DialogTitle className="text-center text-2xl">
@@ -80,11 +78,7 @@ export const UserInfo = reatomComponent(({ ctx }) => {
                 {group.title}
               </Typography>
               <div className="flex flex-col gap-1 w-full">
-                {group.data.map(item => (
-                  <span key={item} className="text-sm">
-                    {item}
-                  </span>
-                ))}
+                {group.data.map(item => <span key={item} className="text-sm">{item}</span>)}
               </div>
               {idx < groups.length - 1 && <Separator />}
             </div>

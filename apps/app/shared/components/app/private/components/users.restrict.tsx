@@ -45,7 +45,8 @@ const UserActionsRestrictSubmit = reatomComponent<{ nickname: string }>(({ ctx, 
 
   return (
     <Button
-      className="bg-neutral-50 text-neutral-950 text-lg font-semibold"
+      background="white"
+      className="font-semibold"
       disabled={isDisabled}
       onClick={() => usersControlPunishBeforeAction(ctx, [nickname])}
     >

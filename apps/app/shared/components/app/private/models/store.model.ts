@@ -75,7 +75,6 @@ export const createStoreItemAction = reatomAsync(async (ctx) => {
   }
 }).pipe(withStatusesAtom())
 
-// 
 export const itemToRemoveAtom = atom<StoreItem | null>(null, "itemToRemove").pipe(withReset())
 
 export const removeStoreItemBeforeAction = action((ctx, item: StoreItem) => {
@@ -91,11 +90,9 @@ export const removeStoreItemBeforeAction = action((ctx, item: StoreItem) => {
 }, "removeStoreItemBeforeAction")
 
 export const removeStoreItemAction = reatomAsync(async (ctx, id: number) => {
-  return await ctx.schedule(() =>
-    client
-      .delete<{ id: number }>(`privated/store/item/${id}`)
-      .exec()
-  )
+  return await client
+    .delete<{ id: number }>(`privated/store/item/${id}`)
+    .exec()
 }, {
   name: "removeStoreItemAction",
   onFulfill: (ctx, res) => {
@@ -109,7 +106,6 @@ export const removeStoreItemAction = reatomAsync(async (ctx, id: number) => {
   }
 }).pipe(withStatusesAtom())
 
-// 
 export const itemToEditAtom = atom<StoreItem | null>(null, "itemToEdit").pipe(withReset())
 
 export const editStoreItemAction = reatomAsync(async (ctx, id: number) => {
@@ -120,12 +116,10 @@ export const editStoreItemAction = reatomAsync(async (ctx, id: number) => {
     value
   })) as z.infer<typeof newsUpdateSchema>
 
-  return await ctx.schedule(() =>
-    client
-      .post(`privated/store/item/edit/${id}`)
-      .pipe(withJsonBody(body))
-      .exec()
-  )
+  return await client
+    .post(`privated/store/item/edit/${id}`)
+    .pipe(withJsonBody(body))
+    .exec()
 }, {
   name: "editStoreItemAction",
   onFulfill: (ctx, res) => {
@@ -136,7 +130,6 @@ export const editStoreItemAction = reatomAsync(async (ctx, id: number) => {
   }
 }).pipe(withStatusesAtom())
 
-// 
 export const storeCategoryAtom = atom<StoreItemsParams["category"]>("all");
 export const storeWalletFilterAtom = atom<StoreItemsParams["wallet"]>("ALL");
 

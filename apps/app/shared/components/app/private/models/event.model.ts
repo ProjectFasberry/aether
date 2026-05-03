@@ -3,7 +3,6 @@ import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatus
 import { getEvents } from "../../events/models/events.model"
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
 import { toast } from "sonner"
-import { logError } from "@/shared/lib/log"
 import { notifyAboutRestrictRole } from "./actions.model"
 
 type EventPayload = ExtractApiData<"getServerEventsList">["data"][number]
@@ -18,46 +17,45 @@ export const eventsListAction = reatomAsync(async (ctx) => {
   withStatusesAtom()
 )
 
-export const createEventTitleAtom = atom("", "createEventTitle").pipe(withReset())
-export const createEventDescriptionAtom = atom("", "createEventDescription").pipe(withReset())
-export const createEventInitiatorAtom = atom("", "createEventInitiator").pipe(withReset())
-export const createEventTypeAtom = atom("", "createEventType").pipe(withReset())
-
-export const createEvent = atom(null, "createEvent").pipe(
-  withAssign((ctx, name) => ({
-    resetFull: action((ctx) => {
-      createEventTitleAtom.reset(ctx)
-      createEventDescriptionAtom.reset(ctx)
-      createEventInitiatorAtom.reset(ctx)
-      createEventTypeAtom.reset(ctx)
-    }, `${name}.createEvent`)
+export const createEventState = atom(null, "createEventState").pipe(
+  withAssign(() => ({
+    title: atom("", "createEventTitle").pipe(withReset()),
+    description: atom("", "createEventDescription").pipe(withReset()),
+    initiator: atom("", "createEventInitiator").pipe(withReset()),
+    type: atom("", "createEventType").pipe(withReset())
   }))
 )
+export const createEvent = atom(null, "createEvent").pipe(
+  withAssign((_, name) => ({
+    resetFull: action((ctx) => {
+      createEventState.title.reset(ctx)
+      createEventState.description.reset(ctx)
+      createEventState.initiator.reset(ctx)
+      createEventState.type.reset(ctx)
+    }),
+    submit: reatomAsync(async (ctx) => {
+      const json = {
+        title: ctx.get(createEventState.title),
+        description: ctx.get(createEventState.description),
+        initiator: ctx.get(createEventState.initiator),
+        type: ctx.get(createEventState.type)
+      }
 
-export const createEventAction = reatomAsync(async (ctx) => {
-  const json = {
-    title: ctx.get(createEventTitleAtom),
-    description: ctx.get(createEventDescriptionAtom),
-    initiator: ctx.get(createEventInitiatorAtom),
-    type: ctx.get(createEventTypeAtom)
-  }
+      return await client
+        .post<EventPayload>("privated/events/create", { throwHttpErrors: false })
+        .pipe(withJsonBody(json))
+        .exec()
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx, res) => {
+        toast.success("Ивент создан");
 
-  return await client
-    .post<EventPayload>("privated/events/create", { throwHttpErrors: false })
-    .pipe(withJsonBody(json))
-    .exec()
-}, {
-  name: "createEventAction",
-  onFulfill: (ctx, res) => {
-    toast.success("Ивент создан");
+        eventsListAction.cacheAtom.reset(ctx)
+        eventsListAction.dataAtom(ctx, (state) => state ? [...state, res] : null)
 
-    eventsListAction.cacheAtom.reset(ctx)
-    eventsListAction.dataAtom(ctx, (state) => state ? [...state, res] : null)
-
-    createEvent.resetFull(ctx)
-  },
-  onReject: (ctx, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-  },
-}).pipe(withStatusesAtom())
+        createEvent.resetFull(ctx)
+      },
+      onReject: (_, e) => notifyAboutRestrictRole(e),
+    }).pipe(withStatusesAtom())
+  }))
+)

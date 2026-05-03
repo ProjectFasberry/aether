@@ -48,9 +48,14 @@ export const orderEvents = new Elysia()
       while (true) {
         while (queue.length) {
           const msg = queue.shift();
-          if (msg) yield sse({ data: msg, event: "payload" })
+
+          if (msg) {
+            yield sse({ data: msg, event: "payload" })
+          }
         }
+
         yield sse({ event: "config", data: "ping" });
+        
         await new Promise((r) => setTimeout(r, 1000));
       }
     } finally {

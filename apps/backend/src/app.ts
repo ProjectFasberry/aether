@@ -1,7 +1,7 @@
 import { isProduction, PORT } from "./shared/env";
 import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
-import { serverTiming as serverTimingPlugin } from "@elysiajs/server-timing";
+import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
 // import { prometheusPlugin } from "./lib/plugins/prometheus";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { defineSession } from "./lib/middlewares/define";

@@ -1,40 +1,15 @@
-import Elysia, { type Static, t } from "elysia";
-import { processStoreCryptoPurchaseCryptobot } from "./cryptobot.model";
+import Elysia, { t } from "elysia";
+import { cryptobot, type CreateOrderPayload, createOrderPayloadSchema } from "./cryptobot.model";
 import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
 import { defineUser } from "#/lib/middlewares/define";
-import { invariant } from "#/helpers/invariant";
 import { wrapError } from "@repo/shared/lib/utils";
+import { heleket } from "./heleket.model";
 
-async function validateMethodAvailable(method: string) {
-  const query = await general
-    .selectFrom("payment_methods")
-    .select("id")
-    .where("isAvailable", "=", true)
-    .where("value", "=", method)
-    .executeTakeFirst()
-
-  return Boolean(query)
-}
-
-const outputSchema = t.Object({
-  url: t.String(),
-  orderId: t.String(),
-  invoiceId: t.Number(),
-  totalPrice: t.Number(),
-  uniqueId: t.String(),
-})
-type OutputPayload = Static<typeof outputSchema>;
-
-const targets: Record<MethodType, (pd: OrderInputPayload) => Promise<OutputPayload>> = {
-  "cryptobot": async (pd) => processStoreCryptoPurchaseCryptobot(pd),
-  "heleket": async (pd) => {
-    invariant(false, "METHOD_NOT_AVAILABLE")
-  },
-  "sbp": async (pd) => {
-    invariant(false, "METHOD_NOT_AVAILABLE")
-  },
+const EVENTS: Partial<Record<MethodType, (pd: OrderInputPayload) => Promise<CreateOrderPayload>>> = {
+  "cryptobot": cryptobot.start,
+  "heleket": heleket.start
 }
 
 export const createOrder = new Elysia()
@@ -43,12 +18,22 @@ export const createOrder = new Elysia()
     const { target, method, comment, value, recipient } = body;
 
     try {
-      const isValid = await validateMethodAvailable(method.type);
-      if (!isValid) {
+      const isValid = await general
+        .selectFrom("payment_methods")
+        .select("id")
+        .where("isAvailable", "=", true)
+        .where("value", "=", method.type)
+        .executeTakeFirst()
+
+      if (!isValid?.id) {
         throw status(400, wrapError("INCORRECT_PAYMENT_METHOD"));
       }
 
-      const event = targets[method.type];
+      const event = EVENTS[method.type];
+      if (!event) {
+        throw status(400, wrapError("INCORRECT_PAYMENT_METHOD"));
+      }
+
       const data = await event({ target, method, value, comment, recipient, initiator });
 
       return { data }
@@ -59,9 +44,7 @@ export const createOrder = new Elysia()
   }, {
     body: createOrderTopUpSchema,
     response: {
-      200: withData(
-        outputSchema
-      ),
+      200: withData(createOrderPayloadSchema),
       400: withError(
         t.UnionEnum([
           "INCORRECT_PAYMENT_METHOD",

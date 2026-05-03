@@ -229,11 +229,9 @@ export const usersControlRolesAction = reatomAsync(async (
 
   const body: BodyPayload = { type, nicknames, targetRoleId }
 
-  const result = await ctx.schedule(() =>
-    client.post<ControlPayload>("privated/user/roles")
-      .pipe(withJsonBody(body))
-      .exec()
-  )
+  const result = await client.post<ControlPayload>("privated/user/roles")
+    .pipe(withJsonBody(body))
+    .exec()
 
   return { nicknames, targetRoleId, result }
 }, {
@@ -280,23 +278,16 @@ export type Role = {
 
 export const rolesAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<Role[]>("privated/role/list", { signal: ctx.controller.signal })
-      .exec()
+    client<Role[]>("privated/role/list", { signal: ctx.controller.signal }).exec()
   )
 }, {
   name: "rolesAction",
-  onReject: (ctx, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-  }
+  onReject: (ctx, e) => notifyAboutRestrictRole(e)
 }).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
 //#endregion
 
 //#region check/select users
-export const getIsCheckedAtom = (nickname: string) => atom(
-  (ctx) => ctx.spy(usersControlNicknamesAtom).has(nickname),
-  "getIsChecked"
-)
+export const getIsCheckedAtom = (nickname: string) => atom((ctx) => ctx.spy(usersControlNicknamesAtom).has(nickname))
 
 export const selectUserAction = action((ctx, value: boolean, nickname: string) => {
   if (value) {
@@ -374,8 +365,7 @@ function updateUsersData(
 export const usersIsViewAtom = atom(false, "usersIsView")
 
 export const updateAction = reatomAsync(async (ctx) => {
-  const params = getParams(ctx);
-  return await ctx.schedule(() => getUsers(params))
+  return await ctx.schedule(() => getUsers(getParams(ctx)))
 }, {
   name: "updateAction",
   onFulfill: (ctx, res) => {
@@ -388,10 +378,7 @@ export const updateAction = reatomAsync(async (ctx) => {
       usersMetaAtom(ctx, res.meta)
     })
   },
-  onReject: (_, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-  }
+  onReject: (_, e) => notifyAboutRestrictRole(e)
 }).pipe(withStatusesAtom())
 
 usersIsViewAtom.onChange((ctx, state) => {
@@ -409,11 +396,7 @@ usersIsViewAtom.onChange((ctx, state) => {
 //#endregion
 
 //#region select
-export const usersSelectedOverAtom = atom(
-  (ctx) => ctx.spy(usersSelectedLengthAtom) >= 2,
-  "usersSelectedOver"
-)
-
+export const usersSelectedOverAtom = atom((ctx) => ctx.spy(usersSelectedLengthAtom) >= 2)
 export const userActionsChangeRoleDropdownMenuIsOpenAtom = atom(false, "userActionsChangeRoleDropdownMenuIsOpen")
 
 usersControlRolesAction.onFulfill.onCall((ctx, res) => {

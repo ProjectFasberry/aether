@@ -16,7 +16,7 @@ import { validateLogger } from "#/utils/config/logger";
 
 export const toLog = (name: string) => new Elysia()
   .onAfterResponse(() => {
-    if (!isProduction) validateLogger.log(name);
+    // if (!isProduction) validateLogger.log(name);
   })
   .as("scoped")
 

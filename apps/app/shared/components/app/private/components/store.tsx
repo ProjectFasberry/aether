@@ -1,12 +1,7 @@
 import { DeleteButton, EditButton, ToLink } from "@/shared/components/app/private/components/ui"
 import {
-  createStoreItemAction,
-  itemToEditAtom,
-  editStoreItemAction,
-  removeStoreItemAction,
-  removeStoreItemBeforeAction,
-  searchParamTargetAtom,
-  storeItemsAction,
+  createStoreItemAction, itemToEditAtom, editStoreItemAction, removeStoreItemAction,
+  removeStoreItemBeforeAction, searchParamTargetAtom, storeItemsAction,
 } from "@/shared/components/app/private/models/store.model"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
 import { createLink } from "@/shared/components/config/link"

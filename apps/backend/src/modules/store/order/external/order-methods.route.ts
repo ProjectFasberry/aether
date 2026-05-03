@@ -43,8 +43,6 @@ export const methodsList = new Elysia()
     return { data }
   }, {
     response: {
-      200: withData(
-        t.Array(methodPayload)
-      )
+      200: withData(t.Array(methodPayload))
     }
   })

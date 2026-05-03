@@ -1,14 +1,8 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  deleteDictionariesBeforeAction,
-  dictionariesCreateAction,
-  dictionariesCreateKeyAtom,
-  dictionariesCreateValueAtom,
-  dictionariesDeleteAction,
+  dict,
   dictionariesEdit,
-  dictionariesEditAction,
-  dictionariesEditKeyAtom,
-  dictionariesEditValueAtom,
+  dictState,
   DictionariesItem,
   dictionariesListAction
 } from "../models/dictionaries.model";
@@ -27,15 +21,15 @@ type DictionariesListItemProps = Omit<DictionariesItem, "key"> & {
 const DictionariesListItem = reatomComponent<DictionariesListItemProps>(({ ctx, id, itemKey, value }) => {
   const isEdit = ctx.spy(dictionariesEdit.getIsEdit(id));
 
-  const editIsLoading = ctx.spy(dictionariesEditAction.statusesAtom).isPending
+  const editIsLoading = ctx.spy(dict.edit.statusesAtom).isPending
 
   return (
     <div className="flex justify-between items-center gap-1 p-2 border border-neutral-800 rounded-lg">
       <div className="flex items-center gap-2">
         {isEdit ? (
           <Input
-            value={ctx.spy(dictionariesEditKeyAtom) ?? itemKey}
-            onChange={e => dictionariesEditKeyAtom(ctx, e.target.value)}
+            value={ctx.spy(dictState.editKey) ?? itemKey}
+            onChange={e => dictState.editKey(ctx, e.target.value)}
             className="h-6"
           />
         ) : (
@@ -45,8 +39,8 @@ const DictionariesListItem = reatomComponent<DictionariesListItemProps>(({ ctx, 
         )}
         {isEdit ? (
           <Input
-            value={ctx.spy(dictionariesEditValueAtom) ?? value}
-            onChange={e => dictionariesEditValueAtom(ctx, e.target.value)}
+            value={ctx.spy(dictState.editValue) ?? value}
+            onChange={e => dictState.editValue(ctx, e.target.value)}
             className="h-6"
           />
         ) : (
@@ -65,7 +59,7 @@ const DictionariesListItem = reatomComponent<DictionariesListItemProps>(({ ctx, 
             />
             <ActionButton
               variant="selected"
-              onClick={() => dictionariesEditAction(ctx, id)}
+              onClick={() => dict.edit(ctx, id)}
               icon={IconCheck}
               disabled={!ctx.spy(dictionariesEdit.isValid) || editIsLoading}
             />
@@ -77,8 +71,8 @@ const DictionariesListItem = reatomComponent<DictionariesListItemProps>(({ ctx, 
               onClick={() => dictionariesEdit.start(ctx, id)}
             />
             <DeleteButton
-              disabled={ctx.spy(dictionariesDeleteAction.statusesAtom).isPending}
-              onClick={() => deleteDictionariesBeforeAction(ctx, { id, title: itemKey })}
+              disabled={ctx.spy(dict.delete.statusesAtom).isPending}
+              onClick={() => dict.deleteBefore(ctx, { id, title: itemKey })}
             />
           </>
         )}
@@ -105,37 +99,33 @@ const DictionariesList = reatomComponent(({ ctx }) => {
   )
 }, "DictionariesList")
 
-// 
 const CreateDictionariesKeyInput = reatomComponent(({ ctx }) => {
   return (
     <Input
       placeholder="Ключ"
-      value={ctx.spy(dictionariesCreateKeyAtom)}
-      onChange={(e) => dictionariesCreateKeyAtom(ctx, e.target.value)}
+      value={ctx.spy(dictState.createKey)}
+      onChange={(e) => dictState.createKey(ctx, e.target.value)}
     />
   )
 }, "CreateDictionariesKeyInput")
-
 const CreateDictionariesValueInput = reatomComponent(({ ctx }) => {
   return (
     <Input
       placeholder="Значение"
-      value={ctx.spy(dictionariesCreateValueAtom)}
-      onChange={(e) => dictionariesCreateValueAtom(ctx, e.target.value)}
+      value={ctx.spy(dictState.createValue)}
+      onChange={(e) => dictState.createValue(ctx, e.target.value)}
     />
   )
 }, "CreateDictionariesValueInput")
-
 const CreateDictionariesSubmit = reatomComponent(({ ctx }) => {
   return (
     <ButtonXSubmit
       title="Создать"
-      isDisabled={ctx.spy(dictionariesCreateAction.statusesAtom).isPending}
-      action={() => dictionariesCreateAction(ctx)}
+      isDisabled={ctx.spy(dict.create.statusesAtom).isPending}
+      action={() => dict.create(ctx)}
     />
   )
 }, "DictionariesCreate")
-
 const CreateDictionariesForm = () => {
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -145,7 +135,6 @@ const CreateDictionariesForm = () => {
   )
 }
 
-// 
 const VARIANTS: Record<ActionType, ReactNode> = {
   "view": <DictionariesList />,
   "create": <CreateDictionariesForm />,
@@ -153,10 +142,7 @@ const VARIANTS: Record<ActionType, ReactNode> = {
 }
 
 export const DictionariesWrapper = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(getSelectedParentAtom("dictionaries"))) {
-    return VARIANTS["view"]
-  }
-
+  if (!ctx.spy(getSelectedParentAtom("dictionaries"))) return VARIANTS["view"]
   return VARIANTS[ctx.spy(actionsTypeAtom)]
 }, "DictionariesWrapper")
 

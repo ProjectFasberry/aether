@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { getSeemsLikePlayersByPlayer, seemsPlayersSchema } from "./seems-players.model";
-import type { SeemsLikePlayersPayload } from "@repo/shared/types/entities/other";
 import { withData } from "#/shared/schemas";
 
 const seemsPlayersPayload = t.Object({
@@ -17,7 +16,7 @@ const seemsPlayersPayload = t.Object({
 
 export const seemsPlayers = new Elysia()
   .get("/seems-like/:nickname", async ({ query, params: { nickname } }) => {
-    const data: SeemsLikePlayersPayload = await getSeemsLikePlayersByPlayer(nickname, query)
+    const data = await getSeemsLikePlayersByPlayer(nickname, query)
     return { data }
   }, {
     query: seemsPlayersSchema,

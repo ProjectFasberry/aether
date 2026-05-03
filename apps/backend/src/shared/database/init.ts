@@ -53,7 +53,7 @@ function checkMySQLHealth(pool: MySQLPool): Promise<void> {
 	});
 }
 
-export async function checkDatabasesHealth(): Promise<void> {
+export async function checkDatabasesHealth(): Promise<HealthCheckResult[]> {
 	const results: HealthCheckResult[] = [];
 
 	for (const [name, pool] of Object.entries(DATABASES_FOR_CHECK)) {
@@ -98,4 +98,6 @@ export async function checkDatabasesHealth(): Promise<void> {
 			process.exit(1);
 		}
 	});
+
+	return results
 }

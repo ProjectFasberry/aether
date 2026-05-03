@@ -1,4 +1,4 @@
-// @ts-expect-error
+// @ts-ignore
 import '@bprogress/core/css';
 
 import "@/shared/styles/tailwind.css";
