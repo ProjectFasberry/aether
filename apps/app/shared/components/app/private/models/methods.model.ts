@@ -1,9 +1,17 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { PrivatedMethodsPayload } from "@repo/shared/types/entities/other";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
 import { logError } from "@/shared/lib/log";
+
+export type PrivatedMethodsPayload = {
+  id: number;
+  description: string | null;
+  imageUrl: string;
+  isAvailable: boolean;
+  title: string;
+  value: string;
+}[];
 
 export const methodsAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>

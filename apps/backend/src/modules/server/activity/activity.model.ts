@@ -4,8 +4,8 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { sql } from "kysely";
 import { getPlayerStatusGlobal } from "../status/status.model";
-import type { PlayerActivityPayload } from "@repo/shared/types/entities/user";
 import { invariant } from "#/helpers/invariant";
+import type { PlayerActivityPayload } from "./activity-now.route";
 
 type PlayerStatus = {
   nickname: string;

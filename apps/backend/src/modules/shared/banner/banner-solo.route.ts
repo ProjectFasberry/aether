@@ -1,6 +1,5 @@
-import Elysia, { t } from "elysia";
+import Elysia, { type Static, t } from "elysia";
 import { bannerSchema } from "./banner.model";
-import type { BannerPayload } from "@repo/shared/types/entities/banner";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { bannerPayload } from "./banner-list.route";
@@ -9,7 +8,7 @@ const baseQuery = general
   .selectFrom("banners")
   .select(["id", "title", "description", "href_title", "href_value"])
 
-async function getLatestBanner(): Promise<BannerPayload | null> {
+async function getLatestBanner(): Promise<Static<typeof bannerPayload> | null> {
   const query = await baseQuery
     .orderBy("created_at", "desc")
     .executeTakeFirst()
@@ -29,7 +28,7 @@ async function getLatestBanner(): Promise<BannerPayload | null> {
 
 async function getBanner(
   id: number
-): Promise<BannerPayload | null> {
+): Promise<Static<typeof bannerPayload> | null> {
   const query = await baseQuery
     .where("id", "=", id)
     .executeTakeFirst()

@@ -43,34 +43,3 @@ export type Land = {
 		gallery: string[];
 	};
 };
-
-export type Lands = Pick<Land, "ulid" | "title" | "name" | "level" | "created_at" | "type" | "stats" | "details"> & {
-	members: [
-		{
-			uuid: string;
-			avatar: string;
-			chunks: number;
-			nickname: string;
-		},
-	];
-};
-
-export type LandsPayload = {
-	data: Lands[];
-	meta: PaginatedMeta;
-};
-
-export type PlayerLands = {
-	data: Array<
-		Pick<Land, "ulid" | "name" | "title" | "created_at" | "type"> & {
-			members: Array<{
-				nickname: string;
-				uuid: string;
-				chunks: number;
-			}>;
-		}
-	>;
-	meta: { count: number };
-};
-
-export type PlayerLandsPayload = PlayerLands;

@@ -1,6 +1,6 @@
 import * as z from "zod/v4";
 import { currencyCryptoSchema, currencyFiatSchema } from "../entities/currencies-schema";
-import type { JsonValue } from "@repo/shared/types/db/general-database-types";
+import type { JsonValue } from "../../types/db/general-database-types";
 import { nicknameSchema } from "../auth";
 
 export const paymentFiatMethodSchema = z.enum(["card", "sbp"]);

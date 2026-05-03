@@ -1,11 +1,10 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { playerActivity } from "../models/activity.model";
+import { playerActivity, PlayerActivityPayload } from "../models/activity.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { expImage } from "@/shared/consts/images";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
-import { PlayerActivityPayload } from "@repo/shared/types/entities/user";
 import { onConnect, sleep } from "@reatom/framework";
 import { playerParamAtom } from "../models/player.model";
 

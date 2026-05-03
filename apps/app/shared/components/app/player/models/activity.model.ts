@@ -1,9 +1,21 @@
 import { logError } from "@/shared/lib/log";
 import { reatomAsync, withCache, withDataAtom, withRetry, withStatusesAtom } from "@reatom/async";
-import { PlayerActivityPayload } from "@repo/shared/types/entities/user";
 import { client } from "@/shared/lib/client-wrapper";
 import { playerParamAtom } from "./player.model";
 import { atom, withAssign } from "@reatom/framework";
+
+export type PlayerActivityPayload =
+  | {
+    type: "online";
+    nickname: string;
+    server: string;
+    issued_date: Date;
+  }
+  | {
+    type: "offline";
+    nickname: string;
+    issued_date: Date | null;
+  };
 
 type PlayerLocation = {
   world: string,

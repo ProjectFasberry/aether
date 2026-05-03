@@ -2,10 +2,26 @@ import { general } from "#/shared/database/general-db"
 import { metaSchema, withData, withMeta } from "#/shared/schemas"
 import { getDirection } from "#/utils/config/paginate"
 import { wrapMeta } from "#/utils/config/transforms"
-import type { TasksPayload } from "@repo/shared/types/entities/other"
 import Elysia, { type Static, t } from "elysia"
 import { executeWithCursorPagination } from "kysely-paginate"
 import { taskPayload } from "./tasks.model"
+
+export type TaskItem = {
+  id: number;
+  description: string;
+  created_at: Date;
+  title: string;
+  expires: Date | null;
+  action_type: string;
+  action_value: string | null;
+  reward_currency: string;
+  reward_value: number;
+};
+
+export type TasksPayload = {
+  data: TaskItem[];
+  meta: PaginatedMeta;
+};
 
 const tasksListSchema = t.Pick(metaSchema, ["asc", "endCursor"])
 

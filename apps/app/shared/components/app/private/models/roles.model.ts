@@ -2,10 +2,24 @@ import { client, withJsonBody } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async"
 import { notifyAboutRestrictRole } from "./actions.model"
 import { logError } from "@/shared/lib/log"
-import { RolePayload, RolesRolePermissionListPayload } from "@repo/shared/types/entities/role"
 import { toast } from "sonner"
 import { action, atom } from "@reatom/core"
 import { withAssign, withReset } from "@reatom/framework"
+
+export type RolePayload = {
+  id: number;
+  name: string;
+}
+
+export type RolePermission = {
+  id: number;
+  name: string;
+}
+
+export type RolesRolePermissionListPayload = {
+  role_id: number;
+  permissions: RolePermission[];
+}
 
 export const rolesListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() => client<RolePayload[]>("privated/role/list").exec())

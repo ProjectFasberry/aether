@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { createContext, useContext } from 'react';
 
 function getStrictContext<T>(
   name?: string,
@@ -12,7 +12,7 @@ function getStrictContext<T>(
   }) => React.JSX.Element,
   () => T,
 ] {
-  const Context = React.createContext<T | undefined>(undefined);
+  const Context = createContext<T | undefined>(undefined);
 
   const Provider = ({
     value,
@@ -20,10 +20,10 @@ function getStrictContext<T>(
   }: {
     value: T;
     children?: React.ReactNode;
-  }) => <Context.Provider value={value}>{children}</Context.Provider>;
+  }) => <Context value={value}>{children}</Context>;
 
   const useSafeContext = () => {
-    const ctx = React.useContext(Context);
+    const ctx = useContext(Context);
     if (ctx === undefined) {
       throw new Error(`useContext must be used within ${name ?? 'a Provider'}`);
     }

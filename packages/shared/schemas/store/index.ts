@@ -1,6 +1,6 @@
 import * as z from "zod/v4";
 import { editorFieldSchema, GAME_CURRENCIES, storeItemSchema } from "../payment";
-import type { JsonValue } from "@repo/shared/types/db/general-database-types";
+import type { JsonValue } from "../../types/db/general-database-types";
 
 const fields = storeItemSchema.pick({
 	title: true,

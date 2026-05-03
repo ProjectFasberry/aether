@@ -1,6 +1,6 @@
 import { getRedisKey } from "#/helpers/redis"
+import type { EventPayload } from "#/modules/private/events/events.model"
 import { getRedis } from "#/shared/redis/client"
-import type { EventPayload } from "@repo/shared/types/entities/other"
 import { type Static, t } from "elysia"
 import { nanoid } from "nanoid"
 

@@ -4,9 +4,26 @@ import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/
 import { action, atom, batch, Ctx } from "@reatom/core"
 import { reatomMap, reatomSet, sleep, withConcurrency, withReset } from "@reatom/framework"
 import { withLocalStorage } from "@reatom/persist-web-storage"
-import { PrivatedUsersPayload } from "@repo/shared/types/entities/other"
 import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
+
+export type PrivatedUser = {
+  id: number;
+  lower_case_nickname: string;
+  premium_uuid: string | null;
+  uuid: string;
+  created_at: Date;
+  avatar: string;
+  nickname: string;
+  role_id: number;
+  role_name: string;
+  status: "default" | "banned" | "muted";
+};
+
+export type PrivatedUsersPayload = {
+  data: PrivatedUser[];
+  meta: PaginatedMeta;
+};
 
 //#region fetch/action list
 type UsersSort = "created_at" | "role" | "abc"

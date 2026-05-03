@@ -1,11 +1,25 @@
 import Elysia, { t } from "elysia";
 import dayjs from 'dayjs';
 import { defineOptionalUser } from "#/lib/middlewares/define";
-import type { MePayload } from "@repo/shared/types/entities/user"
 import { validateBannedStatus } from "#/lib/middlewares/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
 import { getPlayerAvatar } from "../server/skin/skin.model";
+
+export type MePayload = {
+  nickname: string;
+  uuid: string;
+  meta: {
+    login_date: Date;
+    reg_date: Date;
+    role: {
+      id: number;
+      name: string;
+    };
+    permissions: string[];
+  };
+  avatar: string;
+};
 
 export const me = new Elysia()
   .use(validateBannedStatus())

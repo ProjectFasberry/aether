@@ -5,7 +5,6 @@ import { getRedis } from "#/shared/redis/client";
 import { safeJsonParse } from "#/utils/config/transforms";
 import pLimit from "p-limit";
 import { general } from "#/shared/database/general-db";
-import type { SkinsHistory } from "@repo/shared/types/entities/other";
 import { sql } from "kysely";
 import { BUCKETS, minio } from "#/shared/minio/client";
 import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } from "#/shared/env";
@@ -80,16 +79,18 @@ export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("i
 
 export type SkinsHistoryPayload = Static<typeof skinsHistorySchema>
 
-export const skinsHistorySchema = t.Array(
-  t.Object({
-    skin_identifier: t.String(),
-    skin_variant: t.Nullable(t.String()),
-    timestamp: t.Number(),
-    skin_url: t.Nullable(t.String()),
-    skin_head_url: t.Nullable(t.String())
-  })
-)
+export const skinHistorySingleSchema = t.Object({
+  skin_identifier: t.String(),
+  skin_variant: t.Nullable(t.String()),
+  timestamp: t.Number(),
+  skin_url: t.Nullable(t.String()),
+  skin_head_url: t.Nullable(t.String())
+})
 
+export const skinsHistorySchema = t.Array(
+  skinHistorySingleSchema
+)
+type SkinsHistory = Static<typeof skinHistorySingleSchema>
 export async function getSkinsHistory({ nickname }: { nickname: string }) {
   const result = await getCachedSkinPayload(nickname)
   return result

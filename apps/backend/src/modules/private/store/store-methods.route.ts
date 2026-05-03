@@ -1,11 +1,19 @@
 import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
 import * as z from "zod/v4";
-import type { PrivatedMethodsPayload } from "@repo/shared/types/entities/other";
 import { getStaticUrl } from "#/helpers/volume";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
+
+export type PrivatedMethodsPayload = {
+  id: number;
+  description: string | null;
+  imageUrl: string;
+  isAvailable: boolean;
+  title: string;
+  value: string;
+}[];
 
 async function getMethods() {
   let query = await general

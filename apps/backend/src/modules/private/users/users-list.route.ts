@@ -1,5 +1,4 @@
 import Elysia, { type Static, t } from "elysia";
-import type { PrivatedUsersPayload } from "@repo/shared/types/entities/other";
 import { getDirection } from "#/utils/config/paginate";
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
@@ -11,6 +10,24 @@ import { Permissions } from "#/shared/constants/permissions";
 import { getPlayerAvatar } from "#/modules/server/skin/skin.model";
 
 const USER_SORT = ["abc", "created_at", "role"] as const
+
+export type PrivatedUser = {
+  id: number;
+  lower_case_nickname: string;
+  premium_uuid: string | null;
+  uuid: string;
+  created_at: Date;
+  avatar: string;
+  nickname: string;
+  role_id: number;
+  role_name: string;
+  status: "default" | "banned" | "muted";
+};
+
+export type PrivatedUsersPayload = {
+  data: PrivatedUser[];
+  meta: PaginatedMeta;
+};
 
 const sortSchema = t.UnionEnum(USER_SORT, { default: USER_SORT[0] });
 

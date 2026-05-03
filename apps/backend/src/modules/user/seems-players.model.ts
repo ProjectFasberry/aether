@@ -3,12 +3,25 @@ import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
 import { getRedis } from "#/shared/redis/client";
 import { safeJsonParse } from "#/utils/config/transforms";
-import type { SeemsLikePlayer, SeemsLikePlayersPayload } from "@repo/shared/types/entities/other";
 import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
 import * as z from "zod/v4";
 import { getPlayerAvatar } from "../server/skin/skin.model";
+
+export type SeemsLikePlayer = {
+	nickname: string;
+	uuid: string;
+	seemsRate: number;
+	avatar: string;
+};
+
+export type SeemsLikePlayersPayload = {
+	data: SeemsLikePlayer[];
+	meta: {
+		count: number;
+	};
+};
 
 export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) =>
 	getRedisKey("internal", `seems-like:last-update:${nickname}:data`);

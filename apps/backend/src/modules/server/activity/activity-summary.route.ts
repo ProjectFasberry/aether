@@ -1,8 +1,13 @@
 import Elysia, { t } from 'elysia';
 import { general } from '#/shared/database/general-db';
 import dayjs from 'dayjs';
-import type { PlayerActivitySummaryPayload } from '@repo/shared/types/entities/user';
 import { withData } from '#/shared/schemas';
+
+export type PlayerActivitySummaryPayload = {
+  [k: string]: {
+    [k: string]: number;
+  };
+};
 
 type Heatmap = Map<string, Map<number, number>>;
 

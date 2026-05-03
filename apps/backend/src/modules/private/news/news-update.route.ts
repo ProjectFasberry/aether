@@ -5,12 +5,12 @@ import { Permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/middlewares/validators";
 import { createAdminActivityLog } from "../private.model";
 import type { Selectable } from "kysely";
-import type { News } from "@repo/shared/types/db/general-database-types";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { buildUpdates } from "#/utils/config/transforms";
+import type { DB } from "@repo/shared/types/db/general-database-types";
 
 async function updateNews(id: number, values: z.infer<typeof newsUpdateSchema>) {
-	const updates = buildUpdates<Selectable<News>>(values);
+	const updates = buildUpdates<Selectable<DB["news"]>>(values);
 	const fields = values.map((o) => o.field);
 
 	const query = await general

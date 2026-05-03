@@ -1,7 +1,18 @@
-import { withData } from "#/shared/schemas";
-import type { PlayerActivityPayload } from "@repo/shared/types/entities/user";
 import Elysia, { t } from "elysia";
 import { getPlayerStatus } from "./activity.model";
+
+export type PlayerActivityPayload =
+  | {
+    type: "online";
+    nickname: string;
+    server: string;
+    issued_date: Date;
+  }
+  | {
+    type: "offline";
+    nickname: string;
+    issued_date: Date | null;
+  };
 
 export const activityNow = new Elysia()
   // .model({

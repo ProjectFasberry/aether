@@ -1,5 +1,4 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import type { RolePayload } from "@repo/shared/types/entities/role"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@repo/ui/dropdown-menu"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
@@ -24,6 +23,11 @@ import {
 } from "../models/roles.model"
 import { appState } from "@/shared/models/app.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
+
+type RolePayload = {
+  id: number;
+  name: string;
+}
 
 const rolesListPermItemVariant = tv({
   base: `
