@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
       paraglideVitePlugin({
         project: "./project.inlang",
         outdir: "./paraglide",
+        strategy: ["url", "cookie", "baseLocale"]
       })
     ],
     ssr: {

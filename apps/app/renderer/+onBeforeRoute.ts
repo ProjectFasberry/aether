@@ -1,6 +1,5 @@
 import { Locale, localeDefault, locales } from '@/shared/locales'
 import { PageContext } from 'vike/types'
-import { setLocale } from "@/paraglide/runtime.js";
 import { modifyUrl } from 'vike/modifyUrl'
 
 function extractLocale(pathname: string) {
@@ -23,10 +22,6 @@ function extractLocale(pathname: string) {
 export function onBeforeRoute(pageCtx: PageContext) {
   const { urlParsed } = pageCtx
   const { locale, pathnameWithoutLocale } = extractLocale(urlParsed.pathname)
-
-  console.log(locale);
-
-  setLocale(locale, { reload: false })
 
   const urlWithoutLocale = modifyUrl(urlParsed.href, { pathname: pathnameWithoutLocale })
 
