@@ -14,6 +14,7 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import NumberFlow from '@number-flow/react'
+import { translate } from "@/shared/locales/helpers";
 
 const cardImage = getStaticImage("arts/steve_night.jpg")
 
@@ -141,12 +142,12 @@ const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
       <HoverCardContent align="end" side="bottom">
         <div className="flex flex-col gap-2 w-full h-full">
           <Typography className="text-neutral-400 text-md">
-            Особенности
+            {translate['player.balance.settings.title']()}
           </Typography>
           <div className="flex flex-col w-full h-full">
             <div className="flex items-center justify-between gap-1 w-full">
               <Typography className="cursor-pointer text-neutral-100">
-                Показывать анимацию
+                {translate["player.balance.settings.variants.animation"]()}
               </Typography>
               <Switch
                 checked={ctx.spy(balanceState.settings.animateBalance)}
@@ -176,7 +177,7 @@ export const Balance = () => {
     <div className="flex flex-col gap-2 w-full">
       <div className="flex items-center justify-between w-full">
         <Typography className="text-2xl font-semibold">
-          Баланс:
+          {translate["player.balance.title"]()}
         </Typography>
         <BalanceSettings />
       </div>

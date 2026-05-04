@@ -1,6 +1,7 @@
 import { StoreFilterList, StoreFiltersSheet, StoreSearch } from "@/shared/components/app/shop/components/filters/store-filters";
 import { StoreList } from "@/shared/components/app/shop/components/items/store-list";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
+import { translate } from "@/shared/locales/helpers";
 import { PageHeaderImage } from "@/shared/ui/header-image";
 import { Typography } from "@repo/ui/typography";
 
@@ -11,7 +12,7 @@ export default function Page() {
     <div className="flex flex-col gap-6 w-full h-full">
       <PageHeaderImage img={storeImage} />
       <div className="flex flex-col gap-4 h-full w-full">
-        <Typography className="text-3xl font-semibold">Магазин</Typography>
+        <Typography className="text-3xl font-semibold">{translate["store.title"]()}</Typography>
         <div className="flex items-center gap-2 justify-between w-full">
           <StoreSearch />
           <StoreFiltersSheet />

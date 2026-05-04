@@ -1,5 +1,6 @@
 import { RatingItem as RatingItemProps, ratingList } from "@/shared/components/app/ratings/models/ratings.model"
 import { Link } from "@/shared/components/config/link"
+import { translate } from "@/shared/locales/helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
@@ -34,7 +35,7 @@ const RatingItem = ({
                   {child.title}
                 </span>
                 <span className="text-xs text-neutral-500 uppercase tracking-wider font-semibold">
-                  Посмотреть топ
+                  {translate["ratings.goTo"]()}
                 </span>
               </div>
             </div>

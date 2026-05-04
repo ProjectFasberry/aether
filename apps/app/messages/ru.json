@@ -6,6 +6,25 @@
     "change-lang": {
       "title": "Сменить язык"
     },
+    "empty": "пусто",
+    "back": "назад",
+    "next": "продолжить",
+    "lands": {
+      "list": {
+        "showMore": "просмотреть список"
+      },
+      "single": {
+        "attributes": {
+          "level": "уровень",
+          "members": "участников"
+        }
+      }
+    },
+    "news": {
+      "single": {
+        "showMore": "подробнее"
+      }
+    },
     "header": {
       "links": {
         "main": {
@@ -37,7 +56,8 @@
         "private": "Системная панель",
         "settings": "Настройки",
         "logout": "Выйти"
-      }
+      },
+      "authorizeTitle": "Вход"
     },
     "footer": {
       "about": {
@@ -69,6 +89,63 @@
       "statusLabel": "играют сейчас"
     }
   },
+  "auth": {
+    "navigation": {
+      "auth": {
+        "loginTitle": "Вход",
+        "regTitle": "Регистрация",
+        "recoveryTitle": "Я забыл пароль"
+      }
+    },
+    "login": {
+      "otherVariantsTitle": "Другие способы входа",
+      "variants": {
+        "basic": "Через пароль",
+        "qr": "Через QR"
+      },
+      "qr": {
+        "steps": {
+          "1": "1. Открой Fasberry на телефоне",
+          "2": "2. Зайди в Настройки > Безопасность > Привязать устройство",
+          "3": "3. Наведи телефон на QR-код на экране"
+        }
+      },
+      "submit": "Войти"
+    },
+    "register": {
+      "success": "Вы успешно зарегистрировались на проекте Fasberry!",
+      "error": "Что-то пошло не так",
+      "toLogin": "Перейти к входу",
+      "placeholders": {
+        "findoutOther": "Например: Telegram-канал",
+        "findout": "Откуда узнали о проекте?"
+      },
+      "findout": {
+        "referrer": "От другого игрока",
+        "custom": "Другое"
+      },
+      "acceptRulesTitle": "Я согласен(-на) с положениями",
+      "acceptRulesPrivacy": "политикой конфиденциальности",
+      "acceptRulesProcessing": "пользовательского соглашения",
+      "acceptRulesProject": "правилами проекта",
+      "seed-phrase": {
+        "startTitle": "Введите отсутствующие слова, чтобы подтвердить, что вы сохранили фразу",
+        "saveTitle": "Сохраните фразу в секретном месте. Она вам понадобится, если вы захотите восстановить доступ к аккаунту",
+        "download": "Скачать",
+        "warning": "Перед тем как показать свою фразу, убедитесь, что рядом с вами никого нет."
+      }
+    },
+    "shared": {
+      "placeholders": {
+        "nickname": "Никнейм",
+        "password": "Пароль"
+      }
+    }
+  },
+  "ratings": {
+    "title": "Рейтинги сервера",
+    "goTo": "Посмотреть топ"
+  },
   "land": {
     "not-found": "Похоже этого региона уже нет"
   },
@@ -76,11 +153,68 @@
     "not-found": "Ресурс не найден"
   },
   "player": {
-    "not-found": "Игрок не найден"
+    "not-found": "Игрок не найден",
+    "lands": {
+      "title": "Территории"
+    },
+    "seems-like-players": {
+      "title": "Похожие игроки",
+      "notShow": "Не показывать"
+    },
+    "activity": {
+      "online": "Онлайн",
+      "offline": "Оффлайн"
+    },
+    "balance": {
+      "title": "Баланс",
+      "settings": {
+        "title": "Настройки",
+        "variants": {
+          "animation": "Показывать анимацию"
+        }
+      }
+    },
+    "purchases": {
+      "title": "Покупки",
+      "subtitle": "Здесь отображена история ваших покупок",
+      "goTo": "Перейти"
+    }
+  },
+  "lands": {
+    "title": "Территории"
   },
   "store": {
+    "title": "Магазин",
+    "buy": "Купить",
+    "inCart": "В корзине",
+    "filters": {
+      "title": "Фильтры",
+      "placeholders": {
+        "search": "Найти..."
+      },
+      "type": {
+        "label": "Тип товара",
+        "variants": {
+          "all": "Все",
+          "donate": "Привилегии",
+          "event": "Ивенты"
+        }
+      },
+      "wallet": {
+        "label": "Валюта",
+        "variants": {
+          "all": "Все",
+          "charism": "Харизма",
+          "belkoin": "Белкоин"
+        }
+      }
+    },
     "item": {
       "not-found": "Товар не найден"
     }
+  },
+  "map": {
+    "title": "Выбери сервер",
+    "goTo": "Перейти"
   }
 }

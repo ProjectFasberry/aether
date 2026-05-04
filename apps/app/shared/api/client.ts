@@ -27,12 +27,35 @@ const hooksConfig: Options = {
 
 				if (!response.ok) {
 					const json = await response.json();
-
-					if (json && typeof json === "object" && "error" in json) {
-						throw new Error(String((json as Record<string, unknown>).error));
+					if (!json) {
+						throw new Error(response.statusText);
 					}
 
-					throw new Error(response.statusText);
+					if (typeof json === 'object' && "error" in json) {
+						type TypeboxError = {
+							type: string,
+							on: string,
+							property: string,
+							essage: string,
+							summary: string,
+							expected: { data: unknown[] },
+							found: { data: unknown[] },
+							errors: unknown[]
+						}
+
+						const error = json.error as TypeboxError
+
+						if ("type" in error) {
+							if (error.type === 'validation') {
+								console.error(error);
+								throw new Error(`Validation error with ${error.errors.length} errors`)
+							}
+						}
+					}
+
+					if (typeof json === "object" && "error" in json) {
+						throw new Error(String((json as Record<string, unknown>).error));
+					}
 				}
 			},
 		],

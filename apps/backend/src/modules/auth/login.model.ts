@@ -44,6 +44,33 @@ export const qrLogger = loginLogger.withTag("QR");
 
 const IP_WHITELIST = ["127.0.0.1", "::1", "localhost"] as const;
 
+type IterateKey = "platform" | "os" | "browser" | "ip";
+
+function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, string> {
+	function serializeValue(value: string | object): string {
+		if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
+			return "unknown";
+		}
+		return typeof value === "string" ? value : JSON.stringify(value);
+	}
+
+	const result: Partial<Record<IterateKey, string>> = {};
+	const iterateKeys = ["platform", "os", "browser", "ip"];
+
+	for (const [key, value] of Object.entries(raw) as [IterateKey, string | object][]) {
+		if (!iterateKeys.includes(key)) continue;
+
+		if (key === "ip" && typeof value === "string" && IP_WHITELIST.includes(value as (typeof IP_WHITELIST)[number])) {
+			result[key] = IP_WHITELIST[0];
+			continue;
+		}
+
+		result[key] = serializeValue(value);
+	}
+
+	return result as Record<IterateKey, string>;
+}
+
 export const session = {
 	getUserSessionsKey: (nickname: string) => `user_sessions:${nickname}`,
 	async refreshSession(token: string) {
@@ -144,46 +171,18 @@ export const session = {
 
 			if (oldestSessions.length > 0) {
 				const oldestToken = oldestSessions[0];
-				const userSessionKey = auth.getUserKey(token);
+				const userSessionKey = auth.getUserKey(oldestToken);
 
 				const removalPipeline = redis
 					.multi()
 					.zrem(userSessionsKey, oldestToken)
 					.del(userSessionKey)
 
-				const removalResults = await removalPipeline.exec();
-				console.log("removalResults", removalResults)
+				await removalPipeline.exec();
 			}
 		}
-
-		type IterateKey = "platform" | "os" | "browser" | "ip";
 
 		const { browser, engine, os, platform } = ua;
-
-		function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, string> {
-			function serializeValue(value: string | object): string {
-				if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
-					return "unknown";
-				}
-				return typeof value === "string" ? value : JSON.stringify(value);
-			}
-
-			const result: Partial<Record<IterateKey, string>> = {};
-			const iterateKeys = ["platform", "os", "browser", "ip"];
-
-			for (const [key, value] of Object.entries(raw) as [IterateKey, string | object][]) {
-				if (!iterateKeys.includes(key)) continue;
-
-				if (key === "ip" && typeof value === "string" && IP_WHITELIST.includes(value as (typeof IP_WHITELIST)[number])) {
-					result[key] = IP_WHITELIST[0];
-					continue;
-				}
-
-				result[key] = serializeValue(value);
-			}
-
-			return result as Record<IterateKey, string>;
-		}
 
 		const infoUpdated = { browser, engine, os, platform, ip };
 		const processedUA = buildUA(infoUpdated);
@@ -200,8 +199,7 @@ export const session = {
 			.zadd(userSessionsKey, Date.now(), token)
 			.expire(userSessionsKey, DEFAULT_SESSION_EXPIRE)
 
-		const createUserSessionResults = await createUserSessionPp.exec();
-		console.log("createUserSessionResults", createUserSessionResults);
+		await createUserSessionPp.exec();
 
 		const expires_at = new Date(Date.now() + DEFAULT_SESSION_EXPIRE_MS);
 
@@ -226,7 +224,6 @@ export const session = {
 			.zrem(userSessionsKey, token)
 			.exec()
 
-		console.log("deleteSessionResults", results);
 		if (!results) {
 			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
 		}
@@ -282,8 +279,7 @@ export const loginQR = {
 
 		const key = this.getQRTokenKey(token);
 		const pd: LoginQRKeyPayload = {
-			ua, vId: visitorId, ip,
-			status: "pending",
+			ua, vId: visitorId, ip, status: "pending",
 		};
 
 		const results = await redis
@@ -292,7 +288,6 @@ export const loginQR = {
 			.expire(key, this.QR_VERIFY_TIMEOUT_S)
 			.exec();
 		
-		console.log("generateTokenQRResults", results);
 		if (!results) {
 			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
 		}

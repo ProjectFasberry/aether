@@ -4,6 +4,7 @@ import { PropsWithChildren } from "react";
 import { PageHeaderImage } from "@/shared/ui/header-image";
 import { BackButton } from "@/shared/ui/back-button";
 import { usePageContext } from "vike-react/usePageContext";
+import { translate } from "@/shared/locales/helpers";
 
 const ratingsImage = getStaticImage("arts/sand-camel.jpg")
 
@@ -14,7 +15,7 @@ const RatingsHeader = () => {
   return (
     <div className="flex items-center gap-2">
       {isValid && <BackButton href="/ratings" />}
-      <Typography className="font-semibold text-3xl">Рейтинги сервера</Typography>
+      <Typography className="font-semibold text-3xl">{translate["ratings.title"]()}</Typography>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import { Typography } from "@repo/ui/typography"
 import { createLink, Link } from "../../../config/link"
 import { playerLands, playerLandsState } from "../models/player-lands.model"
 import { atom } from "@reatom/core"
+import { translate } from "@/shared/locales/helpers"
 
 type Land = ExtractApiData<"getServerLandsListByNickname">["data"]["data"][number]
 
@@ -25,7 +26,7 @@ const PlayerLand = ({ ulid, title, details, name, members }: Land) => {
           </Typography>
           <div className="flex flex-col gap-1">
             <span className="text-base leading-4 text-neutral-400">
-              {members.length} {members.length > 1 ? "участника" : "участник"}
+              {members.length} {translate["shared.lands.single.attributes.members"]()}
             </span>
           </div>
         </div>
@@ -64,7 +65,7 @@ export const PlayerLands = () => {
   return (
     <div className="flex flex-col gap-2 w-full">
       <div className="flex items-end gap-2">
-        <h3 className="text-white font-semibold text-2xl">Территории</h3>
+        <h3 className="text-white font-semibold text-2xl">{translate["player.lands.title"]()}</h3>
         <PlayerLandsCount />
       </div>
       <PlayerLandsList />

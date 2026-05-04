@@ -2,7 +2,7 @@ import { action, atom, AtomMut, reatomAsync, withAssign, withDataAtom, withReset
 import { invariant } from "@/shared/lib/invariant";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
-import { auth, authState, ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
+import { auth, AuthFindoutType, authState, ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import { isEmptyArray } from "@/shared/lib/utils";
@@ -11,6 +11,7 @@ import { createNavigationModel } from "./navigation.model";
 import { authSecurity } from "./auth-security.model";
 import { getExistNickname } from "@/shared/models/shared.model";
 import { appState } from "@/shared/models/app.model";
+import { translate } from "@/shared/locales/helpers";
 
 export type AuthRegisterType = |
   "start-input" |
@@ -43,7 +44,7 @@ export const register = atom(null, "register").pipe(
             findout: ctx.spy(authState.fields.findout),
             findoutType: ctx.spy(authState.fields.findoutType)
           })
-          
+
           return validationRes.success
         }),
         seedPhraseConfirmValidate: atom((ctx): boolean => false),
@@ -171,7 +172,7 @@ export const register = atom(null, "register").pipe(
       const fileContent = ph.join('\n');
       const blob = new Blob([fileContent], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
-      
+
       const link = document.createElement('a');
       link.href = url;
       link.download = `${nickname}-phrases.txt`
@@ -227,3 +228,12 @@ export const registerNavigationModel = createNavigationModel({
   ],
   typeAtom: registerState.type as AtomMut<string>
 })
+
+export const FINDOUT_OPTIONS: { title: string; value: AuthFindoutType }[] = [
+  { title: translate["auth.register.findout.referrer"](), value: "referrer" },
+  { title: translate["auth.register.findout.custom"](), value: "custom" },
+];
+
+export const findoutSelectedTypeAtom = atom((ctx) =>
+  FINDOUT_OPTIONS.find((d) => d.value === ctx.spy(authState.fields.findoutType)) ?? null,
+);

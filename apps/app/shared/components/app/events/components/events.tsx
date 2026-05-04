@@ -5,6 +5,7 @@ import { NotFound } from "@/shared/ui/not-found";
 import { tv } from "tailwind-variants";
 import { eventsState } from "../models/events.model";
 import { isEmptyArray } from "@/shared/lib/utils";
+import { translate } from "@/shared/locales/helpers";
 
 type EventCardProps = ExtractApiData<"getServerEventsList">["data"][number]
 
@@ -52,7 +53,7 @@ export const EventsList = reatomComponent(({ ctx }) => {
   const data = ctx.spy(eventsState.data);
   
   if (!data || isEmptyArray(data)) {
-    return <NotFound title="Ивентов нет" />
+    return <NotFound title={translate["shared.empty"]()} />
   }
 
   return data.map(event => <EventCard key={event.id} {...event}/>)

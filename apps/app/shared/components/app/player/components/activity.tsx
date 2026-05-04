@@ -7,6 +7,7 @@ import { expImage } from "@/shared/consts/images";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import { onConnect, sleep } from "@reatom/framework";
 import { playerParamAtom } from "../models/player.model";
+import { translate } from "@/shared/locales/helpers";
 
 const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
   useUpdate((ctx) => playerActivity.location.fetch(ctx, nickname), [nickname]);
@@ -103,7 +104,7 @@ export const PlayerActivity = reatomComponent(({ ctx }) => {
       <div className="flex items-center gap-2">
         {isOnline && <img src={expImage} alt="" width={22} height={22} />}
         <Typography className="font-semibold text-lg">
-          {isOnline ? "Онлайн" : "Оффлайн"}
+          {isOnline ? translate["player.activity.online"]() : translate["player.activity.offline"]()}
         </Typography>
       </div>
       {isOnline && <PlayerServer />}

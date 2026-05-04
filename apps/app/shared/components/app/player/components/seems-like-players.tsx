@@ -9,6 +9,7 @@ import { playerSLP, playerSLPState } from "../models/player-seems-like.model";
 import { IconX } from "@tabler/icons-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/ui/tooltip"
 import { scrollableVariant } from "@/shared/consts/style-variants";
+import { translate } from "@/shared/locales/helpers";
 
 const playerSeemsLikePlayersCountAtom = atom((ctx) => 
   ctx.spy(playerSLP.fetch.dataAtom)?.meta.count ?? 0, 
@@ -21,7 +22,7 @@ const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
       <Tooltip delayDuration={1}>
         <TooltipTrigger
           id="hide-section-seems-like"
-          aria-label="Не показывать секцию"
+          aria-label={translate["player.seems-like-players.notShow"]()}
           onClick={() => playerSLPState.settings.isShow.toggle(ctx)}
           className="cursor-pointer"
         >
@@ -29,7 +30,7 @@ const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
         </TooltipTrigger>
         <TooltipContent>
           <span className="text-neutral-400 text-md">
-            Не показывать
+            {translate["player.seems-like-players.notShow"]()}
           </span>
         </TooltipContent>
       </Tooltip>
@@ -59,7 +60,9 @@ export const PlayerSeemsLikePlayers = reatomComponent(({ ctx }) => {
     <div className="flex flex-col gap-2 w-full h-full">
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
-          <h4 className="text-white font-semibold text-2xl">Похожие игроки</h4>
+          <h4 className="text-white font-semibold text-2xl">
+            {translate["player.seems-like-players.title"]()}
+          </h4>
           <PlayerSeemsLikePlayersCount />
         </div>
         <PlayerSeemsLikeShowToggle />

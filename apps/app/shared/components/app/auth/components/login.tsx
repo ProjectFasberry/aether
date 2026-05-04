@@ -2,21 +2,22 @@ import { reatomComponent } from "@reatom/npm-react"
 import { login, AuthLoginQRStatus, loginState, AuthLoginVariant, authLoginVariantAtom, authSubmitIsDisabledAtom } from "../models/login.model"
 import { ReactNode, useRef } from "react"
 import { IconCheck, IconHandStop, IconRefresh } from "@tabler/icons-react"
-import { Copy } from "@/shared/ui/copy"
+// import { Copy } from "@/shared/ui/copy"
 import { Button } from "@repo/ui/button"
 import { spawn } from "@reatom/framework"
 import { Separator } from "@repo/ui/separator"
 import { NicknameInput, PasswordInput } from "./auth"
 import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"
-import { authState } from "../models/auth.model"
+import { translate } from "@/shared/locales/helpers"
 
 const LoginVariants = reatomComponent(({ ctx }) => (
-  <div className="grid *:bg-neutral-700 grid-cols-2 auto-rows-auto gap-2 w-full">
+  <div className="grid grid-cols-2 auto-rows-auto gap-2 w-full [&>*:only-child]:col-span-2">
     {ctx.spy(authLoginVariantAtom.filterVariants(LOGIN_VARIANTS)).map((variant) => (
       <Button
         key={variant.value}
         type="button"
+        background="default"
         onClick={() => spawn(ctx, (spawnCtx) => authLoginVariantAtom.select(spawnCtx, variant.value))}
       >
         {variant.title}
@@ -31,7 +32,7 @@ const LoginPasswordSubmit = reatomComponent(({ ctx }) => (
     disabled={ctx.spy(authSubmitIsDisabledAtom)}
     type="submit"
   >
-    {ctx.spy(authState.type) === 'register' ? "Зарегистрироваться" : "Войти"}
+    {translate["auth.login.submit"]()}
   </Button>
 ), "LoginPasswordSubmit")
 
@@ -148,36 +149,36 @@ const LoginQR = () => {
         <LoginQRContent />
       </div>
       <div className="flex flex-col items-start gap-2 w-fit">
-        <p>1. Открой Fasberry на телефоне</p>
-        <p>2. Зайди в Настройки {">"} Безопасность {">"} Привязать устройство</p>
-        <p>3. Наведи телефон на QR-код на экране</p>
+        <p>{translate["auth.login.qr.steps.1"]()}</p>
+        <p>{translate["auth.login.qr.steps.2"]()}</p>
+        <p>{translate["auth.login.qr.steps.3"]()}</p>
       </div>
     </div>
   )
 }
 
-const LoginGame = reatomComponent(({ ctx }) => {
-  const code = ctx.spy(loginState.game.code)
-  const isPending = ctx.spy(login.game.generate.statusesAtom).isPending
-  const isLoading = isPending || !code
+// const LoginGame = reatomComponent(({ ctx }) => {
+//   const code = ctx.spy(loginState.game.code)
+//   const isPending = ctx.spy(login.game.generate.statusesAtom).isPending
+//   const isLoading = isPending || !code
 
-  return (
-    <div className="flex flex-col items-center gap-4 w-full">
-      <div className="w-full text-base">
-        <p>
-          Введи код в <span className="font-semibold">игре</span> с помощью команды ниже!&nbsp;
-        </p>
-        <p className="font-semibold">Никому не сообщай его!</p>
-      </div>
-      {isLoading ? <IconLoader /> : <Copy code={`/verify ${code}`} />}
-    </div>
-  )
-}, "LoginGame")
+//   return (
+//     <div className="flex flex-col items-center gap-4 w-full">
+//       <div className="w-full text-base">
+//         <p>
+//           Введи код в <span className="font-semibold">игре</span> с помощью команды ниже!&nbsp;
+//         </p>
+//         <p className="font-semibold">Никому не сообщай его!</p>
+//       </div>
+//       {isLoading ? <IconLoader /> : <Copy code={`/verify ${code}`} />}
+//     </div>
+//   )
+// }, "LoginGame")
 
 const LOGIN_VARIANTS: { title: string, value: AuthLoginVariant, component: ReactNode }[] = [
-  { title: "Через пароль", value: "password", component: <LoginPassword /> },
-  { title: "Через игру", value: "game", component: <LoginGame /> },
-  { title: "Через QR-code", value: "qr", component: <LoginQR /> }
+  { title: translate["auth.login.variants.basic"](), value: "password", component: <LoginPassword /> },
+  // { title: "Через игру", value: "game", component: <LoginGame /> },
+  { title: translate["auth.login.variants.qr"](), value: "qr", component: <LoginQR /> }
 ]
 
 export const LoginFormComponent = reatomComponent(({ ctx }) =>
@@ -192,7 +193,7 @@ export const LoginForm = () => {
         <div className="flex items-center w-full gap-4">
           <Separator className="flex-1" />
           <span className="shrink-0 text-sm text-neutral-50">
-            Другие способы входа
+            {translate["auth.login.otherVariantsTitle"]()}
           </span>
           <Separator className="flex-1" />
         </div>

@@ -14,6 +14,7 @@ import { withSsr } from "@/shared/lib/reatom-helpers"
 import { cartState } from "./store-cart.model"
 import { parseBoolean } from "@/shared/lib/utils"
 import { isClientAtom } from "@/shared/models/page-context.model"
+import { translate } from "@/shared/locales/helpers"
 
 export type Payment = Selectable<Payments>
 
@@ -204,25 +205,25 @@ export const filtersState = atom(null, "filters").pipe(
     data: atom<Filter[]>((ctx) => {
       return [
         {
-          title: "Тип товара",
+          title: translate["store.filters.type.label"](),
           origin: "category",
           atom: storeItemsState.filters.category,
           updater: (ctx, v) => storeItemsState.filters.category(ctx, v as StoreCategory),
           filters: [
-            { name: "Все", value: "all" },
-            { name: "Привилегии", value: "donate", },
-            { name: "Ивенты", value: "event" },
+            { name: translate["store.filters.type.variants.all"](), value: "all" },
+            { name: translate["store.filters.type.variants.donate"](), value: "donate", },
+            { name: translate["store.filters.type.variants.event"](), value: "event" },
           ]
         },
         {
-          title: "Валюта",
+          title: translate["store.filters.wallet.label"](),
           origin: "wallet",
           atom: storeItemsState.filters.wallet,
           updater: (ctx, v) => storeItemsState.filters.wallet(ctx, v as StoreWallet),
           filters: [
-            { name: "Все", value: "ALL", },
-            { name: "Харизма", value: "CHARISM" },
-            { name: "Белкоин", value: "BELKOIN", }
+            { name: translate["store.filters.wallet.variants.all"](), value: "ALL", },
+            { name: translate["store.filters.wallet.variants.charism"](), value: "CHARISM" },
+            { name: translate["store.filters.wallet.variants.belkoin"](), value: "BELKOIN", }
           ]
         }
       ]

@@ -13,6 +13,7 @@ import { MasonryGrid } from "@repo/ui/masonry-grid"
 import { NotFound } from "@/shared/ui/not-found"
 import { isClientAtom } from "@/shared/models/page-context.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
+import { translate } from "@/shared/locales/helpers"
 
 type Lands = ExtractApiData<"getServerLandsList">["data"]["data"][number]
 
@@ -45,11 +46,11 @@ const LandCard = ({ level, members, name, title, ulid, details: { banner } }: La
         <div className="flex flex-col select-none gap-1">
           <Typography className={landCardVariants().stat()}>
             <IconCircleFilled size={8} />
-            {members.length} участников
+            {members.length} {translate["shared.lands.single.attributes.members"]()}
           </Typography>
           <Typography className={landCardVariants().stat()}>
             <IconCircleFilled size={8} />
-            {level} уровень
+            {level} {translate["shared.lands.single.attributes.level"]()}
           </Typography>
         </div>
       </div>
@@ -110,7 +111,7 @@ export const LandsListShorted = reatomComponent(({ ctx }) => {
 
   const data = ctx.spy(landsAction.dataAtom)
   if (!data) {
-    return <NotFound title="Пока ничего нет" />
+    return <NotFound title={translate["shared.empty"]()} />
   }
 
   return (
@@ -121,7 +122,7 @@ export const LandsListShorted = reatomComponent(({ ctx }) => {
       {data.length > 3 && (
         <Link href="/lands?from=index" className="flex self-end w-fit">
           <Typography className="font-semibold text-neutral-400">
-            просмотреть список
+            {translate["shared.lands.list.showMore"]()}
           </Typography>
         </Link>
       )}
@@ -139,7 +140,7 @@ export const LandsList = reatomComponent(({ ctx }) => {
   const data = ctx.spy(landsAction.dataAtom)
 
   if (!data) {
-    return <NotFound title="Пока ничего нет" />
+    return <NotFound title={translate["shared.empty"]()} />
   }
 
   return (

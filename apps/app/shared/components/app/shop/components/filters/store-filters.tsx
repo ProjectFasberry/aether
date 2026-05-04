@@ -9,6 +9,7 @@ import { isClientAtom } from "@/shared/models/page-context.model";
 import { Input } from "@repo/ui/input";
 import { Vaul, VaulContent, VaulHeader, VaulTrigger } from "@/shared/ui/vaul";
 import { appState } from "@/shared/models/app.model";
+import { translate } from "@/shared/locales/helpers";
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
   const searchQuery = ctx.spy(isClientAtom) 
@@ -23,7 +24,7 @@ export const StoreSearch = reatomComponent(({ ctx }) => {
       />
       <Input
         value={searchQuery}
-        placeholder="Найти..."
+        placeholder={translate["store.filters.placeholders.search"]()}
         className='w-full pl-8 sm:pl-12'
         onChange={e => storeItems.onChangeEvent(ctx, e)}
         maxLength={1024}
@@ -112,7 +113,7 @@ export const StoreFiltersSheet = reatomComponent(({ctx}) => {
         </div>
       </VaulTrigger>
       <VaulContent>
-        <VaulHeader title="Фильтр" />
+        <VaulHeader title={translate["store.filters.title"]()} />
         <div className='flex flex-col gap-6 w-full'>
           <StoreFilterList />
         </div>

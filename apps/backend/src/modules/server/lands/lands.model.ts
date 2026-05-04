@@ -407,6 +407,13 @@ export async function getLands({ cursor }: Static<typeof landsSchema>): Promise<
     rmembers: JSON.parse(row.members) as Record<string, { chunks: number }>
   }));
 
+  if (!parsedLands.length) {
+    return {
+      data: [],
+      meta: wrapMeta(result)
+    }
+  }
+
   const allUuids = [
     ...new Set(parsedLands.flatMap(l => Object.keys(l.rmembers)))
   ];
@@ -418,11 +425,6 @@ export async function getLands({ cursor }: Static<typeof landsSchema>): Promise<
     .execute();
 
   const nameMap = new Map(playersList.map(p => [p.uuid, p.nickname]));
-
-  if (!parsedLands.length) return {
-    data: [],
-    meta: wrapMeta(result)
-  }
 
   const lands = await Promise.all(
     parsedLands.map(async (land) => {

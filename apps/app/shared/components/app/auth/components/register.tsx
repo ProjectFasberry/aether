@@ -1,6 +1,6 @@
 import { NicknameInput, PasswordInput } from "./auth"
 import { reatomComponent } from "@reatom/npm-react"
-import { auth, type AuthFindoutType, authState, FINDOUT_OPTIONS, findoutSelectedTypeAtom } from "../models/auth.model"
+import { auth, type AuthFindoutType, authState } from "../models/auth.model"
 import { Typography } from "@repo/ui/typography"
 import { env } from "@/shared/env"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select"
@@ -10,9 +10,10 @@ import { Checkbox } from "@repo/ui/checkbox"
 import { Button } from "@repo/ui/button"
 import { SeedPhrase, SeedPhraseFooter, SeedPhraseHeader, SeedPhraseBody } from "@/shared/ui/seed-phrase"
 import { IconCheck, IconDownload, IconX } from "@tabler/icons-react"
-import { type AuthRegisterType, registerNavigationModel, register, registerSeedPhraseModel, registerState } from "../models/register.model"
+import { type AuthRegisterType, registerNavigationModel, register, registerSeedPhraseModel, registerState, findoutSelectedTypeAtom, FINDOUT_OPTIONS } from "../models/register.model"
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { spawn } from "@reatom/framework"
+import { translate } from "@/shared/locales/helpers"
 
 const FindoutReferrerInput = reatomComponent(({ ctx }) => (
   <Input
@@ -20,7 +21,7 @@ const FindoutReferrerInput = reatomComponent(({ ctx }) => (
     autoCapitalize="off"
     spellCheck="false"
     autoComplete="new-referrer"
-    placeholder="Никнейм"
+    placeholder={translate["auth.shared.placeholders.nickname"]()}
     variant={ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"}
     className="w-full"
     value={ctx.spy(authState.fields.findout) ?? ""}
@@ -36,7 +37,7 @@ const FindoutOtherInput = reatomComponent(({ ctx }) => (
     autoCapitalize="off"
     spellCheck="false"
     autoComplete="new-other"
-    placeholder="Например: Telegram-канал"
+    placeholder={translate["auth.register.placeholders.findoutOther"]()}
     className="w-full"
     variant={ctx.spy(authState.errorsType).includes("findout") ? "danger" : "default"}
     value={ctx.spy(authState.fields.findout) ?? ""}
@@ -63,7 +64,7 @@ const FindoutOptions = reatomComponent(({ ctx }) => {
         {currentItem ? (
           <span className="text-neutral-50">{currentItem.title}</span>
         ) : (
-          <SelectValue placeholder="Откуда узнали о проекте?" />
+          <SelectValue placeholder={translate["auth.register.placeholders.findout"]()} />
         )}
       </SelectTrigger>
       <SelectContent>
@@ -93,16 +94,16 @@ const PrivacyTerms = reatomComponent(({ ctx }) => {
       </label>
       <label className="select-none relative -top-1" htmlFor="rules">
         <Typography className="text-sm [&_a]:text-green-500 [&_a]:inline">
-          Я согласен(-на) с положениями
+          {translate["auth.register.acceptRulesTitle"]()}
           <a href="/legal/terms" target="_blank">
-            &nbsp;пользовательского соглашения
+            &nbsp;{translate["auth.register.acceptRulesPrivacy"]()}
           </a>,
           <a href="/legal/privacy" target="_blank">
-            &nbsp;политикой конфиденциальности&nbsp;
+            &nbsp;{translate["auth.register.acceptRulesProcessing"]()}&nbsp;
           </a>
           и
           <a href={`${env.VITE_LANDING_URL}/rules`} target="_blank">
-            &nbsp;правилами проекта
+            &nbsp;{translate["auth.register.acceptRulesProject"]()}
           </a>.
         </Typography>
       </label>
@@ -138,7 +139,7 @@ const RegisterSeedPhraseConfirm = reatomComponent(({ ctx }) => {
     >
       <SeedPhraseHeader onChangeVisibilityStatus={v => setIsHidden(v)}>
         <p className="text-neutral-400">
-          Введите отсутствующие слова, чтобы подтвердить, что вы сохранили фразу
+          {translate["auth.register.seed-phrase.startTitle"]()}
         </p>
       </SeedPhraseHeader>
       <SeedPhraseBody />
@@ -160,8 +161,7 @@ const RegisterSeedPhraseSave = reatomComponent(({ ctx }) => {
       >
         <SeedPhraseHeader onChangeVisibilityStatus={v => setIsHidden(v)}>
           <p className="text-neutral-400">
-            Сохраните фразу в секретном месте.
-            Она вам понадобится, если вы захотите восстановить доступ к аккаунту
+            {translate["auth.register.seed-phrase.saveTitle"]()}
           </p>
         </SeedPhraseHeader>
         <SeedPhraseBody />
@@ -173,12 +173,12 @@ const RegisterSeedPhraseSave = reatomComponent(({ ctx }) => {
               className="gap-2"
               onClick={() => register.downloadPhrase(ctx)}
             >
-              Скачать
+              {translate["auth.register.seed-phrase.download"]()}
               <IconDownload size={16} />
             </Button>
           </div>
           <p className="text-neutral-400 text-xs text-center">
-            Перед тем как показать свою фразу, убедитесь, что рядом с вами никого нет.
+            {translate["auth.register.seed-phrase.warning"]()}
           </p>
         </SeedPhraseFooter>
       </SeedPhrase>
@@ -196,7 +196,7 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
       <div className="flex flex-col gap-4 w-full items-center justify-center">
         <IconX size={32} className="text-red-600" />
         <p className="text-xl w-full sm:w-2/3 leading-5 font-semibold text-center">
-          Что-то пошло не так
+          {translate["auth.register.error"]()}
         </p>
       </div>
     )
@@ -209,7 +209,7 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
       <div className="flex flex-col gap-4 w-full items-center justify-center">
         <IconCheck size={32} className="text-green-600" />
         <p className="text-xl w-full sm:w-2/3 leading-5 font-semibold text-center">
-          Вы успешно зарегистрировались на проекте Fasberry!
+          {translate["auth.register.success"]()}
         </p>
       </div>
       <Button
@@ -217,7 +217,7 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
         background="white"
         onClick={() => authState.type(ctx, "login")}
       >
-        Перейти к входу
+        {translate["auth.register.toLogin"]()}
       </Button>
     </div >
   )
@@ -232,9 +232,9 @@ const RegisterBack = reatomComponent(({ ctx }) => {
       disabled={!canGoBack || ctx.spy(registerNavigationModel.back.statusesAtom).isPending}
       onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.back(spawnCtx))}
       background="default"
-      className="transition-none"
+      className="transition-none capitalize"
     >
-      Назад
+      {translate["shared.back"]()}
     </Button>
   )
 }, "RegisterBack")
@@ -245,11 +245,11 @@ const RegisterContinue = reatomComponent(({ ctx }) => {
   return (
     <Button
       type="button"
-      className="w-full bg-green-600 font-semibold transition-none"
+      className="w-full bg-green-600 capitalize font-semibold transition-none"
       disabled={!canGoNext || ctx.spy(registerNavigationModel.next.statusesAtom).isPending}
       onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.next(spawnCtx))}
     >
-      Продолжить
+      {translate["shared.next"]()}
     </Button>
   )
 }, "RegisterContinue")

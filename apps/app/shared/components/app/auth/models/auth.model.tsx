@@ -37,15 +37,6 @@ export const authState = atom(null, "authState").pipe(
 	}))
 )
 
-export const FINDOUT_OPTIONS: { title: string; value: AuthFindoutType }[] = [
-	{ title: "От другого игрока", value: "referrer" },
-	{ title: "Другое", value: "custom" },
-];
-
-export const findoutSelectedTypeAtom = atom((ctx) =>
-	FINDOUT_OPTIONS.find((d) => d.value === ctx.spy(authState.fields.findoutType)) ?? null,
-);
-
 authState.searchParams.onChange((ctx, state) => {
 	const isReferrer = "referrer" in state;
 

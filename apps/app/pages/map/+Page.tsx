@@ -1,6 +1,7 @@
 import { Link } from "@/shared/components/config/link"
 import { client } from "@/shared/lib/client-wrapper"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
+import { translate } from "@/shared/locales/helpers"
 import { PageHeaderImage } from "@/shared/ui/header-image"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
@@ -45,7 +46,7 @@ const ServersList = reatomComponent(({ ctx }) => {
           <Link href={i.href} target="_blank">
             <Button background="white" className="gap-2 py-1">
               <Typography className='font-semibold leading-6'>
-                Перейти
+                {translate["map.goTo"]()}
               </Typography>
               <IconExternalLink size={16} />
             </Button>
@@ -62,7 +63,7 @@ export default function Page() {
       <PageHeaderImage img={mapImage} />
       <div className="flex flex-col gap-4 h-full w-full">
         <Typography className="text-3xl font-semibold">
-          Выбери сервер
+          {translate["map.title"]()}
         </Typography>
         <ServersList />
       </div>

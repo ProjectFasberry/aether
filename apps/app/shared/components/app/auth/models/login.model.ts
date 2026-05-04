@@ -85,18 +85,16 @@ export const login = atom(null, "login").pipe(
           const { success, error, data } = z.safeParse(loginSchema, raw);
           if (!success) return error;
 
-          return await ctx.schedule(() =>
-            client
-              .post(`auth/login/basic`, {
-                searchParams: {
-                  token: token ?? ""
-                },
-                throwHttpErrors: false,
-                timeout: 10000,
-                json: data
-              })
-              .exec(),
-          );
+          return await client
+            .post(`auth/login/basic`, {
+              searchParams: {
+                token: token ?? ""
+              },
+              throwHttpErrors: false,
+              timeout: 10000,
+              json: data
+            })
+            .exec()
         }, {
           name: `${name}.submit`,
           onFulfill: (ctx, res) => {

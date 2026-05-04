@@ -8,6 +8,7 @@ import { reatomComponent } from "@reatom/npm-react"
 import { CURRENCIES } from "../cart/cart-price"
 import { tv } from "tailwind-variants"
 import { Button } from "@repo/ui/button"
+import { translate } from "@/shared/locales/helpers"
 
 const buyButtonVariants = tv({
   base: `group gap-2 duration-150 h-10 *:duration-150 px-6 w-full rounded-xl`,
@@ -98,7 +99,7 @@ export const ItemSelectToCart = reatomComponent<Pick<StoreItemProps, "id">>(({ c
       isLoading={isLoading}
     >
       <Typography className={buyButtonTypographyVariants({ variant })}>
-        {isSelected ? "В корзине" : "Купить"}
+        {isSelected ? translate["store.inCart"]() : translate["store.buy"]()}
       </Typography>
     </Button>
   )

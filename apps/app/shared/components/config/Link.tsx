@@ -20,20 +20,24 @@ export function Link({ href, locale, className, ...props }: LinkProps) {
   const pageContext = usePageContext()
   const pathname = pageContext.urlPathname;
 
-  const initWithLocale = !!locale
+  const targetLocale = locale ?? pageContext.locale;
+  const initWithLocale = !!locale;
 
-  locale = locale ?? pageContext.locale;
+  let finalHref = href.startsWith('/') ? href : `/${href}`;
 
-  if (locale !== "ru") {
-    href = '/' + locale + href
+  if (targetLocale !== "ru") {
+    finalHref = `/${targetLocale}${finalHref === '/' ? '' : finalHref}`;
   }
 
-  const isActive = href ? href === "/" ? pathname === href : pathname === href : false;
-  const isIdentity = href === pathname
+  const normalizedPathname = pathname.replace(/\/$/, "") || "/";
+  const normalizedHref = finalHref.replace(/\/$/, "") || "/";
 
+  const isActive = normalizedPathname === normalizedHref;
+  const isIdentity = pathname === finalHref;
+  
   return (
     <a
-      href={href}
+      href={finalHref}
       data-state={isActive ? "active" : "inactive"}
       style={isIdentity && !initWithLocale ? { pointerEvents: 'none' } : {}}
       onClick={(e) => {

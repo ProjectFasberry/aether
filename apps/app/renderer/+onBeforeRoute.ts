@@ -23,12 +23,9 @@ export function onBeforeRoute(pageCtx: PageContext) {
   const { urlParsed } = pageCtx
   const { locale, pathnameWithoutLocale } = extractLocale(urlParsed.pathname)
 
-  const urlWithoutLocale = modifyUrl(urlParsed.href, { pathname: pathnameWithoutLocale })
-
   return {
     pageContext: {
       locale,
-      urlLogical: urlWithoutLocale
     }
   }
 }

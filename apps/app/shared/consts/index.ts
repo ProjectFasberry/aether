@@ -1,5 +1,5 @@
 const DEFAULT_SOFT_DELAY = 300
-const DIALOG_DELAY = 200
+const DIALOG_DELAY = 300
 
 export {
   DIALOG_DELAY,

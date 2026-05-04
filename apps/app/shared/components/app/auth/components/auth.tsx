@@ -6,6 +6,7 @@ import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../../../../models/shared.model";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { ErrorBlock } from "@/shared/ui/error-block";
+import { translate } from "@/shared/locales/helpers";
 
 export const NicknameInput = reatomComponent(({ ctx }) => (
   <Input
@@ -19,7 +20,7 @@ export const NicknameInput = reatomComponent(({ ctx }) => (
     autoComplete="nickname"
     onClick={() => auth.resetError(ctx)}
     onChange={e => authState.fields.nickname(ctx, e.target.value)}
-    placeholder="Никнейм"
+    placeholder={translate["auth.shared.placeholders.nickname"]()}
     maxLength={32}
   />
 ), "Nickname")
@@ -43,7 +44,7 @@ export const PasswordInput = reatomComponent(({ ctx }) => (
       autoComplete="password"
       onClick={() => auth.resetError(ctx)}
       onChange={e => authState.fields.password(ctx, e.target.value)}
-      placeholder="Пароль"
+      placeholder={translate["auth.shared.placeholders.password"]()}
       maxLength={64}
       type={ctx.spy(authState.settings.showPassword) ? "text" : "password"}
     />

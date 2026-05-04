@@ -11,13 +11,14 @@ import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
 import { useEffect } from "react";
 import { register } from "@/shared/components/app/auth/models/register.model";
+import { translate } from "@/shared/locales/helpers";
 
 const ResetPassword = reatomComponent(({ ctx }) => {
   if (!ctx.spy(showResetPasswordAtom)) return null;
 
   return (
     <Link href="/auth/restore" className='flex items-center justify-center w-full text-sm text-neutral-400'>
-      Я забыл пароль
+      {translate["auth.navigation.auth.recoveryTitle"]()}
     </Link>
   )
 }, "ResetPassword")
@@ -34,8 +35,8 @@ const Auth = reatomComponent(({ ctx }) => {
         data-disabled={ctx.spy(authTriggerIsDisabledAtom)}
         className="flex flex-col sm:flex-row min-h-24 h-24 sm:min-h-fit sm:h-fit w-full gap-2 *:h-10 *:w-full"
       >
-        <TabsTrigger value="login">Вход</TabsTrigger>
-        <TabsTrigger value="register">Регистрация</TabsTrigger>
+        <TabsTrigger value="login">{translate["auth.navigation.auth.loginTitle"]()}</TabsTrigger>
+        <TabsTrigger value="register">{translate["auth.navigation.auth.regTitle"]()}</TabsTrigger>
       </TabsList>
       <div className="flex flex-col gap-6 min-w-0 w-full h-full">
         <TabsContent value="register">

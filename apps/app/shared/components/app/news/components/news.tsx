@@ -5,6 +5,7 @@ import { NotFound } from "@/shared/ui/not-found"
 import { tv } from "tailwind-variants"
 import { newsState } from "../models/news.model"
 import { isEmptyArray } from "@/shared/lib/utils"
+import { translate } from "@/shared/locales/helpers"
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
 
@@ -37,7 +38,7 @@ const NewsItem = ({ id, title, imageUrl }: NewsPayload["data"][number]) => {
         </Typography>
         <Link href={createLink("news", id)} className="w-fit">
           <Typography className="text-neutral-400">
-            подробнее
+            {translate["shared.news.single.showMore"]()}
           </Typography>
         </Link>
       </div>
@@ -49,7 +50,7 @@ export const NewsList = reatomComponent(({ ctx }) => {
   const data = ctx.spy(newsState.data)
 
   if (!data || isEmptyArray(data)) {
-    return <NotFound title="Новостей нет" />
+    return <NotFound title={translate["shared.empty"]()} />
   }
 
   return data.map(news => <NewsItem key={news.id} {...news} />)

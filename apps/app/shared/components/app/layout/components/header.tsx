@@ -15,6 +15,7 @@ import { MobileBottomBar } from "./mobile-navigation";
 import { appState } from "@/shared/models/app.model";
 import { Banner } from "../../widgets/components/banner";
 import { cn } from "@/shared/lib/cn";
+import { translate } from "@/shared/locales/helpers";
 
 const HeaderMenuActionItem = reatomComponent<MenuActionItem>(({ ctx, label, cb, disabled, className }) => {
   return (
@@ -80,7 +81,7 @@ const AuthorizeButton = () => {
       className="flex items-center justify-center gap-1 h-9 min-w-10 px-4 py-2 bg-green-600 rounded-xl"
     >
       <Typography className="leading-5 font-semibold select-none text-neutral-50 text-sm">
-        Вход
+        {translate["shared.header.authorizeTitle"]()}
       </Typography>
     </Link>
   )

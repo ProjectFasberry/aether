@@ -18,7 +18,7 @@
 		"build:image:tag": "infisical run --env=common --path=/root --make tag",
 		"build:image:push": "infisical run --env=common --path=/root --make push",
 		"--------------------": "",
-		"release:prod": "infisical run --env=common --path=/root --make all STAGE=prod NAME=frontend-main",
+		"release:prod": "infisical run --env=common --path=/root -- make all STAGE=prod NAME=frontend-main",
 		"release:staging": "infisical run --env=common --path=/root -- make all STAGE=staging NAME=frontend-main",
 		"machine-translate": "inlang machine translate --project project.inlang"
 	},

@@ -15,10 +15,6 @@ const previewImage = getStaticImage("arts/adventure-in-blossom.jpg")
 export type Land = ExtractApiData<"getServerLandsByUlid">["data"]
 export type Data = Awaited<ReturnType<typeof data>>;
 
-async function getLand(ulid: string, init: RequestInit) {
-  return client<Land>(`server/lands/${ulid}`, init).exec()
-}
-
 function metadata(
   land: Land,
   pageContext: PageContextServer
@@ -46,7 +42,7 @@ function metadata(
 
 async function loadLand(ulid: string, headers?: Record<string, string>): Promise<Land | null> {
   try {
-    const land = await getLand(ulid, { headers })
+    const land = await client<Land>(`server/lands/${ulid}`, { headers }).exec()
     return land
   } catch (e) {
     return null;

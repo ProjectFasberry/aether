@@ -6,6 +6,25 @@
     "change-lang": {
       "title": "Change language"
     },
+    "empty": "empty",
+    "back": "back",
+    "next": "next",
+    "lands": {
+      "list": {
+        "showMore": "show more"
+      },
+      "single": {
+        "attributes": {
+          "level": "level",
+          "members": "members"
+        }
+      }
+    },
+    "news": {
+      "single": {
+        "showMore": "more"
+      }
+    },
     "header": {
       "links": {
         "main": {
@@ -37,7 +56,8 @@
         "private": "System panel",
         "settings": "Settings",
         "logout": "Log out"
-      }
+      },
+      "authorizeTitle": "Sign in"
     },
     "footer": {
       "about": {
@@ -69,18 +89,132 @@
       "statusLabel": "playing now"
     }
   },
+  "auth": {
+    "navigation": {
+      "auth": {
+        "loginTitle": "Sign in",
+        "regTitle": "Sign up",
+        "recoveryTitle": "I forgot password"
+      }
+    },
+    "login": {
+      "otherVariantsTitle": "Other login variants",
+      "variants": {
+        "basic": "With password",
+        "qr": "With QR"
+      },
+      "qr": {
+        "steps": {
+          "1": "1. Open Fasberry on the mobile",
+          "2": "2. Go to Settings > Security > Connect device",
+          "3": "3. Point your phone at the QR code on the screen"
+        }
+      },
+      "submit": "Sign in"
+    },
+    "register": {
+      "success": "You have successfully registered for the Fasberry project!",
+      "error": "Something went wrong",
+      "toLogin": "Go to login",
+      "placeholders": {
+        "findoutOther": "Example: Telegram channel",
+        "findout": "How did you hear about the project?"
+      },
+      "findout": {
+        "referrer": "From the player",
+        "custom": "Other"
+      },
+      "acceptRulesTitle": "I agree to the terms of",
+      "acceptRulesPrivacy": "privacy policy",
+      "acceptRulesProcessing": "user agreement",
+      "acceptRulesProject": "project rules",
+      "seed-phrase": {
+        "startTitle": "Enter the missing words to confirm you have saved the phrase",
+        "saveTitle": "Save the phrase in a secret place. You will need it if you want to restore access to your account",
+        "download": "Download",
+        "warning": "Before showing your phrase, make sure no one is around you."
+      }
+    },
+    "shared": {
+      "placeholders": {
+        "nickname": "Nickname",
+        "password": "Password"
+      }
+    }
+  },
+  "ratings": {
+    "title": "Server ratings",
+    "goTo": "Go to rating"
+  },
   "land": {
     "not-found": "It looks like this region no longer exists"
+  },
+  "lands": {
+    "title": "Lands"
   },
   "default": {
     "not-found": "Resource not found"
   },
   "player": {
-    "not-found": "Player not found"
+    "not-found": "Player not found",
+    "lands": {
+      "title": "Lands"
+    },
+    "seems-like-players": {
+      "title": "Seems like players",
+      "notShow": "Not show"
+    },
+    "activity": {
+      "online": "Online",
+      "offline": "Offline"
+    },
+    "balance": {
+      "title": "Balance",
+      "settings": {
+        "title": "Settings",
+        "variants": {
+          "animation": "Show animation"
+        }
+      }
+    },
+    "purchases": {
+      "title": "Purchases",
+      "subtitle": "Your purchase history is displayed here",
+      "goTo": "Go"
+    }
   },
   "store": {
+    "title": "Store",
+    "buy": "Buy",
+    "inCart": "In cart",
+    "filters": {
+      "title": "Filters",
+      "placeholders": {
+        "search": "Search..."
+      },
+      "type": {
+        "label": "Item type",
+        "variants": {
+          "all": "All",
+          "donate": "Donates",
+          "event": "Events"
+        }
+      },
+      "wallet": {
+        "label": "Wallet",
+        "variants": {
+          "all": "All",
+          "charism": "Charism",
+          "belkoin": "Belkoin"
+        }
+      }
+    },
     "item": {
       "not-found": "Store item not found"
     }
+  },
+  "map": {
+    "title": "Select the server",
+    "goTo": "Go"
   }
 }
