@@ -31,7 +31,7 @@ export const restore = atom(null, "restore").pipe(
       withAssign((_, name) => ({
         confirmSeedPhrase: reatomAsync(async (ctx) => {
           const nickname = ctx.get(authState.fields.nickname);
-          const mn = authSecurity.generateMnemonic()
+          const mn = authSecurity.generateMnemonic(ctx)
           const hash = await authSecurity.mnToHash(mn)
 
           const result = await client

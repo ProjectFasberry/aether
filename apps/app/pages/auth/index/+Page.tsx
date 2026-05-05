@@ -9,9 +9,12 @@ import { pageContextAtom } from "@/shared/models/page-context.model";
 import { showResetPasswordAtom } from "@/shared/components/app/auth/models/login.model";
 import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
-import { useEffect } from "react";
+import { lazy, useEffect } from "react";
 import { register } from "@/shared/components/app/auth/models/register.model";
 import { translate } from "@/shared/locales/helpers";
+import { ClientOnly } from "vike-react/ClientOnly";
+
+const AuthTestWidget = lazy(() => import("@/shared/components/app/auth/components/test").then(m => ({ default: m.AuthTestWidget })))
 
 const ResetPassword = reatomComponent(({ ctx }) => {
   if (!ctx.spy(showResetPasswordAtom)) return null;
@@ -74,6 +77,9 @@ export default function Page() {
   return (
     <div className="flex flex-col gap-4 items-center py-30 min-h-dvh w-full">
       <SyncData />
+      <ClientOnly>
+        {import.meta.env.DEV && <AuthTestWidget />}
+      </ClientOnly>
       <Auth />
       <AuthError />
       <div className="flex items-start justify-center h-48 w-full">

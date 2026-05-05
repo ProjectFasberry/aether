@@ -1,4 +1,4 @@
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import Elysia from "elysia";
 import { chat, chatDataSchema } from "./chat.model";

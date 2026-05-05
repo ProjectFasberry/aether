@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";

@@ -1,7 +1,6 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async"
 import { notifyAboutRestrictRole } from "./actions.model"
-import { logError } from "@/shared/lib/log"
 import { toast } from "sonner"
 import { action, atom } from "@reatom/core"
 import { withAssign, withReset } from "@reatom/framework"
@@ -44,7 +43,11 @@ export const permissionsByRoleListAction = reatomAsync(async (ctx, roleId: numbe
 }, {
   name: "permissionsByRoleListAction",
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+}).pipe(
+  withDataAtom(),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const addPermissionForRoleAction = reatomAsync(async (ctx, roleId: number) => {
   const perms = ctx.get(roleNewPermsAtom).map((t) => t.id);
@@ -72,7 +75,11 @@ export const addPermissionForRoleAction = reatomAsync(async (ctx, roleId: number
     permissionsByRoleListAction(ctx, roleId)
   },
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+}).pipe(
+  withDataAtom(),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const deletePermissionForRoleAction = reatomAsync(async (ctx, roleId: number) => {
   const perms = ctx.get(roleDeletedPermsAtom).map((t) => t.id);
@@ -100,7 +107,11 @@ export const deletePermissionForRoleAction = reatomAsync(async (ctx, roleId: num
     permissionsByRoleListAction(ctx, roleId)
   },
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+}).pipe(
+  withDataAtom(),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const roleEditableAtom = atom<RolePayload | null>(null, "roleEditable").pipe(withReset())
 export const rolesIsEditableAtom = atom((ctx) => !!ctx.spy(roleEditableAtom), "rolesIsEditable")
@@ -113,15 +124,8 @@ roleEditableAtom.onChange((ctx, state) => {
 export const roleNewPermsAtom = atom<RolePayload[]>([], "roleNewPerms").pipe(withReset())
 export const roleDeletedPermsAtom = atom<RolePayload[]>([], "roleDeletedPerms").pipe(withReset())
 
-export const getPermIsSelectedAtom = (id: number) => atom(
-  (ctx) => ctx.spy(roleNewPermsAtom).some(t => t.id === id), 
-  "getPermIsSelected"
-)
-
-export const getDeletedPermIsSelectedAtom = (id: number) => atom(
-  (ctx) => ctx.spy(roleDeletedPermsAtom).some(p => p.id === id),
-  "getDeletedPermIsSelected"
-)
+export const getPermIsSelectedAtom = (id: number) => atom((ctx) => ctx.spy(roleNewPermsAtom).some(t => t.id === id))
+export const getDeletedPermIsSelectedAtom = (id: number) => atom((ctx) => ctx.spy(roleDeletedPermsAtom).some(p => p.id === id))
 
 export const permission = atom(null, "permission").pipe(
   withAssign((ctx, name) => ({
@@ -186,8 +190,11 @@ export const saveChangesAction = reatomAsync(async (ctx) => {
   onFulfill: (ctx, res) => {
     toast.success("Изменения применены")
   },
-  onReject: (ctx, e) => notifyAboutRestrictRole(e)
-}).pipe(withStatusesAtom(), withErrorAtom())
+  onReject: (_, e) => notifyAboutRestrictRole(e)
+}).pipe(
+  withStatusesAtom(), 
+  withErrorAtom()
+)
 
 export const getRoleIsSelectedRoleAtom = (id: number) => atom((ctx) => ctx.spy(roleEditableAtom)?.id === id)
 

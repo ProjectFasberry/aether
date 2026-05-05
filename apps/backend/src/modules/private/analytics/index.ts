@@ -1,5 +1,5 @@
 import Elysia from "elysia"
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { analyticsRegistrations } from "./analytics-registrations.route";
 import { analyticsActivity } from "./analytics-activity.route";

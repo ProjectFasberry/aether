@@ -1,21 +1,19 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  getIsCheckedAtom, PrivatedUser, rolesAction, selectUserAction, updateAction, usersAction, 
-  usersDataArrAtom, usersIsViewAtom, usersSelectedOverAtom
+  getIsCheckedAtom, getIsSelectedUser, PrivatedUser, users,
+  usersControl, usersControlRoles, usersControlState, usersDataArrAtom
 } from "../models/users.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { tv } from "tailwind-variants";
 import { currentUserState } from "@/shared/models/current-user.model";
-import { action, Atom, atom, reatomMap, withAssign } from "@reatom/framework";
 import { Checkbox } from "@repo/ui/checkbox";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
-import { ActionButton, ToLink } from "./ui";
-import { IconLayoutBottombarInactive } from "@tabler/icons-react";
 import { UserActionsChangeRoleLocal } from "./users.change-role";
-import { UserActionsRestrictLocal } from "./users.restrict";
+import { UserActionsWrapper } from "./users.restrict";
 import { useInView } from "react-intersection-observer";
+import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@repo/ui/context-menu"
 
 const userItemVariant = tv({
   base: `flex flex-col rounded-lg w-full px-4 border`,
@@ -23,6 +21,10 @@ const userItemVariant = tv({
     variant: {
       default: "border-neutral-800",
       selected: "border-green-500/60",
+    },
+    state: {
+      default: "",
+      active: "bg-neutral-700"
     }
   },
   defaultVariants: {
@@ -30,96 +32,47 @@ const userItemVariant = tv({
   }
 })
 
-const UserActions = reatomComponent<UserActionsProps>(({ ctx, role, nickname }) => {
-  const isSelectedItems = ctx.spy(usersSelectedOverAtom);
-
-  return (
-    <div className="flex pb-2 gap-1 items-center justify-end w-full">
-      <UserActionsChangeRoleLocal nickname={nickname} role_id={role.role_id} role_name={role.role_name} />
-      {!isSelectedItems && (
-        <UserActionsRestrictLocal nickname={nickname} />
-      )}
-    </div>
-  )
-}, "UserActions")
-
-const isExpandedAtom = reatomMap<string, boolean>().pipe(
-  withAssign((target, name) => ({
-    toggle: action((ctx, nickname: string) => {
-      const current: boolean = target.getOrCreate(ctx, nickname, () => false)
-      const state = ctx.get(target)
-
-      if (state.size >= 1) {
-        const first = state.keys().next().value;
-
-        if (first) {
-          state.delete(first);
-        }
-      }
-
-      target.set(ctx, nickname, !current)
-    }, `${name}.toggle`),
-  })),
-)
-
-const getIsExpandedAtom = (nickname: string): Atom<boolean> => atom((ctx) => ctx.spy(isExpandedAtom).get(nickname) ?? false)
-
-type UserActionsProps = {
-  nickname: string,
-  role: { role_id: number, role_name: string }
-}
-
-const User = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, role_name, role_id }) => {
-  const currentUser = ctx.get(currentUserState)
-
+const UsersItem = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, role_name, role_id }) => {
   const isChecked = ctx.spy(getIsCheckedAtom(nickname));
-  const isExpanded = ctx.spy(getIsExpandedAtom(nickname));
-  const isIdentity = currentUser?.nickname === nickname;
-  const isSelectedItems = ctx.spy(usersSelectedOverAtom);
+  const isExpanded = ctx.spy(getIsSelectedUser(nickname));
+  const isIdentity = ctx.get(currentUserState)?.nickname === nickname;
 
   const variant = isIdentity ? "selected" : "default"
+  const state = isExpanded ? "active" : "default"
 
   return (
-    <div key={id} className={userItemVariant({ variant })}>
-      <div className="flex gap-2 items-center justify-between w-full h-12">
-        <div className="flex items-center gap-3 min-w-0 justify-start">
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={v => {
-              if (typeof v === 'boolean') {
-                selectUserAction(ctx, v, nickname)
-              }
-            }}
-          />
-          <Link
-            href={createLink("player", nickname)}
-            className="flex items-center min-w-0 gap-2"
-          >
-            <Avatar url={avatar} nickname={nickname} className="h-8 w-8" />
-            <Typography className="font-semibold truncate">
-              {nickname}
-            </Typography>
-          </Link>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center justify-center gap-1">
-            <ToLink link={`/private/users/${nickname}`} />
-            {!isSelectedItems && (
-              <ActionButton
-                variant={isExpanded ? "selected" : "default"}
-                icon={IconLayoutBottombarInactive}
-                onClick={() => isExpandedAtom.toggle(ctx, nickname)}
-              />
-            )}
+    <div className={userItemVariant({ variant, state })}>
+      <ContextMenu onOpenChange={(v) => {
+        if (v) {
+          usersControlState.selectedUser(ctx, nickname)
+        } else {
+          usersControlState.selectedUser.reset(ctx)
+        }
+      }}>
+        <ContextMenuTrigger>
+          <div className="flex items-center gap-3 h-12 min-w-0 justify-start">
+            <Checkbox
+              checked={isChecked}
+              onCheckedChange={v => usersControl.selectSingle(ctx, v, nickname)}
+            />
+            <Link href={createLink("player", nickname)} className="flex items-center min-w-0 gap-2">
+              <Avatar url={avatar} nickname={nickname} className="h-6 w-6" />
+              <Typography className="font-semibold text-sm truncate">
+                {nickname}
+              </Typography>
+            </Link>
+            <UserActionsChangeRoleLocal nickname={nickname} role_id={role_id} role_name={role_name} />
           </div>
-        </div>
-      </div>
-      {isExpanded && (
-        <UserActions nickname={nickname} role={{ role_id, role_name }} />
-      )}
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <div className="flex pb-2 gap-1 items-center justify-end w-full">
+            <UserActionsWrapper nickname={nickname} type="single" />
+          </div>
+        </ContextMenuContent>
+      </ContextMenu>
     </div>
   )
-}, "User")
+}, "UsersItem")
 
 const UsersSkeleton = ({ length = 32 }: { length?: number }) => {
   return (
@@ -130,23 +83,23 @@ const UsersSkeleton = ({ length = 32 }: { length?: number }) => {
 }
 
 const UsersUpdatingSkeleton = reatomComponent(({ ctx }) =>
-  ctx.spy(updateAction.statusesAtom).isPending ? <UsersSkeleton length={3} /> : null, "UsersUpdatingSkeleton"
+  ctx.spy(users.update.statusesAtom).isPending && <UsersSkeleton length={3} />
 )
 
 export const Users = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => {
-    usersAction(ctx)
-    rolesAction(ctx)
+    users.fetch(ctx)
+    usersControlRoles.fetch(ctx)
   }, []);
 
-  const data = ctx.spy(usersDataArrAtom);
-  if (ctx.spy(usersAction.statusesAtom).isPending) return <UsersSkeleton />
+  if (ctx.spy(users.fetch.statusesAtom).isPending) return <UsersSkeleton />
 
+  const data = ctx.spy(usersDataArrAtom);
   if (!data) return null;
 
   return (
     <div className="flex flex-col gap-1 w-full h-full">
-      {data.map((user) => <User key={user.id} {...user} />)}
+      {data.map((user) => <UsersItem key={user.id} {...user} />)}
       <UsersUpdatingSkeleton />
     </div>
   )
@@ -154,6 +107,6 @@ export const Users = reatomComponent(({ ctx }) => {
 
 export const UsersViewer = () => {
   const { ref, inView } = useInView({ triggerOnce: false, threshold: 0 })
-  useUpdate((ctx) => usersIsViewAtom(ctx, inView), [inView])
-  return <div ref={ref} className="h-[1px]" />
+  useUpdate((ctx) => usersControlState.inView(ctx, inView), [inView])
+  return <div ref={ref} className="h-px" />
 }

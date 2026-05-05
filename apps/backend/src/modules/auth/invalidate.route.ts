@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { SESSION_KEY, unsetCookie } from "#/utils/auth/cookie";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { session } from "./login.model";
 

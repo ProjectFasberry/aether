@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { session } from "./login.model";
-import { defineSession } from "#/lib/middlewares/define";
+import { defineSession } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 
 export const validate = new Elysia()

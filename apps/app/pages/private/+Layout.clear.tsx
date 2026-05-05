@@ -20,7 +20,7 @@ import { Chat } from "@/shared/components/app/private/components/chat";
 
 const linkVariant = tv({
   base: `flex justify-start items-center group h-10 rounded-xl px-4
-    data-[state=inactive]:bg-neutral-700 data-[state=inactive]:text-neutral-50 data-[state=active]:bg-neutral-50 data-[state=active]:text-neutral-950`,
+    data-[state=inactive]:bg-neutral-800 data-[state=inactive]:text-neutral-50 data-[state=active]:bg-neutral-50 data-[state=active]:text-neutral-950`,
   slots: {
     text: "font-semibold text-nowrap"
   }

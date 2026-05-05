@@ -1,4 +1,3 @@
-import { abortablePromiseAll } from "#/helpers/abortable"
 import { getNats } from "#/shared/nats/client"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { callServerCommand } from "#/utils/server/call-command"
@@ -13,13 +12,9 @@ async function handleReferalReward(msg: Msg) {
   const payload = msg.json<ReferalRewardPayload>()
   if (!payload) return;
 
-  const controller = new AbortController()
-
   try {
-    await abortablePromiseAll([
-      () => callServerCommand({ parent: "cmi", value: `money give ${payload.referral} 50` }),
-      () => callServerCommand({ parent: "p", value: `give ${payload.referrer} 1` })
-    ], controller)
+    await callServerCommand({ parent: "cmi", value: `money give ${payload.referral} 50` })
+    await callServerCommand({ parent: "p", value: `give ${payload.referrer} 1` })
   } catch (e) {
     logErrorMsg(e)
   }

@@ -16,7 +16,11 @@ export const methodsAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
     client<PrivatedMethodsPayload>("privated/store/methods/list", { signal: ctx.controller.signal }).exec()
   )
-}).pipe(withDataAtom(), withStatusesAtom(), withCache({ swr: false }))
+}).pipe(
+  withDataAtom(),
+  withStatusesAtom(),
+  withCache({ swr: false })
+)
 
 export const editMethodAction = reatomAsync(async (ctx, method: string, key: string, value: boolean | string) => {
   const body = { key, value }
@@ -44,4 +48,6 @@ export const editMethodAction = reatomAsync(async (ctx, method: string, key: str
     })
   },
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withStatusesAtom())
+}).pipe(
+  withStatusesAtom()
+)

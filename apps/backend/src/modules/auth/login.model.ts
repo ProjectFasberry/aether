@@ -33,11 +33,11 @@ export type UserSessionPayload = {
 	created_at: string | Date;
 };
 
-export const DEFAULT_SESSION_EXPIRE = 60 * 60 * 24 * 30; // 30 days
-export const DEFAULT_SESSION_EXPIRE_MS = 60 * 60 * 24 * 30 * 1000;
-export const MIN_SESSION_EXPIRE = 60 * 60 * 24 * 15; // 15 days
-export const MIN_SESSION_EXPIRE_MS = 60 * 60 * 24 * 15 * 1000;
-export const USER_SESSIONS_LIMIT = 15; // 15 sessions per user
+const DEFAULT_SESSION_EXPIRE = 60 * 60 * 24 * 30; // 30 days
+const DEFAULT_SESSION_EXPIRE_MS = DEFAULT_SESSION_EXPIRE * 1000;
+const MIN_SESSION_EXPIRE = 60 * 60 * 24 * 15; // 15 days
+const MIN_SESSION_EXPIRE_MS = MIN_SESSION_EXPIRE * 1000;
+const USER_SESSIONS_LIMIT = 15; // 15 sessions per user
 
 export const loginLogger = authLogger.withTag("Login");
 export const qrLogger = loginLogger.withTag("QR");
@@ -67,7 +67,6 @@ function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, s
 
 		result[key] = serializeValue(value);
 	}
-
 	return result as Record<IterateKey, string>;
 }
 
@@ -78,16 +77,11 @@ export const session = {
 		const sessionKey = auth.getUserKey(token);
 		const remainingTtlMs = await redis.pttl(sessionKey);
 
-		if (remainingTtlMs < 0) {
-			return null;
-		}
+		if (remainingTtlMs < 0) return null;
 
 		if (remainingTtlMs < MIN_SESSION_EXPIRE_MS) {
 			const nickname = await redis.get(sessionKey);
-
-			if (!nickname) {
-				return null;
-			}
+			if (!nickname) return null;
 
 			const userSessionsKey = this.getUserSessionsKey(nickname);
 			const newExpiresAtTimestamp = Date.now() + DEFAULT_SESSION_EXPIRE_MS;
@@ -116,17 +110,16 @@ export const session = {
 		if (!token) return;
 
 		const refreshResult = await this.refreshSession(token);
+		if (!refreshResult) return;
 
-		if (refreshResult) {
-			const { expires_at, nickname } = refreshResult;
+		const { expires_at, nickname } = refreshResult;
 
-			setCookie({
-				cookie,
-				key: SESSION_KEY,
-				expires: expires_at,
-				value: token,
-			});
-		}
+		setCookie({
+			cookie,
+			key: SESSION_KEY,
+			expires: expires_at,
+			value: token,
+		});
 	},
 	generateSessionToken(): string {
 		const bytes = new Uint8Array(20);
@@ -135,15 +128,9 @@ export const session = {
 	},
 	async afterLoginEvents({ nickname }: { nickname: string }) {
 		const nc = getNats();
+		const payload = { created_at: dayjs().toDate(), nickname }
 
-		const payload = {
-			created_at: dayjs().toDate(),
-			nickname,
-		}
-
-		nc.publish(
-			SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload)
-		);
+		nc.publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
 	},
 	async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
 		const redis = getRedis();
@@ -263,11 +250,9 @@ export const loginQR = {
 	getAuthQRSubject: (token: string) => `auth.qr.*.${token}`,
 	_notify(type: QREventsEvent, token: string) {
 		const nc = getNats();
+		const payload = { data: token }
 
-		nc.publish(
-			this.createAuthQRSubject(type, token),
-			JSON.stringify({ data: token })
-		);
+		nc.publish(this.createAuthQRSubject(type, token), JSON.stringify(payload));
 	},
 	async generate({
 		visitorId, ip, ua
@@ -278,13 +263,13 @@ export const loginQR = {
 		const redis = getRedis();
 
 		const key = this.getQRTokenKey(token);
-		const pd: LoginQRKeyPayload = {
+		const payload: LoginQRKeyPayload = {
 			ua, vId: visitorId, ip, status: "pending",
 		};
 
 		const results = await redis
 			.pipeline()
-			.hset(key, pd)
+			.hset(key, payload)
 			.expire(key, this.QR_VERIFY_TIMEOUT_S)
 			.exec();
 		
@@ -299,8 +284,8 @@ export const loginQR = {
 		return { token };
 	},
 	async deleteToken(token: string): Promise<void> {
-		const key = this.getQRTokenKey(token);
 		const redis = getRedis();
+		const key = this.getQRTokenKey(token);
 		const status = await redis.hget(key, "status") as Nullable<LoginQRKeyPayload["status"]>
 
 		if (!status || status !== 'verified') {
@@ -315,7 +300,6 @@ export const loginQR = {
 	},
 	async confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
 		const redis = getRedis();
-		
 		const key = this.getQRTokenKey(token);
 		const currStatus = await redis.hget(key, "status");
 
@@ -333,8 +317,8 @@ export const loginQR = {
 		this._notify("verified", token);
 	},
 	async getData(token: string) {
-		const key = this.getQRTokenKey(token);
 		const redis = getRedis();
+		const key = this.getQRTokenKey(token);
 
 		const data = await redis.hgetall(key);
 		if (!data || Object.keys(data).length === 0) {

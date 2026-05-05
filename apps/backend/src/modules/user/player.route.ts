@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { getPlayerAvatar } from "../server/skin/skin.model";
-import { defineOptionalUser } from "#/lib/middlewares/define";
+import { defineOptionalUser } from "#/lib/define";
 import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";

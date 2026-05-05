@@ -5,7 +5,7 @@ import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { metaSchema, searchQuerySchema } from "#/shared/schemas";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { getPlayerAvatar } from "#/modules/server/skin/skin.model";
 

@@ -12,7 +12,7 @@ type ControlPayload = {
 const usersControlTargetsSchema = z.array(z.string())
 
 export const usersControlRestrictSchema = z.object({
-  type: z.enum(["ban", "unban", "unmute", "mute", "kick"]),
+  type: z.enum(["ban", "unban", "unmute", "mute", "kick", "unregister"]),
   nicknames: usersControlTargetsSchema
 })
 
@@ -69,7 +69,7 @@ const getMuteCmd = ({ type, nickname, time, reason }: BaseCmd & MuteCmdArgs) => 
 type ExecCmdFnReturn = string
 type ExecCmdFn = (payload: any) => ExecCmdFnReturn;
 
-const EXEC_CMDS: Record<UsersControlRestrictSchema["type"], ExecCmdFn> = {
+const EXEC_CMDS: Partial<Record<UsersControlRestrictSchema["type"], ExecCmdFn>> = {
   ban: getBanCmd,
   unban: getBanCmd,
   mute: getMuteCmd,
@@ -92,14 +92,12 @@ type ExecCmdArgs = | {
 } | {
   type: "unmute",
   args?: never
+} | {
+  type: "unregister",
+  args: KickCmdArgs
 }
 
 type ExecCmd = ExecCmdArgs & { nicknames: UsersControlSchema["nicknames"] }
-
-function getStackTrace() {
-  const stack = new Error().stack?.split('\n').slice(1).join('\n');
-  return stack
-}
 
 async function execCmd({
   type, nicknames, args: rawArgs
@@ -119,9 +117,12 @@ async function execCmd({
 
   const tasks = nicknames.map(async nickname => {
     const payload = { ...args, nickname };
-    const toExec = exec(payload)
-    const cmd = await client.send(toExec);
-    return stripMinecraftColors(cmd.toString());
+    const toExec = exec?.(payload);
+
+    if (toExec) {
+      const cmd = await client.send(toExec);
+      return stripMinecraftColors(cmd.toString());
+    }
   });
   
   let result: string[];
@@ -175,6 +176,11 @@ async function kickUsers(nicknames: Nicknames, args: KickCmdArgs): Promise<Contr
   return { ok: true, type, payload: nicknames }
 }
 
+async function unregisterUsers(nicknames: Nicknames, args: KickCmdArgs): Promise<ControlPayload> {
+  console.log(nicknames, args);
+
+  return { ok: true, type: "unregister", payload: nicknames }
+}
 
 // 
 export async function changeRoleUsers(
@@ -210,12 +216,12 @@ const TARGETS_EVENTS: Record<UsersControlRestrictSchema["type"], (t: Nicknames, 
   unban: (t) => unbanUsers(t),
   mute: (t, args) => muteUsers(t, args as MuteCmdArgs),
   unmute: (t) => unmuteUsers(t),
-  kick: (t, args) => kickUsers(t, args as KickCmdArgs)
+  kick: (t, args) => kickUsers(t, args as KickCmdArgs),
+  unregister: (t, args) => unregisterUsers(t, args as KickCmdArgs)
 }
 
 export async function controlRestrictUsers({ nicknames, args, type }: UsersControlRestrictSchema & { args: unknown }) {
   const event = TARGETS_EVENTS[type];
-  console.log(TARGETS_EVENTS[type])
   const result = await event(nicknames, args)
   alert(`${JSON.stringify(result)}`)
   return result

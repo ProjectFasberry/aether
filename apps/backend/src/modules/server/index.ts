@@ -6,7 +6,7 @@ import { events } from "#/modules/server/events";
 import { lands } from "#/modules/server/lands";
 import { playerGroup } from "./player";
 import { tasks } from "./tasks";
-import { validateBannedStatus } from "#/lib/middlewares/validators";
+import { validateBannedStatus } from "#/lib/validators";
 import { skinGroup } from "./skin";
 import { referrals } from "./referals";
 

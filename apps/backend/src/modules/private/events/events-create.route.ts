@@ -1,6 +1,6 @@
 import Elysia from "elysia"
 import { createEvent, createEventSchema } from "../../server/events/events.model";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 

@@ -7,14 +7,18 @@ import { notifyAboutRestrictRole } from "./actions.model"
 
 type EventPayload = ExtractApiData<"getServerEventsList">["data"][number]
 
-export const eventsListAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    getEvents({ limit: 12 }, { signal: ctx.controller.signal })
-  )
-}).pipe(
-  withDataAtom(null),
-  withCache({ swr: false }),
-  withStatusesAtom()
+export const events = atom(null, "events").pipe(
+  withAssign(() => ({
+    fetch: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() =>
+        getEvents({ limit: 12 }, { signal: ctx.controller.signal })
+      )
+    }).pipe(
+      withDataAtom(null),
+      withCache({ swr: false }),
+      withStatusesAtom()
+    )
+  }))
 )
 
 export const createEventState = atom(null, "createEventState").pipe(
@@ -50,12 +54,21 @@ export const createEvent = atom(null, "createEvent").pipe(
       onFulfill: (ctx, res) => {
         toast.success("Ивент создан");
 
-        eventsListAction.cacheAtom.reset(ctx)
-        eventsListAction.dataAtom(ctx, (state) => state ? [...state, res] : null)
+        events.fetch.cacheAtom.reset(ctx)
+        events.fetch.dataAtom(ctx, (state) => state ? [...state, res] : null)
 
         createEvent.resetFull(ctx)
       },
       onReject: (_, e) => notifyAboutRestrictRole(e),
+    }).pipe(withStatusesAtom())
+  }))
+)
+export const deleteEvent = atom(null, "deleteEvent").pipe(
+  withAssign((_, name) => ({
+    submit: reatomAsync(async (ctx) => {
+
+    }, {
+      name: `${name}.submit`
     }).pipe(withStatusesAtom())
   }))
 )

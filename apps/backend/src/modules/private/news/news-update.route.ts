@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import * as z from "zod/v4";
 import { general } from "#/shared/database/general-db";
 import { Permissions } from "#/shared/constants/permissions";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import type { Selectable } from "kysely";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";

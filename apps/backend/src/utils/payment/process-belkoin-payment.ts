@@ -1,4 +1,3 @@
-import { abortablePromiseAll } from "#/helpers/abortable"
 import { callBroadcast } from "../server/call-broadcast"
 import { callServerCommand } from "../server/call-command";
 
@@ -14,20 +13,13 @@ async function giveBelkoin(
   return callServerCommand(payload)
 }
 
-type ExtractAsyncResult<T extends (...args: any) => any> =
-  Awaited<ReturnType<T>>;
-
 export async function processBelkoinPayment({
   nickname, value
 }: { nickname: string, value: number }) {
-  const controller = new AbortController();
-
   const message = `Игрок ${nickname} приобрел ${value} ед. белкоинов`
   const command = { parent: "cmi", value: `toast ${nickname} Поздравляем c покупкой!` } as const;
 
-  await abortablePromiseAll<ExtractAsyncResult<typeof giveBelkoin>>([
-    () => giveBelkoin({ nickname, value }),
-    () => callServerCommand({ ...command }),
-    () => callBroadcast({ message }),
-  ], controller)
+  await giveBelkoin({ nickname, value });
+  await callServerCommand({ ...command });
+  await callBroadcast({ message });
 }

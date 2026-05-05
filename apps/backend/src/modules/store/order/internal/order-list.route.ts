@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { orderGameSchema } from "./internal-order.model";

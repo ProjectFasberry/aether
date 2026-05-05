@@ -16,17 +16,35 @@ import { appState } from "@/shared/models/app.model";
 import { Banner } from "../../widgets/components/banner";
 import { cn } from "@/shared/lib/cn";
 import { translate } from "@/shared/locales/helpers";
+import { Switch } from "@repo/ui/switch";
+ 
+const HeaderMenuActionItem = reatomComponent<MenuActionItem>(({ ctx, label, value, type, cb, disabled, className }) => {
+  if (type === 'switch') {
+    return (
+      <div className="flex items-center px-2 justify-between font-semibold text-neutral-400 w-full">
+        {label}
+        <Switch
+          onCheckedChange={v => cb(ctx)}
+          checked={ctx.spy(value)}
+          disabled={disabled?.(ctx) ?? false}
+        />
+      </div>
+    )
+  }
 
-const HeaderMenuActionItem = reatomComponent<MenuActionItem>(({ ctx, label, cb, disabled, className }) => {
-  return (
-    <DropdownMenuItem
-      className={cn("gap-2 w-full text-neutral-400 font-semibold", className)}
-      disabled={disabled?.(ctx) ?? false}
-      onClick={() => cb(ctx)}
-    >
-      {label}
-    </DropdownMenuItem>
-  )
+  if (type === 'button') {
+    return (
+      <DropdownMenuItem
+        className={cn("gap-2 w-full text-neutral-400 font-semibold", className)}
+        disabled={disabled?.(ctx) ?? false}
+        onClick={() => cb(ctx)}
+      >
+        {label}
+      </DropdownMenuItem>
+    )
+  }
+  
+  return null;
 }, "HeaderMenuActionItem")
 
 const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {

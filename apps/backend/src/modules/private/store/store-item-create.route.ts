@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import type * as z from "zod/v4"
 import { general } from "#/shared/database/general-db";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { storeItemCreateSchema } from "@repo/shared/schemas/store";

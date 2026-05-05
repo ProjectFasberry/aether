@@ -1,6 +1,5 @@
-import { abortablePromiseAll } from "#/helpers/abortable"
 import { callBroadcast } from "../server/call-broadcast"
-import { type AbortableCommandArgs, callServerCommand } from "../server/call-command"
+import { callServerCommand } from "../server/call-command"
 
 type GiveCharism = { nickname: string, value: number }
 
@@ -17,9 +16,7 @@ export async function processCharismPayment({
 }: { nickname: string, value: number }) {
   const message = `Игрок ${nickname} приобрел ${value} ед. харизмы`
 
-  await abortablePromiseAll([
-    () => giveCharism({ nickname, value }),
-    () => callServerCommand({ parent: "cmi", value: `toast ${nickname} Поздравляем с покупкой` }),
-    () => callBroadcast({ message }),
-  ])
+  await giveCharism({ nickname, value });
+  await callServerCommand({ parent: "cmi", value: `toast ${nickname} Поздравляем с покупкой` });
+  await callBroadcast({ message });
 }

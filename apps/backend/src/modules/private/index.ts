@@ -5,7 +5,7 @@ import { permissions } from "./permissions";
 import { storePrivate } from "./store";
 import { users } from "./users";
 import { roles } from "./roles";
-import { validateBannedStatus } from "#/lib/middlewares/validators";
+import { validateBannedStatus } from "#/lib/validators";
 import { analytics } from "./analytics";
 import { news } from "./news";
 import { banners } from "./banners";

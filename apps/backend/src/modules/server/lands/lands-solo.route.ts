@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineOptionalUser } from "#/lib/middlewares/define";
+import { defineOptionalUser } from "#/lib/define";
 import { getLand, landPayload } from "./lands.model";
 import { withData } from "#/shared/schemas";
 

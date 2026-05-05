@@ -3,7 +3,7 @@ import { cryptobot, type CreateOrderPayload, createOrderPayloadSchema } from "./
 import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/utils";
 import { heleket } from "./heleket.model";
 

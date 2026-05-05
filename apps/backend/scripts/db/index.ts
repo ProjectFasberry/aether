@@ -9,7 +9,7 @@ const portOpts = {
 			validate: (value) => {
 				if (!value) return "Please enter a value";
 				const num = parseInt(value);
-				if (isNaN(num)) return "Please enter a valid number";
+				if (Number.isNaN(num)) return "Please enter a valid number";
 				if (num < 1 || num > 65535) return "Port must be between 1 and 65535";
 				return undefined;
 			},

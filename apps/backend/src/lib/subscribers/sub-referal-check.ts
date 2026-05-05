@@ -1,4 +1,3 @@
-import { abortablePromiseAll } from "#/helpers/abortable";
 import { general } from "#/shared/database/general-db";
 import { getNats } from "#/shared/nats/client";
 import { logErrorMsg } from "#/utils/config/log-utils";
@@ -15,18 +14,14 @@ async function handleReferalCheck(msg: Msg) {
     const result = await validateReferal(nickname)
     if (!result) return;
 
-    const controller = new AbortController()
-
     await general.transaction().execute(async (trx) => {
-      await abortablePromiseAll([
-        // for initiator
-        () => callServerCommand({ parent: "cmi", value: `money give ${result.initiator} 60` }),
-        () => callServerCommand({ parent: "p", value: `give ${result.initiator} 5` }),
+      // for initiator
+      await callServerCommand({ parent: "cmi", value: `money give ${result.initiator} 60` })
+      await callServerCommand({ parent: "p", value: `give ${result.initiator} 5` })
 
-        // for recipient
-        () => callServerCommand({ parent: "cmi", value: `money give ${result.recipient} 30` }),
-        () => callServerCommand({ parent: "p", value: `give ${result.recipient} 1` })
-      ], controller)
+      // for recipient
+      await callServerCommand({ parent: "cmi", value: `money give ${result.recipient} 30` })
+      await callServerCommand({ parent: "p", value: `give ${result.recipient} 1` })
 
       const update = await trx
         .updateTable("referrals")

@@ -1,10 +1,11 @@
 import { CONFIG_PANEL_READ_PERMISSION, currentUserState } from "@/shared/models/current-user.model";
-import { action, Action, atom, CtxSpy } from "@reatom/core";
+import { action, Action, atom, AtomMut, CtxSpy } from "@reatom/core";
 import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, TablerIcon } from "@tabler/icons-react"
 import { settingsState } from "../../settings/models/settings.model";
 import { logout } from "../../auth/models/logout.model";
 import { isAuthedAtom, pageContextAtom } from "@/shared/models/page-context.model";
 import { translate } from "@/shared/locales/helpers";
+import { debug, debugState } from "@/shared/models/app.model";
 
 const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
   ({ title, icon, label, href })
@@ -41,25 +42,49 @@ export const validatedLinksAtom = atom((ctx) => {
   return validatedLinks
 })
 
-export type MenuActionItem = {
-  label: string,
-  className?: string,
-  disabled?: (ctx: CtxSpy) => boolean,
-  cb: Action<[], void>
-}
+export type MenuActionItem = ButtonMenuItem | SwitchMenuItem
+
+type BaseMenuItem = {
+  label: string;
+  className?: string;
+  disabled?: (ctx: CtxSpy) => boolean;
+};
+
+type ButtonMenuItem = BaseMenuItem & {
+  type: "button";
+  cb: Action<[], void>;
+  value?: never;
+};
+
+type SwitchMenuItem = BaseMenuItem & {
+  type: "switch";
+  value: AtomMut<boolean>;
+  cb: Action<[], void>;
+};
 
 export const MENU_ACTIONS: MenuActionItem[] = [
   {
     label: translate["shared.header.menu.settings"](),
-    cb: action((ctx) => void settingsState.dialogIsOpen(ctx, true))
+    cb: action((ctx) => void settingsState.dialogIsOpen(ctx, true)),
+    type: "button"
   },
   {
-    label: translate["shared.header.menu.logout"](), 
+    label: translate["shared.header.menu.logout"](),
     className: "text-red hover:bg-red/60!",
     disabled: (ctx) => ctx.spy(logout.exec.statusesAtom).isPending,
-    cb: logout.withConfirm
-  }
+    cb: logout.withConfirm,
+    type: "button"
+  },
 ]
+
+if (import.meta.env.DEV) {
+  MENU_ACTIONS.push({
+    label: "Debug",
+    cb: debug.toggle,
+    type: "switch",
+    value: debugState.enabled
+  })
+}
 
 export const showCurrentUserMenuAtom = atom((ctx) => {
   const pathname = ctx.spy(pageContextAtom)?.urlPathname

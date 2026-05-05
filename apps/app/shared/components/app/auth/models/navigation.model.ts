@@ -73,7 +73,7 @@ export const createNavigationModel = ({
     if (!prev) return;
 
     typeAtom(ctx, prev.id)
-  }).pipe(
+  }, "_").pipe(
     withStatusesAtom()
   );
 
@@ -94,7 +94,7 @@ export const createNavigationModel = ({
 
     typeAtom(ctx, next.id)
     return true;
-  }).pipe(
+  }, "_").pipe(
     withStatusesAtom()
   )
 

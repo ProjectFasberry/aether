@@ -1,15 +1,17 @@
 export function normalizeIp(ip: string | undefined | null): string | null {
   if (!ip) return null;
 
-  if (ip === '::1') {
+  let trimmedIp = ip.trim().toLowerCase();
+
+  if (trimmedIp === '::1' || trimmedIp === '0:0:0:0:0:0:0:1') {
     return '127.0.0.1';
   }
-  
-  if (ip.startsWith('::ffff:')) {
-    return ip.replace('::ffff:', '');
+
+  if (trimmedIp.startsWith('::ffff:')) {
+    trimmedIp = trimmedIp.replace('::ffff:', '');
   }
 
-  const result = ip.replace(/^\[|\]$/g, '');
+  const result = trimmedIp.replace(/^\[|\]$/g, '');
 
-  return result
+  return result || null;
 }

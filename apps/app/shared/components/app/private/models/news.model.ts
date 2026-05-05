@@ -4,7 +4,6 @@ import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatus
 import { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
 import { toast } from "sonner";
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper";
-import { devLog } from "@/shared/lib/log";
 import { generateHTML, type JSONContent } from "@tiptap/react"
 import { actionsTargetAtom, collectChanges, compareChanges, notifyAboutRestrictRole } from "./actions.model";
 import { editorExtensions } from "@/shared/components/config/editor";
@@ -17,11 +16,14 @@ type News = NewsPayload["data"][number];
 
 export const newsListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
-    client<NewsPayload>("privated/news/list", { signal: ctx.controller.signal }).pipe(withQueryParams({ asc: false, content: true })).exec()
+    client
+      .get<NewsPayload>("privated/news/list", { signal: ctx.controller.signal })
+      .pipe(withQueryParams({ asc: false, content: true }))
+      .exec()
   )
 }, "newsListAction").pipe(
-  withDataAtom(null), 
-  withStatusesAtom(), 
+  withDataAtom(null),
+  withStatusesAtom(),
   withCache({ swr: false })
 )
 
@@ -76,8 +78,10 @@ export const createNews = atom(null, "news").pipe(
         newsListAction.dataAtom(ctx, (state) => state ? { data: [...state.data, res], meta: state.meta } : null)
         createNews.resetFull(ctx)
       },
-      onReject: (ctx, e) => notifyAboutRestrictRole(e)
-    }).pipe(withStatusesAtom())
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom()
+    )
   }))
 )
 
@@ -190,7 +194,10 @@ export const editNews = atom(null, "editNews").pipe(
 
       const body = Object.entries(changes).map(([field, value]) => ({ field, value })) as z.infer<typeof newsUpdateSchema>
 
-      return await client.post(`privated/news/${id}/edit`).pipe(withJsonBody(body)).exec()
+      return await client
+        .post(`privated/news/${id}/edit`)
+        .pipe(withJsonBody(body))
+        .exec()
     }, {
       name: "editNewsAction",
       onFulfill: (ctx, res) => {
@@ -199,8 +206,10 @@ export const editNews = atom(null, "editNews").pipe(
         ctx.schedule(() => navigate("/private/config"));
         editNews.resetFull(ctx);
       },
-      onReject: (ctx, e) => notifyAboutRestrictRole(e)
-    }).pipe(withStatusesAtom())
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom()
+    )
   }))
 )
 
@@ -229,7 +238,9 @@ export const deleteNews = atom(null, "deleteNews").pipe(
         newsListAction.cacheAtom.reset(ctx)
         newsListAction.dataAtom(ctx, (state) => state ? { data: state.data.filter(news => news.id !== res.id), meta: state.meta } : null)
       },
-      onReject: (ctx, e) => notifyAboutRestrictRole(e)
-    }).pipe(withStatusesAtom())
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom()
+    )
   }))
 )

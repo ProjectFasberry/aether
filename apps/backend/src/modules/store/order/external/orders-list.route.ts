@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia"
 import { externalOrders, orderDefaultSingleSchema, orderStatusSchema } from "./external-order.model"
-import { defineUser } from "#/lib/middlewares/define"
+import { defineUser } from "#/lib/define"
 import { withData } from "#/shared/schemas"
 
 export const ordersList = new Elysia()

@@ -1,11 +1,13 @@
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
-import { action, atom, batch, Ctx } from "@reatom/core"
-import { reatomMap, reatomSet, sleep, withConcurrency, withReset } from "@reatom/framework"
+import { action, atom, batch } from "@reatom/core"
+import { reatomMap, reatomSet, sleep, withAssign, withConcurrency, withReset } from "@reatom/framework"
 import { withLocalStorage } from "@reatom/persist-web-storage"
 import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
+import { DEFAULT_SOFT_DELAY } from "@/shared/consts"
+import { invariant } from "@/shared/lib/invariant"
 
 export type PrivatedUser = {
   id: number;
@@ -20,335 +22,320 @@ export type PrivatedUser = {
   status: "default" | "banned" | "muted";
 };
 
-export type PrivatedUsersPayload = {
-  data: PrivatedUser[];
-  meta: PaginatedMeta;
-};
+export type PrivatedUsersPayload = { data: PrivatedUser[]; meta: PaginatedMeta };
 
-//#region fetch/action list
 type UsersSort = "created_at" | "role" | "abc"
 
 type Params = {
-  searchQuery: string | undefined;
+  searchQuery: Nullable<string>;
   asc: boolean;
   sort: UsersSort;
-  startCursor: Maybe<string>;
-  endCursor: Maybe<string>;
+  startCursor: Nullable<string>;
+  endCursor: Nullable<string>;
 }
 
-export const usersSearchQueryAtom = atom<Maybe<string>>(undefined, "usersSearchQuery")
-export const usersAscendingAtom = atom(false, "usersAscending").pipe(withLocalStorage({ key: "privated-users-asc" }))
-export const usersSortAtom = atom<UsersSort>("created_at", "usersSort").pipe(withLocalStorage({ key: "privated-users-sort" }))
+export const usersState = atom(null, "usersState").pipe(
+  withAssign((_, name) => ({
+    filters: atom(null, `${name}.filters`).pipe(
+      withAssign(() => ({
+        searchQuery: atom<Nullable<string>>(null),
+        asc: atom(false).pipe(withLocalStorage({ key: "privated-users-asc" })),
+        sortBy: atom<UsersSort>("created_at").pipe(withLocalStorage({ key: "privated-users-sort" })),
+        startCursor: atom<Nullable<string>>(null).pipe(withReset()),
+        endCursor: atom<Nullable<string>>(null).pipe(withReset())
+      }))
+    ),
+    data: reatomMap<string, PrivatedUsersPayload["data"][number]>(),
+    meta: atom<PrivatedUsersPayload["meta"] | null>(null)
+  }))
+)
 
-const usersStartCursorAtom = atom<Maybe<string>>(undefined).pipe(withReset())
-const usersEndCursorAtom = atom<Maybe<string>>(undefined).pipe(withReset())
+usersState.filters.sortBy.onChange((ctx) => users.refetchAll(ctx))
+usersState.filters.asc.onChange((ctx) => users.refetchAll(ctx))
 
-usersSortAtom.onChange((ctx) => refetchUsersAction(ctx))
-usersAscendingAtom.onChange((ctx) => refetchUsersAction(ctx))
-
-export const updateSearchQueryAction = action(async (ctx, e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value;
-  usersSearchQueryAtom(ctx, value)
-
-  await ctx.schedule(() => sleep(300))
-
-  refetchUsersAction(ctx)
-}, "updateSearchQueryAction").pipe(withConcurrency())
-
-export const usersDataAtom = reatomMap<string, PrivatedUsersPayload["data"][number]>();
-
-export const usersDataArrAtom = atom<PrivatedUsersPayload["data"]>((ctx) => Array.from(ctx.spy(usersDataAtom).values()))
-export const usersMetaAtom = atom<PrivatedUsersPayload["meta"] | null>(null, "usersMeta")
+export const usersDataArrAtom = atom<PrivatedUsersPayload["data"]>((ctx) => Array.from(ctx.spy(usersState.data).values()))
 
 async function getUsers(params: Params) {
-  return client<PrivatedUsersPayload>("privated/user/list")
-    .pipe(withQueryParams(params))
-    .exec()
+  return client<PrivatedUsersPayload>("privated/user/list").pipe(withQueryParams(params)).exec()
 }
 
-function getParams(ctx: Ctx) {
-  return {
-    searchQuery: ctx.get(usersSearchQueryAtom),
-    asc: ctx.get(usersAscendingAtom),
-    sort: ctx.get(usersSortAtom),
-    startCursor: ctx.get(usersStartCursorAtom),
-    endCursor: ctx.get(usersEndCursorAtom)
-  }
-}
+const getParams = action((ctx) => ({
+  searchQuery: ctx.get(usersState.filters.searchQuery),
+  asc: ctx.get(usersState.filters.asc),
+  sort: ctx.get(usersState.filters.sortBy),
+  startCursor: ctx.get(usersState.filters.startCursor),
+  endCursor: ctx.get(usersState.filters.endCursor)
+}))
 
-export const usersAction = reatomAsync(async (ctx) => {
-  const params = getParams(ctx)
-  return await ctx.schedule(() => getUsers(params))
-}, {
-  name: "usersAction",
-  onFulfill: (ctx, res) => {
-    batch(ctx, () => {
-      usersDataAtom(ctx, new Map(res.data.map((d) => [d.nickname, d])))
-      usersMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-  }
-}).pipe(withStatusesAtom(), withCache({ swr: false }))
-//#endregion;
+export const users = atom(null, "users").pipe(
+  withAssign((_, name) => ({
+    searchQueryChangeEvent: action(async (ctx, e: React.ChangeEvent<HTMLInputElement>) => {
+      usersState.filters.searchQuery(ctx, e.target.value)
+      await ctx.schedule(() => sleep(DEFAULT_SOFT_DELAY))
+      users.refetchAll(ctx)
+    }).pipe(withConcurrency()),
+    fetch: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() => getUsers(getParams(ctx)))
+    }, {
+      name: `${name}.fetch`,
+      onFulfill: (ctx, res) => {
+        batch(ctx, () => {
+          usersState.data(ctx, new Map(res.data.map((d) => [d.nickname, d])))
+          usersState.meta(ctx, res.meta)
+        })
+      },
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom(),
+      withCache({ swr: false })
+    ),
+    refetchAll: action((ctx) => {
+      usersState.filters.endCursor.reset(ctx)
+      usersState.filters.startCursor.reset(ctx)
+      users.fetch.cacheAtom.reset(ctx)
+      users.fetch(ctx);
+    }),
+    update: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() => getUsers(getParams(ctx)))
+    }, {
+      name: `${name}.update`,
+      onFulfill: (ctx, res) => {
+        batch(ctx, () => {
+          usersState.data(ctx, (state) => new Map([...state, ...res.data.map(d => [d.nickname, d] as const)]))
+          usersState.meta(ctx, res.meta)
+        })
+      },
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom()
+    )
+  }))
+)
 
-//#region control events list
 type ControlPayload = { ok: boolean, payload: string[] }
-type UsersControlPunishType = "ban" | "mute" | "unlogin" | "kick" | "unban" | "unmute"
 type UsersControlRolesType = "change_role" | "reset"
-type UsersControlArgs = { reason?: string, time?: string };
+type UsersControlArgs = { reason: Nullable<string>, time: Nullable<string> };
 
-const USERS_CONTROL_TYPE_WITH_ARGS: UsersControlPunishType[] = ["ban", "mute", "kick"]
+export const usersControlState = atom(null, "usersControlState").pipe(
+  withAssign((_, name) => ({
+    nicknames: reatomSet<string>([]).pipe(withReset()),
+    targetRoleId: atom<number | null>(null).pipe(withReset()),
+    fields: atom(null, `${name}.fields`).pipe(
+      withAssign((_, name) => ({
+        reason: atom<Nullable<string>>(null, `${name}.reason`).pipe(withReset()),
+        duration: atom<Nullable<string>>(null, `${name}.duration`).pipe(withReset()),
+      }))
+    ),
+    isOpen: atom(false).pipe(withReset()),
+    eventType: atom<Nullable<string>>(null).pipe(withReset()),
+    eventGroup: atom<Nullable<string>>(null).pipe(withReset()),
+    inView: atom(false),
+    selectedId: atom<Nullable<string>>(null).pipe(withReset()),
+    isCheckedAll: atom(false).pipe(withReset()),
+    selectedUser: atom<Nullable<string>>(null).pipe(withReset())
+  }))
+)
+export const usersControl = atom(null, "usersControl").pipe(
+  withAssign((_, name) => ({
+    submit: reatomAsync(async (ctx, type: string) => {
+      const nicknames = [...ctx.get(usersControlState.nicknames)]
 
-export const usersControlNicknamesAtom = reatomSet<string>([], "usersControlNicknames").pipe(withReset())
-export const usersControlTargetRoleIdAtom = atom<number | null>(null, "usersControlTargetRoleId").pipe(withReset())
+      type BodyPayload = { type: string, nicknames: string[], args?: UsersControlArgs }
 
-export const usersControlReasonAtom = atom<Maybe<string>>(undefined, "usersControlReason").pipe(withReset())
-export const usersControlTimeAtom = atom<Maybe<string>>(undefined, "usersControlTime").pipe(withReset())
+      const args: UsersControlArgs = {
+        reason: ctx.get(usersControlState.fields.reason),
+        time: ctx.get(usersControlState.fields.duration)
+      }
 
-export const userActionsRestrictDropdownMenuIsOpenAtom = atom(false, "userActionsRestrictDropdownMenuIsOpen").pipe(withReset())
+      const body: BodyPayload = { type, nicknames, args }
 
-userActionsRestrictDropdownMenuIsOpenAtom.onChange((ctx, state) => {
+      const result = await client
+        .post<ControlPayload>("privated/user/restrict/create", { timeout: 20000 })
+        .pipe(withJsonBody(body))
+        .exec()
+
+      return { nicknames, result }
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx, res) => {
+        if (!res) return;
+
+        const { nicknames, result } = res;
+
+        if (!result.ok) {
+          toast.error("Is not updated")
+          return;
+        }
+
+        if (nicknames.length <= 2) {
+          const toUpdate = [
+            { k: "status", v: "banned" }
+          ]
+
+          updateUsersData(ctx, nicknames, toUpdate)
+        } else {
+          users.refetchAll(ctx)
+        }
+
+        usersControlState.isOpen.reset(ctx)
+        usersControlState.fields.reason.reset(ctx)
+        usersControlState.fields.duration.reset(ctx)
+        usersControlState.nicknames.reset(ctx)
+      },
+      onReject: (ctx, e) => {
+        usersControlState.nicknames.reset(ctx)
+        notifyAboutRestrictRole(e)
+        logError(e)
+      }
+    }).pipe(
+      withStatusesAtom()
+    ),
+    before: action((ctx, nicknames: string[]) => {
+      const type = ctx.get(usersControlState.eventGroup)
+      invariant(type, "Restrict event group is not defined")
+
+      for (const nickname of nicknames) {
+        usersControlState.nicknames.add(ctx, nickname);
+      }
+
+      usersControl.submit(ctx, type)
+    }),
+    resetAll: action((ctx) => {
+      usersControlState.nicknames.reset(ctx)
+      usersControlState.targetRoleId.reset(ctx)
+    }),
+    selectAll: action((ctx, value: boolean) => {
+      if (value) {
+        const users = ctx.get(usersDataArrAtom);
+        if (!users || users.length === 0) throw new Error("Users is not defined")
+
+        const nicknames = users.map((user) => user.nickname)
+
+        batch(ctx, () => {
+          usersControlState.nicknames(ctx, new Set(nicknames))
+          usersControlState.isCheckedAll(ctx, true);
+        })
+      } else {
+        batch(ctx, () => {
+          usersControlState.nicknames.reset(ctx)
+          usersControlState.isCheckedAll.reset(ctx)
+        })
+      }
+    }),
+    selectSingle: action((ctx, value: boolean | string, nickname: string) => {
+      if (typeof value !== 'boolean') return;
+
+      if (value) {
+        usersControlState.nicknames.add(ctx, nickname)
+      } else {
+        usersControlState.nicknames.delete(ctx, nickname)
+      }
+    })
+  }))
+)
+
+usersControlState.isOpen.onChange((ctx, state) => {
   if (!state) {
-    usersControlRestrictTypeAtom.reset(ctx)
+    usersControlState.eventGroup.reset(ctx);
+    usersControlState.eventType.reset(ctx);
   }
 })
 
-function getArgs(ctx: Ctx) {
-  const args: UsersControlArgs = {
-    reason: ctx.get(usersControlReasonAtom),
-    time: ctx.get(usersControlTimeAtom)
-  }
+export const usersControlRoles = atom(null, "usersControlRoles").pipe(
+  withAssign((_, name) => ({
+    fetch: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() => client<Role[]>("privated/role/list", { signal: ctx.controller.signal }).exec())
+    }, {
+      name: `${name}.fetch`,
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withDataAtom(),
+      withCache({ swr: false }),
+      withStatusesAtom()
+    ),
+    submit: reatomAsync(async (ctx, type: UsersControlRolesType, targetRoleId: number) => {
+      const nicknames = [...ctx.get(usersControlState.nicknames)]
 
-  return args
-}
+      type BodyPayload = { type: UsersControlRolesType, targetRoleId: number, nicknames: string[] }
 
-export const usersControlRestrictAction = reatomAsync(async (ctx, type: UsersControlPunishType) => {
-  const nicknames = [...ctx.get(usersControlNicknamesAtom)]
+      const body: BodyPayload = { type, nicknames, targetRoleId }
 
-  type BodyPayload = { type: UsersControlPunishType, nicknames: string[], args?: UsersControlArgs }
+      const result = await client
+        .post<ControlPayload>("privated/user/roles")
+        .pipe(withJsonBody(body))
+        .exec()
 
-  const args = getArgs(ctx)
-  const body: BodyPayload = { type, nicknames, args }
+      return { nicknames, targetRoleId, result }
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx, res) => {
+        if (!res) return;
 
-  const result = await ctx.schedule(() =>
-    client
-      .post<ControlPayload>("privated/user/restrict/create", { timeout: 20000 })
-      .pipe(withJsonBody(body))
-      .exec()
-  )
+        const { result, nicknames, targetRoleId } = res;
 
-  return { nicknames, result }
-}, {
-  name: "usersControlPunishAction",
-  onFulfill: (ctx, res) => {
-    if (!res) return;
+        if (!result.ok) {
+          toast.error("Is not updated")
+          return;
+        }
 
-    const { nicknames, result } = res;
+        if (nicknames.length <= 2) {
+          const targetRoleName = ctx.get(usersControlRoles.fetch.dataAtom)?.find(role => role.id === targetRoleId)?.name;
+          invariant(targetRoleName, "Target role name is not defined")
 
-    if (!result.ok) {
-      toast.error("Is not updated")
-      return;
-    }
+          const toUpdate = [
+            { k: "role_id", v: targetRoleId },
+            { k: "role_name", v: targetRoleName }
+          ]
 
-    if (nicknames.length <= 2) {
-      const toUpdate = [
-        { key: "status", value: "banned" }
-      ]
+          updateUsersData(ctx, nicknames, toUpdate)
+        } else {
+          users.refetchAll(ctx)
+        }
 
-      updateUsersData(ctx, nicknames, toUpdate)
-    } else {
-      refetchUsersAction(ctx)
-    }
+        usersControl.resetAll(ctx)
+        usersControlState.selectedId.reset(ctx)
+      },
+      onReject: (ctx, e) => {
+        notifyAboutRestrictRole(e)
+        logError(e)
+        usersControl.resetAll(ctx)
+      }
+    }).pipe(withStatusesAtom()),
+    before: action((ctx, nicknames: string[], { type }: { type: UsersControlRolesType }) => {
+      for (const nickname of nicknames) {
+        usersControlState.nicknames.add(ctx, nickname);
+      }
 
-    userActionsRestrictDropdownMenuIsOpenAtom.reset(ctx)
-    usersControlReasonAtom.reset(ctx)
-    usersControlTimeAtom.reset(ctx)
-    usersControlNicknamesAtom.reset(ctx)
-  },
-  onReject: (ctx, e) => {
-    notifyAboutRestrictRole(e)
-    usersControlNicknamesAtom.reset(ctx)
-    logError(e)
-  }
-}).pipe(withStatusesAtom())
+      const targetRoleId = ctx.get(usersControlState.targetRoleId)
+      invariant(targetRoleId, "Target role id is not defined")
 
-export const usersControlRestrictTypeAtom = atom<UsersControlPunishType | null>(null, "usersControlRestrictType").pipe(withReset())
-
-export const usersControlRestrictTypeWithArgsAtom = atom(
-  (ctx) => USERS_CONTROL_TYPE_WITH_ARGS.includes(ctx.spy(usersControlRestrictTypeAtom)!) ?? false,
-  "usersControlRestrictTypeWithArgs"
+      usersControlRoles.submit(ctx, type, targetRoleId)
+    })
+  }))
 )
 
-export const usersControlPunishBeforeAction = action((
+export type Role = { name: string, id: number }
+
+export const getIsCheckedAtom = (nickname: string) => atom((ctx) => ctx.spy(usersControlState.nicknames).has(nickname))
+
+export const usersLengthAtom = atom((ctx) => ctx.spy(usersDataArrAtom)?.length ?? 0)
+export const usersSelectedLengthAtom = atom((ctx) => ctx.spy(usersControlState.nicknames).size ?? 0)
+
+const updateUsersData = action((
   ctx,
   nicknames: string[],
+  updates: { k: string, v: string | number | boolean }[]
 ) => {
-  const type = ctx.get(usersControlRestrictTypeAtom)
-  if (!type) throw new Error("Restrict type is not defined")
-
-  for (const nickname of nicknames) {
-    usersControlNicknamesAtom.add(ctx, nickname);
-  }
-
-  usersControlRestrictAction(ctx, type)
-}, "usersControlPunishBeforeAction")
-
-export const usersControlRolesBeforeAction = action((
-  ctx,
-  nicknames: string[],
-  { type }: { type: UsersControlRolesType }
-) => {
-  for (const nickname of nicknames) {
-    usersControlNicknamesAtom.add(ctx, nickname);
-  }
-
-  const targetRoleId = ctx.get(usersControlTargetRoleIdAtom)
-  if (!targetRoleId) {
-    throw new Error("Target role id is not defined")
-  }
-
-  usersControlRolesAction(ctx, type, targetRoleId)
-}, "usersControlRolesBeforeAction")
-
-function resetControlRoles(ctx: Ctx) {
-  usersControlNicknamesAtom.reset(ctx)
-  usersControlTargetRoleIdAtom.reset(ctx)
-}
-
-export const usersControlRolesAction = reatomAsync(async (
-  ctx,
-  type: UsersControlRolesType,
-  targetRoleId: number
-) => {
-  const nicknames = [...ctx.get(usersControlNicknamesAtom)]
-
-  type BodyPayload = { type: UsersControlRolesType, targetRoleId: number, nicknames: string[] }
-
-  const body: BodyPayload = { type, nicknames, targetRoleId }
-
-  const result = await client.post<ControlPayload>("privated/user/roles")
-    .pipe(withJsonBody(body))
-    .exec()
-
-  return { nicknames, targetRoleId, result }
-}, {
-  name: "usersControlRolesAction",
-  onFulfill: (ctx, res) => {
-    if (!res) return;
-
-    const { result, nicknames, targetRoleId } = res;
-
-    if (!result.ok) {
-      toast.error("Is not updated")
-      return;
-    }
-
-    if (nicknames.length <= 2) {
-      const targetRoleName = ctx.get(rolesAction.dataAtom)?.find(role => role.id === targetRoleId)?.name;
-      if (!targetRoleName) throw new Error("Target role name is not defined")
-
-      const toUpdate = [
-        { key: "role_id", value: targetRoleId },
-        { key: "role_name", value: targetRoleName }
-      ]
-
-      updateUsersData(ctx, nicknames, toUpdate)
-    } else {
-      refetchUsersAction(ctx)
-    }
-
-    resetControlRoles(ctx)
-  },
-  onReject: (ctx, e) => {
-    notifyAboutRestrictRole(e)
-    logError(e)
-    resetControlRoles(ctx)
-  }
-}).pipe(withStatusesAtom())
-//#endregion
-
-//#region fetch roles
-export type Role = {
-  name: string,
-  id: number
-}
-
-export const rolesAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<Role[]>("privated/role/list", { signal: ctx.controller.signal }).exec()
-  )
-}, {
-  name: "rolesAction",
-  onReject: (ctx, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
-//#endregion
-
-//#region check/select users
-export const getIsCheckedAtom = (nickname: string) => atom((ctx) => ctx.spy(usersControlNicknamesAtom).has(nickname))
-
-export const selectUserAction = action((ctx, value: boolean, nickname: string) => {
-  if (value) {
-    usersControlNicknamesAtom.add(ctx, nickname)
-  } else {
-    usersControlNicknamesAtom.delete(ctx, nickname)
-  }
-}, "selectUserAction")
-
-export const usersLengthAtom = atom((ctx) => ctx.spy(usersDataArrAtom)?.length ?? 0, "usersLength")
-export const usersSelectedLengthAtom = atom((ctx) => ctx.spy(usersControlNicknamesAtom).size ?? 0, "usersLength")
-
-export const isCheckedAllAtom = atom(false, "isCheckedAll").pipe(withReset())
-
-export const selectAllAction = action((ctx, value: boolean) => {
-  if (value) {
-    const users = ctx.get(usersDataArrAtom);
-    if (!users) throw new Error("Users is not defined")
-
-    const nicknames = users.map((user) => user.nickname)
-
-    batch(ctx, () => {
-      usersControlNicknamesAtom(ctx, new Set(nicknames))
-      isCheckedAllAtom(ctx, true);
-    })
-  } else {
-    batch(ctx, () => {
-      usersControlNicknamesAtom.reset(ctx)
-      isCheckedAllAtom.reset(ctx)
-    })
-  }
-}, "selectAllAction")
-//#endregion
-
-//#region infinity-view (scroll)
-function refetchUsersAction(ctx: Ctx) {
-  function resetCursors(ctx: Ctx) {
-    usersEndCursorAtom.reset(ctx)
-    usersStartCursorAtom.reset(ctx)
-  }
-
-  resetCursors(ctx)
-  usersAction.cacheAtom.reset(ctx)
-  usersAction(ctx);
-}
-
-function updateUsersData(
-  ctx: Ctx,
-  nicknames: string[],
-  updates: { key: string, value: string | number | boolean }[]
-) {
-  usersAction.cacheAtom.reset(ctx);
+  users.fetch.cacheAtom.reset(ctx);
 
   const results = updates.reduce<Record<string, string | number | boolean>>(
-    (acc, { key, value }) => {
-      acc[key] = value;
+    (acc, { k, v }) => {
+      acc[k] = v;
       return acc;
     }, {}
   );
 
-  usersDataAtom(ctx, (state) => {
+  usersState.data(ctx, (state) => {
     const updated: typeof state = new Map();
 
     for (const [key, value] of state) {
@@ -358,54 +345,101 @@ function updateUsersData(
 
     return updated
   })
-}
-//#endregion
+})
 
-//#region views
-export const usersIsViewAtom = atom(false, "usersIsView")
+export const usersSelectedOverAtom = atom((ctx) => ctx.spy(usersSelectedLengthAtom) >= 2)
 
-export const updateAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() => getUsers(getParams(ctx)))
-}, {
-  name: "updateAction",
-  onFulfill: (ctx, res) => {
-    batch(ctx, () => {
-      usersDataAtom(ctx, (state) => new Map([
-        ...state,
-        ...res.data.map(d => [d.nickname, d] as const)
-      ]))
+usersControlState.selectedId.onChange((ctx, state) => !state && usersControlState.targetRoleId.reset(ctx))
 
-      usersMetaAtom(ctx, res.meta)
-    })
-  },
-  onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withStatusesAtom())
-
-usersIsViewAtom.onChange((ctx, state) => {
+usersControlState.inView.onChange((ctx, state) => {
   if (!state) return;
 
-  const meta = ctx.get(usersMetaAtom)
-  const endCursor = meta?.endCursor
+  const meta = ctx.get(usersState.meta)
   const hasNextPage = meta?.hasNextPage
+  if (!hasNextPage) return;
 
-  if (hasNextPage) {
-    usersEndCursorAtom(ctx, endCursor)
-    updateAction(ctx)
+  usersState.filters.endCursor(ctx, meta?.endCursor ?? null)
+  users.update(ctx)
+})
+
+type UserAction = {
+  type: string,
+  label: string,
+  childs: Array<{
+    label: string,
+    type: string,
+    permission?: string,
+    fields?: Array<{
+      label: string,
+      value: string
+    }>
+  }>
+}
+
+export const USER_ACTIONS: UserAction[] = [
+  {
+    type: "restricts",
+    label: "Рестрикты",
+    childs: [
+      {
+        label: "Бан",
+        type: "ban",
+        fields: [
+          { label: "Срок", value: "duration" },
+          { label: "Причина", value: "reason" }
+        ]
+      },
+      {
+        label: "Разбан", type: "unban",
+      },
+      {
+        label: "Мут",
+        type: "mute",
+        fields: [
+          { label: "Срок", value: "duration" },
+          { label: "Причина", value: "reason" }
+        ]
+      },
+      {
+        label: "Размут", type: "unmute"
+      },
+      {
+        label: "Кик",
+        type: "kick",
+        fields: [
+          { label: "Причина", value: "reason" }
+        ]
+      },
+      {
+        label: "Выйти из сессии", type: "unlogin",
+      },
+    ]
+  },
+  {
+    type: "actions",
+    label: "Экшены",
+    childs: [
+      {
+        label: "Удалить аккаунт",
+        type: "unregister",
+        permission: "delete-account",
+        fields: [
+          { label: "Причина", value: "reason" }
+        ]
+      },
+    ]
   }
-})
-//#endregion
+]
+export const usersActionsChildsByGroupAtom = atom((ctx): UserAction["childs"] =>
+  USER_ACTIONS.find(d => d.type === ctx.spy(usersControlState.eventGroup))?.childs ?? [],
+)
+export const getIsSelectedUser = (nickname: string) => atom((ctx) => ctx.spy(usersControlState.selectedUser) === nickname)
 
-//#region select
-export const usersSelectedOverAtom = atom((ctx) => ctx.spy(usersSelectedLengthAtom) >= 2)
-export const userActionsChangeRoleDropdownMenuIsOpenAtom = atom(false, "userActionsChangeRoleDropdownMenuIsOpen")
+usersControlState.selectedUser.onChange(async (ctx, state) => {
+  await sleep(DEFAULT_SOFT_DELAY);
 
-usersControlRolesAction.onFulfill.onCall((ctx, res) => {
-  userActionsChangeRoleDropdownMenuIsOpenAtom(ctx, false)
-})
-
-userActionsChangeRoleDropdownMenuIsOpenAtom.onChange((ctx, state) => {
   if (!state) {
-    usersControlTargetRoleIdAtom.reset(ctx)
+    usersControlState.eventGroup.reset(ctx)
+    usersControlState.eventType.reset(ctx)
   }
 })
-//#endregion

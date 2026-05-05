@@ -1,8 +1,8 @@
 import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData } from "#/shared/schemas";
-import { validateBannedStatus } from "#/lib/middlewares/validators";
+import { validateBannedStatus } from "#/lib/validators";
 import { getPlayerLikes, ratePlayer } from "./like.model";
 
 const likes = new Elysia()

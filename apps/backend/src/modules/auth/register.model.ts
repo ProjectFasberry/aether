@@ -14,6 +14,7 @@ import { isProduction } from "#/shared/env";
 import { invariant } from "#/helpers/invariant";
 import type { registerSchema } from "@repo/shared/schemas/auth";
 import { initPlayerSkin } from "../server/skin/skin.model";
+import { HTTPError } from "ky";
 
 type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
   trx?: Transaction<DB>;
@@ -69,7 +70,7 @@ const referral = {
 }
 
 const MAX_USERS_PER_IP = 3;
-const MOJANG_API_URL = "https://api.ashcon.app/mojang/v2/user";
+const MOJANG_API_URL = "https://api.ashcon.app";
 
 export const register = {
   async registrationEvents({ nickname }: { nickname: string }) {
@@ -236,30 +237,39 @@ export const register = {
 
     return raw.join("-");
   },
-  async getUserUUID(nickname: string) {
-    let uuid: string | null = null;
-    let type: "offline" | "license" = "license";
-
+  async getUserUUID(nickname: string): Promise<string> {
     try {
-      const license = await this.getLicense(nickname);
+      type MojangPayload =
+        | { uuid: string, username: string, username_history: { username: string }[] }
+        | { reason: string; error: string, code: number };
 
-      if ("error" in license) {
-        type = "offline";
-        throw new Error(license.reason);
+      const license = await client
+        .get(`/mojang/v2/user/${nickname}`, {
+          baseUrl: MOJANG_API_URL,
+          throwHttpErrors: false,
+          timeout: 5000
+        })
+        .json<MojangPayload>();
+
+      if (import.meta.env.DEV) {
+        registerLogger.debug(license)
       }
 
-      if (license.uuid) {
-        uuid = license.uuid;
+      if (!("error" in license)) {
+        authLogger.log(`Player ${nickname} has a license account. UUID: ${license.uuid}`);
+        return license.uuid;
       }
     } catch (e) {
-      // generate offline uuid if user is not licensed
-      uuid = this.generateOfflineUUID(nickname);
+      if (e instanceof HTTPError) {
+        throw new Error(`Mojang API network problem: ${e.message}`);
+      }
+      throw e;
     }
 
-    authLogger.log(`Player ${nickname} has a ${type} account`);
-    invariant(uuid, "UUID must be required");
+    const offlineUuid = this.generateOfflineUUID(nickname);
+    authLogger.log(`Player ${nickname} has an offline account. UUID: ${offlineUuid}`);
 
-    return uuid;
+    return offlineUuid;
   },
   async validateIpRestricts(ip: string): Promise<boolean> {
     const result = await general
@@ -271,21 +281,6 @@ export const register = {
     if (!result) return false;
 
     return result.length > MAX_USERS_PER_IP;
-  },
-  async getLicense(nickname: string) {
-    type MojangPayload = |
-    { uuid: string } |
-    { reason: string; error: string };
-
-    const result = await client
-      .get(`/${nickname}`, {
-        baseUrl: MOJANG_API_URL,
-        throwHttpErrors: false,
-        timeout: 5000
-      })
-      .json<MojangPayload>();
-
-    return result;
   },
   async unregister({
     nickname, isStrict = false,

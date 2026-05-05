@@ -88,7 +88,7 @@ export const register = atom(null, "register").pipe(
 
           authState.globalError.reset(ctx);
 
-          const mn = authSecurity.generateMnemonic()
+          const mn = authSecurity.generateMnemonic(ctx)
 
           registerSeedPhraseModel.state.words(ctx, mn.split(" "))
           registerState.mn(ctx, mn)

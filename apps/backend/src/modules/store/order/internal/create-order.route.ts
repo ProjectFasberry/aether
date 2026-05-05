@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { cartItem } from "../../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";

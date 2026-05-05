@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { deleteEvent } from "./events.model";

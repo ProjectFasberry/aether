@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import Elysia, { t } from "elysia";
 
 type SessionPayload = {

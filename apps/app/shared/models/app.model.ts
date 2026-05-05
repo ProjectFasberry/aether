@@ -8,6 +8,8 @@ import { devLog } from "../lib/log";
 import { playerSeemsLikePlayersIsShowKey, playerSLPState } from "../components/app/player/models/player-seems-like.model";
 import { withSsr } from "../lib/reatom-helpers";
 import { isMobile, parseBoolean, parseCookie } from "../lib/utils";
+import { usePageContext } from "vike-react/usePageContext";
+import { withLocalStorage } from "@reatom/persist-web-storage";
 
 export type AppOptionsPayload = ExtractApiData<"getAppOptions">["data"]
 
@@ -23,7 +25,7 @@ export const appOptionsInit: AppOptionsPayloadExtend = {
 	locale: "ru",
 	country: null,
 	isWl: false,
-	pofEnabled: true
+	pofEnabled: true,
 };
 
 export const APP_OPTIONS_KEY = "appState.options";
@@ -34,6 +36,10 @@ export async function getAppOptions(init: RequestInit) {
 }
 export async function getAppDictionaries(init: RequestInit) {
 	return client<Record<string, string>>("app/dictionaries", init).exec();
+}
+export function getAppOptionsFromSnapshot() {
+	const snapshot = usePageContext().snapshot
+	return snapshot[APP_OPTIONS_KEY]?.data as AppOptionsPayloadExtend
 }
 
 const MOBILE_BREAKPOINT = 1024
@@ -92,6 +98,8 @@ export const app = atom(null, "app").pipe(
 				screen.unsub
 			]
 
+			debug.init(ctx);
+
 			return () => unsubs.forEach(t => { t() })
 		}, `${name}.init`),
 		initCookie: action((ctx, pageCtx: PageContextServer) => {
@@ -111,6 +119,43 @@ export const app = atom(null, "app").pipe(
 
 				target.atom(ctx, finalValue);
 			}
+		})
+	}))
+)
+export const debugState = atom(null, "debugState").pipe(
+	withAssign((_, name) => ({
+		enabled: atom(false, `${name}.enabled`).pipe(withLocalStorage({ key: "debugIsEnabled" })),
+	}))
+)
+export const debug = atom(null, "debug").pipe(
+	withAssign(() => ({
+		init: action((ctx) => {
+			const isDebug = ctx.get(debugState.enabled)
+			if (isDebug) {
+				debug.activate(ctx)
+			}
+		}),
+		activate: action((ctx) => {
+			debugState.enabled(ctx, true);
+
+			if (document.getElementById("react-scan")) return;
+
+			const script = document.createElement('script');
+			script.id = "react-scan";
+			script.src = '//unpkg.com/react-scan/dist/auto.global.js';
+			script.async = true;
+			script.crossOrigin = "anonymous";
+
+			document.head.appendChild(script);
+		}),
+		deactivate: action((ctx) => {
+			debugState.enabled(ctx, false)
+			
+			window.location.reload()
+		}),
+		toggle: action((ctx) => {
+			const isDebug = ctx.get(debugState.enabled)
+			isDebug ? debug.deactivate(ctx) : debug.activate(ctx)
 		})
 	}))
 )

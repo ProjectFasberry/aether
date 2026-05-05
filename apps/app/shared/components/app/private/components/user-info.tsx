@@ -61,7 +61,7 @@ export const UserInfo = reatomComponent(({ ctx }) => {
 
   return (
     <Dialog>
-      <DialogTrigger className="flex justify-between rounded-lg bg-neutral-700 h-10 overflow-hidden select-none px-4 gap-2 items-center">
+      <DialogTrigger className="flex justify-between rounded-lg bg-neutral-800 h-10 overflow-hidden select-none px-4 gap-2 items-center">
         <Typography>
           Роль: <span className="font-semibold">{roleTitle}</span>
         </Typography>

@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import dayjs from 'dayjs';
-import { defineOptionalUser } from "#/lib/middlewares/define";
-import { validateBannedStatus } from "#/lib/middlewares/validators";
+import { defineOptionalUser } from "#/lib/define";
+import { validateBannedStatus } from "#/lib/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
 import { getPlayerAvatar } from "../server/skin/skin.model";

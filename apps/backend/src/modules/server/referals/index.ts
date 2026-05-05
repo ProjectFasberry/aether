@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/middlewares/define"
+import { defineUser } from "#/lib/define"
 import { general } from "#/shared/database/general-db"
 import Elysia, { type Static, t } from "elysia"
 import { getPlayerAvatar } from "../skin/skin.model"

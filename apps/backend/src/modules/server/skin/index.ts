@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { getSkin, getSkinsHistory, setSkin, skinsHistorySchema } from "./skin.model";
-import { defineUser } from '#/lib/middlewares/define';
+import { defineUser } from '#/lib/define';
 import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";

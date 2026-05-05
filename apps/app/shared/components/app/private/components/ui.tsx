@@ -9,7 +9,7 @@ import { cn } from "@/shared/lib/cn"
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement>
 
 const baseVariant = tv({
-  base: `h-6 w-6 aspect-square p-0 bg-neutral-800`
+  base: `h-6 w-6 aspect-square p-0 rounded-sm bg-neutral-800`
 })
 
 export const DeleteButton = (props: ButtonProps) => {
@@ -39,7 +39,7 @@ export const ToLink = ({ link }: { link: string }) => {
     <Link
       href={link}
       target="_blank"
-      className="flex items-center justify-center rounded-md h-6 w-6 aspect-square p-0 bg-neutral-800"
+      className="flex items-center justify-center rounded-sm h-6 w-6 aspect-square p-0 bg-neutral-800"
     >
       <IconArrowRight size={18} className="-rotate-45" />
     </Link>
@@ -58,7 +58,7 @@ export const AddButton = (props: ButtonProps) => {
 }
 
 const actionButtonVariant = tv({
-  base: `p-0 h-6 min-w-6`,
+  base: `p-0 h-6 min-w-6 rounded-sm`,
   variants: {
     variant: {
       default: "bg-neutral-800 text-neutral-50",

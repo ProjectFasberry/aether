@@ -1,10 +1,6 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Input } from "@repo/ui/input"
-import {
-  createEvent,
-  createEventState,
-  eventsListAction,
-} from "../models/event.model"
+import { createEvent, createEventState, deleteEvent, events } from "../models/event.model"
 import { AtomState } from "@reatom/core"
 import { ReactNode } from "react"
 import { Typography } from "@repo/ui/typography"
@@ -21,7 +17,6 @@ const CreateEventTitle = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateEventTitle")
-
 const CreateEventType = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -31,7 +26,6 @@ const CreateEventType = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateEventType")
-
 const CreateEventDesc = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -41,7 +35,6 @@ const CreateEventDesc = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateEventDesc")
-
 const CreateEventInitiator = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -51,7 +44,6 @@ const CreateEventInitiator = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateEventInitiator")
-
 const CreateEventSubmit = reatomComponent(({ ctx }) => {
   return (
     <ButtonXSubmit
@@ -61,7 +53,6 @@ const CreateEventSubmit = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateEventSubmit")
-
 const CreateEventForm = () => {
   return (
     <div className="flex flex-col gap-2 w-full h-full">
@@ -73,16 +64,12 @@ const CreateEventForm = () => {
   )
 }
 
-// 
 const EventsList = reatomComponent(({ ctx }) => {
-  useUpdate(eventsListAction, [])
+  useUpdate(events.fetch, [])
 
-  const data = ctx.spy(eventsListAction.dataAtom)
-
-  if (ctx.spy(eventsListAction.statusesAtom).isPending) {
-    return null;
-  }
-
+  if (ctx.spy(events.fetch.statusesAtom).isPending) return null;
+  
+  const data = ctx.spy(events.fetch.dataAtom)
   if (!data) return null;
 
   return (
@@ -101,7 +88,10 @@ const EventsList = reatomComponent(({ ctx }) => {
             </Typography>
           </div>
           <div className="flex items-center gap-1">
-            <DeleteButton />
+            <DeleteButton
+              disabled={ctx.spy(deleteEvent.submit.statusesAtom).isPending}
+              onClick={() => deleteEvent.submit(ctx)}
+            />
           </div>
         </div>
       ))}
@@ -109,7 +99,6 @@ const EventsList = reatomComponent(({ ctx }) => {
   )
 }, "EventsList")
 
-// 
 const VARIANTS: Record<AtomState<typeof actionsTypeAtom>, ReactNode> = {
   "create": <CreateEventForm />,
   "edit": null,

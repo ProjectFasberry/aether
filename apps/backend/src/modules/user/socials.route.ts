@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import * as z from "zod/v4";
 import { getRedis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";

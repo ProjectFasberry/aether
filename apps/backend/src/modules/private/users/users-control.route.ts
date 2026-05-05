@@ -7,7 +7,7 @@ import {
   usersControlRestrictSchema,
   usersControlRolesSchema,
 } from "./users-control.model";
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import * as z from "zod/v4";

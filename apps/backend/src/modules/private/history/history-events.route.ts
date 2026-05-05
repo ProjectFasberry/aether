@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { getNats } from "#/shared/nats/client";
 import Elysia, { sse } from "elysia";
 import { ACTIVITY_LOG_SUBJECT } from "../private.model";

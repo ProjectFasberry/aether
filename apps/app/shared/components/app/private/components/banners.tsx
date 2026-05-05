@@ -1,25 +1,21 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import {
-  bannersAction,
-  deleteBanner
-} from "../models/banner.model"
+import { bannersAction, deleteBanner } from "../models/banner.model"
 import { Skeleton } from "@repo/ui/skeleton"
-import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
 import { action, atom, AtomState } from "@reatom/core"
 import { sleep, withReset } from "@reatom/framework"
-import { IconEye, IconX } from "@tabler/icons-react"
+import { IconEye } from "@tabler/icons-react"
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog"
 import { ReactNode } from "react"
 import { actionsTypeAtom, getSelectedParentAtom } from "../models/actions.model"
 import { ToActionButtonX } from "./global"
-import { ActionButton } from "./ui"
-import { 
-  createBanner, 
-  createBannerDescriptionAtom, 
-  createBannerHrefTitleAtom, 
-  createBannerHrefValueAtom, 
-  createBannerTitleAtom 
+import { ActionButton, DeleteButton } from "./ui"
+import {
+  createBanner,
+  createBannerDescriptionAtom,
+  createBannerHrefTitleAtom,
+  createBannerHrefValueAtom,
+  createBannerTitleAtom
 } from "../models/banner.model"
 import { Input } from "@repo/ui/input"
 import { ButtonXSubmit } from "./global"
@@ -35,7 +31,6 @@ const CreateBannerTitle = reatomComponent(({ ctx }) => {
     />
   )
 })
-
 const CreateBannerDescription = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -45,7 +40,6 @@ const CreateBannerDescription = reatomComponent(({ ctx }) => {
     />
   )
 })
-
 const CreateBannerLinkTitle = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -55,7 +49,6 @@ const CreateBannerLinkTitle = reatomComponent(({ ctx }) => {
     />
   )
 })
-
 const CreateBannerLinkValue = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -65,7 +58,6 @@ const CreateBannerLinkValue = reatomComponent(({ ctx }) => {
     />
   )
 })
-
 const CreateBannerSubmit = reatomComponent(({ ctx }) => {
   return (
     <ButtonXSubmit
@@ -75,7 +67,6 @@ const CreateBannerSubmit = reatomComponent(({ ctx }) => {
     />
   )
 }, "CreateBanner")
-
 const CreateBannerForm = () => {
   return (
     <div className="flex flex-col gap-2">
@@ -104,7 +95,7 @@ const controlShowBannerAction = action(async (ctx, value: boolean, id?: number) 
     await sleep(300)
     showBannerItemAtom.reset(ctx)
   }
-}, "controlShowBannerAction")
+})
 
 const ShowBanner = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (
@@ -140,19 +131,7 @@ const ShowBannerDialog = reatomComponent(({ ctx }) => {
   )
 })
 
-const DeleteBanner = reatomComponent<{ id: number, title: string }>(({ ctx, id, title }) => {
-  return (
-    <Button
-      onClick={() => deleteBanner.deleteBefore(ctx, { id, title })}
-      disabled={ctx.spy(deleteBanner.submit.statusesAtom).isPending}
-      className="h-6 w-6 aspect-square p-0 bg-neutral-800"
-    >
-      <IconX size={18} />
-    </Button>
-  )
-}, "DeleteBanner")
-
-const BannerListItem = ({ id, title, description, href }: BannerPayload) => {
+const BannerListItem = reatomComponent<BannerPayload>(({ ctx, id, title, description, href }) => {
   return (
     <div className="flex items-center gap-2 justify-between w-full h-16 border border-neutral-800 p-2 rounded-lg overflow-hidden">
       <div className="flex w-full justify-between sm:items-start gap-1">
@@ -169,22 +148,22 @@ const BannerListItem = ({ id, title, description, href }: BannerPayload) => {
         </div>
         <div className="flex items-center gap-1">
           <ShowBanner id={id} />
-          <DeleteBanner id={id} title={title} />
+          <DeleteButton
+            onClick={() => deleteBanner.deleteBefore(ctx, { id, title })}
+            disabled={ctx.spy(deleteBanner.submit.statusesAtom).isPending}
+          />
         </div>
       </div>
     </div >
   )
-}
+}, "BannerListItem")
 
 export const BannersList = reatomComponent(({ ctx }) => {
   useUpdate(bannersAction, [])
 
+  if (ctx.spy(bannersAction.statusesAtom).isPending) return <Skeleton className="h-16 w-full" />
+  
   const data = ctx.spy(bannersAction.dataAtom)?.data;
-
-  if (ctx.spy(bannersAction.statusesAtom).isPending) {
-    return <Skeleton className="h-16 w-full" />
-  }
-
   if (!data) return null;
 
   return (

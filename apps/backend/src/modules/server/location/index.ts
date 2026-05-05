@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia"
-import { defineUser } from "#/lib/middlewares/define"
+import { defineUser } from "#/lib/define"
 import { getCustomLocation, getLocation, parseWorldName, type UserLocation } from "./location.model"
 import { withData } from "#/shared/schemas"
 

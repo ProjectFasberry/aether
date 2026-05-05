@@ -11,8 +11,6 @@ import { general } from "#/shared/database/general-db";
 
 type LandMember = Record<string, { chunks: number }>
 
-const { getLandsUrl } = landHelpers
-
 export const landSchema = t.Object({
   area: t.Nullable(
     t.Object({
@@ -136,7 +134,7 @@ export async function getLandsByNickname(
     const target = detailsMap.get(row.ulid);
 
     if (target) {
-      target.banner = getLandsUrl(row.banner_url)
+      target.banner = landHelpers.getLandsUrl(row.banner_url)
     }
   }
 
@@ -144,7 +142,7 @@ export async function getLandsByNickname(
     const target = detailsMap.get(row.ulid)
 
     if (target) {
-      target.gallery.push(getLandsUrl(row.url))
+      target.gallery.push(landHelpers.getLandsUrl(row.url))
     }
   }
 

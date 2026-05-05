@@ -1,4 +1,4 @@
-import { validatePermission } from "#/lib/middlewares/validators";
+import { validatePermission } from "#/lib/validators";
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
 import { Permissions } from "#/shared/constants/permissions";

@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import type { Subscription } from "@nats-io/nats-core";

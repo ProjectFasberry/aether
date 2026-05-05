@@ -2,11 +2,12 @@ import Elysia, { t } from "elysia";
 import { auth } from "./auth.model";
 import { wrapError } from "#/helpers/wrap-error";
 import { general } from "#/shared/database/general-db";
-import { botValidator, validateAuthStatus } from "#/lib/middlewares/validators";
+import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";
 import { registerSchema } from "@repo/shared/schemas/auth"
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "./register.model"
+import { isProduction } from "#/shared/env";
 
 const registerValidator = () => new Elysia()
   .onBeforeHandle(async ({ status }) => {
@@ -24,8 +25,12 @@ const registerValidator = () => new Elysia()
 const ipValidator = () => new Elysia()
   .use(ipPlugin())
   .onBeforeHandle(async ({ ip, status }) => {
-    const isValid = await register.validateIpRestricts(ip)
-    if (isValid) throw status(400, wrapError("IP_RESTRICTIONS"))
+    if (isProduction) {
+      const isValid = await register.validateIpRestricts(ip)
+      if (isValid) {
+        throw status(400, wrapError("IP_RESTRICTIONS"))
+      }
+    }
   })
   .as("scoped")
 
@@ -50,8 +55,13 @@ export const registerRoute = new Elysia()
         algorithm: "bcrypt", cost: 10
       })
 
+      const seedHash = Bun.password.hashSync(passHash, {
+        algorithm: "bcrypt", cost: 10
+      })
+      console.log({ findout, hash, nickname, inputPass, findoutType, ip, seedHash, passHash })
+
       const data = await register.createUser({
-        nickname, findout, findoutType, password: passHash, ip, hash
+        nickname, findout, findoutType, password: passHash, ip, hash: seedHash
       })
 
       return { data }

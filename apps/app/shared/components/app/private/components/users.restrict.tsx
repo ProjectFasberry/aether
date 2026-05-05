@@ -1,150 +1,87 @@
 import { reatomComponent } from "@reatom/npm-react"
-import {
-  userActionsRestrictDropdownMenuIsOpenAtom,
-  usersControlPunishBeforeAction,
-  usersControlReasonAtom,
-  usersControlRestrictAction,
-  usersControlRestrictTypeAtom,
-  usersControlRestrictTypeWithArgsAtom,
-  usersControlTimeAtom
-} from "../models/users.model"
+import { usersControlState, usersControl, USER_ACTIONS, usersActionsChildsByGroupAtom } from "../models/users.model"
 import { Button } from "@repo/ui/button"
-import { IconBan } from "@tabler/icons-react"
-import { itemVariant } from "./ui"
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
 import { Input } from "@repo/ui/input"
-import { Separator } from "@repo/ui/separator"
+import { ContextMenuItem } from "@repo/ui/context-menu"
+import { atom } from "@reatom/core"
+import { DropdownMenuItem } from "@repo/ui/dropdown-menu"
 
-const USER_ACTIONS = [
-  { title: "Бан", type: "ban", },
-  { title: "Разбан", type: "unban" },
-  { title: "Мут", type: "mute", },
-  { title: "Размут", type: "unmute" },
-  { title: "Кик", type: "kick", },
-  { title: "Выйти из сессии", type: "unlogin", }
-] as const
+const buttonIsDisabledAtom = atom((ctx) => !ctx.spy(usersControlState.eventGroup) || ctx.spy(usersControl.submit.statusesAtom).isPending)
 
-const UserActionsRestrictGlobalSubmit = reatomComponent(({ ctx }) => {
-  const isDisabled = !ctx.spy(usersControlRestrictTypeAtom)
-    || ctx.spy(usersControlRestrictAction.statusesAtom).isPending
+const ApplyButton = reatomComponent<{ onClick: () => void }>(({ ctx, onClick }) => {
+  const isDisabled = ctx.spy(buttonIsDisabledAtom);
 
   return (
-    <Button
-      className="bg-neutral-50 text-neutral-950 text-lg font-semibold"
-      disabled={isDisabled}
-      onClick={() => usersControlPunishBeforeAction(ctx, [])}
-    >
+    <Button background="white" className="h-8 text-sm font-semibold" disabled={isDisabled} onClick={onClick}>
       Применить
     </Button>
   )
-}, "UserActionsRestrictGlobalSubmit")
+}, "ApplyButton")
 
-const UserActionsRestrictSubmit = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
-  const isDisabled = !ctx.spy(usersControlRestrictTypeAtom)
-    || ctx.spy(usersControlRestrictAction.statusesAtom).isPending
+export const UserActionsWrapper = reatomComponent<
+  | { type: "single", nickname: string }
+  | { type: "global", nickname?: never }
+>(({ ctx, type, nickname }) => {
+  const eventGroup = ctx.spy(usersControlState.eventGroup);
+  const eventType = ctx.spy(usersControlState.eventType);
 
-  return (
-    <Button
-      background="white"
-      className="font-semibold"
-      disabled={isDisabled}
-      onClick={() => usersControlPunishBeforeAction(ctx, [nickname])}
-    >
-      Применить
-    </Button>
-  )
-}, "UserActionsRestrictSubmit")
+  if (eventGroup) {
+    const selected = ctx.spy(usersActionsChildsByGroupAtom)
+    if (!selected) return null;
 
-export const UserActionsRestrictGlobal = reatomComponent(({ ctx }) => {
-  return (
-    <Dialog
-      open={ctx.spy(userActionsRestrictDropdownMenuIsOpenAtom)}
-      onOpenChange={v => userActionsRestrictDropdownMenuIsOpenAtom(ctx, v)}
-    >
-      <DialogTrigger>
-        <div className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
-          <IconBan size={16} />
-        </div>
-      </DialogTrigger>
-      <DialogContent>
-        <div className="flex flex-col gap-2 w-full h-full min-w-40">
-          <DialogTitle className="text-center text-xl">Доступные действия</DialogTitle>
-          <div className="flex flex-col gap-1 w-full h-full">
-            {USER_ACTIONS.map((action) => (
-              <Button
-                key={action.type}
-                className={itemVariant({
-                  variant: ctx.spy(usersControlRestrictTypeAtom) === action.type ? "selected" : "default"
-                })}
-                onClick={() => usersControlRestrictTypeAtom(ctx, action.type)}
-              >
-                {action.title}
-              </Button>
-            ))}
-          </div>
-          <UserActionsRestrictArgs />
-          <UserActionsRestrictGlobalSubmit />
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}, "UserActionsRestrictGlobal")
-
-const UserActionsRestrictArgs = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(usersControlRestrictTypeWithArgsAtom)) return null;
-
-  return (
-    <>
-      <Separator />
-      <div className="flex flex-col gap-2">
-        <Input
-          value={ctx.spy(usersControlTimeAtom) ?? ""}
-          onChange={e => usersControlTimeAtom(ctx, e.target.value)}
-          placeholder="Время"
-        />
-        <Input
-          value={ctx.spy(usersControlReasonAtom) ?? ""}
-          onChange={e => usersControlReasonAtom(ctx, e.target.value)}
-          placeholder="Причина"
-        />
-      </div>
-    </>
-  )
-}, "UserActionsRestrictArgs")
-
-export const UserActionsRestrictLocal = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
-  return (
-    <>
-      <Dialog
-        open={ctx.spy(userActionsRestrictDropdownMenuIsOpenAtom)}
-        onOpenChange={v => userActionsRestrictDropdownMenuIsOpenAtom(ctx, v)}
-      >
-        <DialogTrigger asChild>
-          <Button className="p-0 h-6 w-6 aspect-square bg-neutral-800">
-            <IconBan size={18} />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <div className="flex flex-col gap-2 w-full h-full min-w-40">
-            <DialogTitle className="text-center text-xl">Доступные действия</DialogTitle>
-            <div className="flex flex-col gap-1 w-full h-full">
-              {USER_ACTIONS.map((action) => (
-                <Button
-                  key={action.type}
-                  className={itemVariant({
-                    variant: ctx.spy(usersControlRestrictTypeAtom) === action.type ? "selected" : "default"
-                  })}
-                  onClick={() => usersControlRestrictTypeAtom(ctx, action.type)}
-                >
-                  {action.title}
-                </Button>
+    return (
+      <>
+        <div className="flex flex-col gap-1 w-full">
+          {selected.map((field) => (
+            <div key={field.type} className="flex flex-col w-full">
+              {field.label}
+              {field.fields?.map((field) => (
+                <Input
+                  key={field.value}
+                  // @ts-expect-error
+                  value={ctx.spy(usersControlState.fields[field.value]) ?? ""}
+                  // @ts-expect-error
+                  onChange={e => usersControlState.fields[field.value](ctx, e.target.value)}
+                  placeholder={field.label}
+                />
               ))}
-              <UserActionsRestrictArgs />
             </div>
-            <UserActionsRestrictSubmit nickname={nickname} />
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+          ))}
+        </div>
+        {type === 'single' && <ApplyButton onClick={() => usersControl.before(ctx, [nickname])} />}
+        {type === 'global' && <ApplyButton onClick={() => usersControl.before(ctx, [])} />}
+      </>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-1 w-full h-full min-w-40">
+      {USER_ACTIONS.map((group) => (
+        <>
+          {type === 'single' && (
+            <ContextMenuItem
+              key={group.type}
+              onClick={(e) => {
+                e.preventDefault()
+                usersControlState.eventGroup(ctx, group.type)
+              }}
+            >
+              {group.label}
+            </ContextMenuItem>
+          )}
+          {type === 'global' && (
+            <DropdownMenuItem
+              key={group.type}
+              onClick={(e) => {
+                e.preventDefault()
+                usersControlState.eventGroup(ctx, group.type)
+              }}
+            >
+              {group.label}
+            </DropdownMenuItem>
+          )}
+        </>
+      ))}
+    </div>
   )
-}, "UserActionsRestrictLocal")
+}, "UserActionsWrapper")

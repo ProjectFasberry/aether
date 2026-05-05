@@ -3,7 +3,7 @@ import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData, withError } from "#/shared/schemas";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 
 const cartAddItem = new Elysia()
   .use(defineUser())

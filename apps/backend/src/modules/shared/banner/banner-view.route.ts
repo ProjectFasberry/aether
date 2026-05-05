@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/middlewares/define";
+import { defineUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { bannerSchema } from "./banner.model";
 import { withData } from "#/shared/schemas";

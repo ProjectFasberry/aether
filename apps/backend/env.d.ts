@@ -34,7 +34,8 @@ declare global {
       HELEKET_MERCHANT_KEY: string;
       HELEKET_PAYMENT_KEY: string;
       HELEKET_PAYOUT_KEY: string;
-
+      HELEKET_PAYOUT_API_KEY: string;
+      
       CRYPTO_PAY_MAINNET_URL: string;
       CRYPTO_PAY_TESTNET_URL: string;
       CRYPTO_PAY_MAINNET_TOKEN: string;

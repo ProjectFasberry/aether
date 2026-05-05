@@ -2,9 +2,8 @@ import { isProduction, PORT } from "./shared/env";
 import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
-// import { prometheusPlugin } from "./lib/plugins/prometheus";
 import { openApiPlugin } from "./lib/plugins/openapi";
-import { defineSession } from "./lib/middlewares/define";
+import { defineSession } from "./lib/define";
 import { session } from "./modules/auth/login.model";
 import { appLogger } from "./utils/config/logger";
 import { main, root } from "./routes";
@@ -21,7 +20,6 @@ export function startApp() {
 	appLogger.log(`Starting app...`);
 
 	const app = new Elysia(appConfig)
-		// .use(prometheusPlugin())
 		.use(openApiPlugin())
 		.use(serverTimingPlugin())
 		.use(ipPlugin())
