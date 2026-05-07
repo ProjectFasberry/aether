@@ -26,7 +26,7 @@ import {
   editNewsState
 } from "../models/news.model"
 import { Input } from "@repo/ui/input"
-import { Atom, AtomMut, Ctx } from "@reatom/core"
+import { Atom, AtomMut, Ctx } from "@reatom/framework"
 import { ActionButton } from "./ui"
 import { IconCheck } from "@tabler/icons-react"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"

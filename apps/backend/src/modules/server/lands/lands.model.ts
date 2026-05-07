@@ -3,13 +3,13 @@ import { safeJsonParse, wrapMeta } from "#/utils/config/transforms";
 import { landHelpers } from "#/utils/lands/lands-helpers";
 import { getPlayerUUID } from "#/utils/player/uuid";
 import { type Static, t } from "elysia";
-import { getPlayerAvatar } from "../skin/skin.model";
+import { getPlayersAvatar } from "../skin/skin.model";
 import { withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
-
-type LandMember = Record<string, { chunks: number }>
+import type { SelectExpression } from "kysely";
+import type { DB } from "@repo/shared/types/db/bisquite-database-types";
 
 export const landSchema = t.Object({
   area: t.Nullable(
@@ -49,7 +49,11 @@ export const landSchema = t.Object({
   name: t.String(),
   ulid: t.String(),
   level: t.Number(),
-  limits: t.Nullable(t.Array(t.String())),
+  limits: t.Nullable(
+    t.Record(
+      t.String(), t.Union([t.String(), t.Number()])
+    )
+  ),
   stats: t.Object({
     kills: t.Number(),
     deaths: t.Number(),
@@ -60,19 +64,20 @@ export const landSchema = t.Object({
   balance: t.Number(),
   chunks_amount: t.Nullable(t.Number()),
   areas_amount: t.Nullable(t.Number()),
-  spawn: t.Nullable(t.String()),
+  spawn: t.Nullable(
+    t.Record(t.String(), t.Unknown())
+  ),
 })
 
 export const landsByNicknameSchema = t.Object({
-  exclude: t.Optional(t.String({ minLength: 1 }))
+  exclude: t.Optional(
+    t.String({ minLength: 1 })
+  )
 })
 
 export const landsByPlayerSchema = t.Object({
   data: t.Array(
-    t.Pick(
-      landSchema,
-      ["ulid", "type", "name", "title", "members", "details", "created_at"]
-    )
+    t.Pick(landSchema, ["ulid", "type", "name", "title", "members", "details", "created_at"])
   ),
   meta: t.Object({
     count: t.Number()
@@ -85,7 +90,7 @@ export async function getLandsByNickname(
 ): Promise<Static<typeof landsByPlayerSchema>> {
   const uuid = await getPlayerUUID(nickname)
 
-  let lands = await bisquite
+  let query = bisquite
     .selectFrom("lands_lands")
     .select([
       "lands_lands.ulid",
@@ -96,17 +101,15 @@ export async function getLandsByNickname(
       "lands_lands.title",
     ])
     .where("members", "like", `%${uuid}%`)
-    .execute();
-
-  if (!lands.length) {
-    return {
-      data: [],
-      meta: { count: 0 }
-    }
-  }
 
   if (exclude) {
-    lands = lands.filter(land => land.ulid !== exclude)
+    query = query.where("lands_lands.ulid", "!=", exclude)
+  }
+
+  const lands = await query.execute();
+
+  if (!lands.length) {
+    return { data: [], meta: { count: 0 } }
   }
 
   const ulids = lands.map(l => l.ulid)
@@ -149,7 +152,7 @@ export async function getLandsByNickname(
   const allMemberUUIDs: Set<string> = new Set();
 
   const parsedLands = lands.map(l => {
-    const parsed = safeJsonParse<LandMember>(l.members)
+    const parsed = safeJsonParse<Record<string, { chunks: number }>>(l.members)
     if (!parsed.ok) throw parsed.error
 
     const members = parsed.value
@@ -169,26 +172,26 @@ export async function getLandsByNickname(
 
   const nameMap = new Map(membersList.map(m => [m.uuid, m.name]))
 
-  const data = await Promise.all(
-    parsedLands.map(async (land) => {
-      const nickname = nameMap.get(uuid)!;
+  const avatarsMap = await getPlayersAvatar(
+    Array.from(nameMap).map(([_, nickname]) => nickname)
+  );
 
-      const members = await Promise.all(
-        Object.entries(land.members).map(async ([uuid, data]) => ({
-          uuid,
-          nickname,
-          chunks: data.chunks,
-          avatar: await getPlayerAvatar(nickname)
-        }))
-      )
+  const data = parsedLands.map((land) => {
+    const nickname = nameMap.get(uuid)!;
 
-      return {
-        ...land,
-        members,
-        details: detailsMap.get(land.ulid)!,
-      }
-    })
-  )
+    const members = Object.entries(land.members).map(([uuid, data]) => ({
+      uuid,
+      nickname,
+      chunks: data.chunks,
+      avatar: avatarsMap[nickname]
+    }))
+
+    return {
+      ...land,
+      members,
+      details: detailsMap.get(land.ulid)!,
+    }
+  })
 
   return {
     data,
@@ -198,16 +201,16 @@ export async function getLandsByNickname(
   }
 }
 
-const { transformBanner, transformGallery } = landHelpers
+const BASE_FIELDS = [
+  "area", "created_at", "details", "type", "title", "name", "level", "stats", "chunks_amount", "areas_amount", "ulid"
+] as const
 
-export const landPayload = t.Composite([
-  t.Pick(
-    landSchema,
-    [
-      "area", "created_at", "details", "type", "title", "name", "level", "limits",
-      "stats", "balance", "chunks_amount", "areas_amount", "ulid", "spawn"
-    ]
-  ),
+const OWNER_FIELDS: SelectExpression<DB, "lands_lands">[] = [
+  "lands_lands.balance", "lands_lands.limits", "lands_lands.spawn"
+]
+
+export const landSinglePayload = t.Composite([
+  t.Pick(landSchema, BASE_FIELDS),
   t.Object({
     members: t.Array(
       t.Object({
@@ -217,14 +220,17 @@ export const landPayload = t.Composite([
         avatar: t.String()
       })
     ),
+    privated: t.Nullable(
+      t.Pick(landSchema, ["spawn", "balance", "limits"])
+    )
   })
 ])
 
 export async function getLand(
   ulid: string,
   { initiator }: { initiator: string | null }
-): Promise<Static<typeof landPayload> | null> {
-  let isOwner = false;
+): Promise<Static<typeof landSinglePayload> | null> {
+  let isMember = false;
 
   const landRow = await bisquite
     .selectFrom('lands_lands')
@@ -233,75 +239,41 @@ export async function getLand(
     .executeTakeFirstOrThrow();
 
   const membersObject = JSON.parse(landRow.members ?? '{}');
-  const memberUUIDs = Object.keys(membersObject);
 
-  const [bannerResult, galleryResult] = await Promise.all([
-    bisquite
-      .selectFrom("lands_banners")
-      .select('banner_url as banner')
-      .where("ulid", "=", ulid)
-      .executeTakeFirst(),
-    bisquite
-      .selectFrom('lands_gallery')
-      .select('url')
-      .where('ulid', '=', ulid)
-      .execute()
-  ])
+  const membersRaw = await bisquite
+    .selectFrom('cmi_users')
+    .select(['player_uuid as uuid', 'username as nickname'])
+    .where('player_uuid', 'in', Object.keys(membersObject))
+    .$narrowType<{ nickname: string, uuid: string }>()
+    .execute()
 
-  const details = {
-    banner: transformBanner(bannerResult?.banner),
-    gallery: transformGallery(galleryResult)
+  if (initiator) {
+    if (membersRaw.some(m => m.nickname === initiator)) {
+      isMember = true
+    }
   }
 
   async function getMembers() {
-    if (memberUUIDs.length === 0) return [];
+    const avatarsMap = await getPlayersAvatar(membersRaw.map(r => r.nickname));
 
-    const members = await bisquite
-      .selectFrom('cmi_users')
-      .select([
-        'player_uuid as uuid',
-        'username as nickname'
-      ])
-      .where('player_uuid', 'in', memberUUIDs)
-      .execute()
-
-    const isMember = members.some(m => m.nickname === initiator)
-
-    if (initiator && isMember) {
-      isOwner = true
-    }
-
-    const data = await Promise.all(
-      members.map(async (member, idx) => ({
-        uuid: member.uuid as string,
-        nickname: member.nickname as string,
-        chunks: 0,
-        // 4 type = owner
-        // 1 type = member
-        role: idx === 0 ? 4 : 1,
-        avatar: await getPlayerAvatar(member.nickname!)
-      }))
-    )
+    const data = membersRaw.map((member, idx) => ({
+      uuid: member.uuid,
+      nickname: member.nickname,
+      chunks: 0,
+      // 4 = owner, 1 = member
+      role: idx === 0 ? 4 : 1,
+      avatar: avatarsMap[member.nickname]
+    }))
 
     return data
   }
 
-  async function getMain() {
-    let OWNER_FIELDS: string[] = [];
-
-    if (isOwner) {
-      OWNER_FIELDS = [
-        "lands_lands.balance",
-        "lands_lands.limits",
-        "lands_lands.spawn"
-      ]
-    }
+  async function getBase() {
+    const ownerFields = isMember ? OWNER_FIELDS : [];
 
     const query = await bisquite
       .selectFrom("lands_lands")
       .leftJoin("lands_lands_claims", "lands_lands_claims.land", "lands_lands.ulid")
-      // OWNER_FIELDS
-      // @ts-expect-error
       .select([
         "lands_lands.ulid",
         "lands_lands.name",
@@ -313,7 +285,7 @@ export async function getLand(
         "lands_lands_claims.areas_amount",
         "lands_lands.stats",
         "lands_lands.level",
-        ...OWNER_FIELDS
+        ...ownerFields
       ])
       .where("lands_lands.ulid", "=", ulid)
       .groupBy([
@@ -327,29 +299,59 @@ export async function getLand(
         "lands_lands_claims.areas_amount",
         "lands_lands.stats",
         "lands_lands.level",
+        ...ownerFields
       ])
       .executeTakeFirst()
 
     return query ?? null;
   }
 
-  const [main, members] = await Promise.all([
-    getMain(), getMembers()
+  async function getDetails() {
+    const [bannerResult, galleryResult] = await Promise.all([
+      bisquite
+        .selectFrom("lands_banners")
+        .select('banner_url as banner')
+        .where("ulid", "=", ulid)
+        .executeTakeFirst(),
+      bisquite
+        .selectFrom('lands_gallery')
+        .select('url')
+        .where('ulid', '=', ulid)
+        .execute()
+    ])
+
+    const details = {
+      banner: landHelpers.transformBanner(bannerResult?.banner),
+      gallery: landHelpers.transformGallery(galleryResult)
+    }
+
+    return details;
+  }
+
+  const [base, members, details] = await Promise.all([
+    getBase(), getMembers(), getDetails()
   ])
+  if (!base || !members || !details) return null;
 
-  if (!main || !members) return null;
+  let privated: Static<typeof landSinglePayload>["privated"] | null = null
 
-  const result = {
-    ...main,
+  if (isMember) {
+    privated = {
+      spawn: base.spawn ? JSON.parse(base.spawn) : null,
+      balance: base.balance,
+      limits: base.limits ? JSON.parse(base.limits) : null,
+    }
+  }
+
+  const result: Static<typeof landSinglePayload> = {
+    ...base,
     members,
     details,
-    chunks_amount: main.chunks_amount ?? 0,
-    areas_amount: main.areas_amount ?? 0,
-    stats: main.stats ? JSON.parse(main.stats) : null,
-    area: isOwner ? JSON.parse(main.area as string) : null,
-    spawn: isOwner ? main.spawn : null,
-    balance: isOwner ? main.balance : 0,
-    limits: isOwner ? main.limits ? JSON.parse(main.limits) : null : null,
+    chunks_amount: base.chunks_amount ?? 0,
+    areas_amount: base.areas_amount ?? 0,
+    stats: base.stats ? JSON.parse(base.stats) : null,
+    area: JSON.parse(base.area),
+    privated
   }
 
   return result
@@ -371,7 +373,9 @@ export const landsListPayload = t.Object({
   meta: withMeta
 })
 
-export async function getLands({ cursor }: Static<typeof landsSchema>): Promise<Static<typeof landsListPayload>> {
+export async function getLands({ 
+  cursor 
+}: Static<typeof landsSchema>): Promise<Static<typeof landsListPayload>> {
   const query = bisquite
     .selectFrom("lands_lands")
     .leftJoin("lands_banners", "lands_banners.ulid", "lands_lands.ulid")
@@ -406,54 +410,51 @@ export async function getLands({ cursor }: Static<typeof landsSchema>): Promise<
   }));
 
   if (!parsedLands.length) {
-    return {
-      data: [],
-      meta: wrapMeta(result)
-    }
+    return { data: [], meta: wrapMeta(result) }
   }
 
-  const allUuids = [
-    ...new Set(parsedLands.flatMap(l => Object.keys(l.rmembers)))
-  ];
+  const allUUIDs = Array.from(
+    new Set(
+      parsedLands.flatMap(({ rmembers }) => Object.keys(rmembers))
+    )
+  )
 
   const playersList = await general
     .selectFrom("players")
     .select(["uuid", "nickname"])
-    .where("uuid", "in", allUuids)
+    .where("uuid", "in", allUUIDs)
     .execute();
 
   const nameMap = new Map(playersList.map(p => [p.uuid, p.nickname]));
+  const avatarsMap = await getPlayersAvatar(Array.from(nameMap).map(([_, nickname]) => nickname));
 
-  const lands = await Promise.all(
-    parsedLands.map(async (land) => {
-      const members = await Promise.all(
-        Object.entries(land.rmembers).map(async ([uuid, data]) => {
-          const nickname = nameMap.get(uuid) || "Unknown";
+  const data = parsedLands.map((land) => {
+    const members = Object
+      .entries(land.rmembers)
+      .map(([uuid, { chunks }]) => {
+        const nickname = nameMap.get(uuid)!
 
-          return {
-            uuid,
-            nickname,
-            chunks: data.chunks,
-            avatar: await getPlayerAvatar(nickname)
-          };
-        })
-      );
+        return {
+          uuid,
+          nickname,
+          chunks,
+          avatar: avatarsMap[nickname]
+        };
+      })
 
-      return {
-        ...land,
-        rmembers: undefined,
-        stats: land.stats ? JSON.parse(land.stats) : null,
-        members,
-        details: {
-          banner: land.banner_url ? landHelpers.getLandsUrl(land.banner_url) : null,
-          gallery: []
-        }
+    return {
+      ...land,
+      stats: land.stats ? JSON.parse(land.stats) : null,
+      members,
+      details: {
+        banner: land.banner_url ? landHelpers.getLandsUrl(land.banner_url) : null,
+        gallery: []
       }
-    })
-  )
+    }
+  })
 
   return {
-    data: lands,
+    data,
     meta: wrapMeta(result)
   }
 }

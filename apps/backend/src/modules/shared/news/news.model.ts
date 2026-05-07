@@ -118,7 +118,7 @@ export async function getNewsList({
     created_at: news.created_at.toString(),
     creator: {
       nickname: news.creator,
-      avatar: getStaticUrl(DEFAULT_HEAD)
+      avatar: DEFAULT_HEAD
     },
     imageUrl: getStaticUrl(news.imageUrl)
   }))

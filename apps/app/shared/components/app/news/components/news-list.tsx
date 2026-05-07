@@ -1,4 +1,4 @@
-import { atom } from "@reatom/core"
+import { atom } from "@reatom/framework"
 import { news, newsAllDataArrAtom, newsState } from "../models/news-list.model"
 import { NotFound } from "@/shared/ui/not-found"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"

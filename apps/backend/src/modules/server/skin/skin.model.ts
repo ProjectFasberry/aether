@@ -9,7 +9,7 @@ import { sql } from "kysely";
 import { BUCKETS, minio } from "#/shared/minio/client";
 import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } from "#/shared/env";
 import { logger } from "#/utils/config/logger";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
   createCipheriv,
   createDecipheriv,
@@ -44,8 +44,10 @@ export type Skin = {
 }
 
 const DEFAULT_SKIN_VARIANT = "CLASSIC"
-export const DEFAULT_HEAD = "fallback/steve_head.png"
+export const DEFAULT_HEAD_PATH = "fallback/steve_head.png"
 const DEFAULT_SKIN = "fallback/steve_skin.png"
+
+export const DEFAULT_HEAD = getStaticUrl(DEFAULT_HEAD_PATH)
 
 async function getCachedSkinPayload(nickname: string): Promise<SkinsHistoryPayload | null> {
   const redis = getRedis()
@@ -54,25 +56,61 @@ async function getCachedSkinPayload(nickname: string): Promise<SkinsHistoryPaylo
   if (!resultStr) return null;
 
   const result = safeJsonParse<SkinsHistoryPayload>(resultStr)
-
-  if (!result.ok) {
-    console.error(result.error.message)
-    return null;
-  }
+  if (!result.ok) return null;
 
   return result.value
 }
 
 export async function getSkin(nickname: string): Promise<string> {
   const result = await getCachedSkinPayload(nickname)
-  if (!result) return getStaticUrl(DEFAULT_HEAD)
-  return result[0].skin_url ?? getStaticUrl(DEFAULT_HEAD)
+  if (!result) return DEFAULT_HEAD
+  return result[0].skin_url ?? DEFAULT_HEAD
+}
+
+export async function getCachedSkinPayloads(nicknames: string[]): Promise<Record<string, SkinsHistoryPayload | null>> {
+  const redis = getRedis();
+  const keys = nicknames.map(getSkinsHistoryCacheRedisKey);
+  const resultsStr = await redis.mget(...keys);
+  const map: Record<string, SkinsHistoryPayload | null> = Object.create(null)
+
+  for (let i = 0; i < resultsStr.length; i++) {
+    const val = resultsStr[i];
+    const nickname = nicknames[i];
+
+    if (!val) {
+      map[nickname] = null;
+      continue;
+    }
+
+    const parsed = safeJsonParse<SkinsHistoryPayload>(val);
+    map[nickname] = parsed.ok ? parsed.value : null;
+  }
+
+  return map;
+}
+
+export async function getPlayersAvatar(nicknames: string[]): Promise<Record<string, string>> {
+  const result = await getCachedSkinPayloads(nicknames)
+  const map: Record<string, string> = Object.create(null)
+
+  for (let i = 0; i < nicknames.length; i++) {
+    const name = nicknames[i];
+    const skinData = result[name];
+
+    if (skinData && skinData.length > 0) {
+      map[name] = skinData[0].skin_head_url ?? DEFAULT_HEAD;
+    } else {
+      map[name] = DEFAULT_HEAD;
+    }
+  }
+
+  return map
 }
 
 export async function getPlayerAvatar(nickname: string): Promise<string> {
   const result = await getCachedSkinPayload(nickname)
-  if (!result) return getStaticUrl(DEFAULT_HEAD)
-  return result[0].skin_head_url ?? getStaticUrl(DEFAULT_HEAD)
+  if (!result) return DEFAULT_HEAD
+  return result[0].skin_head_url ?? DEFAULT_HEAD
 }
 
 export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:skins:${nickname}`) 
@@ -145,7 +183,7 @@ async function performHead(data: SkinsHistory[], nickname: string) {
     state.map(async (c) => {
       const target = c.skin_url
         ? await getHeadFromSkin(c.skin_url)
-        : getStaticUrl(DEFAULT_HEAD)
+        : DEFAULT_HEAD
 
       return client.putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
     })

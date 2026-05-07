@@ -5,7 +5,7 @@ import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
 import { env } from "@/shared/env";
 import { getNews, newsState } from "@/shared/components/app/news/models/news.model";
-import { createCtx } from "@reatom/core";
+import { createCtx } from "@reatom/framework";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import { eventsState, getEvents } from "@/shared/components/app/events/models/events.model";
 

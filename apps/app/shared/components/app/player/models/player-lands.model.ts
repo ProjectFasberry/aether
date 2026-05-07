@@ -1,8 +1,8 @@
-import { reatomAsync, withStatusesAtom } from "@reatom/async"
+import { reatomAsync, withStatusesAtom } from "@reatom/framework"
 import { logError } from "@/shared/lib/log"
-import { atom } from "@reatom/core"
+import { atom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
-import { playerParamAtom } from "./player.model"
+import { playerState } from "./player.model"
 import { client } from "@/shared/lib/client-wrapper"
 import { isEmptyArray } from "@/shared/lib/utils"
 import { withSsr } from "@/shared/lib/reatom-helpers"
@@ -15,23 +15,21 @@ export async function getLands(nickname: string, init?: RequestInit) {
 
 export const playerLandsState = atom(null, "playerLandsState").pipe(
   withAssign((_, name) => ({
-    data: atom<PlayerLandsPayload | null>(null, `${name}.data`).pipe(
-      withSsr("playerLandsState.data"), withReset()
-    )
+    data: atom<Nullable<PlayerLandsPayload>>(null, `${name}.data`).pipe(withSsr(`${name}.data`), withReset())
   }))
 )
 
 export const playerLands = atom(null, "playerLands").pipe(
   withAssign((_, name) => ({
-    fetch: reatomAsync(async (ctx, nickname: string) => {
-      return await ctx.schedule(() =>
-        getLands(nickname, { signal: ctx.controller.signal })
-      )
+    fetch: reatomAsync(async (ctx) => {
+      const nickname = ctx.get(playerState.nickname)
+      if (!nickname) return null;
+
+      playerLandsState.data.reset(ctx);
+      return await ctx.schedule(() => getLands(nickname, { signal: ctx.controller.signal }))
     }, {
       name: `${name}.fetch`,
-      onFulfill: (ctx, res) => {
-        playerLandsState.data(ctx, isEmptyArray(res.data) ? null : res)
-      },
+      onFulfill: (ctx, res) => res && playerLandsState.data(ctx, isEmptyArray(res.data) ? null : res),
       onReject: (_, e) => logError(e)
     }).pipe(
       withStatusesAtom()
@@ -39,4 +37,4 @@ export const playerLands = atom(null, "playerLands").pipe(
   }))
 )
 
-playerParamAtom.onChange((ctx, state) => state && playerLands.fetch(ctx, state))
+playerState.nickname.onChange((ctx, state) => state && playerLands.fetch(ctx))

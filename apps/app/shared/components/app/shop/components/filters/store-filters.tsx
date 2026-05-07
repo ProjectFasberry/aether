@@ -1,7 +1,7 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { Checkbox, CheckboxProps } from "@repo/ui/checkbox"
-import { Ctx } from "@reatom/core";
+import { Ctx } from "@reatom/framework";
 import { Filter, filterIsAppliedAtom, filtersState, storeItems, storeItemsState } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
 import { LabelHTMLAttributes, useState } from "react";

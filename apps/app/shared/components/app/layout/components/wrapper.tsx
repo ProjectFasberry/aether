@@ -1,38 +1,16 @@
-import { reatomComponent, useUpdate } from '@reatom/npm-react';
-import { Toaster } from '@/shared/components/config/toaster';
-import { createCtx, Ctx } from '@reatom/framework'
+import { useUpdate } from '@reatom/npm-react';
+import { action, createCtx, Ctx } from '@reatom/framework'
 import { reatomContext } from '@reatom/npm-react'
-import { lazy, PropsWithChildren, useRef } from 'react'
+import { PropsWithChildren, useRef } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { Footer } from '@/shared/components/app/layout/components/footer';
-import { Button } from "@repo/ui/button";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
 import { app } from '@/shared/models/app.model';
-import { snapshotAtom } from '@/shared/lib/reatom-helpers';
-import { Widgets } from '@/shared/components/app/widgets/components/widgets';
-import { AlertDialog } from '@/shared/components/config/alert-dialog';
-import { getIsAuth } from '@/shared/lib/utils';
-import { ClientOnly } from 'vike-react/ClientOnly';
-import { isClientAtom } from '@/shared/models/page-context.model';
-
-const SettingsDialog = lazy(() => import("@/shared/components/app/settings/components/settings").then(d => ({ default: d.SettingsDialog })))
-
-const Global = reatomComponent(({ ctx }) => {
-  const pageCtx = usePageContext()
-  const isAuthed = ctx.spy(isClientAtom) ? getIsAuth(pageCtx.snapshot) : false
-
-  return (
-    <>
-      <ClientOnly>
-        <Widgets />
-      </ClientOnly>
-      <AlertDialog />
-      <ClientOnly>
-        {isAuthed && <SettingsDialog />}
-      </ClientOnly>
-    </>
-  )
-}, "Global")
+import { pageCtxAtom } from '@/shared/models/page-context.model';
+import { PageContext, PageContextClient } from 'vike/types';
+import { connectLogger } from "@reatom/framework"
+import { ErrorBoundaryProvider } from './error-boundary';
+import { Global } from './global';
+import { ssrSnapshots } from '@/shared/models/shared.model';
 
 interface Fn<Args extends any[] = any[], Return = any> {
   (...a: Args): Return
@@ -49,78 +27,68 @@ const useCreateCtx = (extension?: Fn<[Ctx]>) => {
   return ctxRef.current
 }
 
-const SyncPageContext = () => {
+const initSnapshots = action((ctx, pageCtx: PageContext) => {
+  const pageCtxSnapshot = pageCtx.snapshot;
+  if (!pageCtxSnapshot || !pageCtxSnapshot?.__meta) return;
+
+  for (const [key, snapshot] of Array.from(ssrSnapshots)) {    
+    if (pageCtxSnapshot.__meta.name !== key) continue;
+
+    snapshot(ctx, pageCtxSnapshot);
+
+    if (import.meta.env.DEV) {
+      console.log(`Snapshot ${key} inited`)
+    }
+  }
+})
+
+const Sync = () => {
   const pageCtx = usePageContext()
 
-  useUpdate((ctx) => {
-    const un = app.init(ctx, pageCtx)
-    return un
+  return useUpdate((ctx) => {
+    initSnapshots(ctx, pageCtx)
+    pageCtxAtom(ctx, pageCtx as PageContextClient)
   }, [pageCtx])
-
-  return null;
 }
 
-const ReatomProvider = ({ children }: PropsWithChildren) => {
-  const { snapshot } = usePageContext()
-
-  const ctx = useCreateCtx((ctx) => {
-    snapshotAtom(ctx, snapshot)
-
-    async function logger() {
-      const { connectLogger } = await import("@reatom/framework")
-      connectLogger(ctx)
-    }
-
-    if (typeof window !== 'undefined' && import.meta.env.DEV) {
-      logger()
-    }
-  })
+const AppProvider = ({ children }: PropsWithChildren) => {
+  useUpdate((ctx) => app.init(ctx), []);
 
   return (
-    <reatomContext.Provider value={ctx}>
-      <SyncPageContext />
-      {children}
-    </reatomContext.Provider>
+    <>
+      <Sync />
+      <div id="page-container">
+        {children}
+        <Footer />
+      </div>
+      <Global />
+    </>
   )
 }
 
-function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
-  return (
-    <div className="flex flex-col gap-2 h-dvh responsive mx-auto w-full items-center justify-center">
-      <div className="flex flex-col w-full items-center justify-center">
-        <p className="text-lg font-semibold">Произошла ошибка в работе приложения</p>
-        <span>Мы уже работаем над исправлением!</span>
-      </div>
-      <Button
-        background='white'
-        className="font-semibold"
-        onClick={() => resetErrorBoundary()}
-      >
-        Обновить
-      </Button>
-      {import.meta.env.DEV && <pre className='text-red text-sm truncate text-wrap'>{error.message}</pre>}
-    </div>
-  );
-}
+const onCreateCtx = action((ctx, pageCtx: PageContext) => {
+  initSnapshots(ctx, pageCtx)
 
-function logError(error: Error, info: React.ErrorInfo) {
-  console.error(error)
-};
+  if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    connectLogger(ctx)
+  }
+})
+
+const ReatomProvider = ({ children }: PropsWithChildren) => {
+  const pageCtx = usePageContext();
+  const ctx = useCreateCtx((ctx) =>onCreateCtx(ctx, pageCtx))
+
+  return <reatomContext.Provider value={ctx}>{children}</reatomContext.Provider>
+}
 
 export const WrapperChild = ({ children }: PropsWithChildren) => {
   return (
-    <ErrorBoundary
-      FallbackComponent={ErrorFallback}
-      onError={logError}
-    >
+    <ErrorBoundaryProvider>
       <ReatomProvider>
-        <Toaster />
-        <div id="page-container">
+        <AppProvider>
           {children}
-          <Footer />
-        </div>
-        <Global />
+        </AppProvider>
       </ReatomProvider>
-    </ErrorBoundary>
+    </ErrorBoundaryProvider>
   )
 }

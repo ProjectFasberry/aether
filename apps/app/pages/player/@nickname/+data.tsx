@@ -4,9 +4,9 @@ import { useConfig } from "vike-react/useConfig";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { DONATE_GROUPS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { logRouting } from "@/shared/lib/log";
-import { createCtx, Ctx } from "@reatom/core";
+import { createCtx } from "@reatom/framework";
 import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
-import { getPlayer, playerAtom } from "@/shared/components/app/player/models/player.model";
+import { getPlayer, playerSsrModel, playerState } from "@/shared/components/app/player/models/player.model";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import dayjs from "@/shared/lib/create-dayjs"
 import { playerRateState } from "@/shared/components/app/player/models/rate.model";
@@ -15,24 +15,6 @@ import { isEmptyArray } from "@/shared/lib/utils";
 export type PlayerLandsPayload = ExtractApiData<"getServerLandsListByNickname">["data"]
 export type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 export type Data = Awaited<ReturnType<typeof data>>;
-
-async function loadPlayer(nickname: string, headers?: Record<string, string>): Promise<Player | null> {
-  try {
-    const player = await getPlayer(nickname, { headers });
-    return player;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function loadLands(nickname: string, headers?: Record<string, string>) {
-  try {
-    const lands = await getLands(nickname, { headers });
-    return isEmptyArray(lands?.data) ? null : lands;
-  } catch {
-    return null;
-  }
-}
 
 function buildMetadataValues(user: Player, pageCtx: PageContextServer) {
   const nickname = user.nickname;
@@ -67,25 +49,27 @@ function buildMetadataHead({ title, nickname, description, image, url }: ReturnT
   );
 }
 
-async function fillSnapshot(ctx: Ctx, player: Player, lands: PlayerLandsPayload | null) {
-  const { rate, ...base } = player;
-
-  playerAtom(ctx, base);
-  playerRateState.data(ctx, rate);
-  playerLandsState.data(ctx, lands);
-}
-
 export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data");
+  logRouting(pageCtx.urlPathname, "data.server");
 
   const config = useConfig();
   const headers = pageCtx.headers ?? undefined
   const nickname = pageCtx.routeParams.nickname;
 
-  const player = await loadPlayer(nickname, headers);
+  const player = await getPlayer(nickname, { headers })
+    .catch(e => {
+      console.error(e)
+      return null
+    });
+
   if (!player) throw redirect("/not-exist?type=player");
 
-  const lands = await loadLands(nickname, headers);
+  const lands = await getLands(nickname, { headers })
+    .then(r => isEmptyArray(r?.data) ? null : r)
+    .catch(e => {
+      console.error(e)
+      return null;
+    })
 
   const metaValues = buildMetadataValues(player, pageCtx);
   config({
@@ -96,7 +80,13 @@ export async function data(pageCtx: PageContextServer) {
   });
 
   const ctx = createCtx()
-  await fillSnapshot(ctx, player, lands);
 
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
+  const { rate, ...base } = player;
+  
+  playerState.data(ctx, base);
+  playerState.nickname(ctx, base.nickname)
+  playerRateState.data(ctx, rate);
+  playerLandsState.data(ctx, lands);
+
+  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx, playerSsrModel.snapshotAtom)
 }

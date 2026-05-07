@@ -1,12 +1,12 @@
 import { Ratings } from "@/shared/components/app/ratings/components/rating-list";
 import { ratingByAtom, ratingsAction, ratingServerAtom } from "@/shared/components/app/ratings/models/ratings.model";
 import { startPageEvents } from "@/shared/lib/events";
-import { pageContextAtom } from "@/shared/models/page-context.model";
-import { action, batch } from "@reatom/core";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { action, batch } from "@reatom/framework";
 import { useUpdate } from "@reatom/npm-react";
 
 const events = action((ctx) => {
-  const pageCtx = ctx.get(pageContextAtom)
+  const pageCtx = ctx.get(pageCtxAtom)
   if (!pageCtx) return;
 
   const { id, parent } = pageCtx.routeParams

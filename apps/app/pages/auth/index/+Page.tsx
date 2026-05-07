@@ -2,10 +2,10 @@ import { AuthError, Verify } from "@/shared/components/app/auth/components/auth"
 import { type AuthType, auth, authIsDisabledAtom, authState, authTriggerIsDisabledAtom } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { action } from "@reatom/core";
+import { action } from "@reatom/framework";
 import { Link } from "@/shared/components/config/link";
 import { startPageEvents } from "@/shared/lib/events";
-import { pageContextAtom } from "@/shared/models/page-context.model";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { showResetPasswordAtom } from "@/shared/components/app/auth/models/login.model";
 import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
@@ -55,7 +55,7 @@ const Auth = reatomComponent(({ ctx }) => {
 }, "Auth")
 
 const events = action((ctx) => {
-  const pageCtx = ctx.get(pageContextAtom);
+  const pageCtx = ctx.get(pageCtxAtom);
   if (!pageCtx) return;
   authState.searchParams(ctx, pageCtx.urlParsed.search)
 })

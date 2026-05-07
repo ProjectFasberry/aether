@@ -3,8 +3,9 @@ import { usersControlState, usersControl, USER_ACTIONS, usersActionsChildsByGrou
 import { Button } from "@repo/ui/button"
 import { Input } from "@repo/ui/input"
 import { ContextMenuItem } from "@repo/ui/context-menu"
-import { atom } from "@reatom/core"
+import { atom } from "@reatom/framework"
 import { DropdownMenuItem } from "@repo/ui/dropdown-menu"
+import { Fragment } from "react/jsx-runtime"
 
 const buttonIsDisabledAtom = atom((ctx) => !ctx.spy(usersControlState.eventGroup) || ctx.spy(usersControl.submit.statusesAtom).isPending)
 
@@ -57,10 +58,9 @@ export const UserActionsWrapper = reatomComponent<
   return (
     <div className="flex flex-col gap-1 w-full h-full min-w-40">
       {USER_ACTIONS.map((group) => (
-        <>
+        <Fragment key={group.type}>
           {type === 'single' && (
             <ContextMenuItem
-              key={group.type}
               onClick={(e) => {
                 e.preventDefault()
                 usersControlState.eventGroup(ctx, group.type)
@@ -71,7 +71,6 @@ export const UserActionsWrapper = reatomComponent<
           )}
           {type === 'global' && (
             <DropdownMenuItem
-              key={group.type}
               onClick={(e) => {
                 e.preventDefault()
                 usersControlState.eventGroup(ctx, group.type)
@@ -80,7 +79,7 @@ export const UserActionsWrapper = reatomComponent<
               {group.label}
             </DropdownMenuItem>
           )}
-        </>
+        </Fragment>
       ))}
     </div>
   )

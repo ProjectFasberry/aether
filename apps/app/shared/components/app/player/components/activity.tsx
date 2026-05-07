@@ -6,7 +6,7 @@ import { isClientAtom } from "@/shared/models/page-context.model";
 import { expImage } from "@/shared/consts/images";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import { onConnect, sleep } from "@reatom/framework";
-import { playerParamAtom } from "../models/player.model";
+import { playerState } from "../models/player.model";
 import { translate } from "@/shared/locales/helpers";
 
 const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
@@ -81,7 +81,7 @@ const PlayerActivitySkeleton = () => {
 }
 
 export const PlayerActivity = reatomComponent(({ ctx }) => {
-  const nickname = ctx.spy(playerParamAtom);
+  const nickname = ctx.spy(playerState.nickname);
 
   useUpdate((ctx) => {
     if (!nickname) return;

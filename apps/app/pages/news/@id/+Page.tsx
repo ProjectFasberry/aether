@@ -5,18 +5,12 @@ import { IconEye, IconPencil } from "@tabler/icons-react";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 import { renderToHTMLString } from '@tiptap/static-renderer'
 import type { JSONContent } from "@tiptap/react";
-import { onDisconnect } from "@reatom/framework";
 import { editorExtensions } from "@/shared/components/config/editor";
 import { Avatar } from "@/shared/ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
-import { usePageContext } from "vike-react/usePageContext";
-import { CURRENT_USER_KEY } from "@/shared/models/current-user.model";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
 import { useEffect, useState } from "react";
-
-type MePayload = ExtractApiData<"getMe">["data"];
-
-onDisconnect(newsState.item, (ctx) => newsState.item(ctx, null))
+import { getDataFromSnapshot } from "@/shared/models/app.model";
 
 const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   const [editLink, setEditLink] = useState<string>("")
@@ -41,13 +35,12 @@ const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   )
 }, "NewsEdit")
 
-const News = reatomComponent(({ ctx }) => {
-  const currentUser = usePageContext().snapshot[CURRENT_USER_KEY]?.data as MePayload | undefined
+const News = reatomComponent(({ ctx }) => {  
   const data = ctx.spy(newsState.item);
   if (!data) return null;
 
-  const content = data.content as JSONContent
-  const html = renderToHTMLString({ extensions: editorExtensions, content })
+  const currentUser = getDataFromSnapshot("CURRENT_USER_KEY")
+  const html = renderToHTMLString({ extensions: editorExtensions, content: data.content as JSONContent })
 
   const allowEdit = currentUser?.meta.permissions.includes("news.update")
 

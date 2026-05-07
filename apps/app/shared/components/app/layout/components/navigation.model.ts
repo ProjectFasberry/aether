@@ -1,11 +1,12 @@
 import { CONFIG_PANEL_READ_PERMISSION, currentUserState } from "@/shared/models/current-user.model";
-import { action, Action, atom, AtomMut, CtxSpy } from "@reatom/core";
+import { action, Action, atom, AtomMut, CtxSpy } from "@reatom/framework";
 import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, TablerIcon } from "@tabler/icons-react"
 import { settingsState } from "../../settings/models/settings.model";
 import { logout } from "../../auth/models/logout.model";
-import { isAuthedAtom, pageContextAtom } from "@/shared/models/page-context.model";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { translate } from "@/shared/locales/helpers";
-import { debug, debugState } from "@/shared/models/app.model";
+import { userState } from "@/shared/models/app.model";
+import { debug, debugState } from "@/shared/models/debug.model";
 
 const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
   ({ title, icon, label, href })
@@ -87,15 +88,15 @@ if (import.meta.env.DEV) {
 }
 
 export const showCurrentUserMenuAtom = atom((ctx) => {
-  const pathname = ctx.spy(pageContextAtom)?.urlPathname
+  const pathname = ctx.spy(pageCtxAtom)?.urlPathname
   const isNonAuthPage = pathname === "/auth/"
-  const isAuthed = ctx.spy(isAuthedAtom)
+  const isAuthed = ctx.spy(userState.isAuthed)
   return isAuthed && !isNonAuthPage
 })
 
 export const showCartIconAtom = atom((ctx) => {
-  const pathname = ctx.spy(pageContextAtom)?.urlPathname
-  const isAuthed = ctx.spy(isAuthedAtom)
+  const pathname = ctx.spy(pageCtxAtom)?.urlPathname
+  const isAuthed = ctx.spy(userState.isAuthed)
   const isStorePage = pathname?.includes("/store");
   return isAuthed && isStorePage
 })

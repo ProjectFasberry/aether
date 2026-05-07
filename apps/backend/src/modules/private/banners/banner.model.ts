@@ -2,7 +2,7 @@ import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { Banners } from "@repo/shared/types/db/general-database-types";
 import type { Selectable } from "kysely";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const createBannerSchema = z.object({
   title: z.string(),

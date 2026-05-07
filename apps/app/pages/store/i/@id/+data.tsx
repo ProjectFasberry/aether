@@ -5,7 +5,7 @@ import { render } from "vike/abort";
 import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
 import { getStoreItem, StoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
-import { createCtx } from "@reatom/core";
+import { createCtx } from "@reatom/framework";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 function metadata(

@@ -1,7 +1,7 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { reatomAsync, withCache, withStatusesAtom } from "@reatom/async";
-import { action, atom, batch } from "@reatom/core";
+import { reatomAsync, withCache, withStatusesAtom } from "@reatom/framework";
+import { action, atom, batch } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 
@@ -31,13 +31,11 @@ export const balance = atom(null, "balance").pipe(
     fetch: reatomAsync(async (ctx) => {
       const server = ctx.get(balanceState.targetServer);
 
-      return await ctx.schedule(() =>
-        client
-          .get<BalancePayload>("server/balance", {
-            searchParams: { server }
-          })
-          .exec()
-      )
+      return await client
+        .get<BalancePayload>("server/balance", {
+          searchParams: { server }
+        })
+        .exec()
     }, {
       name: `${name}.fetch`,
       onFulfill: async (ctx, res) => {

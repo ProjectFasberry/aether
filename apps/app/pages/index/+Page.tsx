@@ -3,18 +3,18 @@ import { IconArrowRight } from "@tabler/icons-react";
 import { Intro } from "@/shared/components/app/intro/components/intro";
 import { EventsList } from "@/shared/components/app/events/components/events";
 import { CONTACTS } from "@/shared/consts/contacts";
-import { action } from "@reatom/core";
-import { countryAtom } from "@/shared/models/page-context.model";
+import { action } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { LandsListShorted } from "@/shared/components/app/lands/components/lands-list";
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { NewsList } from "@/shared/components/app/news/components/news";
 import { translate } from "@/shared/locales/helpers";
+import { userState } from "@/shared/models/app.model";
 
 const ruAttr = ['ru-RU', 'RU', 'ru'];
 
 const getContacts = action((ctx) => {
-  const country = ctx.get(countryAtom)
+  const country = ctx.get(userState.geo.country)
   if (!country || !ruAttr.includes(country)) return CONTACTS;
 
   return CONTACTS.filter(d => d.value !== 'ds')

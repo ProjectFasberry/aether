@@ -9,19 +9,26 @@ type BackButtonProps = {
 }
 
 export const BackButton = ({ href, onClick, event = "history" }: BackButtonProps) => {
+  const handle = () => {
+    if (event === 'history') {
+      return href ? navigate(href) : window.history.back()
+    }
+
+    if (!onClick) {
+      console.warn(BackButton.name, "Event is not defined")
+      return;
+    }
+
+    onClick()
+  }
+
   return (
     <Button
       background="default"
-      onClick={() => {
-        if (event === 'history') {
-          return href ? navigate(href) : window.history.back()
-        }
-
-        return onClick?.()
-      }}
-      className="min-h-8 h-8 sm:min-h-8 sm:h-8 p-0 aspect-square w-fit text-neutral-400"
+      onClick={handle}
+      className="min-h-8 h-8 sm:min-h-8 sm:h-8 p-0 aspect-square w-fit"
     >
-      <IconArrowLeft className="size-[16px] sm:size-[20px]" />
+      <IconArrowLeft className="size-4 sm:size-5 text-neutral-400" />
     </Button>
   )
 }

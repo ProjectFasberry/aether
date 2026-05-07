@@ -9,7 +9,7 @@ import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-t
 import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation-database-types";
-import { getPlayerAvatar } from "../skin/skin.model";
+import { getPlayerAvatar, getPlayersAvatar } from "../skin/skin.model";
 import { type Static, t, type TSchema } from "elysia";
 import { invariant } from "#/helpers/invariant";
 import { general } from "#/shared/database/general-db";
@@ -144,7 +144,7 @@ export const ratingPayload = t.Union(allSchemas);
 async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.belkoin.schema>> {
 	const direction = getDirection(asc);
 
-	const belkoinQuery = playerpoints
+	const query = playerpoints
 		.selectFrom("playerpoints_points")
 		.innerJoin("playerpoints_username_cache", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
 		.select([
@@ -152,7 +152,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 			"playerpoints_username_cache.username as nickname"
 		]);
 
-	const belkoinRes = await executeWithCursorPagination(belkoinQuery, {
+	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{
@@ -161,21 +161,21 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 		parseCursor: (cursor) => ({ points: Number(cursor.points) }),
 	});
 
-	const data = await Promise.all(
-		belkoinRes.rows.map(async (row) => ({
-			nickname: row.nickname,
-			avatar: await getPlayerAvatar(row.nickname),
-			balance: row.points
-		}))
-	)
+	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname));
 
-	return { data, meta: wrapMeta(belkoinRes) };
+	const data = result.rows.map((row) => ({
+		nickname: row.nickname,
+		avatar: avatarsMap[row.nickname],
+		balance: row.points
+	}))
+
+	return { data, meta: wrapMeta(result) };
 }
 
 async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.parkour.schema>> {
 	const direction = getDirection(asc);
 
-	const parkourQuery = lobby
+	const query = lobby
 		.selectFrom("ajparkour_scores")
 		.innerJoin("ajparkour_players", "ajparkour_players.id", "ajparkour_scores.player")
 		.select([
@@ -187,25 +187,25 @@ async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingS
 		])
 		.where("ajparkour_scores.area", "!=", "overall"); // overall - scores from all areas
 
-	const parkourRes = await executeWithCursorPagination(parkourQuery, {
+	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{ key: "score", direction, expression: "score" }],
 		parseCursor: (cursor) => ({ score: Number(cursor.score) }),
 	});
 
-	const data = await Promise.all(
-		parkourRes.rows.map(async (row) => ({
-			player: row.player ?? "unknown",
-			nickname: row.nickname ?? "unknown",
-			area: row.area,
-			avatar: await getPlayerAvatar(row.nickname!),
-			gamesplayed: Number(row.gamesplayed ?? 0),
-			score: Number(row.score ?? 0)
-		}))
-	)
+	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
 
-	return { data, meta: wrapMeta(parkourRes) };
+	const data = result.rows.map((row) => ({
+		player: row.player ?? "unknown",
+		nickname: row.nickname ?? "unknown",
+		area: row.area,
+		avatar: avatarsMap[row.nickname!],
+		gamesplayed: Number(row.gamesplayed ?? 0),
+		score: Number(row.score ?? 0)
+	}))
+
+	return { data, meta: wrapMeta(result) };
 }
 
 async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.lands.schema>> {
@@ -281,14 +281,14 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const charismQuery = dbInstance
+	const query = dbInstance
 		.selectFrom("cmi_users")
 		.select([
 			"Balance as balance",
 			"username as nickname"
 		]);
 
-	const charismRes = await executeWithCursorPagination(charismQuery, {
+	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{
@@ -297,15 +297,15 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 		parseCursor: (cursor) => ({ balance: Number(cursor.balance) }),
 	});
 
-	const data = await Promise.all(
-		charismRes.rows.map(async (row) => ({
-			nickname: row.nickname ?? "unknown",
-			balance: Number(row.balance ?? 0),
-			avatar: await getPlayerAvatar(row.nickname ?? "unknown")
-		}))
-	)
+	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
 
-	return { data, meta: wrapMeta(charismRes) };
+	const data = result.rows.map((row) => ({
+		nickname: row.nickname ?? "unknown",
+		balance: Number(row.balance ?? 0),
+		avatar: avatarsMap[row.nickname!]
+	}))
+
+	return { data, meta: wrapMeta(result) };
 }
 
 async function getReputationRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.reputation.schema>> {
@@ -317,11 +317,11 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 	const { dbInstance } = getServerDBInstance<reputationDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const reputationQuery = dbInstance
+	const query = dbInstance
 		.selectFrom("reputation")
 		.select(["reputation", "reputation.uuid"]);
 
-	const reputationRes = await executeWithCursorPagination(reputationQuery, {
+	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{
@@ -331,7 +331,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 	});
 
 	const data = await Promise.all(
-		reputationRes.rows.map(async (row) => {
+		result.rows.map(async (row) => {
 			const query = await bisquite
 				.selectFrom("cmi_users")
 				.select([
@@ -352,7 +352,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 		}),
 	);
 
-	return { data, meta: wrapMeta(reputationRes) };
+	return { data, meta: wrapMeta(result) };
 }
 
 async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.playtime.schema>> {
@@ -364,11 +364,11 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const playtimeQuery = dbInstance
+	const query = dbInstance
 		.selectFrom("cmi_users")
 		.select(["TotalPlayTime as total", "username as nickname"]);
 
-	const playtimeRes = await executeWithCursorPagination(playtimeQuery, {
+	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{
@@ -377,15 +377,15 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 		parseCursor: (cursor) => ({ total: Number(cursor.total) }),
 	});
 
-	const data = await Promise.all(
-		playtimeRes.rows.map(async (row) => ({
-			nickname: row.nickname ?? "unknown",
-			avatar: await getPlayerAvatar(row.nickname ?? "unknown"),
-			total: Number(row.total ?? 0)
-		}))
-	);
+	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
 
-	return { data, meta: wrapMeta(playtimeRes) };
+	const data = result.rows.map((row) => ({
+		nickname: row.nickname ?? "unknown",
+		avatar: avatarsMap[row.nickname!],
+		total: Number(row.total ?? 0)
+	}))
+
+	return { data, meta: wrapMeta(result) };
 }
 
 export async function getRating(by: AllowedKeys, query: Static<typeof ratingSchema>) {

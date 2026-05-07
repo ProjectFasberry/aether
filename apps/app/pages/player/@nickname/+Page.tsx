@@ -3,12 +3,13 @@ import { PlayerSkin } from "@/shared/components/app/player/components/skin"
 import { Balance } from "@/shared/components/app/player/components/balance";
 import { PlayerInfo } from "@/shared/components/app/player/components/info";
 import { PurchasesHistory } from "@/shared/components/app/player/components/details";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { reatomComponent } from "@reatom/npm-react";
 import { PlayerActivity } from "@/shared/components/app/player/components/activity";
-import { isIdentityAtom, playerParamAtom } from "@/shared/components/app/player/models/player.model";
+import { isIdentityAtom, playerState } from "@/shared/components/app/player/models/player.model";
 import { PlayerSeemsLikePlayers } from "@/shared/components/app/player/components/seems-like-players";
 import { PlayerSocials } from "@/shared/components/app/player/components/socials";
 import { usePageContext } from "vike-react/usePageContext";
+import { useEffect } from "react";
 
 const PlayerPrivated = reatomComponent(({ ctx }) => {
   const isIdentity = ctx.spy(isIdentityAtom)
@@ -33,13 +34,25 @@ const PlayerPublic = () => {
   )
 }
 
-export default function Page() {
+const Sync = reatomComponent(({ ctx }) => {
   const nickname = usePageContext().routeParams.nickname
 
-  useUpdate((ctx) => playerParamAtom(ctx, nickname), [nickname])
+  useEffect(() => {
+    playerState.nickname(ctx, nickname);
+    
+    return () => {      
+      playerState.nickname.reset(ctx);
+      playerState.data.reset(ctx);
+    }
+  }, [nickname])
 
+  return null
+})
+
+export default function Page() {
   return (
     <div className="flex flex-col lg:flex-row relative w-full h-full items-start gap-8">
+      <Sync />
       <div
         className="flex flex-col justify-center items-center w-full gap-12 lg:w-[calc(30%-16px)] 
           lg:min-w-[calc(30%-16px)] lg:sticky pt-2 lg:top-0"

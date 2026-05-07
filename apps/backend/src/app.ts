@@ -3,7 +3,7 @@ import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
 import { openApiPlugin } from "./lib/plugins/openapi";
-import { defineSession } from "./lib/define";
+import { defineOptionalSession } from "./lib/define";
 import { session } from "./modules/auth/login.model";
 import { appLogger } from "./utils/config/logger";
 import { main, root } from "./routes";
@@ -58,7 +58,7 @@ export function startApp() {
 			return { error: message };
 		})
 		.use(root)
-		.use(defineSession())
+		.use(defineOptionalSession())
 		.onBeforeHandle(async ({ cookie, session: sessionToken }) =>
 			await session.updateSession(sessionToken, cookie)
 		)

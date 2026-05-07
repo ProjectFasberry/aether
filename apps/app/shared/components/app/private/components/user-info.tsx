@@ -1,6 +1,6 @@
-import { appState } from "@/shared/models/app.model";
+import { getFromDictionary } from "@/shared/models/app.model";
 import { currentUserState } from "@/shared/models/current-user.model";
-import { action, atom } from "@reatom/core";
+import { action, atom } from "@reatom/framework";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import { Separator } from "@repo/ui/separator";
@@ -57,7 +57,7 @@ export const UserInfo = reatomComponent(({ ctx }) => {
   const role = ctx.spy(currentUserState.role)
   if (!role) return null;
 
-  const roleTitle = appState.dict.get(ctx, role.name)
+  const roleTitle = getFromDictionary(ctx, role.name)
 
   return (
     <Dialog>

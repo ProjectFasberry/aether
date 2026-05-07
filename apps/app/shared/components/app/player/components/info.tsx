@@ -1,8 +1,8 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Rate } from "./rate";
-import { playerAtom, playerParamAtom } from "../models/player.model";
+import { playerState } from "../models/player.model";
 import { DONATE_COLORS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { playerRateState } from "../models/rate.model";
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
@@ -23,7 +23,7 @@ const PlayerTag = ({ group }: { group: Player["group"] }) => {
 }
 
 const playerTagsAtom = atom<Player["group"][]>((ctx) => {
-  const player = ctx.spy(playerAtom)
+  const player = ctx.spy(playerState.data)
   if (!player) return [];
 
   if (player.group !== 'default') {
@@ -33,19 +33,15 @@ const playerTagsAtom = atom<Player["group"][]>((ctx) => {
   return [player.group] as Player["group"][]
 }, "playerTags")
 
-const PlayerRate = reatomComponent(({ ctx }) => {
-  const nickname = ctx.spy(playerParamAtom);
+const PlayerRate = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
   const rateData = ctx.spy(playerRateState.data);
+  if (!rateData) return null;
 
-  if (!rateData || !nickname) return null;
-
-  return (
-    <Rate isRated={rateData.isRated} nickname={nickname} count={rateData.count} />
-  )
+  return <Rate isRated={rateData.isRated} nickname={nickname} count={rateData.count} />
 }, "PlayerRate")
 
 export const PlayerInfo = reatomComponent(({ ctx }) => {
-  const nickname = ctx.spy(playerParamAtom);
+  const nickname = ctx.spy(playerState.nickname);
   if (!nickname) return null;
 
   const tags = ctx.spy(playerTagsAtom)
@@ -59,7 +55,7 @@ export const PlayerInfo = reatomComponent(({ ctx }) => {
         </div>
       </div>
       <div className="flex items-center justify-center w-min">
-        <PlayerRate />
+        <PlayerRate nickname={nickname} />
       </div>
     </div>
   )

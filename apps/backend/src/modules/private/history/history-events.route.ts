@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { getNats } from "#/shared/nats/client";
 import Elysia, { sse } from "elysia";
 import { ACTIVITY_LOG_SUBJECT } from "../private.model";
@@ -13,7 +13,7 @@ type HistoryPayload = {
 }
 
 export const historyEvents = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/events", async function* ({ nickname }) {
     const nc = getNats()
     const decoder = new TextDecoder();

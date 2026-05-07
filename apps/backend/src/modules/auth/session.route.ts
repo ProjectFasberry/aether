@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import Elysia, { t } from "elysia";
 
 type SessionPayload = {
@@ -9,7 +9,7 @@ type SessionPayload = {
 };
 
 export const session = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .group("/session", (app) => app
     .get("/list", async ({ nickname, ...ctx }) => {
       const data: { data: SessionPayload[]; meta: PaginatedMeta } = {

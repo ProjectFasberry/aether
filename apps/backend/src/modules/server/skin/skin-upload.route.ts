@@ -1,5 +1,5 @@
 import Elysia from "elysia"
-import { defineUser } from "#/lib/define"
+import { defineRequiredUser } from "#/lib/define"
 import {
   ConfigurationError,
   normalizeStatus,
@@ -11,7 +11,7 @@ import {
 import { wrapError } from "#/helpers/wrap-error"
 
 export const skinUpload = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post('/upload', async ({ query, status, nickname, body }) => {
     try {
       const uploadResult = await upload(nickname, query, body, { status })

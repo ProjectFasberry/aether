@@ -1,6 +1,6 @@
 import { PageContextServer } from "vike/types";
 import { APP_OPTIONS_KEY, AppOptionsPayloadExtend } from "../models/app.model";
-import { Atom, CtxSpy } from "@reatom/core";
+import { Atom, CtxSpy } from "@reatom/framework";
 import { isDeepEqual } from "@reatom/framework";
 
 type WsConfig = {
@@ -178,4 +178,23 @@ export function hardwareAccelerationIsActive(): boolean {
   }
 
   return true;
+}
+
+export function getTopCountry(acceptLanguage?: string): string | null {
+  if (!acceptLanguage) return null
+
+  let best: { country: string; q: number } | null = null
+
+  for (const part of acceptLanguage.split(',')) {
+    const [lang, qRaw] = part.trim().split(';')
+    const country = lang.split('-')[1]
+    if (!country) continue
+
+    const q = qRaw?.startsWith('q=') ? Number(qRaw.slice(2)) : 1
+    if (!best || q > best.q) {
+      best = { country, q }
+    }
+  }
+
+  return best?.country ?? null
 }

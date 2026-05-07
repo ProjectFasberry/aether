@@ -16,14 +16,14 @@ type AvatarProps = HTMLAttributes<HTMLDivElement> & VariantProps<typeof avatarVa
   url: string
 }
 
-const fallback = getStaticImage("fallback/steve_head.png");
+const AVATAR_FALLBACK = getStaticImage("fallback/steve_head.png");
 
 export const Avatar = ({ className, variant, url, nickname, ...props }: AvatarProps) => {
   const handleRef = (img: HTMLImageElement | null) => {
     if (!img) return;
 
     if (img.complete && img.naturalWidth === 0) {
-      img.src = fallback;
+      img.src = AVATAR_FALLBACK;
     }
   };
 
@@ -37,7 +37,7 @@ export const Avatar = ({ className, variant, url, nickname, ...props }: AvatarPr
         src={url}
         onError={(e) => {
           e.currentTarget.onerror = null;
-          e.currentTarget.src = fallback;
+          e.currentTarget.src = AVATAR_FALLBACK;
         }}
         className="rounded-sm w-full h-full"
         loading="eager"

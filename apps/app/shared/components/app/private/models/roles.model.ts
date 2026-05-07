@@ -1,8 +1,8 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async"
+import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/framework"
 import { notifyAboutRestrictRole } from "./actions.model"
 import { toast } from "sonner"
-import { action, atom } from "@reatom/core"
+import { action, atom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
 
 export type RolePayload = {

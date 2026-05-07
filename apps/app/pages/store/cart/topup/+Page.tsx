@@ -2,15 +2,15 @@ import { TopUpExchanges, TopupForm } from "@/shared/components/app/shop/componen
 import { topup, topupState } from "@/shared/components/app/shop/models/store-top-up.model";
 import { startPageEvents } from "@/shared/lib/events";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { pageContextAtom } from "@/shared/models/page-context.model";
-import { action } from "@reatom/core";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { action } from "@reatom/framework";
 import { useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 
 const boostsImg = getStaticImage("icons/boosts_icon.png")
 
 const events = action((ctx) => {
-  const pageCtx = ctx.get(pageContextAtom);
+  const pageCtx = ctx.get(pageCtxAtom);
   if (!pageCtx) return;
 
   topupState.search(ctx, pageCtx.urlParsed.search);
@@ -18,7 +18,7 @@ const events = action((ctx) => {
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageContextAtom])
+  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
 
   return (
     <div className="flex flex-col h-full gap-6 w-full">

@@ -1,6 +1,6 @@
-import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { playerParamAtom } from "./player.model";
-import { action, atom, take, withAssign } from "@reatom/framework";
+import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { playerState } from "./player.model";
+import { action, atom, withAssign } from "@reatom/framework";
 import { toast } from "sonner";
 import dayjs from "@/shared/lib/create-dayjs";
 import { client } from "@/shared/lib/client-wrapper";
@@ -43,36 +43,28 @@ export const playerSLPState = atom(null, "playerSLPState").pipe(
 
 export const playerSLP = atom(null, "playerSLP").pipe(
   withAssign((_, name) => ({
-    refetchAll: action((ctx) => {
-      playerSLP.fetch.dataAtom.reset(ctx)
-      playerSLP.fetch(ctx)
-    }),
-    fetch: reatomAsync(async (ctx) => {
-      let nickname = ctx.get(playerParamAtom)
-
-      if (!nickname) {
-        nickname = await take(ctx, playerParamAtom)
-      }
-
-      if (!nickname) return null;
-
-      const result = await ctx.schedule(() =>
-        client
-          .get<SeemsLikePlayersPayload>(`server/seems-like/${nickname}`, {
-            signal: ctx.controller.signal,
-            searchParams: { limit: 8 }
-          })
-          .exec()
-      )
+    fetch: reatomAsync(async (ctx, nickname: string) => {
+      playerSLP.fetch.dataAtom.reset(ctx);
+      
+      const result = await client
+        .get<SeemsLikePlayersPayload>(`server/seems-like/${nickname}`, {
+          signal: ctx.controller.signal,
+          searchParams: { limit: 8 }
+        })
+        .exec()
 
       return result
-    }, {
-      name: `${name}.fetch`
-    }).pipe(
+    }, `${name}.fetch`).pipe(
       withDataAtom(null),
       withStatusesAtom()
-    )
+    ),
+    init: action((ctx) => {
+      const nickname = ctx.get(playerState.nickname)
+      if (!nickname) return null;
+
+      playerSLP.fetch(ctx, nickname)
+    })
   }))
 )
 
-playerParamAtom.onChange((ctx, state) => state && playerSLP.refetchAll(ctx))
+playerState.nickname.onChange((ctx, state) => state && playerSLP.fetch(ctx, state))

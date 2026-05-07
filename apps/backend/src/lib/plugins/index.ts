@@ -11,6 +11,6 @@ export const corsPlugin = () => new Elysia().use(
 
 export const loggerPlugin = () => logger()
 
-export const ipPlugin = () => new Elysia().use(
+export const ipPlugin = () => new Elysia({ name: "ipPlugin" }).use(
   ip({ checkHeaders: ["X-Forwarded-For"] })
 )

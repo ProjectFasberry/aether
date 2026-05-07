@@ -1,5 +1,5 @@
-import { action, atom, batch, Ctx } from "@reatom/core";
-import * as z from "zod/v4";
+import { action, atom, batch, Ctx } from "@reatom/framework";
+import * as z from "zod";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 import { reatomAsync, sleep, withAssign, withInit, withReset, withStatusesAtom } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";

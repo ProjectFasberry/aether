@@ -1,16 +1,17 @@
 import dayjs from "@/shared/lib/create-dayjs"
 import { client } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async"
+import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/table"
-import { action, atom } from "@reatom/core"
+import { action, atom } from "@reatom/framework"
 import { env } from "@/shared/env"
 import { startPageEvents } from "@/shared/lib/events"
 import { toast } from "sonner"
-import { onDisconnect, reatomMap, sleep, withReset } from "@reatom/framework"
+import { reatomMap, sleep, withReset } from "@reatom/framework"
+import { onDisconnect } from "@reatom/framework"
 import { tv } from "tailwind-variants"
-import { appState } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app.model"
 
 type HistoryPayload = {
   event: string;
@@ -115,7 +116,7 @@ const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({
   const isLoaded = ctx.spy(getHistoryItemStatusAtom(id));
 
   const variant = isLoaded ? "selected" : "default"
-  const eventTitle = appState.dict.get(ctx, event) ?? event
+  const eventTitle = getFromDictionary(ctx, event)
 
   return (
     <TableRow className={historyListItemVariant({ variant })}>

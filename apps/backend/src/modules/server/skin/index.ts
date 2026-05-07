@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { getSkin, getSkinsHistory, setSkin, skinsHistorySchema } from "./skin.model";
-import { defineUser } from '#/lib/define';
+import { defineRequiredUser } from '#/lib/define';
 import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";
@@ -16,7 +16,7 @@ const history = new Elysia()
   })
 
 const set = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/set", async ({ query, nickname, status }) => {
     const result = await setSkin(nickname, query.id)
     if (!result) throw status(500, wrapError("THIRDPARTY_ERROR"))

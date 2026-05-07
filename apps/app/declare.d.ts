@@ -1,3 +1,5 @@
+import type { Rec } from "@reatom/framework"
+import type { PersistRecord } from "@reatom/persist"
 import type { operations } from "@repo/shared/types/generated/main/schema"
 
 declare global {
@@ -27,13 +29,19 @@ declare global {
     ? Data
     : never;
 
+  type Snapshot = Rec<PersistRecord<unknown>> & {
+    __meta?: {
+      name: string
+    }
+  }
+
   namespace Vike {
     interface GlobalContext {
       Page: () => React.JSX.Element
     }
 
     interface PageContext {
-      snapshot: Rec<PersistRecord<unknown>>,
+      snapshot: Snapshot,
       locale: Locale,
       Page: () => React.JSX.Element
     }

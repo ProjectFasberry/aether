@@ -1,10 +1,10 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
-import { action } from "@reatom/core"
+import { action } from "@reatom/framework"
 import dayjs from "@/shared/lib/create-dayjs"
 import { startPageEvents } from "@/shared/lib/events"
-import { pageContextAtom } from "@/shared/models/page-context.model"
+import { pageCtxAtom } from "@/shared/models/page-context.model"
 import { logout } from "@/shared/components/app/auth/models/logout.model"
 import { bannedAction } from "@/shared/components/app/auth/models/banned.model"
 
@@ -76,7 +76,7 @@ const events = action((ctx) => {
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageContextAtom]);
+  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom]);
 
   return (
     <div className="flex items-center h-[80vh] justify-center w-full">

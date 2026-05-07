@@ -1,4 +1,4 @@
-import { Atom } from "@reatom/core";
+import { Atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { ReactNode } from "react";
 import { LoaderNode, LoaderProps } from "./loader";

@@ -1,8 +1,6 @@
-import { useUpdate } from "@reatom/npm-react";
-import { playerParamAtom } from "../models/player.model";
 import { spawn } from "@reatom/framework";
 import { tv } from "tailwind-variants";
-import { reatomComponent } from "@reatom/npm-react";
+import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import React, { useEffect, useRef, useState } from "react";
@@ -12,7 +10,7 @@ import { Button } from "@repo/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import {
   getIsSelectSkinAtom, getIsUploadAvailableAtom, getSkinVariantIsActiveAtom, skins, skinsState, skinSubmitIsDisabledAtom,
-  SkinVariant, skinAnimation,  SKIN_ANIMATIONS, hardwareAccIsEnabledAtom
+  SkinVariant, skinAnimation, SKIN_ANIMATIONS, hardwareAccIsEnabledAtom
 } from "../models/skin.model";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { ReactSkinview3d } from "react-skinview3d"
@@ -29,6 +27,8 @@ const SkinRenderSkeleton = () => {
 }
 
 const SkinRender = reatomComponent(({ ctx }) => {
+  useUpdate((ctx) => skins.init(ctx), []);
+  
   if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinRenderSkeleton />;
   }
@@ -40,13 +40,15 @@ const SkinRender = reatomComponent(({ ctx }) => {
     <div className="flex items-center h-[390px] justify-center overflow-hidden w-full">
       {ctx.spy(hardwareAccIsEnabledAtom) ? (
         <ClientOnly fallback={<SkinRenderSkeleton />}>
-          <ReactSkinview3d
-            skinUrl={skin.skin_url!}
-            height="390"
-            width="300"
-            options={{ zoom: 0.8 }}
-            onReady={({ viewer }) => skinAnimation.viewer(ctx, viewer)}
-          />
+          {skin.skin_url && (
+            <ReactSkinview3d
+              skinUrl={skin.skin_url}
+              height="390"
+              width="300"
+              options={{ zoom: 0.8 }}
+              onReady={({ viewer }) => skinAnimation.viewer(ctx, viewer)}
+            />
+          )}
         </ClientOnly>
       ) : (
         <div className="flex w-full px-2 py-6 items-center justify-center h-full">
@@ -455,13 +457,6 @@ const SkinControls = () => {
 }
 
 export const PlayerSkin = reatomComponent(({ ctx }) => {
-  const nickname = ctx.spy(playerParamAtom);
-
-  useUpdate((ctx) => {
-    if (!nickname) return;
-    skins.init(ctx, nickname)
-  }, [nickname])
-
   return (
     <div className="flex flex-col h-full gap-4 w-full">
       <SkinRenderWrapper />

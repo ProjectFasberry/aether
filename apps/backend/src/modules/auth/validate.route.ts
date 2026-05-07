@@ -1,10 +1,10 @@
 import Elysia, { t } from "elysia";
 import { session } from "./login.model";
-import { defineSession } from "#/lib/define";
+import { defineOptionalSession } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 
 export const validate = new Elysia()
-  .use(defineSession())
+  .use(defineOptionalSession())
   .derive(({ session }) => {
     if (!session) return { data: false }
     return { session }

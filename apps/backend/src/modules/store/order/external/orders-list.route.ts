@@ -1,10 +1,10 @@
 import Elysia, { t } from "elysia"
 import { externalOrders, orderDefaultSingleSchema, orderStatusSchema } from "./external-order.model"
-import { defineUser } from "#/lib/define"
+import { defineRequiredUser } from "#/lib/define"
 import { withData } from "#/shared/schemas"
 
 export const ordersList = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/list", async ({ nickname: initiator, query: { status = "all" } }) => {
     const data = await externalOrders.getAllOrders({ initiator, status })
     return { data }

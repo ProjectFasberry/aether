@@ -1,5 +1,5 @@
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 

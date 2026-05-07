@@ -1,4 +1,4 @@
-import { action, atom } from "@reatom/core"
+import { action, atom } from "@reatom/framework"
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework"
 import { getEvents } from "../../events/models/events.model"
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"

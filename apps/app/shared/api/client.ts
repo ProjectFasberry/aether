@@ -4,10 +4,23 @@ import { env } from "../env";
 const baseConfig: Options = {
 	credentials: "include",
 	timeout: 4000,
-	headers: import.meta.env.DEV ? { "x-forwarded-for": env.VITE_FORWARDED_FOR } : {},
+	headers: import.meta.env.DEV 
+		? { "x-forwarded-for": env.VITE_FORWARDED_FOR } 
+		: {},
 };
 
 export const SKIP_HOOK_HEADER = "X-Skip-Error-Handling";
+
+type TypeboxIssue = {
+	type: string,
+	on: string,
+	property: string,
+	essage: string,
+	summary: string,
+	expected: { data: unknown[] },
+	found: { data: unknown[] },
+	errors: unknown[]
+}
 
 const hooksConfig: Options = {
 	hooks: {
@@ -27,34 +40,26 @@ const hooksConfig: Options = {
 
 				if (!response.ok) {
 					const json = await response.json();
-					if (!json) {
-						throw new Error(response.statusText);
-					}
+					if (!json) throw new Error(response.statusText);
 
 					if (typeof json === 'object' && "error" in json) {
-						type TypeboxError = {
-							type: string,
-							on: string,
-							property: string,
-							essage: string,
-							summary: string,
-							expected: { data: unknown[] },
-							found: { data: unknown[] },
-							errors: unknown[]
-						}
+						const error = json.error
 
-						const error = json.error as TypeboxError
+						if (typeof error === 'object') {
+							const jsonErr = error as Record<string, unknown>;
 
-						if ("type" in error) {
-							if (error.type === 'validation') {
-								console.error(error);
-								throw new Error(`Validation error with ${error.errors.length} errors`)
+							if ("type" in jsonErr) {
+								const error = json.error as TypeboxIssue
+
+								if (error.type === 'validation') {
+									throw new Error(`Validation error with ${error.errors.length} errors`)
+								}
 							}
 						}
-					}
 
-					if (typeof json === "object" && "error" in json) {
-						throw new Error(String((json as Record<string, unknown>).error));
+						if (typeof error === 'string') {
+							throw new Error(error);
+						}
 					}
 				}
 			},

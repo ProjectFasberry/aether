@@ -1,6 +1,6 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { invariant } from "@/shared/lib/invariant";
-import { action, atom } from "@reatom/core";
+import { action, atom } from "@reatom/framework";
 import { AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { onEvent } from "@reatom/web";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
@@ -10,7 +10,7 @@ import { createWsUrl } from "@/shared/lib/utils";
 import { env } from "@/shared/env";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { authSchema as loginSchema } from "@repo/shared/schemas/auth";
 import { appState } from "@/shared/models/app.model";
 
@@ -82,7 +82,7 @@ export const login = atom(null, "login").pipe(
             password: ctx.get(authState.fields.password),
           };
 
-          const { success, error, data } = z.safeParse(loginSchema, raw);
+          const { success, error, data } = loginSchema.safeParse(raw);
           if (!success) return error;
 
           return await client
@@ -157,9 +157,11 @@ export const login = atom(null, "login").pipe(
           const token = ctx.get(loginState.qr.token);
           invariant(token, "Token is not defined");
 
-          return await ctx.schedule(() =>
-            client.post<{ nickname: string }>("auth/login/qr/create", { searchParams: { token } }).exec()
-          );
+          return await client
+            .post<{ nickname: string }>("auth/login/qr/create", {
+              searchParams: { token }
+            })
+            .exec()
         }, {
           name: `${name}.createSession`,
           onFulfill: (ctx) => login.afterEvent(ctx)
@@ -223,9 +225,11 @@ export const login = atom(null, "login").pipe(
               const token = ctx.get(loginState.qr.verify.token);
               invariant(token, "Token is not defined");
 
-              return await ctx.schedule(() =>
-                client.post<"ok">("auth/login/qr/confirm", { searchParams: { token } }).exec()
-              );
+              return await client
+                .post<"ok">("auth/login/qr/confirm", {
+                  searchParams: { token }
+                })
+                .exec()
             }, {
               name: `${name}.confirm`,
               onFulfill: (ctx) => {
@@ -239,9 +243,11 @@ export const login = atom(null, "login").pipe(
               const token = ctx.get(loginState.qr.verify.token);
               invariant(token, "Token is not defined");
 
-              return await ctx.schedule(() =>
-                client.post<"ok">("auth/login/qr/decline", { searchParams: { token } }).exec()
-              );
+              return await client
+                .post<"ok">("auth/login/qr/decline", {
+                  searchParams: { token }
+                })
+                .exec()
             }, {
               name: `${name}.decline`,
               onFulfill: (ctx) => {

@@ -3,7 +3,6 @@ import { store } from "./modules/store";
 import { auth } from "./modules/auth";
 import { serverGroup } from "./modules/server";
 import { shared } from "./modules/shared";
-import { privated } from "./modules/private";
 import { rate } from "./modules/user/like.route";
 import { me } from "#/modules/user/me.route";
 import { service } from "./modules/root/service";
@@ -14,6 +13,7 @@ import { processPlayerVote } from "./modules/server/votes/process-vote.route";
 import { withData, withError } from "./shared/schemas";
 import { wrapError } from "./helpers/wrap-error";
 import { checkDatabasesHealth } from "./shared/database/init";
+import { privated } from "./modules/private";
 
 export const main = new Elysia()
 	.use(shared)
@@ -21,7 +21,6 @@ export const main = new Elysia()
 	.use(me)
 	.use(serverGroup)
 	.use(store)
-	.use(privated)
 	.use(rate);
 
 export const root = new Elysia()
@@ -40,12 +39,12 @@ export const root = new Elysia()
 		.get("/ready", async ({ status }) => {
 			try {
 				const databases = await checkDatabasesHealth();
-				
+
 				const result = {
 					status: "OK",
 					timestamp: new Date().toISOString(),
-					services: { 
-						database: databases 
+					services: {
+						database: databases
 					}
 				}
 
@@ -66,6 +65,7 @@ export const root = new Elysia()
 			}
 		})
 	)
+	.use(privated)
 	.use(appGroup)
 	.use(validateGroup)
 	.use(service)

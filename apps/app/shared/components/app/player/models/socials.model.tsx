@@ -1,10 +1,11 @@
 import { client } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
 import { isEmptyArray } from "@/shared/lib/utils"
 import { ReactNode } from "react"
 import { toast } from "sonner"
 import { Icon } from "@/shared/ui/icon"
-import { atom, withAssign } from "@reatom/framework"
+import { action, atom, withAssign } from "@reatom/framework"
+import { playerState } from "./player.model"
 
 export type PlayerSocialsValuePayload = {
   id: string | number,
@@ -30,9 +31,17 @@ export const playerSocials = atom(null, "playerSocials").pipe(
       withDataAtom([], (_, data) => isEmptyArray(data) ? null : data),
       withStatusesAtom(),
       withCache({ swr: false })
-    )
+    ),
+    init: action((ctx) => {
+      const nickname = ctx.get(playerState.nickname)
+      if (!nickname) return;
+
+      playerSocials.fetch(ctx, nickname)
+    })
   }))
 )
+
+playerState.nickname.onChange((ctx, state) => state && playerSocials.fetch(ctx, state))
 
 export const SOCIAL_ICONS: Record<PlayerSocialsPayload["type"], () => ReactNode> = {
   telegram: () => <Icon name="sprite:telegram-icon" className="size-5" />,

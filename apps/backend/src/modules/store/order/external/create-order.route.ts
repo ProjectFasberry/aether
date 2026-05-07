@@ -3,7 +3,7 @@ import { cryptobot, type CreateOrderPayload, createOrderPayloadSchema } from "./
 import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from "@repo/shared/schemas/payment";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/utils";
 import { heleket } from "./heleket.model";
 
@@ -13,7 +13,7 @@ const EVENTS: Partial<Record<MethodType, (pd: OrderInputPayload) => Promise<Crea
 }
 
 export const createOrder = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post("/create", async ({ status, nickname: initiator, body }) => {
     const { target, method, comment, value, recipient } = body;
 

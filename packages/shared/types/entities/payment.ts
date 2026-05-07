@@ -1,4 +1,4 @@
-import type * as z from "zod/v4";
+import type * as z from "zod";
 import type { currencyCryptoSchema } from "../../schemas/entities/currencies-schema";
 import type {
 	orderEventPayloadSchema,

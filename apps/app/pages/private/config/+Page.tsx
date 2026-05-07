@@ -3,10 +3,10 @@ import { Typography } from "@repo/ui/typography";
 import { Methods } from "@/shared/components/app/private/components/methods";
 import { Roles } from "@/shared/components/app/private/components/roles";
 import { DictionariesWrapper, CreateDictionaries, ViewDictionaries } from "@/shared/components/app/private/components/dictionaries";
-import { action } from "@reatom/core";
+import { action } from "@reatom/framework";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { startPageEvents } from "@/shared/lib/events";
-import { pageContextAtom } from "@/shared/models/page-context.model";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { ActionParent, actionsParentAtom, actionsSearchParamsAtom, actionsTypeAtom, ActionType } from "@/shared/components/app/private/models/actions.model";
 import { ReactNode } from "react";
 import { CreateNews, EditNews, NewsWrapper, ViewNews } from "@/shared/components/app/private/components/news";
@@ -50,14 +50,14 @@ const ActionsHeaderSlot = reatomComponent<{ parent: ActionParent }>(({ ctx, pare
 }, "ActionsHeaderSlot")
 
 const events = action((ctx) => {
-  const pageContext = ctx.get(pageContextAtom);
+  const pageContext = ctx.get(pageCtxAtom);
   if (!pageContext) return;
 
   actionsSearchParamsAtom(ctx, pageContext.urlParsed.search)
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageContextAtom])
+  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">

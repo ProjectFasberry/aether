@@ -46,10 +46,16 @@ export const SUBJECTS = {
 			BASE: "events.authorization",
 			LOGIN: "events.authorization.login",
 			REGISTER: "events.authorization.register",
+			UNREGISTER: "events.authorization.unregister"
 		},
 		SKINS: {
 			UPDATE: "events.skins.update",
 		},
+		USERS: {
+			CONTROL: {
+				WILDCARD: "events.users.control.*"
+			},
+		}
 	},
 	INTERNAL: {
 		HEALTH: "internal.health",

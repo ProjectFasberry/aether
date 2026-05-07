@@ -1,4 +1,4 @@
-import { action, atom } from "@reatom/core"
+import { action, atom } from "@reatom/framework"
 import { sleep, withAssign } from "@reatom/framework"
 import { orderState } from "../../../models/store-order.model"
 

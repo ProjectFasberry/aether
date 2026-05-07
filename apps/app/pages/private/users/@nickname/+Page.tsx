@@ -1,106 +1,77 @@
 import { Avatar } from "@/shared/ui/avatar"
-import { logError } from "@/shared/lib/log"
-import { pageContextAtom } from "@/shared/models/page-context.model"
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
-import { action, atom } from "@reatom/core"
+import { pageCtxAtom } from "@/shared/models/page-context.model"
+import { action } from "@reatom/framework"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { Skeleton } from "@repo/ui/skeleton"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@repo/ui/tooltip"
 import { Typography } from "@repo/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
-import { client } from "@/shared/lib/client-wrapper"
 import { startPageEvents } from "@/shared/lib/events"
-import { PrivatedUser } from "@/shared/components/app/private/models/users.model"
+import { users } from "@/shared/components/app/private/models/users.model"
+import { PageLoader } from "@/shared/ui/page-loader"
+import { BackButton } from "@/shared/ui/back-button"
+import { ClientOnly } from "vike-react/ClientOnly"
+import { lazy } from "react"
 
-const targetPlayerNickname = atom<Nullable<string>>(null, "")
-
-const playerAction = reatomAsync(async (ctx) => {
-  const nickname = ctx.get(targetPlayerNickname)
-
-  if (!nickname || nickname.trim() === "") {
-    throw new Error("Nickname is not defined")
-  }
-
-  return await ctx.schedule(() =>
-    client<PrivatedUser>(`privated/user/${nickname}`).exec()
-  )
-}, {
-  name: "playerAction",
-  onReject: (ctx, e) => {
-    logError(e, { type: "combined" })
-  }
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+const ReactSkinview3d = lazy(() => import("react-skinview3d").then((m) => ({ default: m.ReactSkinview3d })));
 
 const UserInfo = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(playerAction.dataAtom);
+  if (ctx.spy(users.fetchSingle.statusesAtom).isPending) return <PageLoader />
 
-  if (ctx.spy(playerAction.statusesAtom).isPending) {
-    return (
-      <div className="flex flex-col gap-1 w-full h-full">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-      </div>
-    )
-  }
-
+  const data = ctx.spy(users.fetchSingle.dataAtom);
   if (!data) return null;
 
   return (
-    <div className="flex flex-col items-start gap-1 w-full h-full">
-      <div className="flex items-center justify-center w-full h-full">
-        <Avatar
-          url={data.avatar}
-          nickname={data.nickname}
-          className="h-16 w-16"
-        />
+    <div className="flex sm:flex-row flex-col w-full gap-4 items-start">
+      <div className="flex flex-col items-start w-full sm:w-[100%-300px] h-full">
+        <Avatar url={data.avatar} nickname={data.nickname} className="h-20 w-20 mb-4" />
+        <Typography>
+          ID: {data.player?.id ?? "Unregistered"}
+        </Typography>
+        <Typography>
+          Никнейм: {data.nickname} ({data.lower_case_nickname})
+        </Typography>
+        Регистрация: {dayjs(data.created_at).format("DD.MM.YYYY hh:mm")}
+        <Typography>
+          UUID: {data.uuid}
+        </Typography>
+        <Typography>
+          Premium UUID: {data.premium_uuid ?? "none"}
+        </Typography>
+        <Typography>
+          Роль: {data.role ? `${data.role.name} ${data.role.id}` : `none`}
+        </Typography>
       </div>
-      <Typography className="text-lg">
-        ID: {data.id}
-      </Typography>
-      <Typography className="text-lg">
-        Никнейм: {data.nickname} ({data.lower_case_nickname})
-      </Typography>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger>
-            <Typography className="text-lg">
-              Регистрация: {dayjs(data.created_at).fromNow()}
-            </Typography>
-          </TooltipTrigger>
-          <TooltipContent>
-            {dayjs(data.created_at).format("DD.MM.YYYY hh:mm")}
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-      <Typography className="text-lg">
-        UUID: {data.uuid}
-      </Typography>
-      <Typography className="text-lg">
-        Premium UUID: {data.premium_uuid}
-      </Typography>
-      <Typography className="text-lg">
-        Роль: {data.role_name} {data.role_id}
-      </Typography>
+      <div className="flex w-full bg-neutral-900 h-[390px] rounded-lg p-2 sm:w-[300px]">
+        {data.skin?.[0].skin_url ? (
+          <ClientOnly>
+            <ReactSkinview3d
+              skinUrl={data.skin[0].skin_url}
+              height="390"
+              width="300"
+              options={{ zoom: 0.8 }}
+            />
+          </ClientOnly>
+        ) : (
+          <span className="m-auto text-neutral-400">Скина нет</span>
+        )}
+      </div>
     </div>
   )
 }, "UserInfo")
 
 const events = action((ctx) => {
-  const pageContext = ctx.get(pageContextAtom)
-  if (!pageContext) return;
+  const pageCtx = ctx.get(pageCtxAtom)
+  if (!pageCtx) return;
 
-  const nickname = pageContext.routeParams.nickname;
-
-  targetPlayerNickname(ctx, nickname)
-  playerAction(ctx)
+  users.fetchSingle(ctx, pageCtx.routeParams.nickname)
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageContextAtom])
+  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
 
-  return <UserInfo />
+  return (
+    <div className="flex flex-col w-full gap-4 justify-center h-full">
+      <BackButton />
+      <UserInfo />
+    </div>
+  )
 }

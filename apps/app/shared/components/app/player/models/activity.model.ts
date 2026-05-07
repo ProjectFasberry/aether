@@ -1,7 +1,7 @@
 import { logError } from "@/shared/lib/log";
-import { reatomAsync, withCache, withDataAtom, withRetry, withStatusesAtom } from "@reatom/async";
+import { reatomAsync, withCache, withDataAtom, withRetry, withStatusesAtom } from "@reatom/framework";
 import { client } from "@/shared/lib/client-wrapper";
-import { playerParamAtom } from "./player.model";
+import { playerState } from "./player.model";
 import { atom, withAssign } from "@reatom/framework";
 
 export type PlayerActivityPayload =
@@ -68,4 +68,4 @@ export const playerActivity = atom(null, "playerActivity").pipe(
   }))
 )
 
-playerParamAtom.onChange((ctx, state) => state && playerActivity.online.fetch(ctx, state))
+playerState.nickname.onChange((ctx, state) => state && playerActivity.online.fetch(ctx, state))

@@ -41,6 +41,8 @@
 		"@oslojs/encoding": "1.1.0",
 		"@repo/shared": "workspace:*",
 		"@scure/bip39": "2.0.1",
+		"@sinclair/typebox": "^0.34.49",
+		"@tqman/nice-logger": "1.1.1",
 		"bcryptjs": "3.0.2",
 		"bowser": "2.13.1",
 		"consola": "3.4.2",
@@ -59,7 +61,6 @@
 		"nanoid": "5.1.5",
 		"p-limit": "7.1.1",
 		"pg": "8.13.1",
-		"@tqman/nice-logger": "1.1.1",
 		"zod": "4.2.1"
 	},
 	"devDependencies": {

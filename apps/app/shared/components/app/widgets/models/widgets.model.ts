@@ -1,5 +1,5 @@
 import { currentUserState } from "@/shared/models/current-user.model";
-import { action, Atom, atom, Ctx } from "@reatom/core";
+import { action, Atom, atom, Ctx } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { withCookie } from "@reatom/persist-web-storage";
 import { IconLock, TablerIcon } from "@tabler/icons-react";

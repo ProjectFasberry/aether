@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
-export function AutoWidthInput({ value }: { value: string }) {
+export const AutoWidthInput = ({ value }: { value: string }) => {
   const spanRef = useRef<HTMLSpanElement>(null);
   const [inputWidth, setInputWidth] = useState(0);
 
   useEffect(() => {
-    if (spanRef.current) {
-      setInputWidth(spanRef.current.offsetWidth);
-    }
+    if (!spanRef.current) return;
+    setInputWidth(spanRef.current.offsetWidth);
   }, [value]);
 
   return (

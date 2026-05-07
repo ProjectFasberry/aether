@@ -1,6 +1,6 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withErrorAtom, withStatusesAtom } from "@reatom/async";
-import { atom, AtomMut } from "@reatom/core";
+import { reatomAsync, withErrorAtom, withStatusesAtom } from "@reatom/framework";
+import { atom, AtomMut } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { authState } from "./auth.model";
 import { createPhraseModel } from "./seed-phrase.model";
@@ -31,7 +31,7 @@ export const restore = atom(null, "restore").pipe(
       withAssign((_, name) => ({
         confirmSeedPhrase: reatomAsync(async (ctx) => {
           const nickname = ctx.get(authState.fields.nickname);
-          const mn = authSecurity.generateMnemonic(ctx)
+          const mn = await authSecurity.generateMnemonic(ctx)
           const hash = await authSecurity.mnToHash(mn)
 
           const result = await client

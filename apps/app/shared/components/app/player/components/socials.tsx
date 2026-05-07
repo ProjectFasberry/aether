@@ -3,7 +3,6 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Separator } from "@repo/ui/separator"
 import { Skeleton } from "@repo/ui/skeleton"
 import { playerSocials, PlayerSocialsPayload, PlayerSocialsValuePayload, SOCIAL_EVENTS, SOCIAL_ICONS } from "../models/socials.model"
-import { playerParamAtom } from "../models/player.model"
 
 const SocialCard = ({ type, value }: { type: PlayerSocialsPayload["type"], value: PlayerSocialsValuePayload }) => {
   const icon = SOCIAL_ICONS[type]()
@@ -42,10 +41,8 @@ const PlayerSocialsSkeleton = () => {
 }
 
 export const PlayerSocials = reatomComponent(({ ctx }) => {
-  const nickname = ctx.spy(playerParamAtom)
-
-  useUpdate((ctx) => playerSocials.fetch(ctx, nickname!), [nickname]);
-
+  useUpdate((ctx) => playerSocials.init(ctx), []);
+  
   if (!ctx.spy(isClientAtom) || ctx.spy(playerSocials.fetch.statusesAtom).isPending) {
     return <PlayerSocialsSkeleton/>
   }

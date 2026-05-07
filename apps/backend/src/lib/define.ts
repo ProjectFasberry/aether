@@ -2,16 +2,17 @@ import Elysia from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
-import { toLog } from "./validators";
 import { bearer } from "@elysia/bearer";
+import { validateLogger } from "#/utils/config/logger";
+import { isProduction } from "#/shared/env";
 
-async function handleAuthedByApiUser(apiKey: string | undefined): Promise<{ nickname: string } | null> {
-  if (!apiKey || apiKey.trim().length === 0) return null;
+async function handleByBearer(bearer: string): Promise<{ nickname: string } | null> {
+  const hash = new Bun.CryptoHasher("sha256").update(bearer).digest("hex");
 
   const query = await general
     .selectFrom("api_keys")
-    .select(["key", "nickname"])
-    .where("key", "=", apiKey)
+    .select("nickname")
+    .where("key", "=", hash)
     .executeTakeFirst()
 
   if (!query) return null;
@@ -19,13 +20,21 @@ async function handleAuthedByApiUser(apiKey: string | undefined): Promise<{ nick
   return { nickname: query.nickname }
 }
 
-export const defineOptionalUser = () => new Elysia()
-  .use(defineSession())
+export const defineOptionalUser = () => new Elysia({ name: "defineOptionalUser" })
+  .use(defineOptionalSession())
   .use(bearer())
-  .use(toLog("defineOptionalUser"))
   .derive(async ({ session, bearer }) => {
-    const result = await handleAuthedByApiUser(bearer)
-    if (result) return result
+    if (!isProduction) {
+      validateLogger.log("defineOptionalUser");
+    }
+
+    if (bearer && bearer.trim().length !== 0) {
+      const result = await handleByBearer(bearer)
+
+      if (result) {
+        return result
+      }
+    }
 
     let nickname: string | null = null;
 
@@ -37,52 +46,68 @@ export const defineOptionalUser = () => new Elysia()
   })
   .as("scoped")
 
-export const defineUser = () => new Elysia()
-  .use(defineSession())
+export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" })
+  .use(defineOptionalSession())
   .use(bearer())
-  .use(toLog("defineUser"))
   .derive(async ({ session, status, bearer }) => {
+    if (!isProduction) {
+      validateLogger.log("defineRequiredUser");
+    }
     if (!session) throw status(401)
 
-    const result = await handleAuthedByApiUser(bearer)
-    if (result) return result
+    if (bearer && bearer.trim().length >= 1) {
+      const result = await handleByBearer(bearer)
 
-    const nickname: string | null = await auth.getUserNickname(session);
+      if (result) {
+        return { nickname: result.nickname }
+      }
+    }
+
+    const nickname = await auth.getUserNickname(session);
     if (!nickname) throw status(401)
 
     return { nickname }
   })
   .as("scoped")
 
-export const defineSession = () => new Elysia()
-  .use(toLog("defineSession"))
+export const defineOptionalSession = () => new Elysia({ name: "defineOptionalSession" })
   .derive(({ cookie }) => ({ session: cookie[SESSION_KEY].value as string | undefined }))
-  .as("global")
+  .as("scoped")
 
-export const defineUserRole = () => new Elysia()
-  .use(defineUser())
-  .use(toLog("defineUserRole"))
+export const defineUserRole = () => new Elysia({ name: "defineUserRole" })
+  .use(defineOptionalUser())
   .use(bearer())
   .derive(async ({ nickname, status, bearer }) => {
-    let role: { id: number, name: string } | null = null;
-
-    const result = await handleAuthedByApiUser(bearer)
-
-    if (result) {
-      // todo: impl correct way for define the highest role
-      role = { id: 3, name: 'admin' }
-      return { role }
+    if (!isProduction) {
+      validateLogger.log("defineUserRole");
     }
 
-    role = await general
+    if (bearer && bearer.trim().length >= 1) {
+      const result = await handleByBearer(bearer)
+
+      if (result?.nickname) {
+        // todo: impl correct way for define the highest role
+        return {
+          role: {
+            id: 3,
+            name: 'admin'
+          },
+          nickname: result.nickname
+        }
+      }
+    }
+
+    if (!nickname) throw status(401)
+
+    const role = await general
       .selectFrom("players")
       .innerJoin("roles", "roles.id", "players.role_id")
       .select(["roles.id", "roles.name"])
       .where("players.nickname", "=", nickname)
-      .executeTakeFirstOrThrow();
+      .executeTakeFirst();
 
-    if (!role) throw status(500)
+    if (!role) throw status(401)
 
-    return { role }
+    return { role, nickname }
   })
   .as("scoped")

@@ -1,6 +1,6 @@
 import { panelClient, withJsonBody } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
-import { atom } from "@reatom/core";
+import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/framework";
+import { atom } from "@reatom/framework";
 import { toast } from "sonner";
 
 export const configAtom = atom("", "codeAtom");

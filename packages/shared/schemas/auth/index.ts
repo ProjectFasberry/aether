@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const nicknameSchema = z
 	.string()
@@ -26,25 +26,23 @@ export const authSchema = z.object({
 
 export const registerSchema = z.object({
 	...authSchema.shape,
-	...z
-		.object({
-			findout: z.string().min(1).max(128),
-			findoutType: z.enum(["custom", "referrer"]),
-			hash: z.string(),
-		})
-		.superRefine((data, ctx) => {
-			if (data.findoutType === "referrer") {
-				const { error, success } = nicknameSchema.safeParse(data.findout);
+	...z.object({
+		findout: z.string().min(1).max(128),
+		findoutType: z.enum(["custom", "referrer"]),
+		hash: z.string(),
+	}).superRefine((data, ctx) => {
+		if (data.findoutType === "referrer") {
+			const { error, success } = nicknameSchema.safeParse(data.findout);
 
-				if (!success) {
-					const msg = JSON.parse(error.message)[0];
+			if (!success) {
+				const msg = JSON.parse(error.message)[0];
 
-					ctx.addIssue({
-						path: ["findout"],
-						code: "custom",
-						message: msg.message,
-					});
-				}
+				ctx.addIssue({
+					path: ["findout"],
+					code: "custom",
+					message: msg.message,
+				});
 			}
-		}).shape,
+		}
+	}).shape,
 });

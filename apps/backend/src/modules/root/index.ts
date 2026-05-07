@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { initPlayerSkin, updatePlayersSkins } from "../server/skin/skin.model";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { bearer } from "@elysia/bearer";
 import { general } from "#/shared/database/general-db";
 

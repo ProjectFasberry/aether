@@ -3,7 +3,7 @@ import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
 import { createLink, Link } from "../../../config/link"
 import { playerLands, playerLandsState } from "../models/player-lands.model"
-import { atom } from "@reatom/core"
+import { atom } from "@reatom/framework"
 import { translate } from "@/shared/locales/helpers"
 
 type Land = ExtractApiData<"getServerLandsListByNickname">["data"]["data"][number]
@@ -36,11 +36,9 @@ const PlayerLand = ({ ulid, title, details, name, members }: Land) => {
 }
 
 const PlayerLandsList = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(playerLandsState.data)?.data
+  if (ctx.spy(playerLands.fetch.statusesAtom).isPending) return <Skeleton className="h-24 w-full" />
 
-  if (ctx.spy(playerLands.fetch.statusesAtom).isPending) {
-    return <Skeleton className="h-24 w-full" />
-  }
+  const data = ctx.spy(playerLandsState.data)?.data
 
   if (!data) {
     return <Typography color="gray" className="text-lg">нет</Typography>
@@ -52,6 +50,8 @@ const PlayerLandsList = reatomComponent(({ ctx }) => {
 const playerLandsCountAtom = atom((ctx) => ctx.spy(playerLandsState.data)?.meta.count ?? 0)
 
 const PlayerLandsCount = reatomComponent(({ ctx }) => {
+  if (ctx.spy(playerLands.fetch.statusesAtom).isPending) return <Skeleton className="h-8 aspect-square" />
+  
   const data = ctx.spy(playerLandsCountAtom)
 
   return (

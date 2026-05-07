@@ -1,5 +1,5 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
 

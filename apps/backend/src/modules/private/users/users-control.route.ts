@@ -10,12 +10,13 @@ import {
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { getNats } from "#/shared/nats/client";
+import { SUBJECTS } from "#/shared/nats/subjects";
 
 function publish(event: string, data: { initiator: string, payload: string }) {
   const nc = getNats()
-  nc.publish("events.control.*", JSON.stringify({ event, data }))
+  nc.publish(SUBJECTS.EVENTS.USERS.CONTROL.WILDCARD, JSON.stringify({ event, data }))
 }
 
 const playersControlRestrictCreate = new Elysia()

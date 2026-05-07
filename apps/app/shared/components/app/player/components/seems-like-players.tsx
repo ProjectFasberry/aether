@@ -1,9 +1,9 @@
 import { Skeleton } from "@repo/ui/skeleton";
 import { tv } from "tailwind-variants";
 import { Avatar } from "../../../../ui/avatar";
-import { reatomComponent } from "@reatom/npm-react";
+import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { createLink, Link } from "@/shared/components/config/link";
-import { atom, onConnect } from "@reatom/framework";
+import { atom } from "@reatom/framework";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { playerSLP, playerSLPState } from "../models/player-seems-like.model";
 import { IconX } from "@tabler/icons-react";
@@ -11,10 +11,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { translate } from "@/shared/locales/helpers";
 
-const playerSeemsLikePlayersCountAtom = atom((ctx) => 
-  ctx.spy(playerSLP.fetch.dataAtom)?.meta.count ?? 0, 
-  "playerLandsCount"
-)
+const playerSeemsLikePlayersCountAtom = atom((ctx) => ctx.spy(playerSLP.fetch.dataAtom)?.meta.count ?? 0)
 
 const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
   return (
@@ -37,8 +34,6 @@ const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
     </TooltipProvider>
   )
 }, "PlayerSeemsLikeShowToggle")
-
-onConnect(playerSLP.fetch.dataAtom, playerSLP.fetch)
 
 const PlayerSeemsLikePlayersCount = reatomComponent(({ ctx }) => {
   const data = ctx.spy(playerSeemsLikePlayersCountAtom)
@@ -75,7 +70,7 @@ export const PlayerSeemsLikePlayers = reatomComponent(({ ctx }) => {
 const seemsLikeGridVariant = tv({
   base: `${scrollableVariant()} grid grid-flow-col auto-cols-max scrollbar-h-2 pb-2 whitespace-nowrap overflow-x-auto gap-2 w-full`,
   slots: {
-    card: `flex flex-col rounded-lg bg-neutral-800 overflow-hidden w-fit h-fit`,
+    card: `flex flex-col rounded-lg bg-neutral-900 overflow-hidden w-fit h-fit`,
     cardAvatar: `w-full h-full rounded-lg overflow-hidden flex items-center justify-center`
   }
 })
@@ -83,14 +78,9 @@ const seemsLikeGridVariant = tv({
 const PlayerSeemsLikePlayersListSkeleton = () => {
   return (
     <div className={seemsLikeGridVariant().base()}>
-      {Array.from({ length: 6 }).map((item, idx) => (
-        <div
-          key={idx}
-          className={seemsLikeGridVariant().card()}
-        >
-          <Skeleton
-            className={seemsLikeGridVariant().cardAvatar({ className: "min-h-16 min-w-16" })}
-          />
+      {Array.from({ length: 8 }).map((_, idx) => (
+        <div key={idx} className={seemsLikeGridVariant().card()}>
+          <Skeleton className={seemsLikeGridVariant().cardAvatar({ className: "min-h-16 min-w-16" })} />
         </div>
       ))}
     </div>
@@ -98,25 +88,19 @@ const PlayerSeemsLikePlayersListSkeleton = () => {
 }
 
 const PlayerSeemsLikePlayersList = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom)) {
+  useUpdate((ctx) => playerSLP.init(ctx), [])
+
+  if (!ctx.spy(isClientAtom) || ctx.spy(playerSLP.fetch.statusesAtom).isPending) {
     return <PlayerSeemsLikePlayersListSkeleton />
   }
 
   const data = ctx.spy(playerSLP.fetch.dataAtom)?.data;
-
-  if (ctx.spy(playerSLP.fetch.statusesAtom).isPending) {
-    return <PlayerSeemsLikePlayersListSkeleton />
-  }
-
   if (!data) return null;
 
   return (
     <div className={seemsLikeGridVariant().base()}>
       {data.map((player) => (
-        <div
-          key={player.uuid}
-          className={seemsLikeGridVariant().card()}
-        >
+        <div key={player.uuid} className={seemsLikeGridVariant().card()}>
           <Link
             href={createLink("player", player.nickname)}
             aria-label={player.nickname}

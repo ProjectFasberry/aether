@@ -1,5 +1,5 @@
-import { reatomAsync, withStatusesAtom } from "@reatom/async";
-import { action, atom } from "@reatom/core";
+import { reatomAsync, withStatusesAtom } from "@reatom/framework";
+import { action, atom } from "@reatom/framework";
 import { cart, cartState } from "./store-cart.model";
 import { logError } from "@/shared/lib/log";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";

@@ -3,10 +3,10 @@ import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData, withError } from "#/shared/schemas";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 
 const cartAddItem = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post("/add/:id", async ({ status, nickname: initiator, body: { recipient }, params: { id } }) => {
     const validateResult = await cartItem.validateInitiatorExists(recipient)
 
@@ -45,7 +45,7 @@ const cartAddItem = new Elysia()
   })
 
 const cartRemoveItem = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .delete("/remove/:id", async ({ nickname: initiator, params: { id } }) => {
     const data = await cartItem.delete(id, initiator)
     return { data }
@@ -61,7 +61,7 @@ const cartRemoveItem = new Elysia()
   })
 
 const cartEditItem = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post("/edit/:id", async ({ nickname: initiator, body, params: { id } }) => {
     const data = await cartItem.edit(initiator, { ...body, id })
     return { data }
@@ -80,7 +80,7 @@ const cartEditItem = new Elysia()
   })
 
 const cartPrice = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/price", async ({ nickname: initiator }) => {
     const data = await defineGlobalPrice(initiator);
     return { data }
@@ -91,7 +91,7 @@ const cartPrice = new Elysia()
   })
 
 const cartList = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/list", async ({ nickname: initiator }) => {
     const data = await cartItem.getData(initiator)
     

@@ -1,5 +1,5 @@
-import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/async";
-import { atom, batch, Ctx } from "@reatom/core";
+import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/framework";
+import { atom, batch, Ctx } from "@reatom/framework";
 import { withReset } from "@reatom/framework";
 import { withHistory } from "@/shared/lib/reatom-helpers";
 import { logError } from "@/shared/lib/log";

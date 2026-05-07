@@ -120,14 +120,12 @@ const SeedPhraseBody = () => {
               onKeyDown={(e) => handleKeyDown(e, idx)}
               value={word}
               onChange={(e) => {
-                if (isEditable) {
-                  onUpdateWord?.(idx, e.target.value);
-                }
+                if (!isEditable) return;
+                onUpdateWord?.(idx, e.target.value);
               }}
               onBlur={() => {
-                if (isEditable) {
-                  onValidateWord?.(idx);
-                }
+                if (!isEditable) return;
+                onValidateWord?.(idx);
               }}
               placeholder="---"
               className="w-full pl-0 focus-within:ring-transparent bg-transparent outline-none"

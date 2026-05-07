@@ -1,5 +1,5 @@
-import { reatomAsync, withStatusesAtom } from "@reatom/async"
-import { action, atom, AtomMut, createCtx, Ctx } from "@reatom/core"
+import { reatomAsync, withStatusesAtom } from "@reatom/framework"
+import { action, atom, AtomMut, createCtx, Ctx } from "@reatom/framework"
 import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
 import type { Selectable } from "kysely"
 import { Payments } from "@repo/shared/types/db/payments-database-types"

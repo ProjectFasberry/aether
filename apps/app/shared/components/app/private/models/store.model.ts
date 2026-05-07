@@ -1,13 +1,13 @@
 import { storeItemCreateSchema } from '@repo/shared/schemas/store/index';
 import { logError } from "@/shared/lib/log";
-import { action, atom, AtomState, batch } from "@reatom/core";
+import { action, atom, AtomState, batch } from "@reatom/framework";
 import { reatomAsync, reatomRecord, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { getStoreItems, StoreItemsParams } from "../../shop/models/store.model";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
 import { alertDialog } from "@/shared/components/config/alert-dialog.model";
-import * as z from "zod/v4";
+import * as z from "zod";
 import type { JSONContent } from "@tiptap/react";
 import { navigate } from "vike/client/router";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";

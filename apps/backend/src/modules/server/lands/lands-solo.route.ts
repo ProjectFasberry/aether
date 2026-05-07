@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { defineOptionalUser } from "#/lib/define";
-import { getLand, landPayload } from "./lands.model";
+import { getLand, landSinglePayload } from "./lands.model";
 import { withData } from "#/shared/schemas";
 
 export const landsSolo = new Elysia()
@@ -13,8 +13,6 @@ export const landsSolo = new Elysia()
       ulid: t.String({ min: 3 })
     }),
     response: {
-      200: withData(
-        landPayload
-      )
+      200: withData(landSinglePayload)
     }
   })

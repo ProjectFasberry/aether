@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { bannerSchema } from "./banner.model";
 import { withData } from "#/shared/schemas";
@@ -24,7 +24,7 @@ const bannerViewPayload = t.Object({
 })
 
 export const bannerView = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post("/view/:id", async ({ nickname, params: { id } }) => {
     const data = await viewBanner(id, nickname);
     return { data }

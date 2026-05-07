@@ -1,5 +1,5 @@
-import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { atom } from "@reatom/core";
+import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { atom } from "@reatom/framework";
 import { withReset } from "@reatom/framework";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { withHistory, withSsr } from "@/shared/lib/reatom-helpers";

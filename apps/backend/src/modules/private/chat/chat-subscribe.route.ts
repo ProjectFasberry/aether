@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import type { Subscription } from "@nats-io/nats-core";
@@ -47,7 +47,7 @@ const timers = new Map<string, ReturnType<typeof setInterval>>()
 const subs = new Map<string, Subscription>()
 
 export const chatWs = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .ws("/subscribe", {
     async open(ws) {
       const { nickname } = ws.data;

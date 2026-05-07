@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { currencyCryptoSchema, currencyFiatSchema } from "../entities/currencies-schema";
 import type { JsonValue } from "../../types/db/general-database-types";
 import { nicknameSchema } from "../auth";

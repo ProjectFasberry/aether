@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const invoiceFiatSchema = z.enum([
   "USD", "EUR", "RUB", "BYN", "UAH", "GBP", "CNY",

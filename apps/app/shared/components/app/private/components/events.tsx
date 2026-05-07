@@ -1,7 +1,7 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Input } from "@repo/ui/input"
 import { createEvent, createEventState, deleteEvent, events } from "../models/event.model"
-import { AtomState } from "@reatom/core"
+import { AtomState } from "@reatom/framework"
 import { ReactNode } from "react"
 import { Typography } from "@repo/ui/typography"
 import { DeleteButton } from "./ui"

@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { getNats } from "#/shared/nats/client"
 import { SUBJECTS } from "#/shared/nats/subjects"
-import * as z from "zod/v4"
+import * as z from "zod"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from '#/shared/database/general-db';
 import { safeJsonParse } from '#/utils/config/transforms';

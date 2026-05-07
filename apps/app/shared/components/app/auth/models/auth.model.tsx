@@ -1,5 +1,5 @@
 import { withHistory } from "@/shared/lib/reatom-helpers";
-import { action, atom, Ctx } from "@reatom/core";
+import { action, atom, Ctx } from "@reatom/framework";
 import { reatomRecord, withAssign, withReset } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
 import { pof } from "../../../../models/shared.model";
@@ -82,7 +82,7 @@ export const auth = atom(null, "auth").pipe(
 			authState.isProcessing.reset(ctx)
 			authState.settings.showPassword.reset(ctx)
 
-			pof.resetState(ctx)
+			pof.resetAll(ctx)
 		})
 	})),
 );
@@ -93,17 +93,17 @@ export const authTriggerIsDisabledAtom = atom((ctx) =>
 
 const ERRORS_RECORDS = {
 	auth: {
-		exists: "Такой игрок уже зарегистрирован",
-		"not-exists": "Такой игрок не зарегистрирован",
-		invalid: "Неверный никнейм или пароль",
+		"EXISTS": "Такой игрок уже зарегистрирован",
+		"NOT_EXISTS": "Такой игрок не зарегистрирован",
+		"PASSWORD_OR_LOGIN_INCORRECT": "Неверный никнейм или пароль",
 	},
 	system: {
-		"authorization-disabled": "Авторизация недоступна",
-		"ip-limit": "Превышен лимит регистраций",
+		"AUTHORIZATION_DISABLED": "Авторизация недоступна",
+		"IP_RESTRICTS": "Превышен лимит регистраций",
 	},
 	captcha: {
-		"token-not-found": "Нужна проверка",
-		unsafe: "Пароль ненадежный",
+		"TOKEN_NOT_FOUND": "Нужна проверка",
+		"PASSWORD_UNSAFE": "Пароль ненадежный",
 	},
 } as const;
 

@@ -1,4 +1,4 @@
-import { Action, atom, Atom, AtomMut, isAtom } from "@reatom/core";
+import { Action, atom, Atom, AtomMut, isAtom } from "@reatom/framework";
 import { AsyncAction, reatomAsync, withStatusesAtom } from "@reatom/framework";
 
 export type NavigationSteps = {

@@ -2,7 +2,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
 import { changeRecipient, changeRecipientState, changeGlobalRecipientIsValidAtom } from "../../shop/models/store-recipient.model";
 import { Button } from "@repo/ui/button";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
 import { IconDeviceFloppy } from "@tabler/icons-react";
 

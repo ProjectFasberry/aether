@@ -1,7 +1,7 @@
 import { isEmptyArray } from "@/shared/lib/utils";
 import { client } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { action, atom } from "@reatom/core";
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { action, atom } from "@reatom/framework";
 import { withAssign, withReset } from "@reatom/framework";
 import { login } from "../../auth/models/login.model";
 import { listenBackOnce } from "@/shared/lib/events";

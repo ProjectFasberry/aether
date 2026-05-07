@@ -1,4 +1,4 @@
-import { Action, action, atom } from "@reatom/core"
+import { Action, action, atom } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
 import { isDeepEqual, sleep, withInit, withReset } from "@reatom/framework"
 import { ReactNode } from "react"

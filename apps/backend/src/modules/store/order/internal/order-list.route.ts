@@ -1,10 +1,10 @@
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { orderGameSchema } from "./internal-order.model";
 
 export const ordersList = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/list", async (ctx) => {
     return { data: null }
   }, {

@@ -5,7 +5,7 @@ import { getRedis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";
-import type * as z from "zod/v4"
+import type * as z from "zod"
 import { getRedisKey } from "#/helpers/redis";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { invariant } from "#/helpers/invariant";

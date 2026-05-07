@@ -2,7 +2,7 @@ import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import Elysia from "elysia";
 import { createAdminActivityLog } from "../private.model";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { general } from "#/shared/database/general-db";
 
 export const dictionariesEdit = new Elysia()

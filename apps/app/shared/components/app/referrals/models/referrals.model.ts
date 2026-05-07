@@ -1,6 +1,6 @@
 import { env } from "@/shared/env";
 import { client } from "@/shared/lib/client-wrapper";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { reatomAsync, withAssign, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 
 type ReferralListPayload = ExtractApiData<"getServerReferralsList">["data"]

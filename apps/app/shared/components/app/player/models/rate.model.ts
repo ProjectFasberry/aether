@@ -1,13 +1,13 @@
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { isIdentityAtom } from "./player.model";
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { isIdentityAtom, playerSsrModel, playerState } from "./player.model";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { isAuthedAtom } from "@/shared/models/page-context.model";
+import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { navigate } from "vike/client/router";
-import { action, atom } from "@reatom/core";
+import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
-import { withSsr } from "@/shared/lib/reatom-helpers";
+import { userState } from "@/shared/models/app.model";
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 
@@ -20,18 +20,30 @@ export type RateUser = {
 	avatar: string
 };
 
+const PLAYERRATESTATE_DATA_KEY = "playerRateState.data";
+
 export const playerRateState = atom(null, "playerRateState").pipe(
 	withAssign((_, name) => ({
-		data: atom<Player["rate"] | null>(null, `${name}.data`).pipe(withSsr(`${name}.data`))
+		data: atom<Nullable<Player["rate"]>>(null, `${name}.data`).pipe(playerSsrModel.withSsr(PLAYERRATESTATE_DATA_KEY))
 	}))
 )
+
+playerState.nickname.onChange((ctx, state) => {
+	if (!state) return;
+
+	const snap = ctx.get(pageCtxAtom)?.snapshot
+	if (!snap) return;
+
+	const snapData = snap[PLAYERRATESTATE_DATA_KEY]?.data
+	playerRateState.data(ctx, snapData)
+})
 
 export const playerRate = atom(null, "playerRate").pipe(
 	withAssign((_, name) => ({
 		rate: reatomAsync(async (ctx, nickname: string) => {
 			if (ctx.get(isIdentityAtom)) return;
 
-			if (!ctx.get(isAuthedAtom)) {
+			if (!ctx.get(userState.isAuthed)) {
 				return ctx.schedule(() => navigate("/auth"));
 			}
 
@@ -65,13 +77,11 @@ export const playerRate = atom(null, "playerRate").pipe(
 			const currentUser = ctx.get(currentUserState);
 			if (!currentUser) return null;
 
-			return await ctx.schedule(() =>
-				client
-					.get<RateList>(`rate/list/${currentUser.nickname}`, {
-						signal: ctx.controller.signal,
-					})
-					.exec(),
-			);
+			return await client
+				.get<RateList>(`rate/list/${currentUser.nickname}`, {
+					signal: ctx.controller.signal,
+				})
+				.exec()
 		}, `${name}.fetchList`).pipe(
 			withDataAtom(null),
 			withStatusesAtom(),

@@ -1,5 +1,5 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withCache, withStatusesAtom } from "@reatom/async";
+import { reatomAsync, withCache, withStatusesAtom } from "@reatom/framework";
 import { reatomMap } from "@reatom/framework";
 import { notifyAboutRestrictRole } from "./actions.model";
 

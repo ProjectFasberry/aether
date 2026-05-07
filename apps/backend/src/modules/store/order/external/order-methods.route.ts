@@ -3,7 +3,7 @@ import { getStaticUrl } from "#/helpers/volume"
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas"
 import { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema"
-import * as z from "zod/v4"
+import * as z from "zod"
 
 const methodPayload = t.Object({
   id: t.Number(),

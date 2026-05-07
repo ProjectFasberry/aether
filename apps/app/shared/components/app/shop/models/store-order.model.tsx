@@ -1,5 +1,5 @@
-import { reatomAsync, withStatusesAtom } from "@reatom/async";
-import { action, Action, atom } from "@reatom/core";
+import { reatomAsync, withStatusesAtom } from "@reatom/framework";
+import { action, Action, atom } from "@reatom/framework";
 import { CreateOrderRoutePayload, OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
 import { withAssign, withReset } from "@reatom/framework";

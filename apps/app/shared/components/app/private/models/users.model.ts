@@ -1,7 +1,7 @@
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
-import { action, atom, batch } from "@reatom/core"
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
+import { action, atom, batch } from "@reatom/framework"
 import { reatomMap, reatomSet, sleep, withAssign, withConcurrency, withReset } from "@reatom/framework"
 import { withLocalStorage } from "@reatom/persist-web-storage"
 import { toast } from "sonner"
@@ -9,20 +9,8 @@ import { notifyAboutRestrictRole } from "./actions.model"
 import { DEFAULT_SOFT_DELAY } from "@/shared/consts"
 import { invariant } from "@/shared/lib/invariant"
 
-export type PrivatedUser = {
-  id: number;
-  lower_case_nickname: string;
-  premium_uuid: string | null;
-  uuid: string;
-  created_at: Date;
-  avatar: string;
-  nickname: string;
-  role_id: number;
-  role_name: string;
-  status: "default" | "banned" | "muted";
-};
-
-export type PrivatedUsersPayload = { data: PrivatedUser[]; meta: PaginatedMeta };
+export type PrivatedUser = PrivatedUsersPayload["data"][number]
+export type PrivatedUsersPayload = ExtractApiData<"getPrivatedUserList">["data"]
 
 type UsersSort = "created_at" | "role" | "abc"
 
@@ -107,6 +95,18 @@ export const users = atom(null, "users").pipe(
       },
       onReject: (_, e) => notifyAboutRestrictRole(e)
     }).pipe(
+      withStatusesAtom()
+    ),
+    fetchSingle: reatomAsync(async (ctx, nickname: string) => {
+      invariant(nickname.trim().length !== 0, "Nickname is not defined")
+    
+      return await ctx.schedule(() => client<PrivatedUser>(`privated/user/${nickname}`).exec())
+    }, {
+      name: `${name}.fetchSingle`,
+      onReject: (_, e) => logError(e, { type: "combined" })
+    }).pipe(
+      withDataAtom(),
+      withCache({ swr: false }),
       withStatusesAtom()
     )
   }))

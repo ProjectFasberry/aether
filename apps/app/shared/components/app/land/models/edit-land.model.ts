@@ -1,6 +1,6 @@
 import { logError } from "@/shared/lib/log"
-import { reatomAsync, withStatusesAtom } from "@reatom/async"
-import { action, atom } from "@reatom/core"
+import { reatomAsync, withStatusesAtom } from "@reatom/framework"
+import { action, atom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
 import { toast } from "sonner"
 

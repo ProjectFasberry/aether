@@ -6,8 +6,8 @@ import { safeJsonParse } from "#/utils/config/transforms";
 import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
-import * as z from "zod/v4";
-import { getPlayerAvatar } from "../server/skin/skin.model";
+import * as z from "zod";
+import { getPlayersAvatar } from "../server/skin/skin.model";
 
 export type SeemsLikePlayer = {
 	nickname: string;
@@ -264,12 +264,12 @@ export async function getSeemsLikePlayersByPlayer(
 		data = data.slice(0, limit);
 	}
 
-	data = await Promise.all(
-		data.map(async (row) => ({
-			...row,
-			avatar: await getPlayerAvatar(row.nickname)
-		}))
-	)
+	const avatarsMap = await getPlayersAvatar(data.map(r => r.nickname));
+
+	data = data.map((row) => ({
+		...row,
+		avatar: avatarsMap[row.nickname]
+	}))
 
 	return {
 		data,

@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { withData } from "#/shared/schemas";
 import { validateBannedStatus } from "#/lib/validators";
@@ -29,7 +29,7 @@ const likes = new Elysia()
   })
 
 const like = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post("/:nickname", async ({ nickname: initiator, status, params: { nickname: recipient } }) => {
     if (initiator === recipient) {
       throw status(400, wrapError("INVALID_REQUEST"))

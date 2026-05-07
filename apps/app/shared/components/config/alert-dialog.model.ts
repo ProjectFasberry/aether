@@ -1,5 +1,5 @@
 import { DIALOG_DELAY } from "@/shared/consts/index"
-import { action, Action, atom } from "@reatom/core"
+import { action, Action, atom } from "@reatom/framework"
 import { sleep, withAssign, withReset } from "@reatom/framework"
 
 type AlertDialogConfig = {

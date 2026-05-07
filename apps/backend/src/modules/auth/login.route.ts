@@ -8,7 +8,7 @@ import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
 import { session, loginQR as loginQRService, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger } from "./login.model";
 import { ipPlugin } from "#/lib/plugins/index";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import Bowser from "bowser";
 import { getNats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
@@ -162,7 +162,7 @@ export const withQR = new Elysia()
 		}
 	})
 	.group("", (app) => app
-		.use(defineUser())
+		.use(defineRequiredUser())
 		.post("/confirm", async ({ nickname, query: { token }, status }) => {
 			const isExists = await loginQRService.checkQRTokenExistence(token);
 			if (!isExists) {

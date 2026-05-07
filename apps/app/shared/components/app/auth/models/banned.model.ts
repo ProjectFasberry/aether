@@ -1,5 +1,5 @@
 import { client } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async"
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
 
 type BannerPayload = {
   initiator: string,

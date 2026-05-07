@@ -1,8 +1,8 @@
 import Elysia from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
-import { defineUser } from "#/lib/define";
-import * as z from "zod/v4";
+import { defineRequiredUser } from "#/lib/define";
+import * as z from "zod";
 import { getRedis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
@@ -25,7 +25,7 @@ type Initial = {
 };
 
 const playerSocialsAvailable = new Elysia()
-	.use(defineUser())
+	.use(defineRequiredUser())
 	.get("/available", async ({ nickname }) => {
 		const query = await general
 			.selectFrom("players_socials")
@@ -64,7 +64,7 @@ const getSocialsAddCacheKey = (nickname: string, social: string) =>
 	getRedisKey("internal", `socials:${nickname}:${social}:connect`);
 
 const playerSocialsAddList = new Elysia()
-	.use(defineUser())
+	.use(defineRequiredUser())
 	.get("/add/list", async ({ nickname }) => {
 		const redis = getRedis();
 
@@ -74,7 +74,7 @@ const playerSocialsAddList = new Elysia()
 	});
 
 const playerSocialsAdd = new Elysia()
-	.use(defineUser())
+	.use(defineRequiredUser())
 	.post("/add", async ({ status, nickname, body: { social } }) => {
 		const socialIsExist = await general
 			.selectFrom("players_socials_available")
@@ -124,7 +124,7 @@ const playerSocialsAdd = new Elysia()
 	});
 
 const playerSocialsDelete = new Elysia()
-	.use(defineUser())
+	.use(defineRequiredUser())
 	.delete("/:social", async ({ status, nickname, params: { social } }) => {
 		const query = await general
 			.deleteFrom("players_socials")

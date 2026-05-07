@@ -3,13 +3,14 @@ import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { getNats } from "#/shared/nats/client";
-import { nicknameSchema, passwordSchema } from "@repo/shared/schemas/auth";
+import { registerSchema } from "@repo/shared/schemas/auth";
 import Elysia from "elysia";
-import * as z from "zod/v4";
+import * as z from "zod";
+import { SUBJECTS } from "#/shared/nats/subjects";
 
-function publishAuth(event: string, { nickname, created_at }: { nickname: string, created_at?: Date }) {
+function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = getNats()
-  nc.publish(`events.authorization.${event}`, JSON.stringify({ nickname, created_at }))
+  nc.publish(SUBJECTS.EVENTS.AUTHORIZATION[event], JSON.stringify({ nickname, created_at }))
 }
 
 const playersAuthReg = new Elysia()
@@ -18,14 +19,10 @@ const playersAuthReg = new Elysia()
     const query = await register.create({ nickname, ip, password, hash });
     return { data: query }
   }, {
-    body: z.object({
-      nickname: nicknameSchema,
-      password: passwordSchema,
-      hash: z.string()
-    }),
+    body: registerSchema.pick({ nickname: true, password: true, hash: true }),
     afterResponse: ({ responseValue }) => {
       const res = responseValue as { data: { nickname: string, created_at: Date } }
-      publishAuth("register", res.data);
+      publishAuth("REGISTER", res.data);
     }
   })
 
@@ -34,13 +31,15 @@ const playersAuthUnreg = new Elysia()
     const query = await register.unregister({ nickname, isStrict: strict });
     return { data: query }
   }, {
-    body: z.object({
-      nickname: nicknameSchema,
-      strict: z.stringbool().or(z.boolean()).default(false)
-    }),
+    body: z.intersection(
+      registerSchema.pick({ nickname: true }),
+      z.object({
+        strict: z.stringbool().or(z.boolean()).default(false)
+      })
+    ),
     afterResponse: ({ responseValue }) => {
       const res = responseValue as { data: { nickname: string } }
-      publishAuth("unregister", res.data);
+      publishAuth("UNREGISTER", res.data);
     }
   })
 

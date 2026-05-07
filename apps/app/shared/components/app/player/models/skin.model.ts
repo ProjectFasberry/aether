@@ -1,9 +1,9 @@
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/async";
-import { action, atom, batch } from "@reatom/core";
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { action, atom, batch } from "@reatom/framework";
 import { sleep, withAssign, withInit, withReset } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { isIdentityAtom, playerParamAtom } from "./player.model";
+import { isIdentityAtom, playerState } from "./player.model";
 import { toast } from "sonner";
 import { DIALOG_DELAY } from "@/shared/consts";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer } from "skinview3d";
@@ -192,7 +192,7 @@ export const skins = atom(null, "skins").pipe(
       withCache({ swr: false })
     ),
     updateSkinAndHead: action((ctx) => {
-      const nickname = ctx.get(playerParamAtom);
+      const nickname = ctx.get(playerState.nickname);
       if (!nickname) throw new Error("Nickname is not defined");
 
       batch(ctx, () => {
@@ -200,7 +200,10 @@ export const skins = atom(null, "skins").pipe(
         skins.fetch(ctx, nickname);
       })
     }),
-    init: action((ctx, nickname: string) => {
+    init: action((ctx) => {
+      if (typeof window === 'undefined') return;
+      
+      const nickname = ctx.get(playerState.nickname)
       const isHardwareAccEnabled = ctx.get(hardwareAccIsEnabledAtom)
       if (!isHardwareAccEnabled || !nickname) return;
     
@@ -212,6 +215,8 @@ export const skins = atom(null, "skins").pipe(
     }, "initSkinAction")
   }))
 )
+
+playerState.nickname.onChange((ctx, state) => state && skins.init(ctx))
 
 export const getIsUploadAvailableAtom = atom((ctx) => {
   if (!ctx.spy(isIdentityAtom)) return false;

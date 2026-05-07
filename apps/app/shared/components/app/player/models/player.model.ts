@@ -1,38 +1,31 @@
 import { currentUserState } from "@/shared/models/current-user.model"
-import { withHistory, withSsr } from "@/shared/lib/reatom-helpers"
-import { atom } from "@reatom/core"
-import { withReset } from "@reatom/framework"
+import { atom } from "@reatom/framework"
+import { withAssign, withReset } from "@reatom/framework"
 import { client } from "@/shared/lib/client-wrapper"
+import { ssrModel } from "@/shared/models/shared.model"
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 export type PlayerOmitted = Omit<Player, "rate">
 
-export const playerAtom = atom<PlayerOmitted | null>(null, "player").pipe(
-  withSsr("player")
+export const playerSsrModel = ssrModel({ name: "player", subscribe: false })
+
+export const playerState = atom(null, "playerState").pipe(
+  withAssign((_, name) => ({
+    data: atom<Nullable<PlayerOmitted>>(null, `${name}.data`).pipe(playerSsrModel.withSsr(`${name}.data`), withReset()),
+    nickname: atom<Nullable<string>>(null, `${name}.nickname`).pipe(playerSsrModel.withSsr(`${name}.nickname`), withReset())
+  }))
 )
-
-export const playerParamAtom = atom<string | null>(null, "playerParam").pipe(
-  withHistory(), withReset(), withSsr("playerParam")
-)
-
-playerAtom.onChange((ctx, state) => {
-  if (!state) return;
-
-  if (!ctx.get(playerParamAtom)) {
-    playerParamAtom(ctx, state.nickname)
-  }
-})
 
 export const isIdentityAtom = atom<boolean>((ctx) => {
   const currentUser = ctx.spy(currentUserState)
   if (!currentUser) return false;
 
-  const targetPlayer = ctx.spy(playerAtom)
-  if (!targetPlayer) return false;
+  const targetNickname = ctx.spy(playerState.nickname)
+  if (!targetNickname) return false;
 
-  return targetPlayer.nickname === currentUser.nickname;
-}, "isIdentity")
+  return targetNickname === currentUser.nickname;
+})
 
 export async function getPlayer(nickname: string, init: RequestInit) {
-  return client<Player>(`server/player/${nickname}`, { ...init, throwHttpErrors: false }).exec()
+  return client<Player>(`server/player/${nickname}`, init).exec()
 }

@@ -5,7 +5,7 @@ import { tv } from "tailwind-variants"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { TableKit } from '@tiptap/extension-table'
 import { reatomComponent } from "@reatom/npm-react"
-import { action, atom } from "@reatom/core"
+import { action, atom } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
 import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"

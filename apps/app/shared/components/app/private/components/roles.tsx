@@ -21,7 +21,7 @@ import {
   saveChangesIsValidAtom,
   toggleRoleEditAction
 } from "../models/roles.model"
-import { appState } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 
 type RolePayload = {
@@ -223,7 +223,7 @@ const RolesListItemSkeleton = () => {
 const RolesListItem = reatomComponent<RolePayload>(({ ctx, id, name }) => {
   const isSelected = ctx.spy(getRoleIsSelectedRoleAtom(id));
 
-  const title = appState.dict.get(ctx, name)
+  const title = getFromDictionary(ctx, name)
 
   return (
     <div className={rolesListItemVariant().base()}>

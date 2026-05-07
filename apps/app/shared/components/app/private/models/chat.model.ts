@@ -1,10 +1,10 @@
 import { env } from "@/shared/env";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/async";
-import { action, atom, batch, Ctx } from "@reatom/core";
+import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom/framework";
+import { action, atom, batch, Ctx } from "@reatom/framework";
 import { reatomMap, withAssign, withReset } from "@reatom/framework";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 import { makeChangeValidator } from "@/shared/lib/utils";
 

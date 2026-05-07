@@ -5,7 +5,7 @@ import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { type Static, t } from "elysia";
 import { executeWithCursorPagination } from "kysely-paginate";
-import * as z from "zod/v4"
+import * as z from "zod"
 
 export type ChatItem = {
   id: number;

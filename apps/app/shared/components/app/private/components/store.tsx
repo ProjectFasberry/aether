@@ -5,7 +5,7 @@ import {
 } from "@/shared/components/app/private/models/store.model"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
 import { createLink } from "@/shared/components/config/link"
-import { atom, AtomState } from "@reatom/core"
+import { atom, AtomState } from "@reatom/framework"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Skeleton } from "@repo/ui/skeleton"
@@ -15,7 +15,7 @@ import { PropsWithChildren, ReactNode } from "react"
 import { navigate } from "vike/client/router"
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
-import { appState } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app.model"
 import { CreateItem } from "./store.create"
 import { StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
 
@@ -141,7 +141,7 @@ const EditItem = reatomComponent(({ ctx }) => {
 
   if (!content) throw new Error("Content is not defined")
 
-  const currencyTitle = appState.dict.get(ctx, currency)
+  const currencyTitle = getFromDictionary(ctx, currency)
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">

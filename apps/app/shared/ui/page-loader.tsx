@@ -10,6 +10,7 @@ export const PageLoader = () => {
         width={96}
         height={96}
         alt="Загрузка..."
+        loading="eager"
       />
     </div>
   )

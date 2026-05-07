@@ -3,7 +3,7 @@ import { playerpoints } from "#/shared/database/playerpoints-db"
 import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types"
 import { DB as playerpointsDB } from "@repo/shared/types/db/player-points-database-types"
 import type { Kysely } from "kysely"
-import * as z from "zod/v4"
+import * as z from "zod"
 
 const charismInstanceDb: Record<Server, Kysely<bisquiteDB> | null> = {
   bisquite: bisquite,

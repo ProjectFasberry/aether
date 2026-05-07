@@ -5,7 +5,7 @@ import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { PageContextServer } from "vike/types";
-import { createCtx } from "@reatom/core";
+import { createCtx } from "@reatom/framework";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 
@@ -26,23 +26,18 @@ function metadata(
   }
 }
 
-async function loadNews(id: string, headers?: Record<string, string>): Promise<News | null> {
-  try {
-    const news = await getNewsById(id, { headers })
-    return news
-  } catch (e) {
-    return null;
-  }
-}
-
 export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data");
+  logRouting(pageCtx.urlPathname, data.name);
 
   const config = useConfig()
   const headers = pageCtx.headers ?? undefined;
   const id = pageCtx.routeParams.id
 
-  const news = await loadNews(id, headers)
+  const news = await getNewsById(id, { headers }).catch(e => {
+    console.error(e)
+    return null;
+  })
+
   if (!news) throw render("/not-exist")
 
   config(metadata(news))

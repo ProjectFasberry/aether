@@ -1,4 +1,4 @@
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { useInView } from "react-intersection-observer";
 import { UserActionsChangeRoleGlobal } from "./users.change-role";

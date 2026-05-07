@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { balanceSchema, getBalance } from "./balance.model";
 
@@ -9,7 +9,7 @@ const balancePayload = t.Object({
 })
 
 export const balance = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/balance", async ({ nickname, query }) => {
     const data = await getBalance(nickname, query)
     return { data }

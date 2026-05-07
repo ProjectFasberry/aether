@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { editorFieldSchema } from "../payment";
 
 const DEFAULT_IMAGE = `news/art-bzzvanet.webp`;

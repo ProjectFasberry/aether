@@ -15,7 +15,7 @@ const seemsPlayersPayload = t.Object({
 })
 
 export const seemsPlayers = new Elysia()
-  .get("/seems-like/:nickname", async ({ query, params: { nickname } }) => {
+  .get("/seems-like/:nickname", async ({ query, request, params: { nickname } }) => {
     const data = await getSeemsLikePlayersByPlayer(nickname, query)
     return { data }
   }, {

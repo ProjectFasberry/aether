@@ -7,7 +7,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-ca
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { navigate } from "vike/client/router";
-import { appState } from "@/shared/models/app.model";
+import { getFromDictionary } from "@/shared/models/app.model";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { isClientAtom } from "@/shared/models/page-context.model";
 import { Skeleton } from "@repo/ui/skeleton";
@@ -75,7 +75,7 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
 }, "BalanceServerSelect")
 
 const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, value, wallet, image }) => {
-  const title = appState.dict.get(ctx, wallet)
+  const title = getFromDictionary(ctx, wallet)
   const isLoading = !ctx.spy(isClientAtom) || ctx.spy(balance.fetch.statusesAtom).isPending
 
   return (

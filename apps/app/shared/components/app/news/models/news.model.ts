@@ -1,13 +1,13 @@
 import { client, withQueryParams } from "@/shared/lib/client-wrapper"
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { withSsr } from "@/shared/lib/reatom-helpers";
 import { withAssign } from "@reatom/framework";
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
-type News = ExtractApiData<"getSharedNewsById">["data"]
+type NewsItem = ExtractApiData<"getSharedNewsById">["data"]
 
 export const getNews = async (
-  params: Partial<{ content?: boolean, limit: number, asc: boolean }>, 
+  params: Partial<{ content?: boolean, limit: number, asc: boolean }>,
   init?: RequestInit
 ) => {
   return client
@@ -22,6 +22,6 @@ export const getNews = async (
 export const newsState = atom(null, "newsState").pipe(
   withAssign((_, name) => ({
     data: atom<NewsPayload["data"]>([], `${name}.data`).pipe(withSsr(`${name}.data`)),
-    item: atom<News | null>(null, `${name}.item`).pipe(withSsr(`${name}.item`))
+    item: atom<Nullable<NewsItem>>(null, `${name}.item`).pipe(withSsr(`${name}.item`))
   }))
 )

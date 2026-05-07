@@ -1,22 +1,22 @@
-import { action, atom, Ctx } from "@reatom/core";
+import { action, atom, Ctx } from "@reatom/framework";
 import { client } from "../lib/client-wrapper";
-import { Locale } from "../locales";
-import { reatomMap, withAssign } from "@reatom/framework";
-import { PageContext, PageContextServer } from "vike/types";
-import { pageContextAtom } from "./page-context.model";
-import { devLog } from "../lib/log";
+import { Locale, localeDefault } from "../locales";
+import { withAssign } from "@reatom/framework";
+import { PageContextServer } from "vike/types";
 import { playerSeemsLikePlayersIsShowKey, playerSLPState } from "../components/app/player/models/player-seems-like.model";
 import { withSsr } from "../lib/reatom-helpers";
 import { isMobile, parseBoolean, parseCookie } from "../lib/utils";
 import { usePageContext } from "vike-react/usePageContext";
-import { withLocalStorage } from "@reatom/persist-web-storage";
+import { MePayload } from "./current-user.model";
+import { debug } from "./debug.model";
 
 export type AppOptionsPayload = ExtractApiData<"getAppOptions">["data"]
-
 export type AppOptionsPayloadExtend = AppOptionsPayload & {
 	locale: Locale;
 	country: string | null;
 };
+
+export type AppDictionaries = Record<string, string>
 
 export const appOptionsInit: AppOptionsPayloadExtend = {
 	bannerIsExists: false,
@@ -28,18 +28,23 @@ export const appOptionsInit: AppOptionsPayloadExtend = {
 	pofEnabled: true,
 };
 
-export const APP_OPTIONS_KEY = "appState.options";
-export const APP_DICTIONARIES_KEY = "appState.dict";
+export const APP_OPTIONS_KEY = "appState.options" as const;
+export const APP_DICTIONARIES_KEY = "appState.dict" as const;
 
 export async function getAppOptions(init: RequestInit) {
 	return client<AppOptionsPayload>("app/options", init).exec();
 }
 export async function getAppDictionaries(init: RequestInit) {
-	return client<Record<string, string>>("app/dictionaries", init).exec();
+	return client<AppDictionaries>("app/dictionaries", init).exec();
 }
-export function getAppOptionsFromSnapshot() {
-	const snapshot = usePageContext().snapshot
-	return snapshot[APP_OPTIONS_KEY]?.data as AppOptionsPayloadExtend
+
+type KeysData = {
+	APP_OPTIONS_KEY: AppOptionsPayloadExtend,
+	APP_DICTIONARIES_KEY: AppDictionaries,
+	CURRENT_USER_KEY: MePayload
+}
+export function getDataFromSnapshot<T extends keyof KeysData>(key: T): KeysData[T] {
+	return usePageContext().snapshot[key]?.data
 }
 
 const MOBILE_BREAKPOINT = 1024
@@ -49,10 +54,7 @@ export const appState = atom(null, "appState").pipe(
 		updateReactiveIsMobile: action((ctx) => {
 			const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
 
-			const onChange = () => {
-				appState.isMobile(ctx, mql.matches)
-			}
-
+			const onChange = () => appState.isMobile(ctx, mql.matches)
 			mql.addEventListener("change", onChange)
 
 			return {
@@ -69,9 +71,21 @@ export const appState = atom(null, "appState").pipe(
 			}))
 		),
 		options: atom<AppOptionsPayloadExtend>(appOptionsInit, `${name}.options`).pipe(withSsr(APP_OPTIONS_KEY)),
-		dict: reatomMap<string, string>(new Map(), `${name}.dict`).pipe(withSsr(APP_DICTIONARIES_KEY))
+		dict: atom<AppDictionaries>({}, `${name}.dict`).pipe(withSsr(APP_DICTIONARIES_KEY))
 	})),
 );
+
+export const userState = atom(null, "userState").pipe(
+	withAssign((_, name) => ({
+		geo: atom(null, `${name}.geo`).pipe(
+			withAssign(() => ({
+				country: atom((ctx) => ctx.spy(appState.options).country, `${name}.country`)
+			}))
+		),
+		locale: atom((ctx) => ctx.spy(appState.options).locale ?? localeDefault, "locale"),
+		isAuthed: atom<boolean>((ctx) => ctx.spy(appState.options)?.isAuth ?? false, "isAuthed")
+	}))
+)
 
 type Target<T = any> = Record<string, {
 	atom: (ctx: Ctx, atom: any) => void,
@@ -87,8 +101,7 @@ const COOKIE_TARGETS: Target = {
 
 export const app = atom(null, "app").pipe(
 	withAssign((_, name) => ({
-		init: action((ctx, pageCtx: PageContext) => {
-			pageContextAtom(ctx, pageCtx);
+		init: action((ctx) => {
 			appState.initState.isMobile(ctx, isMobile());
 
 			const screen = appState.updateReactiveIsMobile(ctx)
@@ -102,10 +115,7 @@ export const app = atom(null, "app").pipe(
 
 			return () => unsubs.forEach(t => { t() })
 		}, `${name}.init`),
-		initCookie: action((ctx, pageCtx: PageContextServer) => {
-			const headers = pageCtx.headers;
-			if (!headers) return;
-
+		initCookie: (ctx: Ctx, headers: NonNullable<PageContextServer["headers"]>) => {
 			const cookieStr = headers["cookie"];
 			const cookies = parseCookie(cookieStr);
 			if (!Object.keys(cookies).length) return;
@@ -114,48 +124,13 @@ export const app = atom(null, "app").pipe(
 				const target = COOKIE_TARGETS[key as keyof typeof COOKIE_TARGETS];
 				if (!target) continue;
 
-				const finalValue = target.validator?.(value) ?? value;
-				devLog(finalValue, "for", key);
-
-				target.atom(ctx, finalValue);
+				const final = target.validator?.(value) ?? value;
+				target.atom(ctx, final);
 			}
-		})
+		}
 	}))
 )
-export const debugState = atom(null, "debugState").pipe(
-	withAssign((_, name) => ({
-		enabled: atom(false, `${name}.enabled`).pipe(withLocalStorage({ key: "debugIsEnabled" })),
-	}))
-)
-export const debug = atom(null, "debug").pipe(
-	withAssign(() => ({
-		init: action((ctx) => {
-			const isDebug = ctx.get(debugState.enabled)
-			if (isDebug) {
-				debug.activate(ctx)
-			}
-		}),
-		activate: action((ctx) => {
-			debugState.enabled(ctx, true);
 
-			if (document.getElementById("react-scan")) return;
-
-			const script = document.createElement('script');
-			script.id = "react-scan";
-			script.src = '//unpkg.com/react-scan/dist/auto.global.js';
-			script.async = true;
-			script.crossOrigin = "anonymous";
-
-			document.head.appendChild(script);
-		}),
-		deactivate: action((ctx) => {
-			debugState.enabled(ctx, false)
-			
-			window.location.reload()
-		}),
-		toggle: action((ctx) => {
-			const isDebug = ctx.get(debugState.enabled)
-			isDebug ? debug.deactivate(ctx) : debug.activate(ctx)
-		})
-	}))
-)
+export function getFromDictionary(ctx: Ctx, key: string) {
+	return ctx.get(appState.dict)[key] ?? key
+}

@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db"
-import * as z from "zod/v4"
+import * as z from "zod"
 import { rcon } from "#/shared/rcon/client";
 import { invariant } from "#/helpers/invariant";
 
@@ -69,7 +69,7 @@ const getMuteCmd = ({ type, nickname, time, reason }: BaseCmd & MuteCmdArgs) => 
 type ExecCmdFnReturn = string
 type ExecCmdFn = (payload: any) => ExecCmdFnReturn;
 
-const EXEC_CMDS: Partial<Record<UsersControlRestrictSchema["type"], ExecCmdFn>> = {
+const EXEC_CMDS: Record<UsersControlRestrictSchema["type"], ExecCmdFn> = {
   ban: getBanCmd,
   unban: getBanCmd,
   mute: getMuteCmd,
@@ -117,12 +117,9 @@ async function execCmd({
 
   const tasks = nicknames.map(async nickname => {
     const payload = { ...args, nickname };
-    const toExec = exec?.(payload);
-
-    if (toExec) {
-      const cmd = await client.send(toExec);
-      return stripMinecraftColors(cmd.toString());
-    }
+    const toExec = exec(payload);
+    const cmd = await client.send(toExec);
+    return stripMinecraftColors(cmd.toString());
   });
   
   let result: string[];
@@ -182,7 +179,6 @@ async function unregisterUsers(nicknames: Nicknames, args: KickCmdArgs): Promise
   return { ok: true, type: "unregister", payload: nicknames }
 }
 
-// 
 export async function changeRoleUsers(
   nicknames: UsersControlSchema["nicknames"],
   { type, targetRoleId }: Omit<UsersControlRolesSchema, "nicknames">

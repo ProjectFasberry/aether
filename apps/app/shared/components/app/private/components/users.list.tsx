@@ -32,7 +32,7 @@ const userItemVariant = tv({
   }
 })
 
-const UsersItem = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, role_name, role_id }) => {
+const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, nickname, uuid, premium_uuid }) => {
   const isChecked = ctx.spy(getIsCheckedAtom(nickname));
   const isExpanded = ctx.spy(getIsSelectedUser(nickname));
   const isIdentity = ctx.get(currentUserState)?.nickname === nickname;
@@ -55,13 +55,15 @@ const UsersItem = reatomComponent<PrivatedUser>(({ ctx, id, avatar, nickname, ro
               checked={isChecked}
               onCheckedChange={v => usersControl.selectSingle(ctx, v, nickname)}
             />
-            <Link href={createLink("player", nickname)} className="flex items-center min-w-0 gap-2">
+            <Link href={`/private/users/${nickname}`} className="flex items-center min-w-0 gap-2">
               <Avatar url={avatar} nickname={nickname} className="h-6 w-6" />
               <Typography className="font-semibold text-sm truncate">
                 {nickname}
               </Typography>
             </Link>
-            <UserActionsChangeRoleLocal nickname={nickname} role_id={role_id} role_name={role_name} />
+            {role && (
+              <UserActionsChangeRoleLocal nickname={nickname} role_id={role.id} role_name={role.name} />
+            )}
           </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
@@ -99,7 +101,7 @@ export const Users = reatomComponent(({ ctx }) => {
 
   return (
     <div className="flex flex-col gap-1 w-full h-full">
-      {data.map((user) => <UsersItem key={user.id} {...user} />)}
+      {data.map((user) => <UsersItem key={user.uuid} {...user} />)}
       <UsersUpdatingSkeleton />
     </div>
   )

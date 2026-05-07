@@ -10,7 +10,7 @@ const SettingsMainDeleteAccount = reatomComponent(({ ctx }) => {
     <>
       <Button
         disabled={true}
-        className="w-fit self-start bg-red-600/80"
+        className="w-fit self-start bg-red/80"
         onClick={() => { }}
       >
         <Typography className="leading-5 font-semibold">

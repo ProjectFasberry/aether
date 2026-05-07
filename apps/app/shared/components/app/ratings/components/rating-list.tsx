@@ -10,7 +10,7 @@ import { useInView } from "react-intersection-observer";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@repo/ui/skeleton";
 import { ReactNode } from "react";
-import { AtomState } from "@reatom/core";
+import { AtomState } from "@reatom/framework";
 import { ratingAscAtom, ratingByAtom, ratingDataAtom, ratingIsViewAtom, ratingsAction, updateRatingAction } from "../models/ratings.model";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { Button } from "@repo/ui/button";

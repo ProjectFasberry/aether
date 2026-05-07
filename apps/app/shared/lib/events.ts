@@ -1,12 +1,12 @@
-import { Action, Ctx } from "@reatom/core";
-import { pageContextAtom } from "../models/page-context.model";
+import { Action, Ctx } from "@reatom/framework";
+import { pageCtxAtom } from "../models/page-context.model";
 
 export function startPageEvents(
   ctx: Ctx,
   events: Action,
   opts: { urlTarget?: string, key?: string } = {}
 ) {
-  const pageCtx = ctx.get(pageContextAtom);
+  const pageCtx = ctx.get(pageCtxAtom);
   if (!pageCtx) return;
 
   const key = opts.key ?? opts.urlTarget ?? 'page';

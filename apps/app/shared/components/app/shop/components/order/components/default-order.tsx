@@ -1,5 +1,5 @@
 import { PageLoader } from "@/shared/ui/page-loader";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { Dialog, DialogContent, DialogTrigger } from "@repo/ui/dialog";
 import { Typography } from "@repo/ui/typography";

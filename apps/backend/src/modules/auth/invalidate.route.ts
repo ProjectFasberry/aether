@@ -1,11 +1,11 @@
 import Elysia, { t } from "elysia";
 import { SESSION_KEY, unsetCookie } from "#/utils/auth/cookie";
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { session } from "./login.model";
 
 export const invalidate = new Elysia()
-	.use(defineUser())
+	.use(defineRequiredUser())
 	.derive(async ({ session, status }) => {
 		if (!session) throw status(401);
 		return { session };

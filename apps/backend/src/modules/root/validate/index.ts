@@ -1,4 +1,4 @@
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
@@ -23,7 +23,7 @@ const validateNickname = new Elysia()
   })
 
 const banStatus = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .get("/ban", async ({ nickname }) => {
     const data = await getBan(nickname)
     return { data }

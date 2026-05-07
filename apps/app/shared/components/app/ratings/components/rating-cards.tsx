@@ -7,7 +7,7 @@ import { currentUserState } from "@/shared/models/current-user.model";
 import { RatingBelkoin, RatingCharism, RatingLands, RatingParkour, RatingPlaytime, RatingReputation } from "@repo/shared/types/entities/rating";
 import "dayjs/locale/ru";
 import { Typography } from "@repo/ui/typography";
-import { atom } from "@reatom/core";
+import { atom } from "@reatom/framework";
 import dayjs from "@/shared/lib/create-dayjs"
 
 const ratingCardVariants = tv({

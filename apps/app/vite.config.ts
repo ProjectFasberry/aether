@@ -15,7 +15,9 @@ type StagePluginOpts = {
 }
 
 type StageOpts = {
-  buildOpts: BuildEnvironmentOptions,
+  buildOpts: BuildEnvironmentOptions & {
+    chunkHashing?: true
+  },
   pluginOpts: Partial<StagePluginOpts>
 }
 
@@ -23,7 +25,8 @@ const STAGES: Record<Stage, StageOpts> = {
   "staging": {
     buildOpts: {
       sourcemap: true,
-      minify: "esbuild"
+      minify: "esbuild",
+      chunkHashing: true
     },
     pluginOpts: {
       analyzerIsEnabled: true
@@ -94,11 +97,20 @@ export default defineConfig(({ mode }) => {
       target: "esnext",
       rollupOptions: {
         output: {
+          chunkFileNames: target.buildOpts?.chunkHashing ? 'assets/[name]-[hash].js' : undefined,
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
 
-            if (id.includes('reatom') || id.includes('zod') || id.includes('ky')) {
-              return "lib-vendor";
+            const CHUNK_GROUPS = [
+              { name: 'lib', matches: ['reatom', 'zod', 'ky', '@scure'] },
+              { name: 'editor', matches: ['@monaco-editor', 'tiptap'] },
+              { name: 'ui', matches: ['embla-carousel', '@radix-ui', "floating-ui", 'vaul', 'number-flow'] },
+            ];
+
+            for (const group of CHUNK_GROUPS) {
+              if (group.matches.some(match => id.includes(match))) {
+                return group.name;
+              }
             }
 
             const parts = id.split('node_modules/');

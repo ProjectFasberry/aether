@@ -34,9 +34,7 @@ export const Copy = ({ code }: { code: string }) => {
     <div className="relative overflow-hidden">
       <CopyButton content={code} />
       <pre className="pr-10">
-        <code>
-          {code}
-        </code>
+        <code>{code}</code>
       </pre>
     </div>
   )

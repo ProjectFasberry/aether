@@ -7,7 +7,7 @@ import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { landAtom } from "@/shared/components/app/land/models/land.model";
-import { createCtx } from "@reatom/core";
+import { createCtx } from "@reatom/framework";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 
 const previewImage = getStaticImage("arts/adventure-in-blossom.jpg")

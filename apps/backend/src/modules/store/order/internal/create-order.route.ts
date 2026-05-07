@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
-import { defineUser } from "#/lib/define";
+import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "#/helpers/wrap-error";
 import { cartItem } from "../../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";
@@ -15,7 +15,7 @@ const ERRORS_MAP: Record<string, string> = {
 }
 
 export const createOrder = new Elysia()
-  .use(defineUser())
+  .use(defineRequiredUser())
   .post('/create', async ({ nickname: initiator, status }) => {
     const [balance, finalPrice] = await Promise.all([
       getBalance(initiator, { server: "bisquite" }),

@@ -1,6 +1,6 @@
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { banner, bannerEditSchema } from "./banner.model";
 
 export const bannerEdit = new Elysia()

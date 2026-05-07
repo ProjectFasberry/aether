@@ -9,7 +9,7 @@ import { normalizeIp } from "#/helpers/normalize-ip";
 import type { DB } from "@repo/shared/types/db/general-database-types";
 import { authLogger } from "./auth.model";
 import { logger } from "#/utils/config/logger";
-import type * as z from "zod/v4";
+import type * as z from "zod";
 import { isProduction } from "#/shared/env";
 import { invariant } from "#/helpers/invariant";
 import type { registerSchema } from "@repo/shared/schemas/auth";

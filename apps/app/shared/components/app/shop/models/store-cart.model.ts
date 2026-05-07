@@ -1,10 +1,9 @@
-import { action, atom, batch, createCtx } from "@reatom/core";
+import { action, atom, batch, createCtx } from "@reatom/framework";
 import { reatomAsync, sleep, withAssign, withConcurrency, withInit, withStatusesAtom } from "@reatom/framework";
 import { PageContextServer } from "vike/types";
 import { logError } from "@/shared/lib/log";
 import { mergeSnapshot } from "@/shared/lib/snapshot";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { isAuthedAtom } from "@/shared/models/page-context.model";
 import { getRecipient } from "./store-recipient.model";
 import { navigate } from "vike/client/router";
 import { withSsr } from "@/shared/lib/reatom-helpers";
@@ -12,6 +11,7 @@ import { invariant } from "@/shared/lib/invariant";
 import { storeItem } from "./store-item.model";
 import { storeItems } from "./store.model";
 import { getIsAuth } from "@/shared/lib/utils";
+import { userState } from "@/shared/models/app.model";
 
 export type CartListPayload = ExtractApiData<"getStoreCartList">["data"]
 export type CartFinalPrice = ExtractApiData<"getStoreCartPrice">["data"]
@@ -87,7 +87,7 @@ export const cart = atom(null, "cart").pipe(
 			pageCtx.snapshot = newSnapshot;
 		},
 		addItem: reatomAsync(async (ctx, id: number) => {
-			const isAuth = ctx.get(isAuthedAtom);
+			const isAuth = ctx.get(userState.isAuthed);
 
 			if (!isAuth) {
 				ctx.schedule(() => navigate("/auth"));
