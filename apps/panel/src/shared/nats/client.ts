@@ -3,6 +3,7 @@ import { connect } from "@nats-io/transport-node";
 import { invariant } from "@repo/shared/lib/utils";
 import { natsLogger } from "../logger";
 import { env } from "../env";
+import { subs } from "./subs";
 
 const config: ConnectionOptions = {
 	servers: [`nats://${env.NATS_HOST}`],
@@ -16,7 +17,7 @@ const config: ConnectionOptions = {
 let client: NatsConnection | null = null;
 
 export const nats = {
-	async init(): Promise<void> {
+	async _init(): Promise<void> {
 		try {
 			client = await connect(config);
 			natsLogger.success(`Connected to ${config.servers}`);
@@ -28,6 +29,20 @@ export const nats = {
 	get(): NatsConnection {
 		invariant(client, "NATS client is not initialized");
 		return client;
+	},
+	async start(): Promise<void> {
+		await this._init();
+
+		try {
+			const nc = this.get();
+
+			for (const sub of subs) {
+				sub.cb(nc);
+				natsLogger.success(`${sub.cb.name} subscribed to ${sub.subject}`);
+			}
+		} catch (e) {
+			natsLogger.log(e);
+		}
 	},
 	async close(): Promise<void> {
 		if (!client) return;

@@ -1,29 +1,44 @@
-import { Action, Ctx } from "@reatom/framework";
-import { pageCtxAtom } from "../models/page-context.model";
+import { Action, Atom, atom, AtomMut, Ctx, onConnect, onDisconnect, withReset } from "@reatom/framework";
 
-export function startPageEvents(
-  ctx: Ctx,
-  events: Action,
-  opts: { urlTarget?: string, key?: string } = {}
-) {
-  const pageCtx = ctx.get(pageCtxAtom);
-  if (!pageCtx) return;
+type WithReset<T> = AtomMut<T | null> & {
+  reset: Action<[], T | null>;
+}
+type Page = { unsubscribe: () => void }
+type PageHandler<Args extends any[] = []> = (ctx: Ctx, atom: WithReset<Page>, ...args: Args) => Promise<void> | void;
 
-  const key = opts.key ?? opts.urlTarget ?? 'page';
+type PageModelConfig<TSpy> = {
+  name: string;
+  onConnAction?: PageHandler<[isConnected: () => boolean]>;
+  onDisconnAction?: PageHandler;
+  onAfterDisconn?: PageHandler;
+} & (
+    | { spyedAtom: Atom<TSpy>; onSpyAction: PageHandler<[payload: TSpy]> }
+    | { spyedAtom?: never; onSpyAction?: never }
+  )
 
-  if (opts.urlTarget) {
-    const urlPathname = pageCtx.urlPathname ?? '';
-    
-    if (!urlPathname.includes(`/${opts.urlTarget}`)) {
-      if (import.meta.env.DEV) console.log(`[${key}] Skip: URL not matching target`);
-      return;
-    }
+export const createPageModel = <TSpy = unknown>({
+  name, onConnAction, onDisconnAction, onAfterDisconn, spyedAtom, onSpyAction
+}: PageModelConfig<TSpy>) => {
+  const dataAtom = atom<Nullable<Page>>(null, `${name}.page`).pipe(withReset());
 
-    if (import.meta.env.DEV) console.log(`[${key}] URL match confirmed`);
+  onConnect(dataAtom, (ctx) => onConnAction?.(ctx, dataAtom, ctx.isConnected));
+
+  onDisconnect(dataAtom, (ctx) => {
+    const pageData = ctx.get(dataAtom);
+
+    onDisconnAction?.(ctx, dataAtom);
+
+    pageData?.unsubscribe?.()
+    dataAtom.reset(ctx)
+
+    onAfterDisconn?.(ctx, dataAtom)
+  })
+
+  if (spyedAtom && onSpyAction) {
+    spyedAtom.onChange((ctx, payload) => onSpyAction(ctx, dataAtom, payload))
   }
 
-  if (import.meta.env.DEV) console.log(`[${key}] Triggering page events`);
-  events(ctx);
+  return { dataAtom }
 }
 
 export const listenBackOnce = (cb: () => void) => {

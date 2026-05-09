@@ -1,5 +1,5 @@
 import { isProduction } from "#/shared/env";
-import { getNats } from "#/shared/nats/client";
+import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { authLogger, auth } from "./auth.model";
@@ -127,7 +127,7 @@ export const session = {
 		return encodeBase32LowerCaseNoPadding(bytes);
 	},
 	async afterLoginEvents({ nickname }: { nickname: string }) {
-		const nc = getNats();
+		const nc = nats.get()
 		const payload = { created_at: dayjs().toDate(), nickname }
 
 		nc.publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
@@ -249,7 +249,7 @@ export const loginQR = {
 	createAuthQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
 	getAuthQRSubject: (token: string) => `auth.qr.*.${token}`,
 	_notify(type: QREventsEvent, token: string) {
-		const nc = getNats();
+		const nc = nats.get()
 		const payload = { data: token }
 
 		nc.publish(this.createAuthQRSubject(type, token), JSON.stringify(payload));

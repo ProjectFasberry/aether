@@ -7,8 +7,8 @@ import { playerSeemsLikePlayersIsShowKey, playerSLPState } from "../components/a
 import { withSsr } from "../lib/reatom-helpers";
 import { isMobile, parseBoolean, parseCookie } from "../lib/utils";
 import { usePageContext } from "vike-react/usePageContext";
-import { MePayload } from "./current-user.model";
-import { debug } from "./debug.model";
+import { CURRENT_USER_KEY, MePayload } from "./current-user.model";
+import { PlayerRatePayload, PLAYERRATESTATE_DATA_KEY } from "../components/app/player/models/rate.model";
 
 export type AppOptionsPayload = ExtractApiData<"getAppOptions">["data"]
 export type AppOptionsPayloadExtend = AppOptionsPayload & {
@@ -28,8 +28,8 @@ export const appOptionsInit: AppOptionsPayloadExtend = {
 	pofEnabled: true,
 };
 
-export const APP_OPTIONS_KEY = "appState.options" as const;
-export const APP_DICTIONARIES_KEY = "appState.dict" as const;
+const APP_OPTIONS_KEY = "appState.options" as const;
+const APP_DICTIONARIES_KEY = "appState.dict" as const;
 
 export async function getAppOptions(init: RequestInit) {
 	return client<AppOptionsPayload>("app/options", init).exec();
@@ -39,12 +39,24 @@ export async function getAppDictionaries(init: RequestInit) {
 }
 
 type KeysData = {
-	APP_OPTIONS_KEY: AppOptionsPayloadExtend,
-	APP_DICTIONARIES_KEY: AppDictionaries,
-	CURRENT_USER_KEY: MePayload
+	[APP_OPTIONS_KEY]: AppOptionsPayloadExtend,
+	[APP_DICTIONARIES_KEY]: AppDictionaries,
+	[CURRENT_USER_KEY]: MePayload,
+	[PLAYERRATESTATE_DATA_KEY]: PlayerRatePayload
 }
-export function getDataFromSnapshot<T extends keyof KeysData>(key: T): KeysData[T] {
-	return usePageContext().snapshot[key]?.data
+
+export function getDataFromSnapshot<T extends keyof KeysData>(key: T, snapshot?: Snapshot): Nullable<KeysData[T]> {
+	const targetSnapshot = snapshot ?? usePageContext().snapshot
+	if (!targetSnapshot) return null;
+
+	const dataByKey = targetSnapshot[key]
+	if (!dataByKey) return null;
+
+	if ("data" in dataByKey) {
+		return dataByKey.data as KeysData[T]
+	}
+
+	return null;
 }
 
 const MOBILE_BREAKPOINT = 1024
@@ -83,7 +95,8 @@ export const userState = atom(null, "userState").pipe(
 			}))
 		),
 		locale: atom((ctx) => ctx.spy(appState.options).locale ?? localeDefault, "locale"),
-		isAuthed: atom<boolean>((ctx) => ctx.spy(appState.options)?.isAuth ?? false, "isAuthed")
+		isAuthed: atom<boolean>((ctx) => ctx.spy(appState.options)?.isAuth ?? false, "isAuthed"),
+		isAuthedManual: atom(false, `${name}.isAuthedManual`)
 	}))
 )
 
@@ -111,13 +124,42 @@ export const app = atom(null, "app").pipe(
 				screen.unsub
 			]
 
-			debug.init(ctx);
+			if (import.meta.env.DEV) {
+				async function initDevModules() {
+					try {
+						const [{ devtools }, { debug }] = await Promise.all([
+							import("./devtools/base.model"),
+							import("./debug.model")
+						]);
 
-			return () => unsubs.forEach(t => { t() })
+						const modules = [
+							{ name: 'Devtools', ref: devtools },
+							{ name: 'Debug', ref: debug }
+						];
+
+						modules.forEach(mod => {
+							try {
+								mod.ref.init(ctx);
+							} catch (e) {
+								console.warn(`${mod.name} failed to init:`, e);
+							}
+						});
+					} catch (e) {
+						console.error("Error loading optional modules:", e);
+					}
+				}
+
+				initDevModules()
+			}
+
+			return () => {
+				unsubs.forEach(t => { 
+					t()
+				})
+			}
 		}, `${name}.init`),
 		initCookie: (ctx: Ctx, headers: NonNullable<PageContextServer["headers"]>) => {
-			const cookieStr = headers["cookie"];
-			const cookies = parseCookie(cookieStr);
+			const cookies = parseCookie(headers["cookie"]);
 			if (!Object.keys(cookies).length) return;
 
 			for (const [key, value] of Object.entries(cookies)) {

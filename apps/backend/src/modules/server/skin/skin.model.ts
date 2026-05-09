@@ -27,7 +27,7 @@ import { type Static, t, type Context } from "elysia";
 import { nanoid } from "nanoid";
 import { getRedisKey } from "#/helpers/redis";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { getNats } from "#/shared/nats/client";
+import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 
 export type Skin = {
@@ -437,7 +437,7 @@ export async function updatePlayersSkins(concurrency = 50, batchSize = 1000) {
 
   const end = performance.now();
 
-  const nc = getNats();
+  const nc = nats.get()
   nc.publish(SUBJECTS.EVENTS.SKINS.UPDATE, JSON.stringify({
     data: `Finished for ${(end - start).toFixed(2)}ms. Updated ${results.size} users.`
   }))

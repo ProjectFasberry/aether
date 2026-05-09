@@ -1,7 +1,7 @@
-import { getNats } from "#/shared/nats/client"
+import { nats } from "#/shared/nats/client"
 
 export function publishVoteNotify(nickname: string) {
-  const nc = getNats()
+  const nc = nats.get()
 
   const payload = JSON.stringify({
     type: "vote",

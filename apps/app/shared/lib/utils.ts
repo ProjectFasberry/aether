@@ -1,5 +1,4 @@
-import { PageContextServer } from "vike/types";
-import { APP_OPTIONS_KEY, AppOptionsPayloadExtend } from "../models/app.model";
+import { getDataFromSnapshot } from "../models/app.model";
 import { Atom, CtxSpy } from "@reatom/framework";
 import { isDeepEqual } from "@reatom/framework";
 
@@ -45,10 +44,9 @@ export const isMobile = (): boolean => {
   return true;
 };
 
-export function getIsAuth(snapshot: PageContextServer["snapshot"]) {
-  const actualSnapshot = snapshot[APP_OPTIONS_KEY].data as AppOptionsPayloadExtend;
-  const isAuth = actualSnapshot.isAuth
-  return isAuth
+export function getIsAuth(snapshot: Snapshot) {
+  const actualSnapshot = getDataFromSnapshot("appState.options", snapshot)
+  return actualSnapshot?.isAuth ?? false
 }
 
 export function parseCookie(header?: string): Record<string, string> {
@@ -68,35 +66,6 @@ export function parseCookie(header?: string): Record<string, string> {
       if (key) acc[key] = decodeURIComponent(value);
       return acc;
     }, {});
-}
-
-export function setCookie(
-  name: string,
-  value: string,
-  options: {
-    maxAgeMs?: number;
-    path?: string;
-    domain?: string;
-    secure?: boolean;
-    sameSite?: 'Strict' | 'Lax' | 'None';
-  } = {
-    sameSite: "Lax",
-    path: "/"
-  }
-) {
-  const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`];
-
-  if (options.maxAgeMs) {
-    const expires = new Date(Date.now() + options.maxAgeMs);
-    parts.push(`Expires=${expires.toUTCString()}`);
-  }
-
-  if (options.path) parts.push(`Path=${options.path}`);
-  if (options.domain) parts.push(`Domain=${options.domain}`);
-  if (options.secure) parts.push(`Secure`);
-  if (options.sameSite) parts.push(`SameSite=${options.sameSite}`);
-
-  document.cookie = parts.join('; ');
 }
 
 export function isEmptyArray(data: unknown): boolean {
@@ -198,3 +167,27 @@ export function getTopCountry(acceptLanguage?: string): string | null {
 
   return best?.country ?? null
 }
+
+export const throttle = <T extends unknown[]>(
+  callback: (...args: T) => void,
+  delay: number,
+) => {
+  let isWaiting = false;
+
+  return (...args: T) => {
+    if (isWaiting) {
+      return;
+    }
+
+    callback(...args);
+    isWaiting = true;
+
+    setTimeout(() => {
+      isWaiting = false;
+    }, delay);
+  };
+};
+
+export const isNullish = <T>(value: T | null | undefined): value is null | undefined => {
+  return value === null || value === undefined;
+};

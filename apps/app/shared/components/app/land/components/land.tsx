@@ -79,7 +79,7 @@ export const Land = reatomComponent(({ ctx }) => {
 
   if (!land || !landOwner) return null;
 
-  const { area, members, balance, stats, level, created_at } = land
+  const { area, members, privated, stats, level, created_at } = land
 
   return (
     <div className="flex flex-col lg:flex-row items-start gap-6 w-full h-full relative">

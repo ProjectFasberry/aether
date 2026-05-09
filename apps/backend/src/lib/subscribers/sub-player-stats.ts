@@ -1,8 +1,7 @@
 import { bisquite } from "#/shared/database/bisquite-db"
 import { reputation } from "#/shared/database/reputation-db"
-import { getNats } from "#/shared/nats/client"
 import { logErrorMsg } from "#/utils/config/log-utils";
-import type { Msg } from "@nats-io/nats-core"
+import type { Msg, NatsConnection } from "@nats-io/nats-core"
 
 type PlayerStats = {
   charism: number
@@ -74,9 +73,7 @@ async function handlePlayerStats(msg: Msg) {
   }
 }
 
-export const subscribePlayerStats = (subject: string) => {
-  const nc = getNats()
-
+export const subscribePlayerStats = (nc: NatsConnection, subject: string) => {
   const subscription = nc.subscribe(subject, {
     callback: (e, msg) => {
       if (e) return logErrorMsg(e)

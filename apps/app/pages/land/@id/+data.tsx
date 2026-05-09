@@ -17,7 +17,7 @@ export type Data = Awaited<ReturnType<typeof data>>;
 
 function metadata(
   land: Land,
-  pageContext: PageContextServer
+  pageCtx: PageContextServer
 ) {
   const title = wrapTitle(land.name.slice(0, 64))
   const created_at = dayjs(land.created_at.toString()).format("DD MMM YYYY");
@@ -30,7 +30,7 @@ function metadata(
     image: previewImage,
     Head: (
       <>
-        <meta property="og:url" content={pageContext.urlPathname} />
+        <meta property="og:url" content={pageCtx.urlPathname} />
         <meta property="og:type" content="website" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />

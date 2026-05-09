@@ -1,10 +1,9 @@
 import { general } from "#/shared/database/general-db";
-import { getNats } from "#/shared/nats/client";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { logger } from "#/utils/config/logger";
 import { callServerCommand } from "#/utils/server/call-command";
 import { validateReferal } from "#/utils/server/validate-referal";
-import type { Msg } from "@nats-io/nats-core";
+import type { Msg, NatsConnection } from "@nats-io/nats-core";
 
 async function handleReferalCheck(msg: Msg) {
   const nickname: string = new TextDecoder().decode(msg.data)
@@ -41,9 +40,7 @@ async function handleReferalCheck(msg: Msg) {
   }
 }
 
-export const subscribeRefferalCheck = (subject: string) => {
-  const nc = getNats()
-
+export const subscribeRefferalCheck = (nc: NatsConnection, subject: string) => {
   const subscription = nc.subscribe(subject, {
     callback: (e, msg) => {
       if (e) return logErrorMsg(e)

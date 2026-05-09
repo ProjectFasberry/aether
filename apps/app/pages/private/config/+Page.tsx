@@ -3,9 +3,7 @@ import { Typography } from "@repo/ui/typography";
 import { Methods } from "@/shared/components/app/private/components/methods";
 import { Roles } from "@/shared/components/app/private/components/roles";
 import { DictionariesWrapper, CreateDictionaries, ViewDictionaries } from "@/shared/components/app/private/components/dictionaries";
-import { action } from "@reatom/framework";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { startPageEvents } from "@/shared/lib/events";
+import { reatomComponent, useAtom } from "@reatom/npm-react";
 import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { ActionParent, actionsParentAtom, actionsSearchParamsAtom, actionsTypeAtom, ActionType } from "@/shared/components/app/private/models/actions.model";
 import { ReactNode } from "react";
@@ -13,6 +11,7 @@ import { CreateNews, EditNews, NewsWrapper, ViewNews } from "@/shared/components
 import { CreateEvent, EventsWrapper, ViewEvent } from "@/shared/components/app/private/components/events";
 import { BannersWrapper, CreateBanner, EditBanner, ViewBanner } from "@/shared/components/app/private/components/banners";
 import { ActionsHeader } from "@/shared/components/app/private/components/ui";
+import { createPageModel } from "@/shared/lib/events";
 
 const list: Record<string, Partial<Record<ActionType, ReactNode>>> = {
   "news": {
@@ -49,15 +48,16 @@ const ActionsHeaderSlot = reatomComponent<{ parent: ActionParent }>(({ ctx, pare
   return list[parent][targetType]
 }, "ActionsHeaderSlot")
 
-const events = action((ctx) => {
-  const pageContext = ctx.get(pageCtxAtom);
-  if (!pageContext) return;
-
-  actionsSearchParamsAtom(ctx, pageContext.urlParsed.search)
+const page = createPageModel({
+  name: "private.config",
+  onSpyAction: (ctx, dataAtom, pageCtx) => {
+    actionsSearchParamsAtom(ctx, (state) => pageCtx?.urlParsed.search ?? state)
+  },
+  spyedAtom: pageCtxAtom
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
+  const [_] = useAtom(page.dataAtom)
 
   return (
     <div className="flex flex-col gap-4 w-full h-full">

@@ -10,7 +10,9 @@ import { PageContext, PageContextClient } from 'vike/types';
 import { connectLogger } from "@reatom/framework"
 import { ErrorBoundaryProvider } from './error-boundary';
 import { Global } from './global';
-import { ssrSnapshots } from '@/shared/models/shared.model';
+import { initClientCtx, initSnapshots } from '@/shared/models/shared.model';
+import { ENVIRONMENT } from '@/shared/consts';
+import { withLog } from '@/shared/lib/reatom-helpers';
 
 interface Fn<Args extends any[] = any[], Return = any> {
   (...a: Args): Return
@@ -26,21 +28,6 @@ const useCreateCtx = (extension?: Fn<[Ctx]>) => {
 
   return ctxRef.current
 }
-
-const initSnapshots = action((ctx, pageCtx: PageContext) => {
-  const pageCtxSnapshot = pageCtx.snapshot;
-  if (!pageCtxSnapshot || !pageCtxSnapshot?.__meta) return;
-
-  for (const [key, snapshot] of Array.from(ssrSnapshots)) {    
-    if (pageCtxSnapshot.__meta.name !== key) continue;
-
-    snapshot(ctx, pageCtxSnapshot);
-
-    if (import.meta.env.DEV) {
-      console.log(`Snapshot ${key} inited`)
-    }
-  }
-})
 
 const Sync = () => {
   const pageCtx = usePageContext()
@@ -67,16 +54,20 @@ const AppProvider = ({ children }: PropsWithChildren) => {
 }
 
 const onCreateCtx = action((ctx, pageCtx: PageContext) => {
-  initSnapshots(ctx, pageCtx)
+  if (ENVIRONMENT === 'client') {
+    initClientCtx(ctx)
 
-  if (typeof window !== 'undefined' && import.meta.env.DEV) {
-    connectLogger(ctx)
+    if (import.meta.env.DEV) {
+      connectLogger(ctx)
+    }
   }
-})
+
+  initSnapshots(ctx, pageCtx)
+}, "onCreateCtx").pipe(withLog())
 
 const ReatomProvider = ({ children }: PropsWithChildren) => {
   const pageCtx = usePageContext();
-  const ctx = useCreateCtx((ctx) =>onCreateCtx(ctx, pageCtx))
+  const ctx = useCreateCtx((ctx) => onCreateCtx(ctx, pageCtx))
 
   return <reatomContext.Provider value={ctx}>{children}</reatomContext.Provider>
 }

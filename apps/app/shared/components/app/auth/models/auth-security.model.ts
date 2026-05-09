@@ -1,9 +1,6 @@
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
-import { withLocalStorage } from "@reatom/persist-web-storage";
 import { mnemonicToSeed, generateMnemonic } from '@scure/bip39';
-
-export const teststr = atom<Nullable<string>>(null).pipe(withLocalStorage({ key: "test-str-auth-sp" }))
 
 export const authSecurity = atom(null, "authSecurity").pipe(
   withAssign(() => ({
@@ -22,6 +19,7 @@ export const authSecurity = atom(null, "authSecurity").pipe(
       const { wordlist } = await import("@scure/bip39/wordlists/english.js")
 
       if (import.meta.env.DEV) {
+        const { teststr } = await import("./dev-only.model")
         const exists = ctx.get(teststr);
         return exists ? exists : teststr(ctx, generateMnemonic(wordlist))!
       }

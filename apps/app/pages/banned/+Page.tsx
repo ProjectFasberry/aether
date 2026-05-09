@@ -1,9 +1,8 @@
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
+import { reatomComponent, useAtom } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
-import { action } from "@reatom/framework"
 import dayjs from "@/shared/lib/create-dayjs"
-import { startPageEvents } from "@/shared/lib/events"
+import { createPageModel } from "@/shared/lib/events"
 import { pageCtxAtom } from "@/shared/models/page-context.model"
 import { logout } from "@/shared/components/app/auth/models/logout.model"
 import { bannedAction } from "@/shared/components/app/auth/models/banned.model"
@@ -71,12 +70,16 @@ const Banned = reatomComponent(({ ctx }) => {
   )
 })
 
-const events = action((ctx) => {
-  bannedAction(ctx)
+const page = createPageModel({
+  name: "banned",
+  onSpyAction: (ctx, dataAtom, pageCtx) => {
+    bannedAction(ctx)
+  },
+  spyedAtom: pageCtxAtom
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom]);
+  const [_] = useAtom(page.dataAtom)
 
   return (
     <div className="flex items-center h-[80vh] justify-center w-full">

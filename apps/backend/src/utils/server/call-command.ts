@@ -1,4 +1,4 @@
-import { getNats } from "#/shared/nats/client"
+import { nats } from "#/shared/nats/client"
 import { NATS_CONSUMERS } from "#/shared/nats/cons";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { jetstream } from "@nats-io/jetstream";
@@ -28,7 +28,7 @@ export type AbortableCommandArgs = {
 const timeout = 2000
 
 export const startOrderConsumer = async (): Promise<void> => {
-  const nc = getNats();
+  const nc = nats.get()
   const js = jetstream(nc);
 
   const orderCons = NATS_CONSUMERS["order"][0]

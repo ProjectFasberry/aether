@@ -9,8 +9,8 @@ function metadata() {
   }
 }
 
-export async function data(pageContext: PageContextServer) {
-  logRouting(pageContext.urlPathname, "data");
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data");
 
   const config = useConfig()
   config(metadata())

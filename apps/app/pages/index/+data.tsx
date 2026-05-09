@@ -14,14 +14,14 @@ const previewImage = getStaticImage("arts/8332de192322939.webp")
 const title = wrapTitle("Главная")
 const description = `Официальное приложение майнкрафт-проекта Fasberry. Жанр: RP, RPG, полу-ванила. 1.20.1+. Играть: ${`play.${env.VITE_MAIN_DOMAIN}`}.`
 
-function metadata(pageContext: PageContextServer) {
+function metadata(pageCtx: PageContextServer) {
   return {
     title,
     image: previewImage,
     description,
     Head: (
       <>
-        <meta property="og:url" content={pageContext.urlPathname} />
+        <meta property="og:url" content={pageCtx.urlPathname} />
         <meta property="og:type" content="website" />
         <meta name="robots" content="index, follow, noarchive" />
         <meta name="googlebot" content="index, follow, noimageindex, max-video-preview:-1, max-image-preview:large, max-snippet:-1" />

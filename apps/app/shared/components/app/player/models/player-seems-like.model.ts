@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import dayjs from "@/shared/lib/create-dayjs";
 import { client } from "@/shared/lib/client-wrapper";
 import { withSsr } from "@/shared/lib/reatom-helpers";
-import { setCookie } from "@/shared/lib/utils";
+import { setCookie } from "@/shared/lib/cookie-utils";
 
 export const playerSeemsLikePlayersIsShowKey = "playerSLPState.isShow"
 type SeemsLikePlayersPayload = ExtractApiData<"getServerSeems-likeByNickname">["data"]

@@ -1,7 +1,7 @@
 import "../imports";
 import "../declare.d.ts";
 
-import { handleFatalError } from "./utils/config/handle-log";
+import { handleProcessOnEvent } from "./utils/config/handle-log";
 import { checkDatabasesHealth } from "./shared/database/init";
 import { urls } from "./shared/constants/urls";
 import { permissions } from "./shared/constants/permissions";
@@ -43,6 +43,7 @@ async function bootstrap() {
 
 const shutdown = async (signal: string) => {
 	appLogger.log(`Received ${signal}. Starting graceful shutdown...`);
+	setTimeout(() => process.exit(1), 10000).unref();
 
 	await Promise.allSettled([
 		nats.close(),
@@ -60,7 +61,9 @@ const { startApp } = await import("./app");
 startApp();
 
 process
-	.on("uncaughtException", handleFatalError)
-	.on("unhandledRejection", handleFatalError)
+	.on("uncaughtException", (error) => handleProcessOnEvent("uncaughtException", { error }))
+	.on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { error }))
+	.on("rejectionHandled", () => handleProcessOnEvent("rejectionHandled", { kill: false, error: new Error("A promise rejection was handled late") }))
+	.on("warning", (error) => handleProcessOnEvent("warning", { error }))
 	.on("SIGTERM", () => shutdown("SIGTERM"))
 	.on("SIGINT", () => shutdown("SIGINT"))

@@ -1,6 +1,6 @@
-import { getNats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { natsLogger } from "#/utils/config/logger";
+import type { NatsConnection } from "@nats-io/nats-core";
 
 // async function sendLogs(subject: string, message: string) {
 //   try {
@@ -21,9 +21,7 @@ const A_SUBJECTS = [
   SUBJECTS.EVENTS.AUTHORIZATION.REGISTER
 ] as string[]
 
-export const subscribePostHook = (subject: string) => {
-  const nc = getNats()
-
+export const subscribePostHook = (nc: NatsConnection, subject: string) => {
   return nc.subscribe(subject, {
     callback: (err, msg) => {
       if (err) {

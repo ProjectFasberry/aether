@@ -1,17 +1,17 @@
 import dayjs from "@/shared/lib/create-dayjs"
 import { client } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework"
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
+import { reatomComponent, useAtom, useUpdate } from "@reatom/npm-react"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/table"
 import { action, atom } from "@reatom/framework"
 import { env } from "@/shared/env"
-import { startPageEvents } from "@/shared/lib/events"
 import { toast } from "sonner"
 import { reatomMap, sleep, withReset } from "@reatom/framework"
 import { onDisconnect } from "@reatom/framework"
 import { tv } from "tailwind-variants"
 import { getFromDictionary } from "@/shared/models/app.model"
+import { createPageModel } from "@/shared/lib/events"
 
 type HistoryPayload = {
   event: string;
@@ -64,21 +64,6 @@ esAtom.onChange((ctx, state) => {
       console.error('Failed to parse message data:', event.data, e);
     }
   })
-})
-
-const events = action((ctx) => {
-  const es = new EventSource(`${env.VITE_API_URL}/privated/history/events`, { withCredentials: true })
-  if (!es) return null;
-
-  const current = ctx.get(esAtom)
-  if (current) {
-    toast.info("Current es atom defined")
-    current.close()
-    esAtom(ctx, es)
-    return
-  }
-
-  esAtom(ctx, es)
 })
 
 onDisconnect(esAtom, (ctx) => {
@@ -177,8 +162,27 @@ const HistoryList = reatomComponent(({ ctx }) => {
   )
 }, "HistoryList")
 
+const page = createPageModel({
+  name: "private.history",
+  onConnAction: (ctx, dataAtom) => {
+    const es = new EventSource(`${env.VITE_API_URL}/privated/history/events`, { withCredentials: true })
+    if (!es) return;
+
+    const current = ctx.get(esAtom)
+
+    if (current) {
+      toast.info("Current es atom defined")
+      current.close()
+      esAtom(ctx, es)
+      return
+    }
+
+    esAtom(ctx, es)
+  }
+})
+
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), []);
+  const [_] = useAtom(page.dataAtom)
 
   return (
     <div className="bg-neutral-900 rounded-xl p-4">

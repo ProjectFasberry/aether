@@ -43,6 +43,13 @@ const STAGES: Record<Stage, StageOpts> = {
   }
 }
 
+const CHUNK_GROUPS = [
+  { name: 'lib', matches: ['reatom', 'zod', 'ky', '@scure'] },
+  { name: 'editor', matches: ['@monaco-editor', 'tiptap'] },
+  { name: 'ui', matches: ['embla-carousel', '@radix-ui', "floating-ui", 'vaul', 'number-flow'] },
+  { name: "dev", matches: ["tweakpane"]}
+];
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd()) as ImportMetaEnv;
   const host = env.VITE_APP_HOST ?? "0.0.0.0"
@@ -101,11 +108,6 @@ export default defineConfig(({ mode }) => {
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
 
-            const CHUNK_GROUPS = [
-              { name: 'lib', matches: ['reatom', 'zod', 'ky', '@scure'] },
-              { name: 'editor', matches: ['@monaco-editor', 'tiptap'] },
-              { name: 'ui', matches: ['embla-carousel', '@radix-ui', "floating-ui", 'vaul', 'number-flow'] },
-            ];
 
             for (const group of CHUNK_GROUPS) {
               if (group.matches.some(match => id.includes(match))) {

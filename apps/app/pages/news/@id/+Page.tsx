@@ -11,6 +11,7 @@ import { createLink, Link } from "@/shared/components/config/link";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
 import { useEffect, useState } from "react";
 import { getDataFromSnapshot } from "@/shared/models/app.model";
+import { usePageContext } from "vike-react/usePageContext";
 
 const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   const [editLink, setEditLink] = useState<string>("")
@@ -35,11 +36,12 @@ const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   )
 }, "NewsEdit")
 
-const News = reatomComponent(({ ctx }) => {  
+const News = reatomComponent(({ ctx }) => {
   const data = ctx.spy(newsState.item);
+  const pageCtx = usePageContext()
   if (!data) return null;
 
-  const currentUser = getDataFromSnapshot("CURRENT_USER_KEY")
+  const currentUser = getDataFromSnapshot("currentUser", pageCtx.snapshot)
   const html = renderToHTMLString({ extensions: editorExtensions, content: data.content as JSONContent })
 
   const allowEdit = currentUser?.meta.permissions.includes("news.update")

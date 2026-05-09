@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { getNats } from "#/shared/nats/client";
+import { nats } from "#/shared/nats/client";
 
 export const ACTIVITY_LOG_SUBJECT = "admin.activity.log"
 
@@ -14,7 +14,7 @@ export async function createAdminActivityLog(
     .returningAll()
     .executeTakeFirstOrThrow()
 
-  const nc = getNats()
+  const nc = nats.get()
 
   nc.publish(ACTIVITY_LOG_SUBJECT, JSON.stringify(query))
 

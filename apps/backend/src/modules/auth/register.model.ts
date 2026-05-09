@@ -1,6 +1,6 @@
 import { client } from "#/shared/api/client";
 import { general } from "#/shared/database/general-db";
-import { getNats } from "#/shared/nats/client";
+import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { createEvent } from "../server/events/events.model";
@@ -204,7 +204,7 @@ export const register = {
       title: "Регистрация",
     });
 
-    const nc = getNats();
+    const nc = nats.get()
 
     nc.publish(
       SUBJECTS.EVENTS.AUTHORIZATION.REGISTER,

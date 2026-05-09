@@ -1,24 +1,24 @@
 import { TopUpExchanges, TopupForm } from "@/shared/components/app/shop/components/wallet/top-up";
 import { topup, topupState } from "@/shared/components/app/shop/models/store-top-up.model";
-import { startPageEvents } from "@/shared/lib/events";
+import { createPageModel } from "@/shared/lib/events";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { pageCtxAtom } from "@/shared/models/page-context.model";
-import { action } from "@reatom/framework";
-import { useUpdate } from "@reatom/npm-react";
+import { useAtom } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 
 const boostsImg = getStaticImage("icons/boosts_icon.png")
 
-const events = action((ctx) => {
-  const pageCtx = ctx.get(pageCtxAtom);
-  if (!pageCtx) return;
-
-  topupState.search(ctx, pageCtx.urlParsed.search);
-  topup.fetchExchange(ctx)
+const page = createPageModel({
+  name: "topup",
+  onSpyAction: (ctx, dataAtom, pageCtx) => {
+    topupState.search(ctx, (state) => pageCtx?.urlParsed.search ?? state);
+    topup.fetchExchange(ctx)
+  },
+  spyedAtom: pageCtxAtom
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
+  const [_] = useAtom(page.dataAtom)
 
   return (
     <div className="flex flex-col h-full gap-6 w-full">

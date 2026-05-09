@@ -3,7 +3,7 @@ import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
 import { NATS_HOST, NATS_PASSWORD, NATS_USER } from "#/shared/env"
 import { invariant } from "#/helpers/invariant";
-import { NATS_SUBCRIBERS } from "./subscribers";
+import { subs } from "./subscribers";
 import { NATS_CONSUMERS, NATS_JS_STREAMS } from "./cons";
 import { startOrderConsumer } from "#/utils/server/call-command";
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
@@ -51,16 +51,16 @@ export const nats = {
 
     await this._init();
 
+    const nc = this.get();
+
     try {
-      for (const { fn, name, subject } of NATS_SUBCRIBERS) {
-        fn(subject);
-        natsLogger.success(`${name} subscribed to ${subject}`);
+      for (const sub of subs) {
+        sub.cb(nc);
+        natsLogger.success(`${sub.name} subscribed`);
       }
     } catch (e) {
       natsLogger.log(e);
     }
-
-    const nc = getNats();
 
     const js = jetstream(nc);
     const jsm = await jetstreamManager(nc);
@@ -87,5 +87,3 @@ export const nats = {
     startOrderConsumer();
   }
 }
-
-export const getNats = () => nats.get()

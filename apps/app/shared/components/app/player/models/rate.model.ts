@@ -7,7 +7,7 @@ import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { navigate } from "vike/client/router";
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
-import { userState } from "@/shared/models/app.model";
+import { getDataFromSnapshot, userState } from "@/shared/models/app.model";
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 
@@ -20,21 +20,22 @@ export type RateUser = {
 	avatar: string
 };
 
-const PLAYERRATESTATE_DATA_KEY = "playerRateState.data";
+export const PLAYERRATESTATE_DATA_KEY = "playerRateState.data";
+export type PlayerRatePayload = Nullable<Player["rate"]>;
 
 export const playerRateState = atom(null, "playerRateState").pipe(
 	withAssign((_, name) => ({
-		data: atom<Nullable<Player["rate"]>>(null, `${name}.data`).pipe(playerSsrModel.withSsr(PLAYERRATESTATE_DATA_KEY))
+		data: atom<PlayerRatePayload>(null, `${name}.data`).pipe(playerSsrModel.withSsr(PLAYERRATESTATE_DATA_KEY))
 	}))
 )
 
 playerState.nickname.onChange((ctx, state) => {
 	if (!state) return;
 
-	const snap = ctx.get(pageCtxAtom)?.snapshot
-	if (!snap) return;
+	const pageCtx = ctx.get(pageCtxAtom)
+	if (!pageCtx) return;
 
-	const snapData = snap[PLAYERRATESTATE_DATA_KEY]?.data
+	const snapData = getDataFromSnapshot("playerRateState.data", pageCtx.snapshot)
 	playerRateState.data(ctx, snapData)
 })
 

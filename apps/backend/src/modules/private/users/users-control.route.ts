@@ -11,11 +11,11 @@ import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import * as z from "zod";
-import { getNats } from "#/shared/nats/client";
+import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 
 function publish(event: string, data: { initiator: string, payload: string }) {
-  const nc = getNats()
+  const nc = nats.get()
   nc.publish(SUBJECTS.EVENTS.USERS.CONTROL.WILDCARD, JSON.stringify({ event, data }))
 }
 

@@ -1,10 +1,9 @@
 import { Avatar } from "@/shared/ui/avatar"
 import { pageCtxAtom } from "@/shared/models/page-context.model"
-import { action } from "@reatom/framework"
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
+import { reatomComponent, useAtom } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
-import { startPageEvents } from "@/shared/lib/events"
+import { createPageModel } from "@/shared/lib/events"
 import { users } from "@/shared/components/app/private/models/users.model"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { BackButton } from "@/shared/ui/back-button"
@@ -58,15 +57,16 @@ const UserInfo = reatomComponent(({ ctx }) => {
   )
 }, "UserInfo")
 
-const events = action((ctx) => {
-  const pageCtx = ctx.get(pageCtxAtom)
-  if (!pageCtx) return;
-
-  users.fetchSingle(ctx, pageCtx.routeParams.nickname)
+const page = createPageModel({
+  name: "users",
+  onSpyAction: (ctx, dataAtom, pageCtx) => {
+    users.fetchSingle(ctx, pageCtx?.routeParams.nickname ?? "")
+  },
+  spyedAtom: pageCtxAtom
 })
 
 export default function Page() {
-  useUpdate((ctx) => startPageEvents(ctx, events), [pageCtxAtom])
+  const [_] = useAtom(page.dataAtom)
 
   return (
     <div className="flex flex-col w-full gap-4 justify-center h-full">

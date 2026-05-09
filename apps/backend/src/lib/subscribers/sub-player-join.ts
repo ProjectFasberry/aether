@@ -1,11 +1,11 @@
 import dayjs from 'dayjs';
-import { getNats } from "#/shared/nats/client"
+import { nats } from "#/shared/nats/client"
 import { SUBJECTS } from "#/shared/nats/subjects"
 import * as z from "zod"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from '#/shared/database/general-db';
 import { safeJsonParse } from '#/utils/config/transforms';
-import type { Msg } from '@nats-io/nats-core';
+import type { Msg, NatsConnection } from '@nats-io/nats-core';
 import { logger, natsLogger } from '#/utils/config/logger';
 
 const userJoinSchema = z.object({
@@ -17,7 +17,7 @@ const userJoinSchema = z.object({
 function pushToReferral(
   { nickname }: { nickname: string }
 ) {
-  const nc = getNats()
+  const nc = nats.get()
 
   const payload = new TextEncoder().encode(nickname)
   nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload)
@@ -90,9 +90,7 @@ async function handlePlayerJoin(msg: Msg) {
   }
 }
 
-export const subscribePlayerJoin = (subject: string) => {
-  const nc = getNats()
-
+export const subscribePlayerJoin = (nc: NatsConnection, subject: string) => {
   const subscription = nc.subscribe(subject, {
     callback: (e, msg) => {
       if (e) return logErrorMsg(e)

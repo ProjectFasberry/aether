@@ -13,22 +13,15 @@ function metadata(order: OrderSingle) {
   }
 }
 
-export async function data(pageContext: PageContextServer) {
-  logRouting(pageContext.urlPathname, "data")
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data")
   
   const config = useConfig()
-  const headers = pageContext.headers ?? undefined
-  const type = pageContext.urlParsed.search["type"];
+  const headers = pageCtx.headers ?? undefined
+  const type = pageCtx.urlParsed.search["type"];
 
-  let order: OrderSinglePayload | null = null;
-
-  try {
-    order = await getOrder(pageContext.routeParams.id, { headers }, type)
-  } catch {}
-
-  if (!order) {
-    throw render("/not-exist")
-  }
+  const order: OrderSinglePayload | null = await getOrder(pageCtx.routeParams.id, { headers }, type).catch(_ => null)
+  if (!order) throw render("/not-exist")
 
   config(metadata(order))
 

@@ -1,27 +1,24 @@
 import { Ctx } from "@reatom/framework";
 import { PageContext } from "vike/types";
-import { snapshotAtom as defaultSnapshot } from "./reatom-helpers";
-import { SnapshotAtom } from "../models/shared.model";
+import { snapshotAtom as defaultSnapshotAtom } from "./reatom-helpers";
+import type { SnapshotAtom } from "../models/shared.model";
 
-type MergedSnapshot = Snapshot
-
-export function mergeSnapshot(ctx: Ctx, pageCtx: PageContext, snapshot?: SnapshotAtom): MergedSnapshot {
-  let metaName = (snapshot ?? defaultSnapshot).__reatom.name;
+export function mergeSnapshot(ctx: Ctx, pageCtx: PageContext, snapshotAtom?: SnapshotAtom): Snapshot {
+  let metaName = (snapshotAtom ?? defaultSnapshotAtom).__reatom.name;
   if (!metaName) {
     console.warn(`Snapshot name is not defined`)
   }
 
   if (metaName) {
     // name.ssrModel._snapshotAtom -> name.ssrModel
-    const firstDot = metaName.indexOf('.');
-    const secondDot = metaName.indexOf('.', firstDot + 1);
-    const end = secondDot === -1 ? metaName.length : secondDot;
+    const second = metaName.indexOf('.', metaName.indexOf('.') + 1);
+    const end = second === -1 ? metaName.length : second;
     metaName = metaName.substring(0, end); 
   }
 
-  const updSnap = snapshot
-    ? ctx.get(snapshot)
-    : ctx.get(defaultSnapshot)
+  const updSnap = snapshotAtom
+    ? ctx.get(snapshotAtom)
+    : ctx.get(defaultSnapshotAtom)
 
   return {
     ...pageCtx.snapshot,

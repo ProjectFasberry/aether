@@ -29,10 +29,10 @@ declare global {
     ? Data
     : never;
 
-  type Snapshot = Rec<PersistRecord<unknown>> & {
-    __meta?: {
-      name: string
-    }
+  type SnapshotMeta = { name: string };
+
+  type Snapshot = Record<string, PersistRecord<unknown> | SnapshotMeta | undefined> & {
+    __meta?: SnapshotMeta;
   }
 
   namespace Vike {
