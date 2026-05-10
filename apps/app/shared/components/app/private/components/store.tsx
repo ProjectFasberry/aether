@@ -15,7 +15,7 @@ import { PropsWithChildren, ReactNode } from "react"
 import { navigate } from "vike/client/router"
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
-import { getFromDictionary } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app/base.model"
 import { CreateItem } from "./store.create"
 import { StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
 

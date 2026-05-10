@@ -5,7 +5,7 @@ import { withAssign, withReset } from "@reatom/framework"
 import { playerState } from "./player.model"
 import { client } from "@/shared/lib/client-wrapper"
 import { isEmptyArray } from "@/shared/lib/utils"
-import { withSsr } from "@/shared/lib/reatom-helpers"
+import { withSsr } from '@/shared/models/ssr'
 
 type PlayerLandsPayload = ExtractApiData<"getServerLandsListByNickname">["data"]
 

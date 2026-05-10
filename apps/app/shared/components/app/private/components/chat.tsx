@@ -1,5 +1,5 @@
 import dayjs from "@/shared/lib/create-dayjs";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { reatomComponent, useAtom, useUpdate } from "@reatom/npm-react";
 import {
   chatCreate, chatCreateMessageAtom, chatHistory, chatHistoryState, chatEditState,
   chatEdit, getChatItemIsEditAtom, chatItemViewsAction, getChatItemViews, ChatItem, chatDisabledAtom,
@@ -13,9 +13,10 @@ import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { createLink, Link } from "@/shared/components/config/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ActionButton, DeleteButton } from "./ui";
 import { currentUserState } from "@/shared/models/current-user.model";
+import { createPageModel } from "@/shared/lib/events";
 
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {
   return (
@@ -208,18 +209,22 @@ const ChatCreateMessage = reatomComponent(({ ctx }) => {
   )
 }, "ChatCreateMessage")
 
-const Sync = reatomComponent(({ ctx }) => {
-  const disabled = ctx.get(chatDisabledAtom);
-
-  useEffect(() => {
-    if (!disabled) chatWs.init(ctx)
-    return () => chatWs.closeWs(ctx)
-  }, [])
-
-  return null
+const page = createPageModel({
+  name: "chat",
+  onSpyAction: (ctx, dataAtom, disabled) => {
+    if (!disabled) {
+      chatWs.init(ctx)
+    }
+  },
+  onDisconnAction: (ctx, dataAtom) => {
+    chatWs.closeWs(ctx)
+  },
+  spyedAtom: chatDisabledAtom
 })
 
 export const Chat = reatomComponent(({ ctx }) => {
+  const [_] = useAtom(page.dataAtom);
+
   const disabled = ctx.spy(chatDisabledAtom)
 
   if (disabled) {
@@ -234,7 +239,6 @@ export const Chat = reatomComponent(({ ctx }) => {
 
   return (
     <div className="flex fixed bottom-4 z-50 right-4 flex-col gap-2 bg-neutral-950 border border-neutral-900 rounded-xl w-[400px] h-2/4">
-      <Sync />
       <div className="flex px-4 items-center py-2 justify-between w-full">
         Чат
         <Button className="p-0" onClick={() => chatDisabledAtom(ctx, true)}>

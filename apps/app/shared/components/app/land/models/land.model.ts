@@ -2,7 +2,8 @@ import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { atom } from "@reatom/framework";
 import { withReset } from "@reatom/framework";
 import { currentUserState } from "@/shared/models/current-user.model";
-import { withHistory, withSsr } from "@/shared/lib/reatom-helpers";
+import { withHistory } from "@/shared/lib/reatom-helpers";
+import { withSsr } from '@/shared/models/ssr';
 import { logError } from "@/shared/lib/log";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 

@@ -8,7 +8,7 @@ import { logRouting } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { landAtom } from "@/shared/components/app/land/models/land.model";
 import { createCtx } from "@reatom/framework";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 
 const previewImage = getStaticImage("arts/adventure-in-blossom.jpg")
 
@@ -63,5 +63,5 @@ export async function data(pageCtx: PageContextServer) {
 
   const ctx = createCtx()
   landAtom(ctx, land)
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
+  pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

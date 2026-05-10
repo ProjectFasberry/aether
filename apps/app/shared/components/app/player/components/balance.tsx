@@ -7,9 +7,9 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-ca
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { navigate } from "vike/client/router";
-import { getFromDictionary } from "@/shared/models/app.model";
+import { getFromDictionary } from "@/shared/models/app/base.model";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
@@ -76,7 +76,7 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
 
 const BalanceCard = reatomComponent<BalanceCardProps>(({ ctx, value, wallet, image }) => {
   const title = getFromDictionary(ctx, wallet)
-  const isLoading = !ctx.spy(isClientAtom) || ctx.spy(balance.fetch.statusesAtom).isPending
+  const isLoading = !ctx.spy(pageState.isClientside) || ctx.spy(balance.fetch.statusesAtom).isPending
 
   return (
     <div className="relative rounded-2xl min-w-80 overflow-hidden w-full h-56">

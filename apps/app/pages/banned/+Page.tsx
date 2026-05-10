@@ -3,7 +3,6 @@ import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
 import { createPageModel } from "@/shared/lib/events"
-import { pageCtxAtom } from "@/shared/models/page-context.model"
 import { logout } from "@/shared/components/app/auth/models/logout.model"
 import { bannedAction } from "@/shared/components/app/auth/models/banned.model"
 
@@ -72,10 +71,9 @@ const Banned = reatomComponent(({ ctx }) => {
 
 const page = createPageModel({
   name: "banned",
-  onSpyAction: (ctx, dataAtom, pageCtx) => {
+  onConnAction: (ctx, dataAtom, pageCtx) => {
     bannedAction(ctx)
   },
-  spyedAtom: pageCtxAtom
 })
 
 export default function Page() {

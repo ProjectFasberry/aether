@@ -1,5 +1,5 @@
 import dayjs from "@/shared/lib/create-dayjs";
-import { reatomComponent } from "@reatom/npm-react";
+import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import { IconEye, IconPencil } from "@tabler/icons-react";
 import { newsState } from "@/shared/components/app/news/models/news.model";
@@ -9,14 +9,14 @@ import { editorExtensions } from "@/shared/components/config/editor";
 import { Avatar } from "@/shared/ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
-import { useEffect, useState } from "react";
-import { getDataFromSnapshot } from "@/shared/models/app.model";
+import { useState } from "react";
+import { getDataFromSnapshot } from "@/shared/models/app/utils";
 import { usePageContext } from "vike-react/usePageContext";
 
 const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
   const [editLink, setEditLink] = useState<string>("")
 
-  useEffect(() => {
+  useUpdate(() => {
     const params = new URLSearchParams(
       createActionsLinkValueAction(ctx, {
         parent: "news", type: "edit", target: id.toString()

@@ -1,10 +1,9 @@
-import { PageContextServer } from "vike/types";
 import { devtoolsConfig } from "./config";
-import { getCookieClient, getCookieServer, setCookie } from "@/shared/lib/cookie-utils";
-import { ENVIRONMENT } from "@/shared/consts";
+import { getCookieClient, setCookie } from "@/shared/lib/cookie-utils";
+import { isObject } from "@reatom/framework";
 
 export const DEVTOOLS_DATA_COOKIE_KEY = "devtools-data"
-const DEVTOOLS_COORDS_COOKIE_KEY = 'devtools-cookie';
+const DEVTOOLS_COORDS_COOKIE_KEY = 'devtools-coords';
 
 type NestedKeys<T> = T extends { value: any; __meta: any }
   ? never
@@ -17,21 +16,31 @@ export type DevtoolsCookieChildKey = Exclude<
   NestedKeys<typeof devtoolsConfig>,
   "value" | "__meta" | `${string}.value` | `${string}.__meta`
 >;
-type ServerOpts = Pick<PageContextServer, "headers">
-
-export type DevtoolsCoords = { x: number, y: number };
+export type DevtoolsCoords = { x: number, y: number, w: number, h: number };
 
 const DEFAULT_MAXAGE = 30 * 24 * 60 * 60 * 1000;
 const createCookieStorage = <T>(key: string, maxAge = DEFAULT_MAXAGE) => ({
   key,
-  set(value: T): Nullable<T> {
+  set(value: Partial<T>, patch = true): Nullable<T> {
     try {
-      const stringified = JSON.stringify(value);
-      const rawStr = setCookie(this.key, stringified, { maxAgeMs: maxAge });
+      let newValue: T;
+
+      if (patch) {
+        const current = this.get();
+
+        newValue = (isObject(current) && isObject(value))
+          ? { ...current, ...value }
+          : value as T;
+      } else {
+        newValue = value as T;
+      }
+
+      const stringified = JSON.stringify(newValue);
+      const rawStr = setCookie(this.key, stringified, { maxAgeMs: maxAge, path: "/" });
 
       return rawStr ? JSON.parse(decodeURIComponent(rawStr)) : null;
     } catch (e) {
-      console.error(`Error setting cookie [${this.key}]:`, e);
+      console.error(`Error updating cookie [${this.key}]:`, e);
       return null;
     }
   },
@@ -61,53 +70,45 @@ const setDeep = (obj: any, path: string[], value: any): any => {
   };
 };
 
-type CookiePayload = Record<string, unknown>
-
 export const devtoolsData = {
   key: DEVTOOLS_DATA_COOKIE_KEY,
-  _parse(opts?: ServerOpts): Record<string, any> {
-    let rawStr: string | null;
-
-    if (ENVIRONMENT === 'server') {
-      if (!opts) {
-        console.warn("Opts is required for server environment");
-        return {};
-      }
-      rawStr = getCookieServer(this.key, opts);
-    } else {
-      rawStr = getCookieClient(this.key);
-    }
-
-    if (!rawStr) return {};
-
+  _parse(): Record<string, any> {
+    if (typeof window === 'undefined') return {};
     try {
-      return JSON.parse(decodeURIComponent(rawStr));
+      const raw = localStorage.getItem(this.key);
+      return raw ? JSON.parse(raw) : {};
     } catch (e) {
       console.error("Devtools parse error:", e);
       return {};
     }
   },
-  getAll(opts?: ServerOpts): Nullable<CookiePayload> {
-    const data = this._parse(opts);
-    return Object.keys(data).length > 0 ? data : null;
+  getAll<T>(): T | null {
+    const data = this._parse();
+    return Object.keys(data).length > 0 ? (data as T) : null;
   },
-  get<T>(path: DevtoolsCookieChildKey, opts?: ServerOpts): Nullable<T> {
-    const data = this._parse(opts);
+  get<T>(path: DevtoolsCookieChildKey): T | null {
+    const data = this._parse();
     const result = path.split('.').reduce((acc, part) => acc?.[part], data);
     return (result as T) ?? null;
   },
-  setAll(value: object): Nullable<CookiePayload> {
+  setAll<T>(value: object): T | null {
     try {
       const stringified = JSON.stringify(value);
-      const resultStr = setCookie(this.key, stringified, { maxAgeMs: DEFAULT_MAXAGE });
-      return JSON.parse(decodeURIComponent(resultStr));
+      localStorage.setItem(this.key, stringified);
+      return JSON.parse(stringified) as T;
     } catch (e) {
+      console.error("Devtools save error:", e);
       return null;
     }
   },
-  set(path: DevtoolsCookieChildKey | typeof DEVTOOLS_DATA_COOKIE_KEY, value: any): Nullable<CookiePayload> {
+  set(path: DevtoolsCookieChildKey, value: any): any {
+    if (value instanceof Map) return null;
+
     const currentData = this._parse();
     const newData = setDeep(currentData, path.split('.'), value);
     return this.setAll(newData);
+  },
+  clear() {
+    localStorage.removeItem(this.key);
   }
-}
+};

@@ -12,7 +12,7 @@ import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
 import { HEADERS_LINKS, MENU_ACTIONS, MenuActionItem, MenuLink, showCartIconAtom, showCurrentUserMenuAtom, validatedLinksAtom } from "./navigation.model";
 import { MobileBottomBar } from "./mobile-navigation";
-import { appState } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app/base.model";
 import { Banner } from "../../widgets/components/banner";
 import { cn } from "@/shared/lib/cn";
 import { translate } from "@/shared/locales/helpers";
@@ -192,7 +192,7 @@ const HeaderUserBar = reatomComponent(({ ctx }) => {
 }, "HeaderUserBar")
 
 export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = false }) => {
-  const isMobile = ctx.spy(appState.isMobile)
+  const isMobile = ctx.spy(appState.currentState.isMobile)
 
   return (
     <div className="flex flex-col w-full border-b rounded-b-xl border-neutral-800 relative z-20">
@@ -230,7 +230,7 @@ export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = f
 }, "Header")
 
 export const Navigation = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.isMobile)
+  const isMobile = ctx.spy(appState.currentState.isMobile)
 
   return (
     <>

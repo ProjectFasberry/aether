@@ -1,13 +1,13 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { appState } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app/base.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 
 type BannerPayload = ExtractApiData<"getSharedBannerLatest">["data"]
 
-export const bannerIsExistsAtom = atom((ctx) => ctx.spy(appState.options).bannerIsExists, "bannerIsExists")
+export const bannerIsExistsAtom = atom((ctx) => ctx.spy(appState.options)?.flags?.isBanner, "bannerIsExists")
 bannerIsExistsAtom.onChange((ctx, state) => state && banner.fetch(ctx))
 
 export const banner = atom(null, "banner").pipe(
@@ -32,7 +32,7 @@ export const banner = atom(null, "banner").pipe(
     }, {
       name: `${name}.createView`,
       onFulfill: (ctx, res) => {
-        appState.options(ctx, (state) => ({ ...state, bannerIsExists: false }))
+        // appState.options(ctx, (state) => ({ ...state, bannerIsExists: false }))
         banner.refetchAll(ctx)
       },
       onReject: (ctx, e) => logError(e)

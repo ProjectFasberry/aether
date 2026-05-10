@@ -1,7 +1,7 @@
 import { isEmptyArray } from "@/shared/lib/utils";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 
 export type LandsPayload = ExtractApiData<"getServerLandsList">["data"]
@@ -9,7 +9,7 @@ export type LandsPayload = ExtractApiData<"getServerLandsList">["data"]
 export const landsAction = reatomAsync(async (ctx, params?: { limit?: number }) => {
   const limit = params?.limit ?? 32;
 
-  const param = ctx.get(pageCtxAtom)?.urlParsed.search["from"];
+  const param = ctx.get(pageState.urlParsed)?.search["from"];
   const fromIndex = param === 'index';
 
   if (fromIndex) {

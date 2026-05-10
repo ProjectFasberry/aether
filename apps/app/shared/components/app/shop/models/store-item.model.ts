@@ -3,7 +3,7 @@ import { action, atom } from "@reatom/framework";
 import { cart, cartState } from "./store-cart.model";
 import { logError } from "@/shared/lib/log";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { withSsr } from "@/shared/lib/reatom-helpers";
+import { withSsr } from '@/shared/models/ssr';
 import { withAssign } from "@reatom/framework";
 import { SelectItemToCartOptions, storeItemsState } from "./store.model";
 import { invariant } from "@/shared/lib/invariant";

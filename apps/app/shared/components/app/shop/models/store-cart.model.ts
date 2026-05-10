@@ -2,16 +2,16 @@ import { action, atom, batch, createCtx } from "@reatom/framework";
 import { reatomAsync, sleep, withAssign, withConcurrency, withInit, withStatusesAtom } from "@reatom/framework";
 import { PageContextServer } from "vike/types";
 import { logError } from "@/shared/lib/log";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { getRecipient } from "./store-recipient.model";
 import { navigate } from "vike/client/router";
-import { withSsr } from "@/shared/lib/reatom-helpers";
+import { withSsr } from '@/shared/models/ssr';
 import { invariant } from "@/shared/lib/invariant";
 import { storeItem } from "./store-item.model";
 import { storeItems } from "./store.model";
-import { getIsAuth } from "@/shared/lib/utils";
-import { userState } from "@/shared/models/app.model";
+import { getIsAuthed } from "@/shared/models/app/utils";
+import { userState } from "@/shared/models/app/base.model";
 
 export type CartListPayload = ExtractApiData<"getStoreCartList">["data"]
 export type CartFinalPrice = ExtractApiData<"getStoreCartPrice">["data"]
@@ -68,7 +68,7 @@ export const cart = atom(null, "cart").pipe(
 			const headers = pageCtx.headers;
 			if (!headers) return;
 
-			const isAuthed = getIsAuth(pageCtx.snapshot);
+			const isAuthed = getIsAuthed(pageCtx.snapshot);
 			assertDefined(isAuthed, "isAuthed")
 			
 			if (!isAuthed) return;
@@ -83,7 +83,7 @@ export const cart = atom(null, "cart").pipe(
 			cartState.price(ctx, price);
 			cartState.data(ctx, list.data);
 
-			const newSnapshot = mergeSnapshot(ctx, pageCtx);
+			const newSnapshot = snapshots.merge(ctx, pageCtx);
 			pageCtx.snapshot = newSnapshot;
 		},
 		addItem: reatomAsync(async (ctx, id: number) => {

@@ -4,7 +4,7 @@ import { Methods } from "@/shared/components/app/private/components/methods";
 import { Roles } from "@/shared/components/app/private/components/roles";
 import { DictionariesWrapper, CreateDictionaries, ViewDictionaries } from "@/shared/components/app/private/components/dictionaries";
 import { reatomComponent, useAtom } from "@reatom/npm-react";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { ActionParent, actionsParentAtom, actionsSearchParamsAtom, actionsTypeAtom, ActionType } from "@/shared/components/app/private/models/actions.model";
 import { ReactNode } from "react";
 import { CreateNews, EditNews, NewsWrapper, ViewNews } from "@/shared/components/app/private/components/news";
@@ -50,10 +50,10 @@ const ActionsHeaderSlot = reatomComponent<{ parent: ActionParent }>(({ ctx, pare
 
 const page = createPageModel({
   name: "private.config",
-  onSpyAction: (ctx, dataAtom, pageCtx) => {
-    actionsSearchParamsAtom(ctx, (state) => pageCtx?.urlParsed.search ?? state)
+  onSpyAction: (ctx, dataAtom, urlParsed) => {
+    actionsSearchParamsAtom(ctx, (state) => urlParsed?.search ?? state)
   },
-  spyedAtom: pageCtxAtom
+  spyedAtom: pageState.urlParsed
 })
 
 export default function Page() {

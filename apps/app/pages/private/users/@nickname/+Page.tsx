@@ -1,5 +1,5 @@
 import { Avatar } from "@/shared/ui/avatar"
-import { pageCtxAtom } from "@/shared/models/page-context.model"
+import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent, useAtom } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
@@ -59,10 +59,10 @@ const UserInfo = reatomComponent(({ ctx }) => {
 
 const page = createPageModel({
   name: "users",
-  onSpyAction: (ctx, dataAtom, pageCtx) => {
-    users.fetchSingle(ctx, pageCtx?.routeParams.nickname ?? "")
+  onSpyAction: (ctx, dataAtom, routeParams) => {
+    users.fetchSingle(ctx, routeParams?.nickname ?? "")
   },
-  spyedAtom: pageCtxAtom
+  spyedAtom: pageState.routeParams
 })
 
 export default function Page() {

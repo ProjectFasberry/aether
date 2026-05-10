@@ -8,7 +8,7 @@ import { IconLoader } from "@/shared/ui/icon-loader";
 import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, SessionPayload } from "../models/settings-security.model";
 import { IDetectedBarcode, Scanner, TrackFunction } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
-import { appState } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app/base.model";
 import { Skeleton } from "@repo/ui/skeleton.js";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
 import { SettingsSectionItem } from "../models/settings.model";

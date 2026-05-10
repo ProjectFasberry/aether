@@ -1,7 +1,7 @@
 import { Data } from "./+data";
 import { useAtom } from "@reatom/npm-react";
 import { order, orderState } from "@/shared/components/app/shop/models/store-order.model";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { useData } from "vike-react/useData";
 import { GameOrder } from "@/shared/components/app/shop/components/order/components/game-order";
 import { OrderSingleDefault } from "@repo/shared/types/entities/store";
@@ -10,19 +10,20 @@ import { createPageModel } from "@/shared/lib/events";
 
 const page = createPageModel({
   name: "order",
-  onSpyAction: (ctx, dataAtom, pageCtx) => {
-    if (!pageCtx) return;
+  onSpyAction: (ctx, dataAtom, pageData) => {
+    if (!pageData) return;
 
-    const { data } = pageCtx.data as { data: OrderSingleDefault }
+    const { data } = pageData as { data: OrderSingleDefault }
     const type = data.type
     
     if (type === 'default') {
-      const uniqueId = pageCtx.routeParams.id;
+      const routeParams = ctx.get(pageState.routeParams)
+      const uniqueId = routeParams.id;
       orderState.data(ctx, data)
       order.connect(ctx, uniqueId)
     }
   },
-  spyedAtom: pageCtxAtom
+  spyedAtom: pageState.data
 })
 
 export default function Page() {

@@ -1,4 +1,4 @@
-import { isClientAtom } from "@/shared/models/page-context.model"
+import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Separator } from "@repo/ui/separator"
 import { Skeleton } from "@repo/ui/skeleton"
@@ -43,7 +43,7 @@ const PlayerSocialsSkeleton = () => {
 export const PlayerSocials = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => playerSocials.init(ctx), []);
   
-  if (!ctx.spy(isClientAtom) || ctx.spy(playerSocials.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(playerSocials.fetch.statusesAtom).isPending) {
     return <PlayerSocialsSkeleton/>
   }
 

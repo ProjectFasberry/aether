@@ -7,7 +7,7 @@ import { logRouting } from "@/shared/lib/log";
 import { createCtx } from "@reatom/framework";
 import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
 import { getPlayer, playerSsrModel, playerState } from "@/shared/components/app/player/models/player.model";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 import dayjs from "@/shared/lib/create-dayjs"
 import { playerRateState } from "@/shared/components/app/player/models/rate.model";
 import { isEmptyArray } from "@/shared/lib/utils";
@@ -88,5 +88,5 @@ export async function data(pageCtx: PageContextServer) {
   playerRateState.data(ctx, rate);
   playerLandsState.data(ctx, lands);
 
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx, playerSsrModel.snapshotAtom)
+  pageCtx.snapshot = snapshots.merge(ctx, pageCtx, playerSsrModel.snapshotAtom)
 }

@@ -12,7 +12,7 @@ import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod";
 import { authSchema as loginSchema } from "@repo/shared/schemas/auth";
-import { appState } from "@/shared/models/app.model";
+import { spyOptionAtom } from "@/shared/models/app/base.model";
 
 type QRGeneratePayload = ExtractApiData<"postAuthLoginQrGenerate">["data"]
 type GameGeneratePayload = ExtractApiData<"postAuthLoginGameGenerate">["data"]
@@ -67,7 +67,7 @@ export const login = atom(null, "login").pipe(
     basic: atom(null, `${name}.basic`).pipe(
       withAssign(() => ({
         submit: reatomAsync(async (ctx) => {
-          const pofIsActive = ctx.get(appState.options).pofEnabled;
+          const pofIsActive = spyOptionAtom(ctx, "flags", "isPof", true)
           const token = ctx.get(pof.token);
 
           if (pofIsActive && !token) {

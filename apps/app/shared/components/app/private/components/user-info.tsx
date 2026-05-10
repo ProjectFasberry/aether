@@ -1,4 +1,4 @@
-import { getFromDictionary } from "@/shared/models/app.model";
+import { getFromDictionary } from "@/shared/models/app/base.model";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { action, atom } from "@reatom/framework";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";

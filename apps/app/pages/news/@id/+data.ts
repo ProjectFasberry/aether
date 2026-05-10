@@ -6,7 +6,7 @@ import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { PageContextServer } from "vike/types";
 import { createCtx } from "@reatom/framework";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 
 export type Data = Awaited<ReturnType<typeof data>>;
@@ -44,5 +44,5 @@ export async function data(pageCtx: PageContextServer) {
 
   const ctx = createCtx()
   newsState.item(ctx, news)
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
+  pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

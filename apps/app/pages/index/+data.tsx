@@ -6,7 +6,7 @@ import { logRouting } from "@/shared/lib/log";
 import { env } from "@/shared/env";
 import { getNews, newsState } from "@/shared/components/app/news/models/news.model";
 import { createCtx } from "@reatom/framework";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 import { eventsState, getEvents } from "@/shared/components/app/events/models/events.model";
 
 const previewImage = getStaticImage("arts/8332de192322939.webp")
@@ -46,5 +46,5 @@ export async function data(pageCtx: PageContextServer) {
 
   newsState.data(ctx, news.data)
   eventsState.data(ctx, events)
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
+  pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

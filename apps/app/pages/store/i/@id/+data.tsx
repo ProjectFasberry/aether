@@ -6,7 +6,7 @@ import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
 import { getStoreItem, StoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
 import { createCtx } from "@reatom/framework";
-import { mergeSnapshot } from "@/shared/lib/snapshot";
+import { snapshots } from "@/shared/models/snapshot";
 
 function metadata(
   item: StoreItem,
@@ -54,5 +54,5 @@ export async function data(pageCtx: PageContextServer) {
 
   const ctx = createCtx()
   storeItemState.data(ctx, data)
-  pageCtx.snapshot = mergeSnapshot(ctx, pageCtx)
+  pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

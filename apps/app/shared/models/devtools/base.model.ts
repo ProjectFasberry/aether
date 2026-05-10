@@ -1,190 +1,223 @@
-import { action, atom, entries, isObject, reatomAsync, take, withAssign } from '@reatom/framework';
+import { action, Atom, atom, entries, isObject, reatomAsync, take, withAssign } from '@reatom/framework';
 import { FolderApi, Pane } from 'tweakpane';
 import { ConfigItem, devtoolsConfig } from './config';
-import { withLog } from '../../lib/reatom-helpers';
 import { DevtoolsCookieChildKey, devtoolsCoords, DevtoolsCoords, devtoolsData } from './state.model';
-import { isNullish, throttle } from '@/shared/lib/utils';
+import { isMap, isNullish, throttle } from '@/shared/lib/utils';
 
-let x = 0;
-let y = 0;
-
-function hasSameStructure<T extends object>(pattern: T, target: unknown): target is T {
-  if (
-    typeof pattern !== 'object' || pattern === null ||
-    typeof target !== 'object' || target === null
-  ) {
-    return false;
-  }
-
-  const patternKeys = Object.keys(pattern) as Array<keyof T>;
-
-  return patternKeys.every((key) => {
-    if (!Object.hasOwn(target, key)) return false;
-
-    const valueP = pattern[key];
-    const valueT = (target as any)[key];
-
-    if (typeof valueP === 'object' && valueP !== null && !Array.isArray(valueP)) {
-      return hasSameStructure(valueP, valueT);
-    }
-
-    return true;
-  });
-}
-
-function getValueByPath<T>(obj: any, path: string): T | null {
-  if (!obj || !path) return null;
-
-  const parts = path.split('.');
-  let current = obj;
-
-  for (const part of parts) {
-    if (current && typeof current === 'object' && part in current) {
-      current = current[part];
-    } else {
-      return null;
-    }
-  }
-
-  if (current && typeof current === 'object' && '__meta' in current) {
-    return (current.value as T) ?? null;
-  }
-
-  return (current as T) ?? null;
-}
-
-const devtoolsState = atom(null, "devtoolsState").pipe(
-  withAssign((_, name) => ({
-    pane: atom<Pane | null>(null, `${name}.pane`)
+const devtoolsState = atom(null).pipe(
+  withAssign(() => ({
+    coords: atom({ x: 16, y: 16, w: 300, h: 400 }),
+    pane: atom<Nullable<Pane>>(null)
   }))
 )
 
-export const devtools = atom(null, "devtools").pipe(
+export const devtools = atom(null, "_devtools").pipe(
   withAssign((_, name) => ({
     init: reatomAsync(async (ctx) => {
       if (import.meta.hot?.data.pane) import.meta.hot.data.pane.dispose();
 
-      const devtoolsPane = devtoolsState.pane(ctx, new Pane())!
+      const devtoolsPane = devtoolsState.pane(ctx, new Pane()) as Pane
       if (import.meta.hot) import.meta.hot.data.pane = devtoolsPane;
 
-      const el = devtoolsPane.element
-      el.style.position = "fixed"
-      el.style.zIndex = "100";
+      devtools.view.define(ctx, devtoolsPane.element)
+      devtools.folders.define(ctx, devtoolsPane)
+    }, `${name}.init`),
+    folders: atom(null, `${name}.folders`).pipe(
+      withAssign((_, name) => ({
+        define: action((ctx, pane: Pane) => {
+          const configEntries = entries(devtoolsConfig);
 
-      function initPosition() {
-        const savedCoords = devtoolsCoords.get();
+          configEntries.forEach(([folderName, bindings], index) => {
+            const rootFolder = pane.addFolder({
+              title: folderName, expanded: true, index
+            })
 
-        if (savedCoords && typeof savedCoords.x === 'number') {
-          x = Math.min(savedCoords.x, window.innerWidth - el.offsetWidth);
-          y = Math.min(savedCoords.y, window.innerHeight - el.offsetHeight);
+            function addBinding(
+              configData: typeof bindings, 
+              folder: FolderApi, 
+              path: string
+            ) {
+              function bind(
+                keyName: string,
+                configItem: ConfigItem<unknown>,
+                fullPath: DevtoolsCookieChildKey
+              ) {
+                const target = configItem.value
 
-          el.style.left = `${x}px`;
-          el.style.top = `${y}px`;
+                if (isMap(target)) {
+                  (target as Map<string, Atom<unknown>>).forEach((atom, key) => {
+                    const value = {
+                      get [key]() {
+                        const state = ctx.get(atom);
+                        return typeof state === 'object' ? JSON.stringify(state, null, 2) : state;
+                      }
+                    };
 
-          return;
-        }
+                    folder
+                      .addBinding(value, key, { readonly: true, multiline: true, rows: 12 })
 
-        el.style.left = '16px';
-        el.style.top = '16px';
-      }
-
-      function defineView() {
-        const throttledSave = throttle((c: DevtoolsCoords) => devtoolsCoords.set(c), 200);
-
-        el.onpointerdown = (ev) => {
-          let offsetX = ev.clientX - el.offsetLeft;
-          let offsetY = ev.clientY - el.offsetTop;
-
-          function onMove(ev: PointerEvent) {
-            el.style.cursor = "move";
-
-            x = ev.clientX - offsetX;
-            y = ev.clientY - offsetY;
-
-            el.style.left = `${x}px`;
-            el.style.top = `${y}px`;
-
-            throttledSave({ x, y });
-          }
-
-          document.addEventListener("pointermove", onMove);
-
-          document.onpointerup = () => {
-            el.style.cursor = "auto";
-            document.removeEventListener("pointermove", onMove);
-
-            devtoolsCoords.set({ x, y });
-            document.onpointerup = null;
-          };
-        };
-      }
-
-      let persistValues = devtoolsData.getAll();
-
-      if (!persistValues) {
-        persistValues = devtoolsData.setAll(devtoolsConfig)
-      } else {
-        const hasSame = hasSameStructure(persistValues, devtoolsConfig)
-
-        if (!hasSame) {
-          persistValues = devtoolsData.setAll(devtoolsConfig)
-        }
-      }
-
-      function defineFolders() {
-        const configEntries = entries(devtoolsConfig)
-
-        configEntries.forEach(([folderName, bindings], index) => {
-          const rootFolder = devtoolsPane.addFolder({
-            title: folderName, expanded: true, index
-          })
-
-          function addBinding(data: typeof bindings, folder: FolderApi, path: string) {
-            for (const [folderName, folderVal] of entries(data)) {
-              if (isNullish(folderVal)) continue;
-
-              const configItem = folderVal as unknown as ConfigItem<unknown>
-              const fullPath = `${path}.${folderName}` as DevtoolsCookieChildKey;
-
-              if (isObject(configItem)) {
-                if ('__meta' in configItem) {
-                  const currentVal = getValueByPath(persistValues, fullPath)
-                  const binding = folder.addBinding({ [folderName]: currentVal }, folderName)
-
-                  binding.on("change", ({ value: bindingVal }) => {
-                    if (isNullish(bindingVal)) return;
-
-                    devtoolsData.set(fullPath, bindingVal)
-
-                    const { applyAs, applyTarget } = configItem.__meta
-
-                    if (applyAs === "atom") {
-                      applyTarget(ctx, bindingVal);
-                    }
+                    ctx.subscribe(atom, () => pane.refresh())
                   })
+                } else {
+                  let savedValue = devtoolsData.get(fullPath);
 
-                  continue;
+                  if (!isNullish(savedValue) && typeof savedValue !== typeof target) {
+                    savedValue = null;
+                  }
+
+                  if (!isNullish(savedValue)) {
+                    const { applyAs, applyTarget } = configItem.__meta;
+
+                    if (applyAs === 'atom') {
+                      applyTarget?.(ctx, savedValue);
+                    }
+
+                    if (applyAs === 'static') {
+                      // configItem.__meta.onChange?.(savedValue)
+                    }
+                  }
+
+                  const value = { [keyName]: !isNullish(savedValue) ? savedValue : target };
+
+                  folder
+                    .addBinding(value, keyName)
+                    .on("change", ({ value: bindingVal }) => {
+                      if (isNullish(bindingVal)) return;
+
+                      devtoolsData.set(fullPath, bindingVal)
+
+                      const { applyAs, applyTarget } = configItem.__meta;
+
+                      if (applyAs === 'atom') {
+                        applyTarget?.(ctx, bindingVal);
+                      }
+
+                      if (applyAs === 'static') {
+                        configItem.__meta.onChange?.(bindingVal)
+                      }
+                    })
                 }
+              }
 
-                if (!Array.isArray(configItem)) {
-                  const subFolder = folder.addFolder({
-                    title: folderName, expanded: false
-                  });
+              for (const [key, val] of entries(configData)) {
+                if (isNullish(val)) continue;
 
-                  addBinding(configItem, subFolder, fullPath);
+                const configItem = val as unknown as ConfigItem<unknown>
+                const fullPath = `${path}.${key}` as DevtoolsCookieChildKey;
+
+                if (isObject(configItem)) {
+                  if ('__meta' in configItem) {
+                    bind(key, configItem, fullPath);
+                    continue;
+                  }
+
+                  if (!Array.isArray(configItem)) {
+                    const subFolder = folder.addFolder({ title: key, expanded: false });
+                    addBinding(configItem, subFolder, fullPath);
+                  }
                 }
               }
             }
+
+            addBinding(bindings, rootFolder, folderName)
+          })
+        }, `${name}.define`)
+      }))
+    ),
+    view: atom(null, `${name}.view`).pipe(
+      withAssign((_, name) => ({
+        define: action((ctx, el: HTMLElement) => {
+          Object.assign(el.style, {
+            position: "fixed",
+            zIndex: "9999",
+            top: "0px",
+            left: "0px",
+            display: "flex",
+            flexDirection: "column",
+            resize: "both",
+            overflow: "hidden",
+            touchAction: "none"
+          });
+
+          const throttledSave = throttle((c: Partial<DevtoolsCoords>) => devtoolsCoords.set(c), 200);
+          const clampCoords = (x: number, y: number, w: number, h: number) => {
+            const maxX = Math.max(0, window.innerWidth - w);
+            const maxY = Math.max(0, window.innerHeight - h);
+
+            return {
+              x: Math.max(0, Math.min(x, maxX)),
+              y: Math.max(0, Math.min(y, maxY))
+            };
+          };
+
+          const savedCoords = devtoolsCoords.get();
+
+          if (savedCoords) {
+            const current = ctx.get(devtoolsState.coords);
+            const sanitized = clampCoords(savedCoords.x, savedCoords.y, current.w, current.h);
+
+            devtoolsState.coords(ctx, (prev) => ({
+              ...prev,
+              ...savedCoords,
+              ...sanitized
+            }));
           }
 
-          addBinding(bindings, rootFolder, folderName)
-        })
-      }
+          const handleWindowResize = () => {
+            const current = ctx.get(devtoolsState.coords);
+            const sanitized = clampCoords(current.x, current.y, current.w, current.h);
 
-      initPosition();
-      defineView();
-      defineFolders()
-    }, `${name}.init`).pipe(withLog()),
+            if (sanitized.x !== current.x || sanitized.y !== current.y) {
+              devtoolsState.coords(ctx, (prev) => ({ ...prev, ...sanitized }));
+            }
+          };
+
+          window.addEventListener('resize', throttle(handleWindowResize, 100));
+
+          ctx.subscribe(devtoolsState.coords, (c) => {
+            el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
+            el.style.width = `${c.w}px`;
+            el.style.height = `${c.h}px`;
+          });
+
+          el.onpointerdown = (ev) => {
+            const borderThreshold = 15;
+            if (ev.offsetX > el.offsetWidth - borderThreshold || ev.offsetY > el.offsetHeight - borderThreshold) return;
+
+            const startCoords = ctx.get(devtoolsState.coords);
+            const shiftX = ev.clientX - startCoords.x;
+            const shiftY = ev.clientY - startCoords.y;
+
+            const onMove = (moveEv: PointerEvent) => {
+              const x = moveEv.clientX - shiftX;
+              const y = moveEv.clientY - shiftY;
+
+              devtoolsState.coords(ctx, (prev) => ({ ...prev, x, y }));
+              throttledSave({ x, y });
+            };
+
+            document.addEventListener("pointermove", onMove);
+            document.addEventListener("pointerup", () => {
+              document.removeEventListener("pointermove", onMove);
+            }, { once: true });
+          };
+
+          const ro = new ResizeObserver(entries => {
+            for (let entry of entries) {
+              const { width, height } = entry.contentRect;
+              const current = ctx.get(devtoolsState.coords);
+
+              if (Math.abs(current.w - width) > 1 || Math.abs(current.h - height) > 1) {
+                devtoolsState.coords(ctx, (prev) => ({ ...prev, w: width, h: height }));
+                throttledSave({ w: width, h: height });
+              }
+            }
+          });
+
+          ro.observe(el);
+        }, `${name}.define`)
+      }))
+    ),
     wrap: action(async (ctx, cb: (pane: Pane) => (() => void)) => {
       let devtoolsPane = ctx.get(devtoolsState.pane);
 
@@ -198,7 +231,7 @@ export const devtools = atom(null, "devtools").pipe(
       }
 
       return cb(devtoolsPane)
-    }, `${name}.wrap`).pipe(withLog())
+    }, `${name}.wrap`)
   }))
 )
 

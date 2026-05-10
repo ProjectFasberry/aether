@@ -2,7 +2,7 @@ import { Avatar } from "@/shared/ui/avatar";
 import { playerRate, RateUser } from "@/shared/components/app/player/models/rate.model";
 import { createLink, Link } from "@/shared/components/config/link";
 import { isEmptyArray } from "@/shared/lib/utils";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { PageLoader } from "@/shared/ui/page-loader";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
@@ -33,7 +33,7 @@ const ListCard = ({ initiator, created_at, avatar }: RateUser) => {
 }
 
 const RateList = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(playerRate.fetchList.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(playerRate.fetchList.statusesAtom).isPending) {
     return <PageLoader />
   }
 

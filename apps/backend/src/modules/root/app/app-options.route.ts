@@ -36,11 +36,16 @@ export async function getBan(nickname: string) {
 }
 
 const appOptionsSchema = t.Object({
-  bannerIsExists: t.Boolean(),
-  isBanned: t.Boolean(),
-  isWl: t.Boolean(),
-  isAuth: t.Boolean(),
-  pofEnabled: t.Boolean()
+  flags: t.Object({
+    isBanner: t.Boolean(),
+    isBanned: t.Boolean(),
+    isPof: t.Boolean(),
+    isAuthed: t.Boolean(),
+    isWhitelisted: t.Boolean(),
+  }),
+  state: t.Object({
+    stage: t.UnionEnum(["staging", "prod"])
+  })
 });
 
 type AppOptionsPayload = Static<typeof appOptionsSchema>;
@@ -59,7 +64,7 @@ export const appOptionsList = new Elysia()
   .use(defineOptionalUser())
   .use(ipPlugin())
   .get("/options", async ({ nickname, ip }) => {
-    const [bannerIsExists, isBanned, pofEnabled] = await Promise.all([
+    const [isBanner, isBanned, isPof] = await Promise.all([
       nickname ? bannerExists(nickname) : false,
       nickname ? getBan(nickname) : null,
       getPofStatus()
@@ -68,11 +73,16 @@ export const appOptionsList = new Elysia()
     const isWl = getWhitelist(ip)
 
     const data: AppOptionsPayload = {
-      bannerIsExists,
-      isBanned: Boolean(isBanned),
-      isWl,
-      isAuth: Boolean(nickname),
-      pofEnabled
+      flags: {
+        isBanner,
+        isBanned: Boolean(isBanned),
+        isPof,
+        isAuthed: Boolean(nickname),
+        isWhitelisted: isWl
+      },
+      state: {
+        stage: "staging"
+      }
     }
 
     return { data }

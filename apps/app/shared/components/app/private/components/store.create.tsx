@@ -1,5 +1,5 @@
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor";
-import { getFromDictionary } from "@/shared/models/app.model";
+import { getFromDictionary } from "@/shared/models/app/base.model";
 import { AtomState, Ctx } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";

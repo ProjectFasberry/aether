@@ -3,7 +3,7 @@ import { action, atom, Ctx } from "@reatom/framework";
 import { reatomRecord, withAssign, withReset } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
 import { pof } from "../../../../models/shared.model";
-import { appState } from "@/shared/models/app.model";
+import { spyOptionAtom } from "@/shared/models/app/base.model";
 
 export type AuthType = "register" | "login";
 export type AuthErrorType = "nickname" | "password" | "findout";
@@ -50,7 +50,7 @@ authState.type.onChange((ctx) => auth.resetErrors(ctx));
 pof.token.onChange((ctx, state) => state !== null && pof.showTokenVerifySectionAtom.reset(ctx))
 
 export const isPofActiveAtom = atom((ctx) =>
-	ctx.spy(appState.options).pofEnabled ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
+	spyOptionAtom(ctx, "flags", "isPof", true) ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
 );
 
 export const authIsDisabledAtom = atom((ctx) =>
@@ -88,7 +88,7 @@ export const auth = atom(null, "auth").pipe(
 );
 
 export const authTriggerIsDisabledAtom = atom((ctx) =>
-	ctx.spy(appState.options).pofEnabled ? Boolean(ctx.spy(pof.token)) : false,
+	spyOptionAtom(ctx, "flags", "isPof", true) ? Boolean(ctx.spy(pof.token)) : false,
 );
 
 const ERRORS_RECORDS = {

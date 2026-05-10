@@ -1,59 +1,66 @@
 import { AtomMut } from "@reatom/framework"
-import { userState } from "../app.model"
+import { snapshotsMap } from "../snapshot"
+import { DEBUG_MODULES } from "../debug/const"
 
-type ConfigItemMeta<T> = {
-  applyAs: "atom",
-  applyTarget: AtomMut<T>
-} | {
-  applyAs: "static",
-  applyTarget?: never
-}
+type ConfigItemMeta<T> = |
+{ applyAs: "atom", applyTarget: AtomMut<T> } |
+{ applyAs: "static", applyTarget?: never, onChange?: (value: T) => void } |
+{ applyAs: "dynamic", applyTarget?: never }
 
-export type ConfigItem<T = unknown> = { 
-  value: T, 
-  __meta: ConfigItemMeta<T> 
+export type ConfigItem<T = unknown> = {
+  value: T, __meta: ConfigItemMeta<T>
 }
 
 export type DevtoolsConfig = {
-  [key: string]: ConfigItem<any> | DevtoolsConfig;
+  [K: string]: ConfigItem<any> | DevtoolsConfig;
 };
 
 const createConfig = <T extends DevtoolsConfig>(config: T): T => config;
 
-export const authConfig = createConfig({
-  state: {
-    isAuthed: {
-      value: false,
-      __meta: {
-        applyAs: "atom",
-        applyTarget: userState.isAuthedManual
-      }
-    }
-  }
+/** Helper for defining the item if types is broken */
+const defineItem = <T,>(item: ConfigItem<T>) => item;
+
+const authConfig = createConfig({
+  state: {}
 })
 
-export const loggingConfig = createConfig({
+const loggingConfig = createConfig({
   snapshot: {
     value: true,
-    __meta: {
-      applyAs: "static"
-    }
+    __meta: { applyAs: "static" }
   },
   atoms: {
     value: true,
-    __meta: {
-      applyAs: "static"
-    }
+    __meta: { applyAs: "static" }
   },
   actions: {
     value: true,
-    __meta: {
-      applyAs: "static"
+    __meta: { applyAs: "static" }
+  }
+})
+
+const globalConfig = createConfig({
+  flags: {
+    debug: {
+      "react-scan": defineItem({
+        value: false,
+        __meta: {
+          applyAs: "static",
+          onChange: (val) => val ? DEBUG_MODULES[0].activate() : DEBUG_MODULES[0].deactivate()
+        }
+      })
+    }
+  },
+  state: {
+    snapshots: {
+      value: snapshotsMap,
+      __meta: { applyAs: "dynamic" }
     }
   }
 })
 
 export const devtoolsConfig = {
   logging: loggingConfig,
-  auth: authConfig
+  auth: authConfig,
+  global: globalConfig
 } satisfies Record<string, DevtoolsConfig>;

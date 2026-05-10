@@ -10,7 +10,7 @@ import { createPhraseModel } from "./seed-phrase.model";
 import { createNavigationModel } from "./navigation.model";
 import { authSecurity } from "./auth-security.model";
 import { getExistNickname } from "@/shared/models/shared.model";
-import { appState } from "@/shared/models/app.model";
+import { spyOptionAtom } from "@/shared/models/app/base.model";
 import { translate } from "@/shared/locales/helpers";
 
 export type AuthRegisterType = |
@@ -65,7 +65,7 @@ export const register = atom(null, "register").pipe(
             return false;
           }
 
-          const pofIsActive = ctx.get(appState.options).pofEnabled;
+          const pofIsActive = spyOptionAtom(ctx, "flags", "isPof", true)
           const token = ctx.get(pof.token);
 
           if (pofIsActive && !token) {

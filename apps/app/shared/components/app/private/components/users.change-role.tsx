@@ -1,4 +1,4 @@
-import { getFromDictionary } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app/base.model"
 import { reatomComponent } from "@reatom/npm-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import { Typography } from "@repo/ui/typography"

@@ -7,7 +7,7 @@ import { Typography } from "@repo/ui/typography";
 import { serverStatus } from "../models/intro.model";
 import { env } from "@/shared/env";
 import { expImage } from "@/shared/consts/images";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { translate } from "@/shared/locales/helpers";
 
 onConnect(serverStatus.fetch.dataAtom, serverStatus.fetch)
@@ -20,7 +20,7 @@ onConnect(serverStatus.fetch.dataAtom, async (ctx) => {
 })
 
 const IntroStatus = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom)) {
+  if (!ctx.spy(pageState.isClientside)) {
     return <Skeleton className="w-4 h-4 inline-flex rounded-sm" />
   }
 

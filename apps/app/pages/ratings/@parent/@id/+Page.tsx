@@ -1,16 +1,15 @@
 import { Ratings } from "@/shared/components/app/ratings/components/rating-list";
 import { ratingByAtom, ratingsAction, ratingServerAtom } from "@/shared/components/app/ratings/models/ratings.model";
 import { createPageModel } from "@/shared/lib/events";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { useAtom } from "@reatom/npm-react";
 
 const page = createPageModel({
   name: "ratingsById",
   onConnAction: (ctx, dataAtom) => {
-    const pageCtx = ctx.get(pageCtxAtom)
-    if (!pageCtx) return;
+    const routeParams = ctx.get(pageState.routeParams)
 
-    const { id, parent } = pageCtx.routeParams
+    const { id, parent } = routeParams;
 
     if (!id || !parent) {
       throw new Error("Target params is not defined")

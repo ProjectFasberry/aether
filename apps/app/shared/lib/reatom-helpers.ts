@@ -1,11 +1,8 @@
-import { Action, atom, Atom, AtomState } from '@reatom/framework';
-import { ssrModel } from '../models/shared.model';
+import { Action, atom, Atom, AtomState, createCtx, Ctx } from '@reatom/framework';
 import { devtoolsData } from '../models/devtools/state.model';
 import { ENVIRONMENT } from '../consts';
-
-export const { snapshotAtom, withSsr } = ssrModel({
-  name: "default", subscribe: true, mutable: true
-});
+import { useRef } from 'react';
+import { logger } from './logger';
 
 export function withHistory<T extends Atom>(length = 2): (target: T) => T & {
   history: Atom<[current: AtomState<T>, ...past: Array<AtomState<T>>]>
@@ -34,10 +31,25 @@ export function withLog<T extends Action>(opts?: { withParams?: true, withEnv?: 
         if (opts?.withParams) result.params = params;
         if (opts?.withEnv) result.environment = ENVIRONMENT;
 
-        console.log(`Action called: ${name}`, result);
+        logger.withTag(ENVIRONMENT).log(`Action called: ${name}`, result);
       })
     }
 
     return target;
   };
+}
+
+interface Fn<Args extends any[] = any[], Return = any> {
+  (...a: Args): Return
+}
+
+export const useCreateCtx = (extension?: Fn<[Ctx]>) => {
+  const ctxRef = useRef(null as null | Ctx)
+
+  if (!ctxRef.current) {
+    ctxRef.current = createCtx({ restrictMultipleContexts: false })
+    extension?.(ctxRef.current)
+  }
+
+  return ctxRef.current
 }

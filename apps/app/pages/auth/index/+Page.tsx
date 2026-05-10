@@ -2,10 +2,9 @@ import { AuthError, Verify } from "@/shared/components/app/auth/components/auth"
 import { type AuthType, auth, authIsDisabledAtom, authState, authTriggerIsDisabledAtom } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useAtom } from "@reatom/npm-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
-import { action } from "@reatom/framework";
 import { Link } from "@/shared/components/config/link";
 import { createPageModel } from "@/shared/lib/events";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { showResetPasswordAtom } from "@/shared/components/app/auth/models/login.model";
 import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
@@ -53,7 +52,7 @@ const Auth = reatomComponent(({ ctx }) => {
 const page = createPageModel({
   name: "auth",
   onConnAction: async (ctx, dataAtom, isConnected) => {
-    authState.searchParams(ctx, (state) => ctx.get(pageCtxAtom)?.urlParsed.search ?? state)
+    authState.searchParams(ctx, (state) => ctx.get(pageState.urlParsed)?.search ?? state)
     
     if (!isConnected()) return;
 
@@ -69,14 +68,10 @@ const page = createPageModel({
       dataAtom(ctx, { unsubscribe })
     }
   },
-  onDisconnAction: (ctx, dataAtom) => {
+  onDisconnAction: (ctx) => {
     auth.resetAuthState(ctx)
     register.resetRegisterState(ctx)
-    console.log("onDisconnAction", ctx.get(dataAtom))
   },
-  onAfterDisconn: (ctx, dataAtom) => {
-    console.log("onAfterDisconn", ctx.get(dataAtom))
-  }
 })
 
 export default function Page() {

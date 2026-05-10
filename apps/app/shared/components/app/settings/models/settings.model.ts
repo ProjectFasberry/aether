@@ -5,7 +5,7 @@ import { ReactNode } from "react"
 import { logout } from "../../auth/models/logout.model"
 import { listenBackOnce } from "@/shared/lib/events"
 import { withUndo } from '@reatom/undo'
-import { appState } from "@/shared/models/app.model"
+import { appState } from "@/shared/models/app/base.model"
 import { DIALOG_DELAY } from "@/shared/consts/index"
 
 export type SettingsNavigationNode = {
@@ -71,7 +71,7 @@ export const settingsState = atom(null, "settingsState").pipe(
       withUndo({ length: 100 }),
       withReset(),
       withInit((ctx, target) => {
-        const isMobile = ctx.get(appState.isMobile);
+        const isMobile = ctx.get(appState.currentState.isMobile);
 
         if (isMobile) {
           return { parent: "main" as const, child: null }

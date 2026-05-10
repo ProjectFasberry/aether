@@ -2,7 +2,7 @@ import { PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { logRouting } from "@/shared/lib/log";
 import { CONFIG_PANEL_READ_PERMISSION } from "@/shared/models/current-user.model";
-import { getDataFromSnapshot } from "@/shared/models/app.model";
+import { getDataFromSnapshot } from "@/shared/models/app/utils";
 
 export const guard = async (pageCtx: PageContextServer) => {
   logRouting(pageCtx.urlPathname, "guard");

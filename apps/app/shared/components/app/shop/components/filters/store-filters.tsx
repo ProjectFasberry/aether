@@ -5,14 +5,14 @@ import { Ctx } from "@reatom/framework";
 import { Filter, filterIsAppliedAtom, filtersState, storeItems, storeItemsState } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
 import { LabelHTMLAttributes, useState } from "react";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { Input } from "@repo/ui/input";
 import { Vaul, VaulContent, VaulHeader, VaulTrigger } from "@/shared/ui/vaul";
-import { appState } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app/base.model";
 import { translate } from "@/shared/locales/helpers";
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
-  const searchQuery = ctx.spy(isClientAtom) 
+  const searchQuery = ctx.spy(pageState.isClientside) 
     ? ctx.spy(storeItemsState.filters.searchQuery) 
     : storeItemsState.filters.all.get(ctx, "searchQuery")
 
@@ -102,7 +102,7 @@ export const StoreFilterList = reatomComponent(({ ctx }) =>
 export const StoreFiltersSheet = reatomComponent(({ctx}) => {
   const [open, setOpen] = useState(false);
 
-  const isMobile = ctx.spy(appState.isMobile)
+  const isMobile = ctx.spy(appState.currentState.isMobile)
   if (!isMobile) return null;
 
   return (

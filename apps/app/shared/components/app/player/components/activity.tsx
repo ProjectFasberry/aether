@@ -2,7 +2,7 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { playerActivity, PlayerActivityPayload } from "../models/activity.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { expImage } from "@/shared/consts/images";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import { onConnect, sleep } from "@reatom/framework";
@@ -91,7 +91,7 @@ export const PlayerActivity = reatomComponent(({ ctx }) => {
 
   const data = ctx.spy(playerActivity.online.fetch.dataAtom);
 
-  if (!ctx.spy(isClientAtom) || ctx.spy(playerActivity.online.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(playerActivity.online.fetch.statusesAtom).isPending) {
     return <PlayerActivitySkeleton />
   }
 

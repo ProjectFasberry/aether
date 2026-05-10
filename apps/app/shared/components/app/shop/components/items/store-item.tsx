@@ -3,7 +3,7 @@ import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { Typography } from "@repo/ui/typography"
 import { getItemStatus, StoreItem as StoreItemProps, storeItem } from "../../models/store-item.model"
 import { Skeleton } from "@repo/ui/skeleton"
-import { isClientAtom } from "@/shared/models/page-context.model"
+import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent } from "@reatom/npm-react"
 import { CURRENCIES } from "../cart/cart-price"
 import { tv } from "tailwind-variants"
@@ -79,7 +79,7 @@ export const ItemPrice = ({ currency, price }: { currency: string, price: string
 }
 
 export const ItemSelectToCart = reatomComponent<Pick<StoreItemProps, "id">>(({ ctx, id }) => {
-  if (!ctx.spy(isClientAtom)) {
+  if (!ctx.spy(pageState.isClientside)) {
     return <Skeleton className={buyButtonVariants({ variant: "default" })} />
   }
 

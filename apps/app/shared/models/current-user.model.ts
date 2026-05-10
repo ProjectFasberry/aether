@@ -3,7 +3,7 @@ import { atom } from "@reatom/framework";
 import { withAssign, withReset } from "@reatom/framework";
 import { clientInstance } from "../api/client";
 import { parseWrappedJson } from '../lib/client-wrapper';
-import { withSsr } from '../lib/reatom-helpers';
+import { withSsr } from './ssr';
 
 export type MePayload = ExtractApiData<"getMe">['data'];
 

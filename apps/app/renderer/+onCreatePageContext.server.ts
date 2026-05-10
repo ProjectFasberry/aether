@@ -4,9 +4,9 @@ import { currentUserState, getMe } from "@/shared/models/current-user.model";
 import { logRouting } from '@/shared/lib/log';
 import { isBotRequest } from '@/shared/lib/bot-guard';
 import { redirect } from 'vike/abort';
-import { appState, appOptionsInit, getAppDictionaries, getAppOptions, app, AppOptionsPayload, AppDictionaries } from '@/shared/models/app.model';
+import { appState, getAppDictionaries, getAppOptions, initCookie, AppOptionsPayload, AppDictionaries, AppOptionsPayloadExtend } from '@/shared/models/app/base.model';
 import { setupUrlAtomSettings } from '@reatom/url';
-import { snapshotAtom } from '@/shared/lib/reatom-helpers';
+import { snapshotAtom } from '@/shared/models/ssr';
 import { getTopCountry } from '@/shared/lib/utils';
 
 type MePayload = ExtractApiData<"getMe">["data"]
@@ -41,20 +41,24 @@ export const onCreatePageContext = async (pageCtx: PageContextServer) => {
     pageCtx.snapshot = ctx.get(snapshotAtom)
   };
 
-  function setupApp(opts: AppOptionsPayload, headers: NonNullable<typeof pageCtx.headers>, dict: AppDictionaries) {
+  function setupApp(originalOpts: AppOptionsPayload, headers: NonNullable<PageContextServer["headers"]>, dict: AppDictionaries) {
     const country = getTopCountry(headers["accept-language"])
 
-    const optionsExtend = { ...opts, locale, country }
-    const isMobile = /Mobile|Android|iPhone|iPad/i.test(headers["user-agent"]);
+    const optionsExtended: AppOptionsPayloadExtend = { 
+      ...originalOpts, 
+      specified: { country } 
+    }
 
-    appState.isMobile(ctx, isMobile)
+    const isMobile = /Mobile|Android|iPhone|iPad/i.test(headers["user-agent"]);
+    
+    appState.currentState.isMobile(ctx, isMobile)
     appState.dict(ctx, dict);
-    appState.options(ctx, optionsExtend);
-    app.initCookie(ctx, headers);
+    appState.options(ctx, optionsExtended);
+    
+    initCookie(ctx, headers);
   };
 
   if (isBotRequest(headers, urlPathname)) {
-    setupApp(appOptionsInit, headers, {});
     updateSnapshot()
     return;
   }
@@ -78,7 +82,7 @@ export const onCreatePageContext = async (pageCtx: PageContextServer) => {
 
   setupApp(options, headers, dictionaries)
 
-  if (!options.isAuth) {
+  if (!options.flags.isAuthed) {
     updateSnapshot()
     return
   }

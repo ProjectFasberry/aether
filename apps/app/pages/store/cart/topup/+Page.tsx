@@ -2,7 +2,7 @@ import { TopUpExchanges, TopupForm } from "@/shared/components/app/shop/componen
 import { topup, topupState } from "@/shared/components/app/shop/models/store-top-up.model";
 import { createPageModel } from "@/shared/lib/events";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { useAtom } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 
@@ -10,11 +10,11 @@ const boostsImg = getStaticImage("icons/boosts_icon.png")
 
 const page = createPageModel({
   name: "topup",
-  onSpyAction: (ctx, dataAtom, pageCtx) => {
-    topupState.search(ctx, (state) => pageCtx?.urlParsed.search ?? state);
+  onSpyAction: (ctx, dataAtom, urlParsed) => {
+    topupState.search(ctx, (state) => urlParsed?.search ?? state);
     topup.fetchExchange(ctx)
   },
-  spyedAtom: pageCtxAtom
+  spyedAtom: pageState.urlParsed
 })
 
 export default function Page() {

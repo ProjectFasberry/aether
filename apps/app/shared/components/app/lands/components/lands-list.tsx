@@ -11,7 +11,7 @@ import { Avatar } from "../../../../ui/avatar"
 import { IconCircleFilled } from "@tabler/icons-react"
 import { MasonryGrid } from "@repo/ui/masonry-grid"
 import { NotFound } from "@/shared/ui/not-found"
-import { isClientAtom } from "@/shared/models/page-context.model"
+import { pageState } from "@/shared/models/page-context.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { translate } from "@/shared/locales/helpers"
 
@@ -105,7 +105,7 @@ const LandsListShortedSkeleton = () => {
 export const LandsListShorted = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => landsAction(ctx, { limit: 3 }), []);
 
-  if (!ctx.spy(isClientAtom) || ctx.spy(landsAction.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(landsAction.statusesAtom).isPending) {
     return <LandsListShortedSkeleton />
   }
 
@@ -131,17 +131,12 @@ export const LandsListShorted = reatomComponent(({ ctx }) => {
 }, "LandsListShorted")
 
 export const LandsList = reatomComponent(({ ctx }) => {
-  useUpdate(landsAction, []);
-
-  if (!ctx.spy(isClientAtom) || ctx.spy(landsAction.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(landsAction.statusesAtom).isPending) {
     return <LandsSkeleton />
   }
 
   const data = ctx.spy(landsAction.dataAtom)
-
-  if (!data) {
-    return <NotFound title={translate["shared.empty"]()} />
-  }
+  if (!data) return <NotFound title={translate["shared.empty"]()} />
 
   return (
     <MasonryGrid

@@ -29,9 +29,9 @@ declare global {
     ? Data
     : never;
 
-  type SnapshotMeta = { name: string };
+  type SnapshotMeta = Partial<{ name: string }>;
 
-  type Snapshot = Record<string, PersistRecord<unknown> | SnapshotMeta | undefined> & {
+  type Snapshot = Record<string, PersistRecord<unknown>> & {
     __meta?: SnapshotMeta;
   }
 

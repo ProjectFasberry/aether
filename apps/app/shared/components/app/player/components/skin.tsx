@@ -5,7 +5,7 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import React, { useEffect, useRef, useState } from "react";
 import { IconPlus, IconRotate, IconUpload, IconX } from "@tabler/icons-react";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { Button } from "@repo/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
 import {
@@ -29,7 +29,7 @@ const SkinRenderSkeleton = () => {
 const SkinRender = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => skins.init(ctx), []);
   
-  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinRenderSkeleton />;
   }
 
@@ -132,7 +132,7 @@ const SkinsHistoryListSkeleton = () => {
 }
 
 const SkinsHistoryList = reatomComponent<{ variant: "mobile" | "desktop" }>(({ ctx, variant }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinsHistoryListSkeleton />
   }
 
@@ -169,7 +169,7 @@ const Avatar = reatomComponent<{ width: number, height: number, src: string }>((
 }, "Avatar")
 
 const SkinMainHead = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(isClientAtom) || ctx.spy(skins.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinMainHeadSkeleton />
   }
 

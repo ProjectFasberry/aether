@@ -2,12 +2,12 @@ import { currentUserState } from "@/shared/models/current-user.model"
 import { atom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
 import { client } from "@/shared/lib/client-wrapper"
-import { ssrModel } from "@/shared/models/shared.model"
+import { createSsrModel } from "@/shared/models/snapshot"
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 export type PlayerOmitted = Omit<Player, "rate">
 
-export const playerSsrModel = ssrModel({ name: "player", subscribe: false })
+export const playerSsrModel = createSsrModel({ name: "player", subscribe: false })
 
 export const playerState = atom(null, "playerState").pipe(
   withAssign((_, name) => ({

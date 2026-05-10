@@ -2735,16 +2735,19 @@ export interface operations {
             content: {
                 "application/json": {
                     nickname: string & (unknown & unknown);
+                } & {
                     /** @default false */
                     strict: boolean;
                 };
                 "application/x-www-form-urlencoded": {
                     nickname: string & (unknown & unknown);
+                } & {
                     /** @default false */
                     strict: boolean;
                 };
                 "multipart/form-data": {
                     nickname: string & (unknown & unknown);
+                } & {
                     /** @default false */
                     strict: boolean;
                 };
@@ -2762,7 +2765,40 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            nickname: string;
+                            lower_case_nickname: string;
+                            uuid: string;
+                            created_at: string;
+                            premium_uuid: (string | null) | null;
+                            avatar: string;
+                            player: ({
+                                id: number;
+                            } | null) | null;
+                            role: ({
+                                id: number;
+                                name: string;
+                            } | null) | null;
+                            skin: ({
+                                skin_identifier: string;
+                                skin_variant: (string | null) | null;
+                                timestamp: number;
+                                skin_url: (string | null) | null;
+                                skin_head_url: (string | null) | null;
+                            }[] | null) | null;
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedRoleByIdPermissionAdd: {
         parameters: {
@@ -3210,11 +3246,20 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
-                            bannerIsExists: boolean;
-                            isBanned: boolean;
-                            isWl: boolean;
-                            isAuth: boolean;
-                            pofEnabled: boolean;
+                            flags: {
+                                isBanner: boolean;
+                                isBanned: boolean;
+                                isPof: boolean;
+                                isAuthed: boolean;
+                                isWhitelisted: boolean;
+                            };
+                            state: {
+                                /**
+                                 * @default staging
+                                 * @enum {string}
+                                 */
+                                stage: "staging" | "prod";
+                            };
                         };
                     };
                 };

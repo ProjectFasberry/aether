@@ -4,16 +4,16 @@ import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } fr
 import type { Selectable } from "kysely"
 import { Payments } from "@repo/shared/types/db/payments-database-types"
 import { logError } from '@/shared/lib/log';
-import { mergeSnapshot } from '@/shared/lib/snapshot';
+import { snapshots } from '@/shared/models/snapshot';
 import { PageContextServer } from 'vike/types';
 import { client, withQueryParams } from '@/shared/lib/client-wrapper';
 import { clientInstance } from "@/shared/api/client"
 import { DEFAULT_SOFT_DELAY } from '@/shared/consts/index';
 import { withSearchParamsPersist } from '@reatom/url';
-import { withSsr } from "@/shared/lib/reatom-helpers"
+import { withSsr } from '@/shared/models/ssr'
 import { cartState } from "./store-cart.model"
 import { parseBoolean } from "@/shared/lib/utils"
-import { isClientAtom } from "@/shared/models/page-context.model"
+import { pageState } from "@/shared/models/page-context.model"
 import { translate } from "@/shared/locales/helpers"
 
 export type Payment = Selectable<Payments>
@@ -129,7 +129,7 @@ export const storeItems = atom(null, "storeItems").pipe(
       storeItemsState.data(ctx, payload.data);
       storeItemsState.meta(ctx, payload.meta);
 
-      const newSnapshot = mergeSnapshot(ctx, pageCtx)
+      const newSnapshot = snapshots.merge(ctx, pageCtx)
       pageCtx.snapshot = newSnapshot
     },
     fetch: reatomAsync(async (ctx) => {
@@ -234,7 +234,7 @@ export const filtersState = atom(null, "filters").pipe(
 export const filterIsAppliedAtom = ({
   origin, currValue }: Pick<Filter, "origin"> & { currValue: string }
 ) => atom((ctx) => {
-  const isClient = ctx.spy(isClientAtom)
+  const isClient = ctx.spy(pageState.isClientside)
 
   if (isClient) {
     const atom = ctx.get(filtersState.data).find(d => d.origin === origin)?.atom

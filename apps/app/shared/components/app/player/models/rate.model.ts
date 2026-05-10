@@ -3,11 +3,11 @@ import { isIdentityAtom, playerSsrModel, playerState } from "./player.model";
 import { currentUserState } from "@/shared/models/current-user.model";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { pageCtxAtom } from "@/shared/models/page-context.model";
 import { navigate } from "vike/client/router";
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
-import { getDataFromSnapshot, userState } from "@/shared/models/app.model";
+import { getDataFromSnapshot } from "@/shared/models/app/utils";
+import { userState } from "@/shared/models/app/base.model";
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 
@@ -32,10 +32,7 @@ export const playerRateState = atom(null, "playerRateState").pipe(
 playerState.nickname.onChange((ctx, state) => {
 	if (!state) return;
 
-	const pageCtx = ctx.get(pageCtxAtom)
-	if (!pageCtx) return;
-
-	const snapData = getDataFromSnapshot("playerRateState.data", pageCtx.snapshot)
+	const snapData = getDataFromSnapshot("playerRateState.data", ctx.get(playerSsrModel.snapshotAtom))
 	playerRateState.data(ctx, snapData)
 })
 

@@ -76,7 +76,7 @@ export async function callServerCommand(
   { parent, value }: CallServerCommand,
 ): Promise<{ result: "success" }> {
   try {
-    const nc = getNats()
+    const nc = nats.get()
 
     const payload = {
       event: "executeCommand",
@@ -118,7 +118,7 @@ async function sendEmailInServer({ nickname, msg, server, temp, time }: SendEmai
     throw new Error('unsupported server')
   }
 
-  const nc = getNats()
+  const nc = nats.get()
   const decoder = new TextDecoder();
 
   let command = `send ${nickname} ${msg}`

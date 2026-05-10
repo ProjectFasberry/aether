@@ -5,7 +5,7 @@ import { SettingsAppWidgets } from "./settings-app-widgets";
 import { SettingsMainSecurity } from "./settings-main-security";
 import { SettingsMainConnections } from "./settings-main-connections";
 import { Vaul, VaulContent, VaulHeader } from "@/shared/ui/vaul";
-import { appState } from "@/shared/models/app.model";
+import { appState } from "@/shared/models/app/base.model";
 import { ReactNode } from "react";
 import { SettingsNavigationDesktop, SettingsNavigationMobile } from "./settings-navigation";
 import { SettingsStore } from "./settings-store";
@@ -48,7 +48,7 @@ const SettingsContentDesktop = reatomComponent(({ ctx }) => {
 
 export const SettingsDialog = reatomComponent(({ ctx }) => {  
   const open = ctx.spy(settingsState.dialogIsOpen)
-  const isMobile = ctx.spy(appState.isMobile);
+  const isMobile = ctx.spy(appState.currentState.isMobile);
 
   const handle = (v: boolean) => settingsState.dialogIsOpen(ctx, v)
 

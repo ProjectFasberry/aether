@@ -21,7 +21,7 @@ import {
   saveChangesIsValidAtom,
   toggleRoleEditAction
 } from "../models/roles.model"
-import { getFromDictionary } from "@/shared/models/app.model"
+import { getFromDictionary } from "@/shared/models/app/base.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 
 type RolePayload = {

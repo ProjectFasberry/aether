@@ -4,7 +4,7 @@ import { Avatar } from "../../../../ui/avatar";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { createLink, Link } from "@/shared/components/config/link";
 import { atom } from "@reatom/framework";
-import { isClientAtom } from "@/shared/models/page-context.model";
+import { pageState } from "@/shared/models/page-context.model";
 import { playerSLP, playerSLPState } from "../models/player-seems-like.model";
 import { IconX } from "@tabler/icons-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/ui/tooltip"
@@ -90,7 +90,7 @@ const PlayerSeemsLikePlayersListSkeleton = () => {
 const PlayerSeemsLikePlayersList = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => playerSLP.init(ctx), [])
 
-  if (!ctx.spy(isClientAtom) || ctx.spy(playerSLP.fetch.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(playerSLP.fetch.statusesAtom).isPending) {
     return <PlayerSeemsLikePlayersListSkeleton />
   }
 
