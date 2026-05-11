@@ -1,6 +1,6 @@
 import { client, withQueryParams } from "@/shared/lib/client-wrapper"
 import { atom } from "@reatom/framework";
-import { withSsr } from '@/shared/models/ssr';
+import { withSsr } from "@/shared/models/ssr";
 import { withAssign } from "@reatom/framework";
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]

@@ -3,7 +3,7 @@ import { getIsAuthed } from "@/shared/models/app/utils";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { redirect } from "vike/abort";
-import { PageContext } from "vike/types";
+import { type PageContext } from "vike/types";
 
 function metadata() {
   return {
@@ -12,7 +12,7 @@ function metadata() {
 }
 
 export const guard = async (pageCtx: PageContext) => {
-  logRouting(pageCtx.urlPathname, "guard");
+  logRouting(pageCtx.urlPathname, guard.name);
 
   const isAuth = getIsAuthed(pageCtx.snapshot)
   if (!isAuth) throw redirect("/auth")

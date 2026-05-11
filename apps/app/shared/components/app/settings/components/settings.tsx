@@ -1,12 +1,12 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog.js"
-import { SettingsParent, settingsState } from "../models/settings.model"
+import { type SettingsParent, settingsState } from "../models/settings.model"
 import { SettingsAppWidgets } from "./settings-app-widgets";
 import { SettingsMainSecurity } from "./settings-main-security";
 import { SettingsMainConnections } from "./settings-main-connections";
 import { Vaul, VaulContent, VaulHeader } from "@/shared/ui/vaul";
-import { appState } from "@/shared/models/app/base.model";
-import { ReactNode } from "react";
+import { appState } from "@/shared/models/app/index.model";
+import { type ReactNode } from "react";
 import { SettingsNavigationDesktop, SettingsNavigationMobile } from "./settings-navigation";
 import { SettingsStore } from "./settings-store";
 import { SettingsMainDevices } from "./settings-main-devices";
@@ -47,10 +47,10 @@ const SettingsContentDesktop = reatomComponent(({ ctx }) => {
 }, "SettingsContent")
 
 export const SettingsDialog = reatomComponent(({ ctx }) => {  
-  const open = ctx.spy(settingsState.dialogIsOpen)
-  const isMobile = ctx.spy(appState.currentState.isMobile);
+  const open = ctx.spy(settingsState.isOpen)
+  const isMobile = ctx.spy(appState.current.isMobile);
 
-  const handle = (v: boolean) => settingsState.dialogIsOpen(ctx, v)
+  const handle = (v: boolean) => settingsState.isOpen(ctx, v)
 
   if (isMobile) {
     return (

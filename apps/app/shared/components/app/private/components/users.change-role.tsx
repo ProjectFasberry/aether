@@ -1,4 +1,4 @@
-import { getFromDictionary } from "@/shared/models/app/base.model"
+import { getFromDictionary } from "@/shared/models/app/utils"
 import { reatomComponent } from "@reatom/npm-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import { Typography } from "@repo/ui/typography"
@@ -6,7 +6,7 @@ import { usersControlRoles, usersControlState } from "../models/users.model"
 import { IconDotsVertical, IconPencil } from "@tabler/icons-react"
 import { Button } from "@repo/ui/button"
 import { Skeleton } from "@repo/ui/skeleton"
-import { Role as RoleType } from "@/shared/components/app/private/models/users.model"
+import { type Role as RoleType } from "@/shared/components/app/private/models/users.model"
 import { itemVariant } from "./ui"
 
 const UserActionsChangeRoleGlobalSubmit = reatomComponent(({ ctx }) => {

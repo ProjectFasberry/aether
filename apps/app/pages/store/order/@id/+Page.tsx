@@ -1,10 +1,10 @@
-import { Data } from "./+data";
+import { type Data } from "./+data";
 import { useAtom } from "@reatom/npm-react";
 import { order, orderState } from "@/shared/components/app/shop/models/store-order.model";
 import { pageState } from "@/shared/models/page-context.model";
 import { useData } from "vike-react/useData";
 import { GameOrder } from "@/shared/components/app/shop/components/order/components/game-order";
-import { OrderSingleDefault } from "@repo/shared/types/entities/store";
+import { type OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { DefaultOrder } from "@/shared/components/app/shop/components/order/components/default-order";
 import { createPageModel } from "@/shared/lib/events";
 

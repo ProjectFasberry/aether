@@ -1,7 +1,7 @@
 import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from '@/shared/lib/wrap-title'
 import { getStaticImage } from '@/shared/lib/volume-helpers'
-import { PageContextServer } from 'vike/types'
+import { type PageContextServer } from 'vike/types'
 import { logRouting } from '@/shared/lib/log'
 
 const title = wrapTitle(`Рейтинги игроков`)
@@ -16,7 +16,7 @@ function metadata() {
 }
 
 export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, "data");
+  logRouting(pageCtx.urlPathname, data.name);
 
   const config = useConfig()
   config(metadata())

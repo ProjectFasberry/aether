@@ -1,16 +1,16 @@
 import { reatomAsync, withCache, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/framework";
-import { atom, batch, Ctx } from "@reatom/framework";
+import { atom, batch, type Ctx } from "@reatom/framework";
 import { withReset } from "@reatom/framework";
-import { withHistory } from "@/shared/lib/reatom-helpers";
+import { withHistory } from "@/shared/lib/reatom/helpers";
 import { logError } from "@/shared/lib/log";
 import {
-	RatingBelkoin,
-	RatingCharism,
-	RatingLands,
-	RatingParkour,
-	RatingPlaytime,
-	RatingReputation,
-	RatingsPayload,
+	type RatingBelkoin,
+	type RatingCharism,
+	type RatingLands,
+	type RatingParkour,
+	type RatingPlaytime,
+	type RatingReputation,
+	type RatingsPayload,
 } from "@repo/shared/types/entities/rating";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 

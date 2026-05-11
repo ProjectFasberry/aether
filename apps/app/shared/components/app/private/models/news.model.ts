@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { action, atom, AtomMut } from "@reatom/framework";
+import { action, atom, type AtomMut } from "@reatom/framework";
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
 import { toast } from "sonner";

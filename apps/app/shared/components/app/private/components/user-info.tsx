@@ -1,5 +1,5 @@
-import { getFromDictionary } from "@/shared/models/app/base.model";
-import { currentUserState } from "@/shared/models/current-user.model";
+import { getFromDictionary } from "@/shared/models/app/utils";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { action, atom } from "@reatom/framework";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";

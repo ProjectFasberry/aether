@@ -2,7 +2,7 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Switch } from "@repo/ui/switch";
 import { Typography } from "@repo/ui/typography";
-import { Option, optionsAction, optionsAtom, updateOptionAction } from "../models/options.model";
+import { type Option, optionsAction, optionsAtom, updateOptionAction } from "../models/options.model";
 import { atom } from "@reatom/framework";
 
 const OptionsListSkeleton = () => {

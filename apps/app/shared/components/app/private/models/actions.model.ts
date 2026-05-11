@@ -1,4 +1,4 @@
-import { action, atom, AtomState } from "@reatom/framework"
+import { action, atom, type AtomState } from "@reatom/framework"
 import { isDeepEqual, reatomRecord, withReset } from "@reatom/framework"
 import { toast } from "sonner";
 

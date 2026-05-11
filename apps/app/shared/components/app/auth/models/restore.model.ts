@@ -1,6 +1,6 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { reatomAsync, withErrorAtom, withStatusesAtom } from "@reatom/framework";
-import { atom, AtomMut } from "@reatom/framework";
+import { atom, type AtomMut } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { authState } from "./auth.model";
 import { createPhraseModel } from "./seed-phrase.model";

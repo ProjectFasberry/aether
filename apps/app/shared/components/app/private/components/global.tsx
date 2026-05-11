@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { ActionParent, actionsGoBackAction, ActionType, createActionsLinkAction, getIsSelectedActionAtom } from "../models/actions.model";
+import { type ActionParent, actionsGoBackAction, type ActionType, createActionsLinkAction, getIsSelectedActionAtom } from "../models/actions.model";
 import { Button } from "@repo/ui/button";
 import { IconCheck, IconPlus, IconX } from "@tabler/icons-react";
 import { Typography } from "@repo/ui/typography";

@@ -1,4 +1,4 @@
-import { Action, Atom, atom, AtomMut, Ctx, onConnect, onDisconnect, withReset } from "@reatom/framework";
+import { type Action, type Atom, atom, type AtomMut, type Ctx, onConnect, onDisconnect, withReset } from "@reatom/framework";
 
 type WithReset<T> = AtomMut<T | null> & {
   reset: Action<[], T | null>;

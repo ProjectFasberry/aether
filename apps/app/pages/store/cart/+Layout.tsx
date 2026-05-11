@@ -1,5 +1,5 @@
 import { CartNavigation } from "@/shared/components/app/shop/components/cart/cart-navigation";
-import { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 
 export default function Layout({ children }: PropsWithChildren) {
   return (

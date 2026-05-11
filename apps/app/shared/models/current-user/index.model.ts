@@ -1,13 +1,13 @@
-import { SKIP_HOOK_HEADER } from './../api/client';
+import { SKIP_HOOK_HEADER } from '../../api/client';
 import { atom } from "@reatom/framework";
 import { withAssign, withReset } from "@reatom/framework";
-import { clientInstance } from "../api/client";
-import { parseWrappedJson } from '../lib/client-wrapper';
-import { withSsr } from './ssr';
+import { clientInstance } from "../../api/client";
+import { parseWrappedJson } from '../../lib/client-wrapper';
+import { withSsr } from "../ssr";
 
 export type MePayload = ExtractApiData<"getMe">['data'];
 
-export const CURRENT_USER_KEY = 'currentUser'
+export const CURRENT_USER_KEY = 'currentUser' as const
 export const CONFIG_PANEL_READ_PERMISSION = "config.panel.read"
 
 export const currentUserState = atom<MePayload | null>(null, "currentUser").pipe(

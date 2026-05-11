@@ -1,8 +1,9 @@
-import { action, Atom, atom, entries, isObject, reatomAsync, take, withAssign } from '@reatom/framework';
+import { action, type Atom, atom, entries, isObject, reatomAsync, take, withAssign } from '@reatom/framework';
 import { FolderApi, Pane } from 'tweakpane';
-import { ConfigItem, devtoolsConfig } from './config';
-import { DevtoolsCookieChildKey, devtoolsCoords, DevtoolsCoords, devtoolsData } from './state.model';
-import { isMap, isNullish, throttle } from '@/shared/lib/utils';
+import { type ConfigItem, devtoolsConfig } from './config';
+import { type DevtoolsCookieChildKey, devtoolsCoords, type DevtoolsCoords, devtoolsData } from './state.model';
+import { throttle } from '@/shared/lib/utils';
+import { isMap, isNullish } from "@/shared/lib/helpers";
 
 const devtoolsState = atom(null).pipe(
   withAssign(() => ({
@@ -219,19 +220,19 @@ export const devtools = atom(null, "_devtools").pipe(
       }))
     ),
     wrap: action(async (ctx, cb: (pane: Pane) => (() => void)) => {
-      let devtoolsPane = ctx.get(devtoolsState.pane);
+      let instance = ctx.get(devtoolsState.pane);
 
-      if (!devtoolsPane) {
-        devtoolsPane = await take(ctx, devtoolsState.pane)
+      if (!instance) {
+        instance = await take(ctx, devtoolsState.pane)
       }
 
-      if (!devtoolsPane) {
+      if (!instance) {
         console.warn('Skipping wrap devtools callback')
         return;
       }
 
-      return cb(devtoolsPane)
-    }, `${name}.wrap`)
+      return cb(instance)
+    })
   }))
 )
 

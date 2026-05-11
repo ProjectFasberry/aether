@@ -1,8 +1,8 @@
-import { BuildEnvironmentOptions, defineConfig, loadEnv } from "vite";
+import { type BuildEnvironmentOptions, defineConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import vike from "vike/plugin";
-import { analyzer } from 'vite-bundle-analyzer';
+import { analyzer } from 'vite-bundle-analyzer'
 import svg from '@neodx/svg/vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
 import path from "node:path"

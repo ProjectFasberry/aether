@@ -1,11 +1,11 @@
-import { CONFIG_PANEL_READ_PERMISSION, currentUserState } from "@/shared/models/current-user.model";
-import { action, Action, atom, AtomMut, CtxSpy } from "@reatom/framework";
-import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, TablerIcon } from "@tabler/icons-react"
+import { CONFIG_PANEL_READ_PERMISSION, currentUserState } from "@/shared/models/current-user/index.model";
+import { action, type Action, atom, type AtomMut, type CtxSpy } from "@reatom/framework";
+import { IconBasket, IconCategory, IconMap, IconMountain, IconStars, type TablerIcon } from "@tabler/icons-react"
 import { settingsState } from "../../settings/models/settings.model";
 import { logout } from "../../auth/models/logout.model";
 import { pageState } from "@/shared/models/page-context.model";
 import { translate } from "@/shared/locales/helpers";
-import { userState } from "@/shared/models/app/base.model";
+import { userState } from "@/shared/models/app/index.model";
 
 const makeHeaderLink = (title: string, icon: TablerIcon, label: string, href: string) =>
   ({ title, icon, label, href })
@@ -65,7 +65,7 @@ type SwitchMenuItem = BaseMenuItem & {
 export const MENU_ACTIONS: MenuActionItem[] = [
   {
     label: translate["shared.header.menu.settings"](),
-    cb: action((ctx) => void settingsState.dialogIsOpen(ctx, true)),
+    cb: action((ctx) => void settingsState.isOpen(ctx, true)),
     type: "button"
   },
   {
@@ -78,15 +78,13 @@ export const MENU_ACTIONS: MenuActionItem[] = [
 ]
 
 export const showCurrentUserMenuAtom = atom((ctx) => {
-  const pathname = ctx.spy(pageState.urlPathname)
-  const isNonAuthPage = pathname === "/auth/"
+  const isNonAuthPage = ctx.spy(pageState.urlPathname) === "/auth/"
   const isAuthed = ctx.spy(userState.isAuthed)
   return isAuthed && !isNonAuthPage
 })
 
 export const showCartIconAtom = atom((ctx) => {
-  const pathname = ctx.spy(pageState.urlPathname)
   const isAuthed = ctx.spy(userState.isAuthed)
-  const isStorePage = pathname?.includes("/store");
+  const isStorePage = ctx.spy(pageState.urlPathname)?.includes("/store");
   return isAuthed && isStorePage
 })

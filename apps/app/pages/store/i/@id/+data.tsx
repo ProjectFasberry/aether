@@ -1,12 +1,12 @@
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { render } from "vike/abort";
 import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
-import { getStoreItem, StoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
+import { getStoreItem, type StoreItem, storeItemState } from "@/shared/components/app/shop/models/store-item.model";
 import { createCtx } from "@reatom/framework";
-import { snapshots } from "@/shared/models/snapshot";
+import { snapshots } from "@/shared/models/ssr";
 
 function metadata(
   item: StoreItem,
@@ -34,25 +34,25 @@ function metadata(
   }
 }
 
-export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data")
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, data.name)
 
   const config = useConfig()
   const headers = pageCtx.headers ?? undefined
   const id = pageCtx.routeParams.id;
 
-  const data = await getStoreItem(id, { headers }).catch((e) => {
+  const result = await getStoreItem(id, { headers }).catch((e) => {
     console.error(e)
     return null;
   })
   
-  if (!data) throw render("/not-exist?type=store-item")
+  if (!result) throw render("/not-exist?type=store-item")
 
-  config(metadata(data, pageCtx))
+  config(metadata(result, pageCtx))
 
   await cart.init(pageCtx)
 
   const ctx = createCtx()
-  storeItemState.data(ctx, data)
+  storeItemState.data(ctx, result)
   pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

@@ -1,8 +1,8 @@
 import { Link } from "@/shared/components/config/link"
 import { Button } from "@repo/ui/button"
-import { Icon, IconArrowRight, IconPencil, IconPlus, IconProps, IconX } from "@tabler/icons-react"
-import { ButtonHTMLAttributes, ReactNode } from "react"
-import { tv, VariantProps } from "tailwind-variants"
+import { type Icon, IconArrowRight, IconPencil, IconPlus, type IconProps, IconX } from "@tabler/icons-react"
+import { type ButtonHTMLAttributes, type ReactNode } from "react"
+import { tv, type VariantProps } from "tailwind-variants"
 import { Typography } from "@repo/ui/typography"
 import { cn } from "@/shared/lib/cn"
 

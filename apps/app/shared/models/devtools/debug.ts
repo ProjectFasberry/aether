@@ -26,3 +26,12 @@ export const DEBUG_MODULES = [
     }
   }
 ]
+
+export let LOG_SNAPSHOTS = true
+export let LOG_ACTIONS = true;
+
+export const LOGGING = {
+  snapshots: true,
+  actions: true,
+  atoms: true
+}

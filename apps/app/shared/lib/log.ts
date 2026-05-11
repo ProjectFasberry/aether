@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { logger } from "./logger";
+import { ENVIRONMENT } from "../consts";
 
 export function logError(e: unknown, { type = 'console' }: { type?: 'console' | 'toast' | 'combined' } = {}) {
   if (!(e instanceof Error)) return;
@@ -30,3 +31,5 @@ export function devLog(...args: Parameters<typeof logger["log"]>): void {
     logger.withTag("dev").log(...args)
   }
 }
+
+export const loggerWithEnv = logger.withTag(ENVIRONMENT);

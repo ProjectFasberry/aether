@@ -2,7 +2,7 @@ import { Button } from "@repo/ui/button"
 import { Typography } from "@repo/ui/typography"
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { useData } from "vike-react/useData";
-import { Data } from "./+data";
+import { type Data } from "./+data";
 
 const allayImage = getStaticImage("gifs/allay.gif")
 

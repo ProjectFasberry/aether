@@ -5,19 +5,19 @@ import {
 } from "@/shared/components/app/private/models/store.model"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
 import { createLink } from "@/shared/components/config/link"
-import { atom, AtomState } from "@reatom/framework"
+import { atom, type AtomState } from "@reatom/framework"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Skeleton } from "@repo/ui/skeleton"
 import { Typography } from "@repo/ui/typography"
 import { IconArrowLeft, IconPlus } from "@tabler/icons-react"
-import { PropsWithChildren, ReactNode } from "react"
+import { type PropsWithChildren, type ReactNode } from "react"
 import { navigate } from "vike/client/router"
 import { EditorContent, useEditor, type JSONContent } from "@tiptap/react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
-import { getFromDictionary } from "@/shared/models/app/base.model"
+import { getFromDictionary } from "@/shared/models/app/utils"
 import { CreateItem } from "./store.create"
-import { StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
+import { type StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
 
 const titles: Record<AtomState<typeof searchParamTargetAtom>, string> = {
   "create": "Создание товара",

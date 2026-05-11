@@ -7,11 +7,11 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Avatar } from "../../../../ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Typography } from "@repo/ui/typography";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { DeleteButton, EditButton, ToLink } from "./ui";
 import {
   actionsTypeAtom,
-  ActionType,
+  type ActionType,
   createActionsLinkAction,
   getSelectedParentAtom
 } from "../models/actions.model";
@@ -26,11 +26,11 @@ import {
   editNewsState
 } from "../models/news.model"
 import { Input } from "@repo/ui/input"
-import { Atom, AtomMut, Ctx } from "@reatom/framework"
+import { type Atom, type AtomMut, type Ctx } from "@reatom/framework"
 import { ActionButton } from "./ui"
 import { IconCheck } from "@tabler/icons-react"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
-import { Editor, EditorContent, generateJSON, JSONContent, useEditor, useEditorState } from "@tiptap/react"
+import { Editor, EditorContent, generateJSON, type JSONContent, useEditor, useEditorState } from "@tiptap/react"
 import { CharacterCount, Placeholder } from "@tiptap/extensions"
 import { useEffect } from "react"
 import { ButtonXSubmit } from "./global"

@@ -1,16 +1,16 @@
-import { action, atom, AtomMut, reatomAsync, withAssign, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
+import { action, atom, type AtomMut, reatomAsync, withAssign, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { invariant } from "@/shared/lib/invariant";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
-import { auth, AuthFindoutType, authState, ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
+import { auth, type AuthFindoutType, authState, type ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { createPhraseModel } from "./seed-phrase.model";
 import { createNavigationModel } from "./navigation.model";
 import { authSecurity } from "./auth-security.model";
 import { getExistNickname } from "@/shared/models/shared.model";
-import { spyOptionAtom } from "@/shared/models/app/base.model";
+import { spyOptionAtom } from "@/shared/models/app/utils";
 import { translate } from "@/shared/locales/helpers";
 
 export type AuthRegisterType = |

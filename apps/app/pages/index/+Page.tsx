@@ -9,7 +9,7 @@ import { LandsListShorted } from "@/shared/components/app/lands/components/lands
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { NewsList } from "@/shared/components/app/news/components/news";
 import { translate } from "@/shared/locales/helpers";
-import { userState } from "@/shared/models/app/base.model";
+import { userState } from "@/shared/models/app/index.model";
 
 const ruAttr = ['ru-RU', 'RU', 'ru'];
 

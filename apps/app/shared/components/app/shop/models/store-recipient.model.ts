@@ -1,11 +1,11 @@
-import { action, atom, batch, Ctx } from "@reatom/framework";
+import { action, atom, batch, type Ctx } from "@reatom/framework";
 import * as z from "zod";
 import { withLocalStorage } from "@reatom/persist-web-storage";
 import { reatomAsync, sleep, withAssign, withInit, withReset, withStatusesAtom } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";
 import { toast } from "sonner";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { currentUserState } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { nicknameSchema } from "@repo/shared/schemas/auth";
 import { DIALOG_DELAY } from "@/shared/consts/index";
 import { makeChangeValidator } from "@/shared/lib/utils";

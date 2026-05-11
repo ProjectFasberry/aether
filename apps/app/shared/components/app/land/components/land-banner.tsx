@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { tv, VariantProps } from "tailwind-variants";
+import { tv, type VariantProps } from "tailwind-variants";
 import { landBannerAtom } from "../models/land.model";
 import { useRef } from "react";
 import { landChangesAtom, landMode, newBannerUrl } from "../models/edit-land.model";

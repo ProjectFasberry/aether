@@ -1,8 +1,8 @@
-import { Action, atom, Atom, AtomState, createCtx, Ctx } from '@reatom/framework';
-import { devtoolsData } from '../models/devtools/state.model';
-import { ENVIRONMENT } from '../consts';
+import { type Action, atom, type Atom, type AtomState, createCtx, type Ctx } from '@reatom/framework';
 import { useRef } from 'react';
-import { logger } from './logger';
+import { LOGGING } from '../../models/devtools/debug';
+import { loggerWithEnv } from '../log';
+import { ENVIRONMENT } from '@/shared/consts';
 
 export function withHistory<T extends Atom>(length = 2): (target: T) => T & {
   history: Atom<[current: AtomState<T>, ...past: Array<AtomState<T>>]>
@@ -19,19 +19,25 @@ export function withHistory<T extends Atom>(length = 2): (target: T) => T & {
     })
 }
 
-export function withLog<T extends Action>(opts?: { withParams?: true, withEnv?: true }): (target: T) => T {
-  const log = devtoolsData.get("logging.actions");
-
+export function withLog<T extends Action>({ withParams = true } = {}): (target: T) => T {
   return (target) => {
-    if (log) {
-      target.onCall((ctx, _, params) => {
+    if (LOGGING.actions) {
+      target.onCall((_, __, params) => {
         const name = target.__reatom.name || 'anonymous action';
-        const result: { cause: typeof ctx.cause, params?: typeof params, environment?: typeof ENVIRONMENT } = { cause: ctx.cause };
+        const result: { 
+          // cause: typeof ctx.cause, 
+          params?: typeof params, 
+        } = { 
+          // cause: ctx.cause 
+        };
 
-        if (opts?.withParams) result.params = params;
-        if (opts?.withEnv) result.environment = ENVIRONMENT;
+        if (withParams) {
+          result.params = params;
+        }
 
-        logger.withTag(ENVIRONMENT).log(`Action called: ${name}`, result);
+        const showResult = ENVIRONMENT === 'client' && Object.keys(result).length
+
+        loggerWithEnv.log(`Action called: ${name}`, ...(showResult ? [result] : []));
       })
     }
 

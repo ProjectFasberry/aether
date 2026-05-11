@@ -1,5 +1,5 @@
-import { HTMLAttributes } from 'react';
-import { tv, VariantProps } from 'tailwind-variants';
+import { type HTMLAttributes } from 'react';
+import { tv, type VariantProps } from 'tailwind-variants';
 import { getStaticImage } from '@/shared/lib/volume-helpers';
 
 export const avatarVariants = tv({

@@ -1,6 +1,6 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
-import { appState } from "@/shared/models/app/base.model";
+import { appState } from "@/shared/models/app/index.model";
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";

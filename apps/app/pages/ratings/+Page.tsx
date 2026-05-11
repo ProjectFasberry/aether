@@ -1,4 +1,4 @@
-import { RatingItem as RatingItemProps, ratingList } from "@/shared/components/app/ratings/models/ratings.model"
+import { type RatingItem as RatingItemProps, ratingList } from "@/shared/components/app/ratings/models/ratings.model"
 import { Link } from "@/shared/components/config/link"
 import { translate } from "@/shared/locales/helpers"
 import { PageLoader } from "@/shared/ui/page-loader"

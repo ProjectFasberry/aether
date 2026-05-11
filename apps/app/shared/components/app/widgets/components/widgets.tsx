@@ -3,7 +3,7 @@ import { Typography } from "@repo/ui/typography"
 import { tv } from "tailwind-variants"
 import { widgetsState } from "../models/widgets.model"
 import { AuthWidgetActions } from "./widget-variants"
-import { ReactNode } from "react"
+import { type ReactNode } from "react"
 
 const widgetVariant = tv({
   base: `flex items-center p-2 sm:p-3 lg:p-4 gap-2 sm:gap-4 

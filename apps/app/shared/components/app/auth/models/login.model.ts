@@ -1,10 +1,10 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { invariant } from "@/shared/lib/invariant";
 import { action, atom } from "@reatom/framework";
-import { AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorAtom, withReset, withStatusesAtom } from "@reatom/framework";
+import { type AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { onEvent } from "@reatom/web";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import { AuthErrorType, authState, ErrorKey, getError, isPofActiveAtom, SCOPE_ACTIONS } from "./auth.model";
+import { type AuthErrorType, authState, type ErrorKey, getError, isPofActiveAtom, SCOPE_ACTIONS } from "./auth.model";
 import type { QREventsPayload, QREventsEvent } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
 import { env } from "@/shared/env";
@@ -12,7 +12,7 @@ import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod";
 import { authSchema as loginSchema } from "@repo/shared/schemas/auth";
-import { spyOptionAtom } from "@/shared/models/app/base.model";
+import { spyOptionAtom } from "@/shared/models/app/utils";
 
 type QRGeneratePayload = ExtractApiData<"postAuthLoginQrGenerate">["data"]
 type GameGeneratePayload = ExtractApiData<"postAuthLoginGameGenerate">["data"]

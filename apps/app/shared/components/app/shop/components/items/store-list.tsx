@@ -4,7 +4,7 @@ import { storeItems, storeItemsState } from "../../models/store.model"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { StoreItem } from "./store-item"
-import { isEmptyArray } from "@/shared/lib/utils"
+import { isEmptyArray } from "@/shared/lib/helpers"
 
 const itemsNotFoundImage = getStaticImage("minecraft/items/block_inspect.webp")
 

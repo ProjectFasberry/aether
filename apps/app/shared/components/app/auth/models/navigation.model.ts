@@ -1,5 +1,5 @@
-import { Action, atom, Atom, AtomMut, isAtom } from "@reatom/framework";
-import { AsyncAction, reatomAsync, withStatusesAtom } from "@reatom/framework";
+import { type Action, atom, type Atom, type AtomMut, isAtom } from "@reatom/framework";
+import { type AsyncAction, reatomAsync, withStatusesAtom } from "@reatom/framework";
 
 export type NavigationSteps = {
   id: string,

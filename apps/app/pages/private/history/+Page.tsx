@@ -10,7 +10,7 @@ import { toast } from "sonner"
 import { reatomMap, sleep, withReset } from "@reatom/framework"
 import { onDisconnect } from "@reatom/framework"
 import { tv } from "tailwind-variants"
-import { getFromDictionary } from "@/shared/models/app/base.model"
+import { getFromDictionary } from "@/shared/models/app/utils"
 import { createPageModel } from "@/shared/lib/events"
 
 type HistoryPayload = {

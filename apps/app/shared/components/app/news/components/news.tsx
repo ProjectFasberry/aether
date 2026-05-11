@@ -4,7 +4,7 @@ import { createLink, Link } from "@/shared/components/config/link"
 import { NotFound } from "@/shared/ui/not-found"
 import { tv } from "tailwind-variants"
 import { newsState } from "../models/news.model"
-import { isEmptyArray } from "@/shared/lib/utils"
+import { isEmptyArray } from "@/shared/lib/helpers"
 import { translate } from "@/shared/locales/helpers"
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]

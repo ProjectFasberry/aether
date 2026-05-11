@@ -1,9 +1,9 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { ReactNode } from "react"
-import { SettingsSectionItem, settings, settingsState } from "../models/settings.model"
+import { type ReactNode } from "react"
+import { type SettingsSectionItem, settings, settingsState } from "../models/settings.model"
 import { BackButton } from "@/shared/ui/back-button"
-import { appState } from "@/shared/models/app/base.model"
+import { appState } from "@/shared/models/app/index.model"
 
 export const SettingsSection = ({
   title, description, component
@@ -28,7 +28,7 @@ export const SettingsContentWrapper = reatomComponent<{
 }>(({
   ctx, title, description, children
 }) => {
-  const isMobile = ctx.spy(appState.currentState.isMobile)
+  const isMobile = ctx.spy(appState.current.isMobile)
   const isChild = Boolean(ctx.spy(settingsState.target).child)
 
   return (

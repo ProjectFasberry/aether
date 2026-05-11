@@ -1,12 +1,14 @@
-import { Action, action, atom } from "@reatom/framework"
+import { type Action, action, atom, reatomAsync } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
 import { isDeepEqual, sleep, withInit, withReset } from "@reatom/framework"
-import { ReactNode } from "react"
+import { type ReactNode } from "react"
 import { logout } from "../../auth/models/logout.model"
 import { listenBackOnce } from "@/shared/lib/events"
 import { withUndo } from '@reatom/undo'
-import { appState } from "@/shared/models/app/base.model"
+import { appState } from "@/shared/models/app/index.model"
 import { DIALOG_DELAY } from "@/shared/consts/index"
+import { soundPatch } from "@/shared/models/sounds.model"
+import { withLog } from "@/shared/lib/reatom/helpers"
 
 export type SettingsNavigationNode = {
   title: string,
@@ -51,27 +53,27 @@ export const SETTINGS_NAVIGATION: Partial<Record<SettingsParent, SettingsNavigat
 }
 
 type SettingsStateTarget = {
-  parent: SettingsParent, 
+  parent: SettingsParent,
   child: string | null
 }
 
 const getFallbackSection = () => {
   const [parent, child] = Object.entries(SETTINGS_NAVIGATION)[0]
-  return { 
-    parent: parent as SettingsParent, 
-    child: child.nodes[0].value 
+  return {
+    parent: parent as SettingsParent,
+    child: child.nodes[0].value
   }
 }
 
 export const settingsState = atom(null, "settingsState").pipe(
   withAssign((_, name) => ({
-    dialogIsOpen: atom(false, `${name}.dialogIsOpen`),
+    isOpen: atom(false, `${name}.isOpen`),
     cleanup: atom<{ cb: () => void } | null>(null).pipe(withReset()),
     target: atom<SettingsStateTarget>(getFallbackSection(), `${name}.target`).pipe(
       withUndo({ length: 100 }),
       withReset(),
       withInit((ctx, target) => {
-        const isMobile = ctx.get(appState.currentState.isMobile);
+        const isMobile = ctx.get(appState.current.isMobile);
 
         if (isMobile) {
           return { parent: "main" as const, child: null }
@@ -82,10 +84,10 @@ export const settingsState = atom(null, "settingsState").pipe(
     )
   }))
 )
-settingsState.dialogIsOpen.onChange((ctx, state) => state ? settings.open(ctx) : settings.close(ctx))
+settingsState.isOpen.onChange((ctx, state) => state ? settings.open(ctx) : settings.close(ctx))
 
 export const settings = atom(null, "settings").pipe(
-  withAssign(() => ({
+  withAssign((_, name) => ({
     navigate: action((ctx, parent: SettingsParent, child: string) => {
       settingsState.target(ctx, { parent, child });
 
@@ -97,20 +99,26 @@ export const settings = atom(null, "settings").pipe(
       }
     }),
     open: action((ctx) => {
-      settingsState.dialogIsOpen(ctx, true)
-    }),
-    close: action(async (ctx) => {
-      settingsState.dialogIsOpen(ctx, false)
+      const patch = soundPatch.get();
+      patch.play("click");
+      settingsState.isOpen(ctx, true)
+    }, `${name}.open`).pipe(
+      withLog()
+    ),
+    close: reatomAsync(async (ctx) => {
+      settingsState.isOpen(ctx, false)
 
-      await sleep(DIALOG_DELAY);
+      await ctx.schedule(() => sleep(DIALOG_DELAY))
 
-      const currValue = ctx.get(settingsState.dialogIsOpen)
+      const currValue = ctx.get(settingsState.isOpen)
 
       if (!currValue) {
         settingsState.target.reset(ctx);
         settingsState.cleanup.reset(ctx);
       }
-    }),
+    }, `${name}.close`).pipe(
+      withLog()
+    ),
     back: action((ctx) => {
       settingsState.target.undo(ctx)
 
@@ -119,13 +127,16 @@ export const settings = atom(null, "settings").pipe(
       if (!history) {
         const cleanup = ctx.get(settingsState.cleanup)?.cb;
         cleanup?.();
-        settingsState.dialogIsOpen(ctx, false)
+        
+        settingsState.isOpen(ctx, false)
         settingsState.cleanup.reset(ctx);
       } else {
         const cb = listenBackOnce(() => settings.back(ctx));
         settingsState.cleanup(ctx, { cb });
       }
-    })
+    }, `${name}.back`).pipe(
+      withLog()
+    )
   }))
 )
 

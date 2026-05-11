@@ -7,7 +7,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-ca
 import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { navigate } from "vike/client/router";
-import { getFromDictionary } from "@/shared/models/app/base.model";
+import { getFromDictionary } from "@/shared/models/app/utils";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { pageState } from "@/shared/models/page-context.model";
 import { Skeleton } from "@repo/ui/skeleton";

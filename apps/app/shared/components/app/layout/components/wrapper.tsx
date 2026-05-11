@@ -1,12 +1,12 @@
 import { useUpdate } from '@reatom/npm-react';
 import { reatomContext } from '@reatom/npm-react'
-import { PropsWithChildren } from 'react'
+import { type PropsWithChildren } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { Footer } from '@/shared/components/app/layout/components/footer';
-import { app } from '@/shared/models/app/base.model';
+import { app } from '@/shared/models/app/index.model';
 import { ErrorBoundaryProvider } from './error-boundary';
 import { Global } from './global';
-import { useCreateCtx } from '@/shared/lib/reatom-helpers';
+import { useCreateCtx } from '@/shared/lib/reatom/helpers';
 
 const Sync = () => {
   const pageCtx = usePageContext()

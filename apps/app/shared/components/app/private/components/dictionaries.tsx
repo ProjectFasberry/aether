@@ -3,15 +3,15 @@ import {
   dict,
   dictionariesEdit,
   dictState,
-  DictionariesItem,
+  type DictionariesItem,
   dictionariesListAction
 } from "../models/dictionaries.model";
 import { Typography } from "@repo/ui/typography";
 import { ActionButton, DeleteButton, EditButton } from "./ui";
 import { Input } from "@repo/ui/input";
 import { IconArrowBackUp, IconCheck } from "@tabler/icons-react";
-import { ReactNode } from "react";
-import { actionsTypeAtom, ActionType, getSelectedParentAtom } from "../models/actions.model";
+import { type ReactNode } from "react";
+import { actionsTypeAtom, type ActionType, getSelectedParentAtom } from "../models/actions.model";
 import { ButtonXSubmit, ToActionButtonX } from "./global";
 
 type DictionariesListItemProps = Omit<DictionariesItem, "key"> & {

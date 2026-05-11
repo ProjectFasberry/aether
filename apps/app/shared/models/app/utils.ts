@@ -1,14 +1,15 @@
-import { AppDictionaries, AppOptionsPayloadExtend } from "./base.model";
 import { usePageContext } from "vike-react/usePageContext";
-import { PlayerRatePayload, PLAYERRATESTATE_DATA_KEY } from "@/shared/components/app/player/models/rate.model";
-import { CURRENT_USER_KEY, MePayload } from "../current-user.model";
-import { APP_DICTIONARIES_KEY, APP_OPTIONS_KEY } from "./const";
+import type { PLAYER_RATE_DATA_KEY, PLAYER_TAGS_DATA_KEY, PlayerRatePayload, PlayerTagsPayload } from "@/shared/components/app/player/models/player.model";
+import type { CURRENT_USER_KEY, MePayload } from "../current-user/index.model";
+import { appState, type APP_DICTIONARIES_KEY, type APP_OPTIONS_KEY, type AppDictionaries, type AppOptionsPayloadExtend } from "./index.model";
+import type { CtxSpy, Ctx } from "@reatom/framework";
 
 type KeysData = {
   [APP_OPTIONS_KEY]: AppOptionsPayloadExtend,
   [APP_DICTIONARIES_KEY]: AppDictionaries,
   [CURRENT_USER_KEY]: MePayload,
-  [PLAYERRATESTATE_DATA_KEY]: PlayerRatePayload
+  [PLAYER_RATE_DATA_KEY]: PlayerRatePayload,
+  [PLAYER_TAGS_DATA_KEY]: PlayerTagsPayload
 }
 
 export function getDataFromSnapshot<T extends keyof KeysData>(key: T, snapshot?: Snapshot): Nullable<KeysData[T]> {
@@ -26,8 +27,23 @@ export function getDataFromSnapshot<T extends keyof KeysData>(key: T, snapshot?:
 }
 
 /** For server side, when reatom ctx is not accesible */
-export function getIsAuthed(snapshot: Snapshot): boolean {
-  const isAuthed = getDataFromSnapshot("appState.options", snapshot)?.flags.isAuthed;
+export function getIsAuthed(snapshot?: Snapshot): boolean {
+  const snap = snapshot ?? usePageContext().snapshot;
+  const isAuthed = getDataFromSnapshot("appState.options", snap)?.flags.isAuthed;
   return isAuthed ?? false;
+}
+
+export function spyOptionAtom<
+	K extends keyof AppOptionsPayloadExtend,
+	S extends keyof AppOptionsPayloadExtend[K]
+>(
+	ctx: CtxSpy | Ctx, key: K, subKey: S, defaultVal: AppOptionsPayloadExtend[K][S]
+): AppOptionsPayloadExtend[K][S] {
+	const map = ctx.spy ? ctx.spy(appState.options) : ctx.get(appState.options);
+	return map?.[key]?.[subKey] ?? defaultVal;
+}
+
+export function getFromDictionary(ctx: Ctx, key: string): string {
+	return ctx.get(appState.dict)?.[key] ?? key;
 }
 

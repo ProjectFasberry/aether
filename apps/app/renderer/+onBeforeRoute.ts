@@ -1,5 +1,5 @@
-import { Locale, localeDefault, locales } from '@/shared/locales'
-import { PageContext } from 'vike/types'
+import { type Locale, localeDefault, locales } from '@/shared/locales'
+import { type PageContext } from 'vike/types'
 import { modifyUrl } from 'vike/modifyUrl'
 
 function extractLocale(pathname: string) {

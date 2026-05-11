@@ -1,12 +1,12 @@
 import { Avatar } from "@/shared/ui/avatar";
-import { playerRate, RateUser } from "@/shared/components/app/player/models/rate.model";
 import { createLink, Link } from "@/shared/components/config/link";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { pageState } from "@/shared/models/page-context.model";
 import { PageLoader } from "@/shared/ui/page-loader";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
 import dayjs from "dayjs";
+import { player, type RateUser } from "@/shared/components/app/player/models/player.model";
 
 const ListCard = ({ initiator, created_at, avatar }: RateUser) => {
   return (
@@ -33,11 +33,11 @@ const ListCard = ({ initiator, created_at, avatar }: RateUser) => {
 }
 
 const RateList = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(pageState.isClientside) || ctx.spy(playerRate.fetchList.statusesAtom).isPending) {
+  if (!ctx.spy(pageState.isClientside) || ctx.spy(player.rate.fetchList.statusesAtom).isPending) {
     return <PageLoader />
   }
 
-  const data = ctx.spy(playerRate.fetchList.dataAtom)?.data;
+  const data = ctx.spy(player.rate.fetchList.dataAtom)?.data;
 
   if (!data || isEmptyArray(data)) {
     return <Typography color="gray">пусто</Typography>
@@ -58,7 +58,7 @@ const RateList = reatomComponent(({ ctx }) => {
 }, "RateList")
 
 export default function Page() {
-  useUpdate(playerRate.refetchAll, []);
+  useUpdate(player.rate.refetchAll, []);
 
   return (
     <div className='flex flex-col gap-8 w-full h-full'>

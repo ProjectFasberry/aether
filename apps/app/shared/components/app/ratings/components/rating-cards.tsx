@@ -1,10 +1,10 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { HTMLAttributes } from "react";
+import { type HTMLAttributes } from "react";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Avatar } from "@/shared/ui/avatar";
-import { tv, VariantProps } from "tailwind-variants";
-import { currentUserState } from "@/shared/models/current-user.model";
-import { RatingBelkoin, RatingCharism, RatingLands, RatingParkour, RatingPlaytime, RatingReputation } from "@repo/shared/types/entities/rating";
+import { tv, type VariantProps } from "tailwind-variants";
+import { currentUserState } from "@/shared/models/current-user/index.model";
+import { type RatingBelkoin, type RatingCharism, type RatingLands, type RatingParkour, type RatingPlaytime, type RatingReputation } from "@repo/shared/types/entities/rating";
 import "dayjs/locale/ru";
 import { Typography } from "@repo/ui/typography";
 import { atom } from "@reatom/framework";

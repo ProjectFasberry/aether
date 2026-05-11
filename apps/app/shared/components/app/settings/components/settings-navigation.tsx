@@ -6,20 +6,20 @@ import {
   IconLogout2,
   IconShieldHalfFilled,
   IconUserCircle,
-  TablerIcon
+  type TablerIcon
 } from "@tabler/icons-react"
 import {
   settings,
   SETTINGS_NAVIGATION,
-  SettingsNavigation,
-  SettingsNavigationNode,
+  type SettingsNavigation,
+  type SettingsNavigationNode,
   settingsNavigationItemIsActiveAtom,
-  SettingsParent
+  type SettingsParent
 } from "../models/settings.model"
 import { tv } from "tailwind-variants"
 import { reatomComponent } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button.js"
-import { Ctx, spawn } from "@reatom/framework"
+import { type Ctx, spawn } from "@reatom/framework"
 
 type SettingsNavigationItem = { icon: TablerIcon, className?: string }
 

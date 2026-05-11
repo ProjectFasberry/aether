@@ -1,6 +1,6 @@
 import { Link } from "@/shared/components/config/link";
 import { Typography } from "@repo/ui/typography";
-import { PropsWithChildren } from "react"
+import { type PropsWithChildren } from "react"
 import { tv } from "tailwind-variants";
 import {
   SidebarProvider,

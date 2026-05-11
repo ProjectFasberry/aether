@@ -56,3 +56,22 @@ export function getCookieClient(key: string): Nullable<string> {
 
   return target.split('=')[1]
 }
+
+export function parseCookie(cookieStr?: string): Record<string, string> {
+  if (!cookieStr || cookieStr.trim().length === 0) return {};
+
+  return cookieStr
+    .split(';')
+    .map(v => v.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((acc, pair) => {
+      const eqIndex = pair.indexOf('=');
+      if (eqIndex === -1) return acc;
+
+      const key = pair.slice(0, eqIndex).trim();
+      const value = pair.slice(eqIndex + 1).trim();
+
+      if (key) acc[key] = decodeURIComponent(value);
+      return acc;
+    }, {});
+}

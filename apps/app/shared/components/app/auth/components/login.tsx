@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { login, AuthLoginQRStatus, loginState, AuthLoginVariant, authLoginVariantAtom, authSubmitIsDisabledAtom } from "../models/login.model"
-import { ReactNode, useRef } from "react"
+import { login, type AuthLoginQRStatus, loginState, type AuthLoginVariant, authLoginVariantAtom, authSubmitIsDisabledAtom } from "../models/login.model"
+import { type ReactNode, useRef } from "react"
 import { IconCheck, IconHandStop, IconRefresh } from "@tabler/icons-react"
 // import { Copy } from "@/shared/ui/copy"
 import { Button } from "@repo/ui/button"

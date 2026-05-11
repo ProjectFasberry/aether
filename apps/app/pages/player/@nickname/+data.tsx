@@ -1,4 +1,4 @@
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { useConfig } from "vike-react/useConfig";
 import { wrapTitle } from "@/shared/lib/wrap-title";
@@ -7,10 +7,9 @@ import { logRouting } from "@/shared/lib/log";
 import { createCtx } from "@reatom/framework";
 import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
 import { getPlayer, playerSsrModel, playerState } from "@/shared/components/app/player/models/player.model";
-import { snapshots } from "@/shared/models/snapshot";
+import { snapshots } from "@/shared/models/ssr";
 import dayjs from "@/shared/lib/create-dayjs"
-import { playerRateState } from "@/shared/components/app/player/models/rate.model";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 
 export type PlayerLandsPayload = ExtractApiData<"getServerLandsListByNickname">["data"]
 export type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
@@ -49,8 +48,19 @@ function buildMetadataHead({ title, nickname, description, image, url }: ReturnT
   );
 }
 
-export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data.server");
+function definePlayerTags(group: Player["group"]) {
+  const tags: Player["group"][] = [];
+
+  if (group !== 'default') {
+    tags.push(...[group, "default"])
+  } else {
+    tags.push(group)
+  }
+  return tags
+}
+
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, data.name);
 
   const config = useConfig();
   const headers = pageCtx.headers ?? undefined
@@ -84,8 +94,9 @@ export async function data(pageCtx: PageContextServer) {
   const { rate, ...base } = player;
   
   playerState.data(ctx, base);
+  playerState.tags(ctx, definePlayerTags(base.group))
   playerState.nickname(ctx, base.nickname)
-  playerRateState.data(ctx, rate);
+  playerState.rate(ctx, rate);
   playerLandsState.data(ctx, lands);
 
   pageCtx.snapshot = snapshots.merge(ctx, pageCtx, playerSsrModel.snapshotAtom)

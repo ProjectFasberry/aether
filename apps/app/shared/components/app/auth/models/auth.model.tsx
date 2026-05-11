@@ -1,9 +1,9 @@
-import { withHistory } from "@/shared/lib/reatom-helpers";
-import { action, atom, Ctx } from "@reatom/framework";
+import { withHistory } from "@/shared/lib/reatom/helpers";
+import { action, atom, type Ctx } from "@reatom/framework";
 import { reatomRecord, withAssign, withReset } from "@reatom/framework";
 import { withSearchParamsPersist } from "@reatom/url";
 import { pof } from "../../../../models/shared.model";
-import { spyOptionAtom } from "@/shared/models/app/base.model";
+import { spyOptionAtom } from "@/shared/models/app/utils";
 
 export type AuthType = "register" | "login";
 export type AuthErrorType = "nickname" | "password" | "findout";

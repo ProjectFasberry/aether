@@ -4,23 +4,30 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import React, { useEffect, useRef, useState } from "react";
-import { IconPlus, IconRotate, IconUpload, IconX } from "@tabler/icons-react";
+import { IconButterfly, IconManFilled, IconPlus, IconRotate, IconRun, IconUpload, IconX, type TablerIcon } from "@tabler/icons-react";
 import { pageState } from "@/shared/models/page-context.model";
 import { Button } from "@repo/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
-import {
-  getIsSelectSkinAtom, getIsUploadAvailableAtom, getSkinVariantIsActiveAtom, skins, skinsState, skinSubmitIsDisabledAtom,
-  SkinVariant, skinAnimation, SKIN_ANIMATIONS, hardwareAccIsEnabledAtom
-} from "../models/skin.model";
+import { type SkinAnimationType, skinModel, type SkinVariant, type SkinsHistory } from "../models/skin.model";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { ReactSkinview3d } from "react-skinview3d"
 import { ClientOnly } from "vike-react/ClientOnly"
+import { appState } from "@/shared/models/app/index.model";
 
-export type SkinsHistory = NonNullable<ExtractApiData<"getServerSkinHistoryByNickname">["data"]>[number]
+const {
+  getIsSelectSkinAtom,
+  getSkinVariantIsActiveAtom,
+  skinSubmitIsDisabledAtom,
+  getIsUploadAvailableAtom,
+  skins,
+  skinsState,
+  skin,
+  SKIN_VARIANTS
+} = skinModel()
 
 const SkinRenderSkeleton = () => {
   return (
-    <div className="flex items-center justify-center w-2/3 rounded-lg h-[390px]">
+    <div className="flex items-center justify-center px-6 w-full rounded-lg h-[390px]">
       <Skeleton className="w-full h-full" />
     </div>
   )
@@ -28,25 +35,25 @@ const SkinRenderSkeleton = () => {
 
 const SkinRender = reatomComponent(({ ctx }) => {
   useUpdate((ctx) => skins.init(ctx), []);
-  
+
   if (!ctx.spy(pageState.isClientside) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinRenderSkeleton />;
   }
 
-  const skin = ctx.spy(skinsState.selected)
-  if (!skin) return null;
+  const skinData = ctx.spy(skinsState.selected)
+  if (!skinData) return <p>ничего нет</p>
 
   return (
     <div className="flex items-center h-[390px] justify-center overflow-hidden w-full">
-      {ctx.spy(hardwareAccIsEnabledAtom) ? (
+      {ctx.spy(appState.inited.hardwaveIsEnabled) ? (
         <ClientOnly fallback={<SkinRenderSkeleton />}>
-          {skin.skin_url && (
+          {skinData.skin_url && (
             <ReactSkinview3d
-              skinUrl={skin.skin_url}
+              skinUrl={skinData.skin_url}
               height="390"
               width="300"
               options={{ zoom: 0.8 }}
-              onReady={({ viewer }) => skinAnimation.viewer(ctx, viewer)}
+              onReady={({ viewer }) => skin.animation.viewer(ctx, viewer)}
             />
           )}
         </ClientOnly>
@@ -101,13 +108,12 @@ const SkinsHistoryItem = reatomComponent<SkinsHistory & { variant: "mobile" | "d
     })
   }
 
+  if (!skin_head_url) return null;
+
   return (
-    <div
-      className={skinHeadVariant({ status, size: "small" })}
-      onClick={handle}
-    >
+    <div className={skinHeadVariant({ status, size: "small" })} onClick={handle}>
       <Avatar
-        src={skin_head_url!}
+        src={skin_head_url}
         width={variant === 'mobile' ? 128 : 36}
         height={variant === 'mobile' ? 128 : 36}
       />
@@ -137,9 +143,19 @@ const SkinsHistoryList = reatomComponent<{ variant: "mobile" | "desktop" }>(({ c
   }
 
   const data = ctx.spy(skins.fetch.dataAtom)
-  if (!data) return null;
+  if (!data) return <p>ничего нет</p>
 
-  return data.map(d => <SkinsHistoryItem key={d.skin_identifier} variant={variant} {...d} />)
+  return data.map(item => (
+    <SkinsHistoryItem
+      key={item.skin_identifier}
+      variant={variant}
+      skin_head_url={item.skin_head_url}
+      skin_identifier={item.skin_identifier}
+      skin_url={item.skin_url}
+      skin_variant={item.skin_variant}
+      timestamp={item.timestamp}
+    />
+  ))
 }, "SkinsHistoryList")
 
 const SkinMainHeadSkeleton = () => {
@@ -182,24 +198,6 @@ const SkinMainHead = reatomComponent(({ ctx }) => {
     </div>
   )
 }, "SkinMainHead")
-
-const SkinRenderWrapper = () => {
-  return (
-    <div className="flex flex-col justify-between w-full lg:min-h-[450px] lg:border lg:border-neutral-600 rounded-xl">
-      <div className="flex flex-col order-last lg:order-first py-4 items-center gap-2 w-full h-full">
-        <div className="hidden lg:flex">
-          <SkinRender />
-        </div>
-        <div className="flex items-center justify-center gap-2 w-full h-full">
-          <SkinsHistoryList variant="desktop" />
-        </div>
-      </div>
-      <div className="flex lg:hidden lg:order-last justify-center items-center w-full">
-        <SkinMainHead />
-      </div>
-    </div>
-  )
-}
 
 const skinControlVariants = tv({
   base: `flex items-center justify-center cursor-pointer
@@ -355,8 +353,8 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
 
   return (
     <Dialog
-      open={ctx.spy(skinsState.control.dialogIsOpen)}
-      onOpenChange={v => skinsState.control.dialogIsOpen(ctx, v)}
+      open={ctx.spy(skinsState.control.isOpen)}
+      onOpenChange={v => skinsState.control.isOpen(ctx, v)}
     >
       <DialogTrigger asChild>
         <Button
@@ -384,7 +382,7 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
               Выбери тип скина
             </Typography>
             <div className="flex bg-neutral-800 rounded-lg *:h-10 items-center *:rounded-lg justify-between p-1 w-full">
-              {skinsState.control.SKIN_VARIANTS.map((d) => <SkinVariantItem key={d} variant={d} />)}
+              {SKIN_VARIANTS.map((d) => <SkinVariantItem key={d} variant={d} />)}
             </div>
           </div>
           <SkinControlChangeSubmit />
@@ -409,12 +407,12 @@ const SkinSetButton = reatomComponent(({ ctx }) => {
 }, "SkinSetButton")
 
 const SkinControlRotate = reatomComponent(({ ctx }) => {
-  const variant = ctx.spy(skinAnimation.isRotate) ? "active" : "default"
+  const variant = ctx.spy(skin.animation.isRotate) ? "active" : "default"
 
   return (
     <div
       key="rotate"
-      onClick={() => skinAnimation.isRotate(ctx, (state) => !state)}
+      onClick={() => skin.animation.isRotate(ctx, (state) => !state)}
       className={skinControlVariants({ variant })}
     >
       <IconRotate size={18} />
@@ -422,15 +420,21 @@ const SkinControlRotate = reatomComponent(({ ctx }) => {
   )
 }, "SkinControlRotate")
 
+const SKIN_ANIMATIONS: { animation: SkinAnimationType; icon: TablerIcon }[] = [
+  { animation: "idle", icon: IconManFilled },
+  { animation: "run", icon: IconRun, },
+  { animation: "flying", icon: IconButterfly },
+];
+
 const SkinControlsList = reatomComponent(({ ctx }) => {
-  const variant = (c: typeof SKIN_ANIMATIONS[number]) => ctx.spy(skinAnimation.type) === c.animation
+  const variant = (c: typeof SKIN_ANIMATIONS[number]) => ctx.spy(skin.animation.type) === c.animation
     ? "active" : "default"
 
   return (
     SKIN_ANIMATIONS.map((control, i) => (
       <div
         key={i}
-        onClick={() => skinAnimation.type(ctx, control.animation)}
+        onClick={() => skin.animation.type(ctx, control.animation)}
         className={skinControlVariants({ variant: variant(control) })}
       >
         <control.icon size={18} />
@@ -439,28 +443,34 @@ const SkinControlsList = reatomComponent(({ ctx }) => {
   )
 }, "SkinControlsList")
 
-const SkinControls = () => {
-  return (
-    <div className="hidden lg:flex flex-col items-center w-full justify-center gap-4">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center gap-1 w-full">
-          <SkinControlsList />
-          <SkinControlRotate />
-        </div>
-        <div className='flex items-center gap-1'>
-          <SkinControlChangeSkin />
-          <SkinSetButton />
-        </div>
-      </div>
-    </div >
-  );
-}
-
-export const PlayerSkin = reatomComponent(({ ctx }) => {
+export const PlayerSkin = () => {
   return (
     <div className="flex flex-col h-full gap-4 w-full">
-      <SkinRenderWrapper />
-      <SkinControls />
+      <div className="flex flex-col justify-between w-full lg:min-h-[450px] lg:border lg:border-neutral-600 rounded-xl">
+        <div className="flex flex-col order-last lg:order-first py-4 items-center gap-2 w-full h-full">
+          <div className="hidden lg:flex w-full">
+            <SkinRender />
+          </div>
+          <div className="flex items-center justify-center gap-2 w-full h-full">
+            <SkinsHistoryList variant="desktop" />
+          </div>
+        </div>
+        <div className="flex lg:hidden lg:order-last justify-center items-center w-full">
+          <SkinMainHead />
+        </div>
+      </div>
+      <div className="hidden lg:flex flex-col items-center w-full justify-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center justify-center gap-1 w-full">
+            <SkinControlsList />
+            <SkinControlRotate />
+          </div>
+          <div className='flex items-center gap-1'>
+            <SkinControlChangeSkin />
+            <SkinSetButton />
+          </div>
+        </div>
+      </div >
     </div>
   )
-}, "PlayerSkin")
+}

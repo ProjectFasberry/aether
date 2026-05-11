@@ -1,4 +1,4 @@
-import ky, { Options } from "ky";
+import ky, { type Options } from "ky";
 import { env } from "../env";
 
 const baseConfig: Options = {

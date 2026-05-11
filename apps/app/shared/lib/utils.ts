@@ -1,16 +1,14 @@
-import { Atom, CtxSpy, isAtom, Unsubscribe } from "@reatom/framework";
+import { type Atom, type CtxSpy, isAtom, type Unsubscribe } from "@reatom/framework";
 import { isDeepEqual } from "@reatom/framework";
 import { logger } from "./logger";
 import { ENVIRONMENT } from "../consts";
 
-type WsConfig = {
+export const createWsUrl = (config: {
   host: string;
   port?: number | string;
   path?: string;
   isSecure?: boolean;
-};
-
-export const createWsUrl = (config: WsConfig): string => {
+}): string => {
   const { host, port, path = '', isSecure = true } = config;
   const protocol = isSecure ? 'wss' : 'ws';
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -19,7 +17,7 @@ export const createWsUrl = (config: WsConfig): string => {
   return `${protocol}://${cleanHost}${portSuffix}${cleanPath}`;
 };
 
-export const isMobile = (): boolean => {
+export function detectMobile(): boolean {
   const ua = navigator.userAgent.toLowerCase();
 
   const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
@@ -45,29 +43,6 @@ export const isMobile = (): boolean => {
   return true;
 };
 
-export function parseCookie(cookieStr?: string): Record<string, string> {
-  if (!cookieStr || cookieStr.trim().length === 0) return {};
-
-  return cookieStr
-    .split(';')
-    .map(v => v.trim())
-    .filter(Boolean)
-    .reduce<Record<string, string>>((acc, pair) => {
-      const eqIndex = pair.indexOf('=');
-      if (eqIndex === -1) return acc;
-
-      const key = pair.slice(0, eqIndex).trim();
-      const value = pair.slice(eqIndex + 1).trim();
-
-      if (key) acc[key] = decodeURIComponent(value);
-      return acc;
-    }, {});
-}
-
-export function isEmptyArray(data: unknown): boolean {
-  return !Array.isArray(data) || data.length === 0;
-}
-
 export function validateNumber(input: string): number | null {
   const num = Number(input);
   return Number.isFinite(num) ? num : null;
@@ -92,7 +67,7 @@ export function makeChangeValidator<T>(
   }
 }
 
-export function hardwareAccelerationIsActive(): boolean {
+export function detectHardwareAcceleration(): boolean {
   let gl: WebGLRenderingContext | null = null;
   const canvas = document.createElement('canvas');
 
@@ -145,25 +120,6 @@ export function hardwareAccelerationIsActive(): boolean {
   return true;
 }
 
-export function getTopCountry(acceptLanguage?: string): string | null {
-  if (!acceptLanguage) return null
-
-  let best: { country: string; q: number } | null = null
-
-  for (const part of acceptLanguage.split(',')) {
-    const [lang, qRaw] = part.trim().split(';')
-    const country = lang.split('-')[1]
-    if (!country) continue
-
-    const q = qRaw?.startsWith('q=') ? Number(qRaw.slice(2)) : 1
-    if (!best || q > best.q) {
-      best = { country, q }
-    }
-  }
-
-  return best?.country ?? null
-}
-
 export const throttle = <T extends unknown[]>(
   callback: (...args: T) => void,
   delay: number,
@@ -183,14 +139,6 @@ export const throttle = <T extends unknown[]>(
     }, delay);
   };
 };
-
-export const isNullish = <T>(value: T | null | undefined): value is null | undefined => {
-  return value === null || value === undefined;
-};
-
-export const isMap = <K = any, V = any>(val: unknown): val is Map<K, V> => {
-  return val instanceof Map;
-}
 
 export const hasSameStructure = <T extends object>(pattern: T, target: unknown): target is T => {
   if (
@@ -215,17 +163,12 @@ export const hasSameStructure = <T extends object>(pattern: T, target: unknown):
     return true;
   });
 }
-export function unsubscribe(unsubs: Unsubscribe[]) {
-  for (const unsub of unsubs) unsub()
-}
-
-type NestedAtom = Atom & { [key: string]: unknown };
 
 export function subOnchange(data: unknown, visited = new Set<unknown>()): Unsubscribe[] {
   if (ENVIRONMENT === 'server') return [];
 
   const subs: Unsubscribe[] = [];
-  
+
   if (!data || visited.has(data)) return subs;
 
   if (Array.isArray(data)) {
@@ -238,7 +181,7 @@ export function subOnchange(data: unknown, visited = new Set<unknown>()): Unsubs
   if (isAtom(data)) {
     visited.add(data);
 
-    const atom = data as NestedAtom;
+    const atom = data as Atom & { [key: string]: unknown };
     const atomName = atom.__reatom.name ?? 'unnamed';
 
     if ('onChange' in atom && typeof atom.onChange === 'function') {

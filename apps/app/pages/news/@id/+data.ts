@@ -4,9 +4,9 @@ import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { createCtx } from "@reatom/framework";
-import { snapshots } from "@/shared/models/snapshot";
+import { snapshots } from "@/shared/models/ssr";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 
 export type Data = Awaited<ReturnType<typeof data>>;

@@ -2,13 +2,13 @@ import dayjs from "@/shared/lib/create-dayjs"
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { landAtom } from "@/shared/components/app/land/models/land.model";
 import { createCtx } from "@reatom/framework";
-import { snapshots } from "@/shared/models/snapshot";
+import { snapshots } from "@/shared/models/ssr";
 
 const previewImage = getStaticImage("arts/adventure-in-blossom.jpg")
 
@@ -49,8 +49,8 @@ async function loadLand(ulid: string, headers?: Record<string, string>): Promise
   }
 }
 
-export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data");
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, data.name);
 
   const config = useConfig()
   const headers = pageCtx.headers ?? undefined

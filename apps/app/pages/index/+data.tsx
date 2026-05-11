@@ -1,4 +1,4 @@
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
@@ -6,7 +6,7 @@ import { logRouting } from "@/shared/lib/log";
 import { env } from "@/shared/env";
 import { getNews, newsState } from "@/shared/components/app/news/models/news.model";
 import { createCtx } from "@reatom/framework";
-import { snapshots } from "@/shared/models/snapshot";
+import { snapshots } from "@/shared/models/ssr";
 import { eventsState, getEvents } from "@/shared/components/app/events/models/events.model";
 
 const previewImage = getStaticImage("arts/8332de192322939.webp")
@@ -32,8 +32,8 @@ function metadata(pageCtx: PageContextServer) {
   }
 }
 
-export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, "data");
+export const data = async (pageCtx: PageContextServer) => {
+  logRouting(pageCtx.urlPathname, data.name);
 
   const headers = pageCtx.headers ?? undefined;
 

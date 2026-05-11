@@ -1,6 +1,6 @@
 import { Button } from "@repo/ui/button";
-import { PropsWithChildren } from "react";
-import { ErrorBoundary, FallbackProps } from "react-error-boundary";
+import { type PropsWithChildren } from "react";
+import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
 
 export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   return (

@@ -3,8 +3,8 @@ import { registerNavigationModel, registerSeedPhraseModel } from "../models/regi
 import { authState } from "../models/auth.model";
 import { action, atom } from "@reatom/framework";
 import { login } from "../models/login.model";
-import { devtools } from "@/shared/models/devtools/base.model";
-import { withLog } from "@/shared/lib/reatom-helpers";
+import { devtools } from "@/shared/models/devtools/index.model";
+import { withLog } from "@/shared/lib/reatom/helpers";
 
 export const teststr = atom<Nullable<string>>(null).pipe(withLocalStorage({ key: "test-str-auth-sp" }))
 const nicknameAtom = atom("registered_1");

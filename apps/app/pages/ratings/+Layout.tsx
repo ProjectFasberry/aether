@@ -1,6 +1,6 @@
 import { Typography } from "@repo/ui/typography";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { PropsWithChildren } from "react";
+import { type PropsWithChildren } from "react";
 import { PageHeaderImage } from "@/shared/ui/header-image";
 import { BackButton } from "@/shared/ui/back-button";
 import { usePageContext } from "vike-react/usePageContext";

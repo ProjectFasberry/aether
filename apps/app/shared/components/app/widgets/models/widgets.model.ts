@@ -1,9 +1,9 @@
-import { currentUserState } from "@/shared/models/current-user.model";
-import { action, Atom, atom, Ctx } from "@reatom/framework";
+import { currentUserState } from "@/shared/models/current-user/index.model";
+import { action, type Atom, atom, type Ctx } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 import { withCookie } from "@reatom/persist-web-storage";
-import { IconLock, TablerIcon } from "@tabler/icons-react";
-import { ReactNode } from "react";
+import { IconLock, type TablerIcon } from "@tabler/icons-react";
+import { type ReactNode } from "react";
 import { navigate } from "vike/client/router";
 
 type WidgetBase = {

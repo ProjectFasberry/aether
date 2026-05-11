@@ -1,15 +1,14 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
-import { currentUserState } from "@/shared/models/current-user.model"
+import { currentUserState } from "@/shared/models/current-user/index.model"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
-import { action, atom, AtomMut, AtomState, Ctx } from "@reatom/framework"
+import { action, atom, type AtomMut, type AtomState, type Ctx } from "@reatom/framework"
 import { withAssign, withInit, withReset } from "@reatom/framework"
 import { createOrderTopUpSchema } from "@repo/shared/schemas/payment"
 import { navigate } from "vike/client/router"
 import * as z from "zod"
 import { createNavigationModel } from "../../auth/models/navigation.model"
 import { validateNumber } from "@/shared/lib/utils"
-import React from "react"
 
 type OutputPayload = ExtractApiData<"postStoreOrderExternalCreate">["data"]
 export type StoreExchangeRatesPayload = ExtractApiData<"getStoreOrderExternalExchange-rates">["data"]

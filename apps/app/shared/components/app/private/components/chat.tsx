@@ -2,20 +2,20 @@ import dayjs from "@/shared/lib/create-dayjs";
 import { reatomComponent, useAtom, useUpdate } from "@reatom/npm-react";
 import {
   chatCreate, chatCreateMessageAtom, chatHistory, chatHistoryState, chatEditState,
-  chatEdit, getChatItemIsEditAtom, chatItemViewsAction, getChatItemViews, ChatItem, chatDisabledAtom,
-  ChatItemViews, chatWs, chatDelete
+  chatEdit, getChatItemIsEditAtom, chatItemViewsAction, getChatItemViews, type ChatItem, chatDisabledAtom,
+  type ChatItemViews, chatWs, chatDelete
 } from "../models/chat.model";
 import { Button } from "@repo/ui/button";
 import { IconBrandTelegram, IconCheck, IconDotsVertical, IconEye, IconPencil, IconTrash, IconX } from "@tabler/icons-react";
 import { Input } from "@repo/ui/input";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { createLink, Link } from "@/shared/components/config/link";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { useState } from "react";
 import { ActionButton, DeleteButton } from "./ui";
-import { currentUserState } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { createPageModel } from "@/shared/lib/events";
 
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {

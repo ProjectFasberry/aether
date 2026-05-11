@@ -6,7 +6,7 @@ import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 
 const storePreviewImage = getStaticImage("backgrounds/main_background.png")
 
@@ -42,7 +42,7 @@ function metadata() {
 }
 
 export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, "data")
+  logRouting(pageCtx.urlPathname, data.name)
 
   const headers = pageCtx.headers ?? undefined;
   if (!headers) return;

@@ -1,4 +1,4 @@
-import Editor, { OnMount } from "@monaco-editor/react";
+import Editor, { type OnMount } from "@monaco-editor/react";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Button } from "@repo/ui/button";
 import { IconCircleDashed } from "@tabler/icons-react";

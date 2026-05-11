@@ -1,9 +1,9 @@
-import { currentUserState } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { action, atom, reatomAsync, reatomMap, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { client } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
-import { getPlayerSocials, PlayerSocialsPayload } from "../../player/models/socials.model";
+import { getPlayerSocials, type PlayerSocialsPayload } from "../../player/models/socials.model";
 import { logError } from "@/shared/lib/log";
 
 export const profileSocials = atom(null, "profileSocials").pipe(
@@ -22,8 +22,8 @@ export const profileSocials = atom(null, "profileSocials").pipe(
     fetchAvailable: reatomAsync(async (ctx) => {
       return await ctx.schedule(() =>
         client
-          .get<SocialAvailablePayload[]>("server/socials/available", { 
-            signal: ctx.controller.signal 
+          .get<SocialAvailablePayload[]>("server/socials/available", {
+            signal: ctx.controller.signal
           })
           .exec()
       )
@@ -96,10 +96,7 @@ export const profileSocials = atom(null, "profileSocials").pipe(
 
 const socialStatusAtom = reatomMap<string, boolean>()
 
-export const getSocialStatusAtom = (type: string) => atom((ctx) =>
-  ctx.spy(socialStatusAtom).get(type) ?? false,
-  "getSocialStatus"
-)
+export const getSocialStatusAtom = (type: string) => atom((ctx) => ctx.spy(socialStatusAtom).get(type) ?? false)
 
 type SocialAvailablePayload = {
   title: string, social: PlayerSocialsPayload["type"]

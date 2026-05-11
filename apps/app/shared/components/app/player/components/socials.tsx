@@ -2,7 +2,7 @@ import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Separator } from "@repo/ui/separator"
 import { Skeleton } from "@repo/ui/skeleton"
-import { playerSocials, PlayerSocialsPayload, PlayerSocialsValuePayload, SOCIAL_EVENTS, SOCIAL_ICONS } from "../models/socials.model"
+import { playerSocials, type PlayerSocialsPayload, type PlayerSocialsValuePayload, SOCIAL_EVENTS, SOCIAL_ICONS } from "../models/socials.model"
 
 const SocialCard = ({ type, value }: { type: PlayerSocialsPayload["type"], value: PlayerSocialsValuePayload }) => {
   const icon = SOCIAL_ICONS[type]()

@@ -1,5 +1,5 @@
 import { SettingsContentWrapper, SettingsSection } from "./ui"
-import { SettingsSectionItem } from "../models/settings.model"
+import { type SettingsSectionItem } from "../models/settings.model"
 
 const SECURITY_SECTIONS: SettingsSectionItem[] = []
 

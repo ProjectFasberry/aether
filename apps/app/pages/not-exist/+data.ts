@@ -1,7 +1,7 @@
 import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { useConfig } from "vike-react/useConfig";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 import { m } from "@/paraglide/messages.js";
 
 export type Data = Awaited<ReturnType<typeof data>>;
@@ -25,7 +25,7 @@ const TITLE = {
 type TitleType = keyof typeof TITLE
 
 export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, "data");
+  logRouting(pageCtx.urlPathname, data.name);
   
   const type = pageCtx.urlParsed.search["type"] as TitleType | undefined ?? "default"
   const title = m[`${type}.not-found`]()

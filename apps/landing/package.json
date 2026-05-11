@@ -8,8 +8,10 @@
 		"start": "infisical run --env=prod --path=/landing -- node ./dist/server/index.mjs --port 3005",
 		"dev": "infisical run --env=dev --path=/landing -- bun run vike dev --port 3005",
 		"build": "NODE_ENV=production vike build",
+		"--------------": "",
 		"lint": "bunx biome lint",
 		"type-check": "tsc --build",
+		"circular-check": "bunx dpdm --no-warning ./renderer/+Layout.tsx",
 		"------------------": "",
 		"deploy": "bun run vercel deploy --prebuilt --prod"
 	},

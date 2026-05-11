@@ -1,14 +1,14 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@repo/ui/typography";
-import { Checkbox, CheckboxProps } from "@repo/ui/checkbox"
-import { Ctx } from "@reatom/framework";
-import { Filter, filterIsAppliedAtom, filtersState, storeItems, storeItemsState } from "../../models/store.model";
+import { Checkbox, type CheckboxProps } from "@repo/ui/checkbox"
+import { type Ctx } from "@reatom/framework";
+import { type Filter, filterIsAppliedAtom, filtersState, storeItems, storeItemsState } from "../../models/store.model";
 import { IconFilter, IconSearch } from "@tabler/icons-react";
-import { LabelHTMLAttributes, useState } from "react";
+import { type LabelHTMLAttributes, useState } from "react";
 import { pageState } from "@/shared/models/page-context.model";
 import { Input } from "@repo/ui/input";
 import { Vaul, VaulContent, VaulHeader, VaulTrigger } from "@/shared/ui/vaul";
-import { appState } from "@/shared/models/app/base.model";
+import { appState } from "@/shared/models/app/index.model";
 import { translate } from "@/shared/locales/helpers";
 
 export const StoreSearch = reatomComponent(({ ctx }) => {
@@ -102,7 +102,7 @@ export const StoreFilterList = reatomComponent(({ ctx }) =>
 export const StoreFiltersSheet = reatomComponent(({ctx}) => {
   const [open, setOpen] = useState(false);
 
-  const isMobile = ctx.spy(appState.currentState.isMobile)
+  const isMobile = ctx.spy(appState.current.isMobile)
   if (!isMobile) return null;
 
   return (

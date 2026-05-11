@@ -1,11 +1,11 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import {
-  getIsCheckedAtom, getIsSelectedUser, PrivatedUser, users,
+  getIsCheckedAtom, getIsSelectedUser, type PrivatedUser, users,
   usersControl, usersControlRoles, usersControlState, usersDataArrAtom
 } from "../models/users.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { tv } from "tailwind-variants";
-import { currentUserState } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { Checkbox } from "@repo/ui/checkbox";
 import { createLink, Link } from "@/shared/components/config/link";
 import { Avatar } from "../../../../ui/avatar";

@@ -1,17 +1,17 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { login, authLoginQRIsErrorAtom, loginState } from "../../auth/models/login.model";
 import { IconArrowLeft, IconCheck, IconDeviceDesktop, IconQrcode, IconX } from "@tabler/icons-react";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Button } from "@repo/ui/button";
 import { spawn } from "@reatom/framework";
 import { IconLoader } from "@/shared/ui/icon-loader";
-import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, SessionPayload } from "../models/settings-security.model";
-import { IDetectedBarcode, Scanner, TrackFunction } from "@yudiel/react-qr-scanner";
+import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, type SessionPayload } from "../models/settings-security.model";
+import { type IDetectedBarcode, Scanner, type TrackFunction } from "@yudiel/react-qr-scanner";
 import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
-import { appState } from "@/shared/models/app/base.model";
+import { appState } from "@/shared/models/app/index.model";
 import { Skeleton } from "@repo/ui/skeleton.js";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
-import { SettingsSectionItem } from "../models/settings.model";
+import { type SettingsSectionItem } from "../models/settings.model";
 
 const VerifyExpiredOrNotfound = () => {
   return (
@@ -305,7 +305,7 @@ const AccountSessionsList = () => {
 }
 
 const SettingsMainAccountSessions = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.initState.isMobile)
+  const isMobile = ctx.spy(appState.inited.isMobile)
 
   return (
     <div className="flex flex-col gap-4 w-full">

@@ -1,4 +1,4 @@
-import { HTMLAttributes, TdHTMLAttributes, ThHTMLAttributes } from 'react';
+import { type HTMLAttributes, type TdHTMLAttributes, type ThHTMLAttributes } from 'react';
 import { tv } from 'tailwind-variants';
 
 const Table = ({ className, ...props }: HTMLAttributes<HTMLTableElement>) => (

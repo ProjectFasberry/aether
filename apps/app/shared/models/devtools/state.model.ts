@@ -2,7 +2,7 @@ import { devtoolsConfig } from "./config";
 import { getCookieClient, setCookie } from "@/shared/lib/cookie-utils";
 import { isObject } from "@reatom/framework";
 
-export const DEVTOOLS_DATA_COOKIE_KEY = "devtools-data"
+const DEVTOOLS_DATA_LS_KEY = "devtools-data"
 const DEVTOOLS_COORDS_COOKIE_KEY = 'devtools-coords';
 
 type NestedKeys<T> = T extends { value: any; __meta: any }
@@ -18,8 +18,7 @@ export type DevtoolsCookieChildKey = Exclude<
 >;
 export type DevtoolsCoords = { x: number, y: number, w: number, h: number };
 
-const DEFAULT_MAXAGE = 30 * 24 * 60 * 60 * 1000;
-const createCookieStorage = <T>(key: string, maxAge = DEFAULT_MAXAGE) => ({
+const createCookieStorage = <T>(key: string, maxAge = 30 * 24 * 60 * 60 * 1000) => ({
   key,
   set(value: Partial<T>, patch = true): Nullable<T> {
     try {
@@ -71,7 +70,7 @@ const setDeep = (obj: any, path: string[], value: any): any => {
 };
 
 export const devtoolsData = {
-  key: DEVTOOLS_DATA_COOKIE_KEY,
+  key: DEVTOOLS_DATA_LS_KEY,
   _parse(): Record<string, any> {
     if (typeof window === 'undefined') return {};
     try {

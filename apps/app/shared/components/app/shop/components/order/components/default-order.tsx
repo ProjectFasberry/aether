@@ -6,7 +6,7 @@ import { Typography } from "@repo/ui/typography";
 import { IconCheck, IconCopy, IconEye } from "@tabler/icons-react";
 import { QRCode } from "react-qrcode-logo";
 import { useEffect, useState } from "react";
-import { Payment } from "../../../models/store.model";
+import { type Payment } from "../../../models/store.model";
 import { AutoWidthInput } from "@/shared/ui/autowidth-input";
 import { defaultOrderEvents, isCopiedAtom, orderIsLoadingAtom } from "../models/default-order.model";
 import { onDisconnect } from "@reatom/framework";

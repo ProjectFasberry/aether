@@ -1,10 +1,10 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { AuthRestoreType, restoreNavigationModel, restoreSeedPhraseModel, restoreState } from "../models/restore.model";
+import { type AuthRestoreType, restoreNavigationModel, restoreSeedPhraseModel, restoreState } from "../models/restore.model";
 import { SeedPhrase, SeedPhraseBody } from "@/shared/ui/seed-phrase";
 import { Typography } from "@repo/ui/typography";
 import { Button } from "@repo/ui/button";
 import { NicknameInput } from "./auth";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { spawn } from "@reatom/framework";
 import { Link } from "@/shared/components/config/link";
 import { Input } from "@repo/ui/input";

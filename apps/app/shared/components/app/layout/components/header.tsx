@@ -1,7 +1,7 @@
 import { IconBuildingStore, IconChevronUp } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
-import { currentUserState } from "@/shared/models/current-user.model";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 import { Avatar } from "@/shared/ui/avatar";
 import { Typography } from "@repo/ui/typography";
 import { Separator } from "@repo/ui/separator";
@@ -10,9 +10,9 @@ import { cartDataSelectedItemsLengthAtom, cartState } from "../../shop/models/st
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
-import { HEADERS_LINKS, MENU_ACTIONS, MenuActionItem, MenuLink, showCartIconAtom, showCurrentUserMenuAtom, validatedLinksAtom } from "./navigation.model";
+import { HEADERS_LINKS, MENU_ACTIONS, type MenuActionItem, type MenuLink, showCartIconAtom, showCurrentUserMenuAtom, validatedLinksAtom } from "./navigation.model";
 import { MobileBottomBar } from "./mobile-navigation";
-import { appState } from "@/shared/models/app/base.model";
+import { appState } from "@/shared/models/app/index.model";
 import { Banner } from "../../widgets/components/banner";
 import { cn } from "@/shared/lib/cn";
 import { translate } from "@/shared/locales/helpers";
@@ -192,7 +192,7 @@ const HeaderUserBar = reatomComponent(({ ctx }) => {
 }, "HeaderUserBar")
 
 export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = false }) => {
-  const isMobile = ctx.spy(appState.currentState.isMobile)
+  const isMobile = ctx.spy(appState.current.isMobile)
 
   return (
     <div className="flex flex-col w-full border-b rounded-b-xl border-neutral-800 relative z-20">
@@ -230,7 +230,7 @@ export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = f
 }, "Header")
 
 export const Navigation = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.currentState.isMobile)
+  const isMobile = ctx.spy(appState.current.isMobile)
 
   return (
     <>

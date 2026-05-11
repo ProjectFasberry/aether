@@ -2,7 +2,7 @@ import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 
 function metadata() {
   return {
@@ -11,7 +11,7 @@ function metadata() {
 }
 
 export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, "data")
+  logRouting(pageCtx.urlPathname, data.name)
 
   const config = useConfig()
   config(metadata())

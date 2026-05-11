@@ -1,16 +1,16 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/framework";
-import { action, Action, atom } from "@reatom/framework";
-import { CreateOrderRoutePayload, OrderEventPayload } from "@repo/shared/types/entities/payment";
+import { action, type Action, atom } from "@reatom/framework";
+import { type CreateOrderRoutePayload, type OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
 import { withAssign, withReset } from "@reatom/framework";
 import { env } from "@/shared/env";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { OrderSingleDefault, OrderSinglePayload } from "@repo/shared/types/entities/store";
+import { type OrderSingleDefault, type OrderSinglePayload } from "@repo/shared/types/entities/store";
 import { TopUpButton } from "../components/wallet/top-up-button";
 import { navigate } from "vike/client/router";
-import { ReactNode } from "react";
-import { Action as ToasterAction } from "sonner"
+import { type ReactNode } from "react";
+import { type Action as ToasterAction } from "sonner"
 
 export const orderState = atom(null, "orderState").pipe(
   withAssign((_, name) => ({

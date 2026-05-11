@@ -4,7 +4,7 @@ import '@bprogress/core/css';
 import "@/shared/styles/tailwind.css";
 import "@/shared/styles/editor.css"
 
-import { PropsWithChildren } from 'react'
+import { type PropsWithChildren } from 'react'
 import { Navigation } from '@/shared/components/app/layout/components/header';
 import { WrapperChild } from '@/shared/components/app/layout/components/wrapper';
 

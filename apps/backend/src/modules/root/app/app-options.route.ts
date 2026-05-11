@@ -81,7 +81,7 @@ export const appOptionsList = new Elysia()
         isWhitelisted: isWl
       },
       state: {
-        stage: "staging"
+        stage: Bun.env.STAGE as AppOptionsPayload["state"]["stage"]
       }
     }
 

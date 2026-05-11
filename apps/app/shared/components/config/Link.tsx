@@ -1,4 +1,4 @@
-import { AnchorHTMLAttributes } from "react";
+import { type AnchorHTMLAttributes } from "react";
 import { tv } from "tailwind-variants";
 import { usePageContext } from "vike-react/usePageContext";
 

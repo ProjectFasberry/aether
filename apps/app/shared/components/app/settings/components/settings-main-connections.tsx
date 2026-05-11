@@ -13,7 +13,7 @@ import {
   socialForAdd,
   socialForAddState,
 } from "../models/settings-profile.socials.model";
-import { PlayerSocialsPayload, SOCIAL_ICONS } from "../../player/models/socials.model";
+import { type PlayerSocialsPayload, SOCIAL_ICONS } from "../../player/models/socials.model";
 import { SettingsContentWrapper } from "./ui";
 
 const profileSocialsListItemVariant = tv({

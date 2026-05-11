@@ -1,6 +1,6 @@
-import { AtomMut } from "@reatom/framework"
-import { snapshotsMap } from "../snapshot"
-import { DEBUG_MODULES } from "../debug/const"
+import type { AtomMut } from "@reatom/framework"
+import { snapshotsMap } from "../ssr"
+import { DEBUG_MODULES } from "./debug"
 
 type ConfigItemMeta<T> = |
 { applyAs: "atom", applyTarget: AtomMut<T> } |

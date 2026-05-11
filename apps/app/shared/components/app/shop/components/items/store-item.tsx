@@ -1,7 +1,7 @@
 import { createLink, Link } from "@/shared/components/config/link"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { Typography } from "@repo/ui/typography"
-import { getItemStatus, StoreItem as StoreItemProps, storeItem } from "../../models/store-item.model"
+import { getItemStatus, type StoreItem as StoreItemProps, storeItem } from "../../models/store-item.model"
 import { Skeleton } from "@repo/ui/skeleton"
 import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent } from "@reatom/npm-react"

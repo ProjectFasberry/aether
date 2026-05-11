@@ -3,7 +3,7 @@ import { referrals } from "@/shared/components/app/referrals/models/referrals.mo
 import { createLink, Link } from "@/shared/components/config/link"
 import { env } from "@/shared/env"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
-import { currentUserState } from "@/shared/models/current-user.model"
+import { currentUserState } from "@/shared/models/current-user/index.model"
 import { PageHeaderImage } from "@/shared/ui/header-image"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"

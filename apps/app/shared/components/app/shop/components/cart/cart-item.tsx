@@ -5,7 +5,7 @@ import { Typography } from "@repo/ui/typography"
 import { createLink } from "@/shared/components/config/link"
 import { storeItem } from "../../models/store-item.model"
 import { CURRENCIES } from "./cart-price"
-import { cart, cartDataItemIsSelectAtom, CartItem as CartItemProps } from "../../models/store-cart.model"
+import { cart, cartDataItemIsSelectAtom, type CartItem as CartItemProps } from "../../models/store-cart.model"
 import { changeRecipient } from "../../models/store-recipient.model"
 import { Checkbox } from "@repo/ui/checkbox"
 

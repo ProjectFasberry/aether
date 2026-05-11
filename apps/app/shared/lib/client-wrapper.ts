@@ -1,5 +1,5 @@
 import { clientInstance, panelClientInstance } from "@/shared/api/client";
-import { KyInstance, Options } from "ky";
+import { type KyInstance, type Options } from "ky";
 
 type FetchContext = { path: string; options?: Options };
 type FetchPipe = (ctx: FetchContext) => FetchContext;

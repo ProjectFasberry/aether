@@ -1,11 +1,11 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Typography } from "@repo/ui/typography"
-import { OrdersFilterOption, cartOrders, cartOrdersState } from "../../models/store-orders.model"
+import { type OrdersFilterOption, cartOrders, cartOrdersState } from "../../models/store-orders.model"
 import { Link } from "@/shared/components/config/link"
 import { Button } from "@repo/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import { PageLoader } from "@/shared/ui/page-loader"
-import { AtomMut, Ctx } from "@reatom/framework"
+import { type AtomMut, type Ctx } from "@reatom/framework"
 
 const STATUSES: Record<string, string> = {
   "pending": "Ждёт оплаты",

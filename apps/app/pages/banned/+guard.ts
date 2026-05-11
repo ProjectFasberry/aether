@@ -1,6 +1,6 @@
 import { getDataFromSnapshot } from "@/shared/models/app/utils";
 import { redirect } from "vike/abort";
-import { PageContextServer } from "vike/types";
+import { type PageContextServer } from "vike/types";
 
 export async function guard(pageCtx: PageContextServer) {
   const actualSnapshot = getDataFromSnapshot("appState.options", pageCtx.snapshot)

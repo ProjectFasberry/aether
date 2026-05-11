@@ -1,5 +1,5 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { playerActivity, PlayerActivityPayload } from "../models/activity.model";
+import { playerActivity, type PlayerActivityPayload } from "../models/activity.model";
 import { Skeleton } from "@repo/ui/skeleton";
 import { Typography } from "@repo/ui/typography";
 import { pageState } from "@/shared/models/page-context.model";

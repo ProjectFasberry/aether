@@ -1,16 +1,16 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@repo/ui/input";
 import { Typography } from "@repo/ui/typography";
-import { topup, topupErrorAtom, TopupMethodListPayload, topupNavigationModel, topupState, TopupType } from "../../models/store-top-up.model";
+import { topup, topupErrorAtom, type TopupMethodListPayload, topupNavigationModel, topupState, type TopupType } from "../../models/store-top-up.model";
 import { Button } from "@repo/ui/button";
 import { Skeleton } from "@repo/ui/skeleton";
 import { TARGET_TITLE } from "../cart/cart-price";
 import { IconCheck, IconExchange, IconX } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@repo/ui/select";
-import React, { ReactNode } from "react";
-import { Ctx, spawn } from "@reatom/framework";
+import React, { type ReactNode } from "react";
+import { type Ctx, spawn } from "@reatom/framework";
 import { IconLoader } from "@/shared/ui/icon-loader";
 import { ErrorBlock } from "@/shared/ui/error-block";
 

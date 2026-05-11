@@ -1,4 +1,4 @@
-import { PageContext } from "vike/types";
+import { type PageContext } from "vike/types";
 import { localeDefault } from ".";
 import { m } from "@/paraglide/messages.js";
 

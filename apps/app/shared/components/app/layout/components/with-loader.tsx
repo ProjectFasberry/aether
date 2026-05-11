@@ -1,7 +1,7 @@
-import { Atom } from "@reatom/framework";
+import { type Atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
-import { ReactNode } from "react";
-import { LoaderNode, LoaderProps } from "./loader";
+import { type ReactNode } from "react";
+import { LoaderNode, type LoaderProps } from "./loader";
 
 type WithLoaderProps = { children: ReactNode, loaderAtom: Atom<boolean> } & LoaderProps
 

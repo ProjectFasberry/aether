@@ -14,6 +14,7 @@
 		"-------------": "",
 		"type-check": "tsc --build",
 		"lint": "bunx biome lint",
+		"circular-check": "bunx dpdm --no-warning ./src/index.ts",
 		"------------------": "",
 		"db:generate": "bun run ./scripts/db/generate.ts",
 		"db:migrate": "bun run ./scripts/db/migrate.ts",

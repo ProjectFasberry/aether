@@ -2,7 +2,7 @@ import { reatomComponent } from "@reatom/npm-react"
 import { Button } from "@repo/ui/button"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
 import { Typography } from "@repo/ui/typography"
-import { SettingsSectionItem } from "../models/settings.model"
+import { type SettingsSectionItem } from "../models/settings.model"
 import { SettingsContentWrapper, SettingsSection } from "./ui"
 
 const SettingsMainDeleteAccount = reatomComponent(({ ctx }) => {

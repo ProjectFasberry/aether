@@ -9,6 +9,7 @@
 		"noPropertyAccessFromIndexSignature": false,
 		"noEmit": true,
 		"moduleResolution": "Bundler",
+		"verbatimModuleSyntax": true,
 		"jsx": "react-jsx",
 		"composite": false,
 		"allowJs": true,

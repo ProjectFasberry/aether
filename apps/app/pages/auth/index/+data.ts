@@ -2,7 +2,7 @@ import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { wrapTitle } from "@/shared/lib/wrap-title";
 import { useConfig } from "vike-react/useConfig";
-import { PageContext } from "vike/types";
+import { type PageContext } from "vike/types";
 
 const title = wrapTitle(`Авторизация`);
 const previewImage = getStaticImage("arts/wide.jpg");
@@ -16,7 +16,7 @@ function metadata() {
 }
 
 export const data = async (pageCtx: PageContext) => {
-	logRouting(pageCtx.urlPathname, "data");
+	logRouting(pageCtx.urlPathname, data.name);
 
 	const config = useConfig();
 	config(metadata());

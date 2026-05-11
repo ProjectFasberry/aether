@@ -1,57 +1,15 @@
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { reatomAsync, spawn, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
 import { action, atom, batch } from "@reatom/framework";
-import { sleep, withAssign, withInit, withReset } from "@reatom/framework";
+import { sleep, withAssign, withReset } from "@reatom/framework";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
 import { isIdentityAtom, playerState } from "./player.model";
 import { toast } from "sonner";
-import { DIALOG_DELAY } from "@/shared/consts";
+import { DEFAULT_SOFT_DELAY, DIALOG_DELAY, ENVIRONMENT } from "@/shared/consts";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer } from "skinview3d";
-import { IconButterfly, TablerIcon } from "@tabler/icons-react";
-import { IconRun } from "@tabler/icons-react";
-import { IconManFilled } from "@tabler/icons-react";
-import { hardwareAccelerationIsActive } from "@/shared/lib/utils";
-import { SkinsHistory } from "../components/skin";
-
-type SkinAnimationType = "idle" | "run" | "flying";
-type SkinAnimation = typeof FlyingAnimation | typeof IdleAnimation | typeof RunningAnimation
-type SkinControls = { animation: SkinAnimationType; icon: TablerIcon };
-
-export const SKIN_ANIMATIONS: SkinControls[] = [
-  { animation: "idle", icon: IconManFilled },
-  { animation: "run", icon: IconRun, },
-  { animation: "flying", icon: IconButterfly },
-];
-
-export const skinAnimation = atom(null, "skinAnimation").pipe(
-  withAssign((_, name) => ({
-    type: atom<SkinAnimationType>("idle", `${name}.type`),
-    isRotate: atom<boolean>(false, "skinRotating"),
-    viewer: atom<SkinViewer | null>(null, "skinViewer")
-  }))
-)
-
-const animationClasses: Record<SkinAnimationType, SkinAnimation> = {
-  idle: IdleAnimation,
-  run: RunningAnimation,
-  flying: FlyingAnimation,
-};
-
-skinAnimation.isRotate.onChange((ctx, state) => {
-  let viewer = ctx.get(skinAnimation.viewer)
-  if (!viewer) return;
-
-  viewer.autoRotate = state
-  skinAnimation.viewer(ctx, viewer)
-})
-
-skinAnimation.type.onChange((ctx, state) => {
-  let viewer = ctx.get(skinAnimation.viewer)
-  if (!viewer) return;
-
-  viewer.animation = new animationClasses[state]();
-  skinAnimation.viewer(ctx, viewer)
-})
+import { appState } from "@/shared/models/app/index.model";
+import { withLog } from "@/shared/lib/reatom/helpers";
+import { isEmptyArray } from "@/shared/lib/helpers";
 
 type SkinSelected = {
   skin_head_url: string | null,
@@ -60,39 +18,94 @@ type SkinSelected = {
 }
 
 const SKIN_VARIANTS = ["classic", "slim"] as const
+const SKIN_DEFAULT_VARIANT = SKIN_VARIANTS[0]
 
-export const skinsState = atom(null, "skinsState").pipe(
+export type SkinVariant = typeof SKIN_VARIANTS[number]
+type SkinFileData = { name: string, size: number, url: string }
+export type SkinsHistory = NonNullable<ExtractApiData<"getServerSkinHistoryByNickname">["data"]>[number]
+
+const getIsUploadAvailableAtom = atom<boolean>((ctx) => ctx.spy(isIdentityAtom));
+
+const skinSubmitIsDisabledAtom = atom<boolean>((ctx) => {
+  if (ctx.spy(skins.control.change.statusesAtom).isPending) return true;
+  return !ctx.spy(skinsState.control.file);
+})
+
+const getSkinVariantIsActiveAtom = (t: string) => atom((ctx) => ctx.spy(skinsState.control.variant) === t)
+
+const getIsSelectSkinAtom = atom<boolean>((ctx) => {
+  if (!ctx.spy(isIdentityAtom)) return false;
+
+  const state = ctx.spy(skins.fetch.dataAtom)
+  if (!state) return false;
+
+  return state[0].skin_identifier !== ctx.spy(skinsState.selected)?.identifier
+})
+
+const skinsState = atom(null, "skinsState").pipe(
   withAssign((_, name) => ({
-    selected: atom<SkinSelected | null>(null, `${name}.selected`).pipe(withReset()),
+    selected: atom<Nullable<SkinSelected>>(null, `${name}.selected`).pipe(withReset()),
     control: atom(null, `${name}.state`).pipe(
       withAssign((_, name) => ({
-        dialogIsOpen: atom(false, `${name}.dialogIsOpen`).pipe(withReset()),
-        file: atom<File | null>(null, `${name}.file`).pipe(
+        isOpen: atom(false, `${name}.isOpen`).pipe(withReset()),
+        file: atom<Nullable<File>>(null, `${name}.file`).pipe(
           withAssign((target) => ({
             reset: action((ctx) => {
               const url = ctx.get(skinsState.control.fileData)?.url
               if (!url) return;
 
               URL.revokeObjectURL(url);
-
               target(ctx, null);
+
               skinsState.control.fileData.reset(ctx)
             })
           }))
         ),
-        fileData: atom<SkinFileData | null>(null, `${name}.fileData`).pipe(withReset()),
-        variant: atom<SkinVariant>("classic", `${name}.variant`).pipe(withReset()),
-        SKIN_VARIANTS
+        fileData: atom<Nullable<SkinFileData>>(null, `${name}.fileData`).pipe(withReset()),
+        variant: atom<SkinVariant>(SKIN_DEFAULT_VARIANT, `${name}.variant`).pipe(withReset()),
       }))
     )
   }))
 )
 
-export const hardwareAccIsEnabledAtom = atom(false, "hardwareAccIsEnabled").pipe(
-  withInit(() => hardwareAccelerationIsActive())
+const skin = atom(null, "skin").pipe(
+  withAssign((_, name) => ({
+    animation: atom(null, `${name}.animation`).pipe(
+      withAssign((_, name) => ({
+        type: atom<SkinAnimationType>("idle", `${name}.type`),
+        isRotate: atom<boolean>(false, `${name}.isRotate`),
+        viewer: atom<Nullable<SkinViewer>>(null, `${name}.viewer`)
+      }))
+    )
+  }))
 )
 
-export const skins = atom(null, "skins").pipe(
+export type SkinAnimationType = "idle" | "run" | "flying";
+type SkinAnimation = typeof FlyingAnimation | typeof IdleAnimation | typeof RunningAnimation
+
+const animationClasses: Record<SkinAnimationType, SkinAnimation> = {
+  idle: IdleAnimation,
+  run: RunningAnimation,
+  flying: FlyingAnimation,
+};
+
+skin.animation.isRotate.onChange((ctx, state) => {
+  let viewer = ctx.get(skin.animation.viewer)
+  if (!viewer) return;
+
+  viewer.autoRotate = state
+  skin.animation.viewer(ctx, viewer)
+})
+
+skin.animation.type.onChange((ctx, state) => {
+  let viewer = ctx.get(skin.animation.viewer)
+  if (!viewer) return;
+
+  viewer.animation = new animationClasses[state]();
+  skin.animation.viewer(ctx, viewer)
+})
+
+const skins = atom(null, "skins").pipe(
   withAssign((_, name) => ({
     control: atom(null, `${name}.control`).pipe(
       withAssign(() => ({
@@ -122,11 +135,16 @@ export const skins = atom(null, "skins").pipe(
           const id = selectedSkin.identifier
 
           return await ctx.schedule(() =>
-            client<"success" | "error">("server/skin/set", { searchParams: { id }, retry: 1 }).exec()
+            client
+              .get<"success" | "error">("server/skin/set", {
+                searchParams: { id }, 
+                retry: 1
+              })
+              .exec()
           )
         }, {
           name: `${name}.set`,
-          onFulfill: (ctx, res) => {
+          onFulfill: (ctx) => {
             toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
             skins.updateSkinAndHead(ctx)
           },
@@ -147,7 +165,7 @@ export const skins = atom(null, "skins").pipe(
             })
             .exec()
 
-          await ctx.schedule(() => sleep(2000));
+          await ctx.schedule(() => sleep(DEFAULT_SOFT_DELAY));
 
           return { result }
         }, {
@@ -156,7 +174,7 @@ export const skins = atom(null, "skins").pipe(
             toast.success("Скин обновлен", { description: "Если вы в игре - перезайдите" })
 
             skins.updateSkinAndHead(ctx)
-            skinsState.control.dialogIsOpen.reset(ctx)
+            skinsState.control.isOpen.reset(ctx)
 
             await sleep(DIALOG_DELAY)
 
@@ -170,7 +188,11 @@ export const skins = atom(null, "skins").pipe(
       }))
     ),
     fetch: reatomAsync(async (ctx, nickname: string) => {
-      return await ctx.schedule(() => client<SkinsHistory[]>(`server/skin/history/${nickname}`).exec())
+      skins.fetch.dataAtom.reset(ctx);
+
+      return await ctx.schedule(() =>
+        client<SkinsHistory[]>(`server/skin/history/${nickname}`, { signal: ctx.controller.signal }).exec()
+      )
     }, {
       name: `${name}.fetch`,
       onFulfill: (ctx, res) => {
@@ -187,60 +209,45 @@ export const skins = atom(null, "skins").pipe(
       },
       onReject: (_, e) => logError(e)
     }).pipe(
-      withDataAtom(null, (_, data) => data.length ? data : null),
+      withDataAtom(null, (_, data) => isEmptyArray(data) ? null : data),
       withStatusesAtom(),
-      withCache({ swr: false })
     ),
     updateSkinAndHead: action((ctx) => {
-      const nickname = ctx.get(playerState.nickname);
-      if (!nickname) throw new Error("Nickname is not defined");
+      if (ENVIRONMENT === 'server') return;
 
-      batch(ctx, () => {
-        skins.fetch.cacheAtom.reset(ctx);
-        skins.fetch(ctx, nickname);
-      })
+      const nickname = ctx.get(playerState.nickname);
+      if (!nickname) return;
+
+      spawn(ctx, (sCtx) => skins.fetch(sCtx, nickname));
     }),
     init: action((ctx) => {
-      if (typeof window === 'undefined') return;
-      
+      if (ENVIRONMENT === 'server') return;
+
       const nickname = ctx.get(playerState.nickname)
-      const isHardwareAccEnabled = ctx.get(hardwareAccIsEnabledAtom)
-      if (!isHardwareAccEnabled || !nickname) return;
-    
-      skins.fetch.cacheAtom.reset(ctx);
-      skins.fetch.dataAtom.reset(ctx);
+      if (!nickname) return;
+
+      const isHardwareAccEnabled = ctx.get(appState.inited.hardwaveIsEnabled)
+      if (!isHardwareAccEnabled) return;
+
       skinsState.selected.reset(ctx);
-    
-      skins.fetch(ctx, nickname)
-    }, "initSkinAction")
+
+      spawn(ctx, (sCtx) => skins.fetch(sCtx, nickname));
+    }, `${name}.init`)
   }))
 )
 
 playerState.nickname.onChange((ctx, state) => state && skins.init(ctx))
-
-export const getIsUploadAvailableAtom = atom((ctx) => {
-  if (!ctx.spy(isIdentityAtom)) return false;
-  return true;
-})
-
-export type SkinVariant = typeof SKIN_VARIANTS[number]
-
-type SkinFileData = { name: string, size: number, url: string }
-
-export const skinSubmitIsDisabledAtom = atom((ctx) => {
-  if (ctx.spy(skins.control.change.statusesAtom).isPending) return true;
-  return !ctx.spy(skinsState.control.file);
-})
-
-export const getSkinVariantIsActiveAtom = (type: string) => atom((ctx) => ctx.spy(skinsState.control.variant) === type)
-
 skinsState.control.file.onChange((ctx, state) => state && skins.control.setupSkinData(ctx))
 
-export const getIsSelectSkinAtom = atom((ctx) => {
-  if (!ctx.spy(isIdentityAtom)) return false;
+skins.fetch.statusesAtom.onChange((_, s) => console.log(skins.fetch.statusesAtom.__reatom.name, s))
 
-  const state = ctx.spy(skins.fetch.dataAtom)
-  if (!state) return false;
-
-  return state[0].skin_identifier !== ctx.spy(skinsState.selected)?.identifier
+export const skinModel = () => ({
+  skin,
+  SKIN_VARIANTS,
+  skinsState,
+  skins,
+  getIsUploadAvailableAtom,
+  skinSubmitIsDisabledAtom,
+  getSkinVariantIsActiveAtom,
+  getIsSelectSkinAtom
 })

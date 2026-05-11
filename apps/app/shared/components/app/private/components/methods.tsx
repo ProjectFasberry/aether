@@ -3,7 +3,7 @@ import { Skeleton } from "@repo/ui/skeleton";
 import { Switch } from "@repo/ui/switch";
 import { Typography } from "@repo/ui/typography";
 import { tv } from "tailwind-variants";
-import { editMethodAction, methodsAction, PrivatedMethodsPayload } from "../models/methods.model";
+import { editMethodAction, methodsAction, type PrivatedMethodsPayload } from "../models/methods.model";
 
 const methodVariant = tv({
   base: `flex items-center justify-between gap-1 border border-neutral-800 rounded-lg p-2 h-14 w-full`,

@@ -4,7 +4,7 @@ import { Typography } from "@repo/ui/typography";
 import { NotFound } from "@/shared/ui/not-found";
 import { tv } from "tailwind-variants";
 import { eventsState } from "../models/events.model";
-import { isEmptyArray } from "@/shared/lib/utils";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { translate } from "@/shared/locales/helpers";
 
 type EventCardProps = ExtractApiData<"getServerEventsList">["data"][number]
