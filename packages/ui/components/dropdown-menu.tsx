@@ -2,6 +2,7 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui"
 import { cn } from '../lib/cn';
 import { IconCheck, IconChevronRight, IconCircle } from "@tabler/icons-react"
 import type { ComponentProps } from "react";
+import { tv } from "tailwind-variants";
 
 function DropdownMenu({ ...props }: ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -36,7 +37,7 @@ function DropdownMenuContent({ className, sideOffset = 4, ...props }: ComponentP
           data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 
           data-[side=top]:slide-in-from-bottom-2 z-50 max-h-(--radix-dropdown-menu-content-available-height) 
           min-w-[8rem] origin-(--radix-dropdown-menu-content-transform-origin) overflow-x-hidden 
-          overflow-y-auto rounded-md p-2`,
+          overflow-y-auto rounded-lg p-2`,
           className
         )}
         {...props}
@@ -50,26 +51,29 @@ function DropdownMenuGroup({ ...props }: ComponentProps<typeof DropdownMenuPrimi
     <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />
   )
 }
-
-function DropdownMenuItem({ className, inset, variant = "default", ...props }: ComponentProps<typeof DropdownMenuPrimitive.Item> & {
+export type DropdownMenuItemProps = ComponentProps<typeof DropdownMenuPrimitive.Item> & {
   inset?: boolean
   variant?: "default" | "destructive"
-}) {
+}
+const dropdownMenuItemVariants = tv({
+  base: `
+    hover:bg-neutral-800 hover:text-neutral-100 data-[variant=destructive]:text-red
+    data-[variant=destructive]:hover:bg-red/10
+    data-[variant=destructive]:hover:text-red data-[variant=destructive]:*:[svg]:text-red!
+    [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2
+    rounded-lg px-2 py-1.5 duration-300 outline-hidden select-none data-[disabled]:pointer-events-none
+    data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0
+    [&_svg:not([class*='size-'])]:size-4
+  `
+})
+
+function DropdownMenuItem({ className, inset, variant = "default", ...props }: DropdownMenuItemProps) {
   return (
     <DropdownMenuPrimitive.Item
       data-slot="dropdown-menu-item"
       data-inset={inset}
       data-variant={variant}
-      className={cn(
-        `focus:bg-neutral-800 focus:text-neutral-100 data-[variant=destructive]:text-red
-        data-[variant=destructive]:focus:bg-red/10
-        data-[variant=destructive]:focus:text-red data-[variant=destructive]:*:[svg]:text-red!
-        [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 
-        rounded-lg px-2 py-1.5 duration-300 outline-hidden select-none data-[disabled]:pointer-events-none 
-        data-[disabled]:opacity-50 data-[inset]:pl-8 [&_svg]:pointer-events-none [&_svg]:shrink-0 
-        [&_svg:not([class*='size-'])]:size-4`,
-        className
-      )}
+      className={cn(dropdownMenuItemVariants(), className)}
       {...props}
     />
   )
@@ -223,4 +227,5 @@ export {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  dropdownMenuItemVariants
 }

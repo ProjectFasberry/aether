@@ -1,5 +1,5 @@
-import { Button } from "@repo/ui/button"
-import { Typography } from "@repo/ui/typography"
+import { Button } from "@/shared/ui/button"
+import { Typography } from "@/shared/ui/typography"
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { useData } from "vike-react/useData";
 import { type Data } from "./+data";

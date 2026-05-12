@@ -1,5 +1,5 @@
 import { currentUserState } from "@/shared/models/current-user/index.model"
-import { action, atom, reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
+import { action, atom, reatomAsync, withAbort, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
 import { client } from "@/shared/lib/client-wrapper"
 import { createSsrModel } from "@/shared/models/ssr"
@@ -38,7 +38,7 @@ export const player = atom(null, "player").pipe(
   withAssign((_, name) => ({
     rate: atom(null, `${name}.rate`).pipe(
       withAssign((_, name) => ({
-        rate: reatomAsync(async (ctx, nickname: string) => {
+        submit: reatomAsync(async (ctx, nickname: string) => {
           if (ctx.get(isIdentityAtom)) return;
     
           if (!ctx.get(userState.isAuthed)) {
@@ -49,7 +49,7 @@ export const player = atom(null, "player").pipe(
             .post<"rated" | "unrated">(`rate/${nickname}`)
             .exec()
         }, {
-          name: `${name}.rate`,
+          name: `${name}.submit`,
           onFulfill: (ctx, res) => {
             if (!res) return null;
     
@@ -64,36 +64,35 @@ export const player = atom(null, "player").pipe(
               return { count, isRated };
             });
           },
-          onReject: (ctx, e) => logError(e)
+          onReject: (_, e) => logError(e)
         }).pipe(
           withStatusesAtom()
         ),
-        fetchList: reatomAsync(async (ctx) => {
-          const isIdentity = ctx.get(isIdentityAtom);
-          if (!isIdentity) return null;
-    
-          const currentUser = ctx.get(currentUserState);
-          if (!currentUser) return null;
+        fetchList: reatomAsync(async (ctx, nickname: string) => {          
+          const isAuthed = ctx.get(userState.isAuthed)
+          if (!isAuthed) return null;
     
           return await client
-            .get<RateListPayload>(`rate/list/${currentUser.nickname}`, {
+            .get<RateListPayload>(`rate/list/${nickname}`, {
               signal: ctx.controller.signal,
             })
             .exec()
-        }, `${name}.fetchList`).pipe(
+        }, {
+          name: `${name}.fetchList`
+        }).pipe(
           withDataAtom(null),
           withStatusesAtom(),
-          withCache({ swr: false })
+          withCache({ swr: false }),
+          withAbort()
         ),
-        refetchAll: action((ctx) => {
+        refetchAll: action((ctx, nickname: string) => {
           player.rate.fetchList.cacheAtom.reset(ctx)
-          player.rate.fetchList(ctx)
+          player.rate.fetchList(ctx, nickname)
         })
       }))
     )
   }))
 )
-
 
 playerState.nickname.onChange((ctx) => {
   playerState.tags(ctx,

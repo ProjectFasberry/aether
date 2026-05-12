@@ -1,5 +1,5 @@
 import { NewsContent } from "@/shared/components/app/news/components/news-list";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 
 export default function Page() {
   return (

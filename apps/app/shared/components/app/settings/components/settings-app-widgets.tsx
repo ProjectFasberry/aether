@@ -1,8 +1,8 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { Switch } from "@repo/ui/switch";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { playerSLPState } from "../../player/models/player-seems-like.model";
 import { SettingsContentWrapper } from "./ui";
+import { Switch } from "@/shared/ui/switch";
 
 const SeemsLikeVisibility = reatomComponent(({ ctx }) => {
   return (

@@ -8,12 +8,12 @@ import {
 } from "@repo/shared/types/entities/rating"
 import { useInView } from "react-intersection-observer";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { type ReactNode } from "react";
 import { type AtomState } from "@reatom/framework";
 import { ratingAscAtom, ratingByAtom, ratingDataAtom, ratingIsViewAtom, ratingsAction, updateRatingAction } from "../models/ratings.model";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import {
   Table,
   TableBody,

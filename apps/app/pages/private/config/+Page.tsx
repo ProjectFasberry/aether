@@ -1,5 +1,5 @@
 import { Options } from "@/shared/components/app/private/components/options";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { Methods } from "@/shared/components/app/private/components/methods";
 import { Roles } from "@/shared/components/app/private/components/roles";
 import { DictionariesWrapper, CreateDictionaries, ViewDictionaries } from "@/shared/components/app/private/components/dictionaries";

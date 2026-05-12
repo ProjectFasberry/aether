@@ -1,5 +1,5 @@
 import { Link } from "@/shared/components/config/link"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 
 export const Logotype = () => {
   return (

@@ -1,13 +1,13 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { IconGift, IconTrash } from "@tabler/icons-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { createLink } from "@/shared/components/config/link"
 import { storeItem } from "../../models/store-item.model"
 import { CURRENCIES } from "./cart-price"
 import { cart, cartDataItemIsSelectAtom, type CartItem as CartItemProps } from "../../models/store-cart.model"
 import { changeRecipient } from "../../models/store-recipient.model"
-import { Checkbox } from "@repo/ui/checkbox"
+import { Checkbox } from "@/shared/ui/checkbox"
 
 const CartItemRemoveFromCart = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (
@@ -30,7 +30,7 @@ const CartItemUpdateSelectStatus = reatomComponent<{ id: number }>(({ ctx, id })
       variant="filled"
       className="absolute top-3 left-3 p-0 w-5 h-5"
       checked={ctx.spy(cartDataItemIsSelectAtom(id))}
-      onClick={() => storeItem.updateSelectedStatus(ctx, id)}
+      onCheckedChange={(value) => value && storeItem.updateSelectedStatus(ctx, id)}
       disabled={ctx.spy(storeItem.updateSelectedStatus.statusesAtom).isPending}
     />
   )

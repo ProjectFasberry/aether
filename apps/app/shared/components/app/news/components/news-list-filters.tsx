@@ -1,7 +1,7 @@
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { news, newsState } from "../models/news-list.model"
 import { reatomComponent } from "@reatom/npm-react"
-import { Input } from "@repo/ui/input"
+import { Input } from "@/shared/ui/input"
 import { IconArrowDown, IconArrowUp, IconSearch } from "@tabler/icons-react"
 
 const NewsFilterSearch = reatomComponent(({ ctx }) => {

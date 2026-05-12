@@ -1,19 +1,27 @@
 import { NicknameInput, PasswordInput } from "./auth"
 import { reatomComponent } from "@reatom/npm-react"
 import { auth, type AuthFindoutType, authState } from "../models/auth.model"
-import { Typography } from "@repo/ui/typography"
 import { env } from "@/shared/env"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select"
-import { Input } from "@repo/ui/input"
+import { Input } from "@/shared/ui/input"
 import { type ReactNode, useState } from "react"
-import { Checkbox } from "@repo/ui/checkbox"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { SeedPhrase, SeedPhraseFooter, SeedPhraseHeader, SeedPhraseBody } from "@/shared/ui/seed-phrase"
-import { IconCheck, IconDownload, IconX } from "@tabler/icons-react"
-import { type AuthRegisterType, registerNavigationModel, register, registerSeedPhraseModel, registerState, findoutSelectedTypeAtom, FINDOUT_OPTIONS } from "../models/register.model"
+import { IconCheck, IconDownload, IconSelector, IconX } from "@tabler/icons-react"
+import {
+  type AuthRegisterType,
+  registerNavigationModel, register, registerSeedPhraseModel, registerState, findoutSelectedTypeAtom, FINDOUT_OPTIONS
+} from "../models/register.model"
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { spawn } from "@reatom/framework"
 import { translate } from "@/shared/locales/helpers"
+import { Checkbox } from "@/shared/ui/checkbox"
+import { Select, createListCollection } from '@ark-ui/react/select'
+import { Portal } from "@ark-ui/react/portal"
+import { 
+  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant, 
+  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant, 
+  selectItemTextVariant, selectItemVariant, selectTriggerVariant 
+} from "@/shared/ui/select"
 
 const FindoutReferrerInput = reatomComponent(({ ctx }) => (
   <Input
@@ -30,7 +38,6 @@ const FindoutReferrerInput = reatomComponent(({ ctx }) => (
     maxLength={32}
   />
 ), "FindoutReferrerInput")
-
 const FindoutOtherInput = reatomComponent(({ ctx }) => (
   <Input
     autoCorrect="off"
@@ -52,27 +59,55 @@ const FINDOUT_COMPONENTS: Record<AuthFindoutType, ReactNode> = {
   "custom": <FindoutOtherInput />
 }
 
+const collection = createListCollection({
+  items: FINDOUT_OPTIONS
+})
+
 const FindoutOptions = reatomComponent(({ ctx }) => {
   const currentItem = ctx.spy(findoutSelectedTypeAtom)
 
   return (
-    <Select
-      value={currentItem?.value}
-      onValueChange={v => authState.fields.findoutType(ctx, v as AuthFindoutType)}
+    <Select.Root
+      collection={collection}
+      value={currentItem ? [currentItem.value] : []}
+      onValueChange={({ value }) => authState.fields.findoutType(ctx, value[0] as AuthFindoutType)}
+      className="flex flex-col gap-1 w-full"
     >
-      <SelectTrigger className="min-h-10">
-        {currentItem ? (
-          <span className="text-neutral-50">{currentItem.title}</span>
-        ) : (
-          <SelectValue placeholder={translate["auth.register.placeholders.findout"]()} />
-        )}
-      </SelectTrigger>
-      <SelectContent>
-        {FINDOUT_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value}>{option.title}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+      <Select.Control className={selectControlVariant()}>
+        <Select.Trigger className={selectTriggerVariant()}>
+          <Select.ValueText>
+            {currentItem?.title ?? translate["auth.register.placeholders.findout"]()}
+          </Select.ValueText>
+        </Select.Trigger>
+        <div className={selectIndicatorsVariant()}>
+          <Select.ClearTrigger className={selectClearTriggerVariant()}>
+            <IconX size={20} />
+          </Select.ClearTrigger>
+          <Select.Indicator className={selectIndicatorVariant()}>
+            <IconSelector size={20} />
+          </Select.Indicator>
+        </div>
+      </Select.Control>
+      <Portal>
+        <Select.Positioner>
+          <Select.Content className={selectContentVariant()} style={selectContentBaseStyle}>
+            <Select.ItemGroup className={selectItemGroupVariant()}>
+              {FINDOUT_OPTIONS.map((item) => (
+                <Select.Item key={item.value} item={item} className={selectItemVariant()}>
+                  <Select.ItemText className={selectItemTextVariant()}>
+                    {item.title}
+                  </Select.ItemText>
+                  <Select.ItemIndicator className={selectItemIndicatorVariant()}>
+                    <IconCheck size={16} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.ItemGroup>
+          </Select.Content>
+        </Select.Positioner>
+      </Portal>
+      <Select.HiddenSelect />
+    </Select.Root>
   )
 }, "FindoutOptions")
 
@@ -84,28 +119,29 @@ const FindoutComponent = reatomComponent(({ ctx }) => {
 
 const PrivacyTerms = reatomComponent(({ ctx }) => {
   return (
-    <div className="inline-flex gap-2 items-start">
-      <label htmlFor="rules" className="flex items-center relative">
-        <Checkbox
-          id="rules"
-          checked={ctx.spy(authState.fields.acceptRules)}
-          onCheckedChange={v => typeof v === 'boolean' && authState.fields.acceptRules(ctx, v)}
-        />
-      </label>
-      <label className="select-none relative -top-1" htmlFor="rules">
-        <Typography className="text-sm [&_a]:text-green-500 [&_a]:inline">
-          {translate["auth.register.acceptRulesTitle"]()}
-          <a href="/legal/terms" target="_blank">
-            &nbsp;{translate["auth.register.acceptRulesPrivacy"]()}
-          </a>,
-          <a href="/legal/privacy" target="_blank">
-            &nbsp;{translate["auth.register.acceptRulesProcessing"]()}&nbsp;
-          </a>
-          и
-          <a href={`${env.VITE_LANDING_URL}/rules`} target="_blank">
-            &nbsp;{translate["auth.register.acceptRulesProject"]()}
-          </a>.
-        </Typography>
+    <div className="inline-flex items-start">
+      <Checkbox
+        id="rules"
+        checked={ctx.spy(authState.fields.acceptRules)}
+        onCheckedChange={v => authState.fields.acceptRules(ctx, v)}
+        className="flex items-center relative"
+      />
+      <label
+        lang="ru"
+        className="select-none relative -top-1 text-sm [&_a]:text-green-500 [&_a]:inline [hyphens:auto]"
+        htmlFor="checkbox:rules:input"
+      >
+        {translate["auth.register.acceptRulesTitle"]()}
+        <a href="/legal/terms" target="_blank">
+          &nbsp;{translate["auth.register.acceptRulesPrivacy"]()}
+        </a>,
+        <a href="/legal/privacy" target="_blank">
+          &nbsp;{translate["auth.register.acceptRulesProcessing"]()}&nbsp;
+        </a>
+        и
+        <a href={`${env.VITE_LANDING_URL}/rules`} target="_blank">
+          &nbsp;{translate["auth.register.acceptRulesProject"]()}
+        </a>.
       </label>
     </div>
   )

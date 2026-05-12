@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { cartState } from "../../models/store-cart.model"
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 

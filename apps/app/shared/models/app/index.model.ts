@@ -1,4 +1,4 @@
-import { action, atom, withAssign, connectLogger, type Unsubscribe, withInit } from "@reatom/framework";
+import { action, atom, withAssign, connectLogger, type Unsubscribe, withInit, type Ctx } from "@reatom/framework";
 import type { PageContext } from "vike/types";
 import { withLog } from "../../lib/reatom/helpers";
 import { withSsr } from "../ssr";
@@ -55,6 +55,20 @@ export const userState = atom(null, "userState").pipe(
 	}))
 )
 
+export const getDevModulesInfo = (ctx: Ctx) => {
+	const stage = spyOptionAtom(ctx, "state", "stage", "prod")
+	const allowedStage: typeof stage[] = ["staging"];
+	const by = import.meta.env.DEV === true ? "environment" : "stage";
+
+	const isMobile = ctx.get(appState.inited.isMobile)
+	if (isMobile) return;
+
+	return {
+		isImport: import.meta.env.DEV || allowedStage.includes(stage),
+		by
+	}
+}
+
 export const app = atom(null, "app").pipe(
 	withAssign((_, name) => ({
 		/** Executed on the server and client only one times */
@@ -71,26 +85,21 @@ export const app = atom(null, "app").pipe(
 		init: action((ctx) => {
 			let unsubs: Unsubscribe[] = [];
 
-			appState.inited.isMobile(ctx, detectMobile());
+			const f = appState.inited.isMobile(ctx, detectMobile());
 
 			const screen = updateReactiveIsMobile(ctx)
 			screen.onChange();
 
 			unsubs.push(screen.unsub)
 
-			const stage = spyOptionAtom(ctx, "state", "stage", "prod")
-			const allowedStage: typeof stage[] = ["staging"];
+			const devModulesInfo = getDevModulesInfo(ctx)
 
-			if (
-				import.meta.env.DEV || allowedStage.includes(stage)
-			) {
-				async function lazyInitDevModules() {
+			if (devModulesInfo) {
+				async function lazyInitDevModules(by: string) {
 					try {
 						const [{ devtools }] = await Promise.all([
 							import("../devtools/index.model"),
 						]);
-
-						const by = import.meta.env.DEV === true ? "environment" : "stage";
 
 						const modules = [
 							{ name: 'Devtools', ref: devtools },
@@ -110,7 +119,7 @@ export const app = atom(null, "app").pipe(
 				}
 
 				/** only fire and forget */
-				lazyInitDevModules()
+				lazyInitDevModules(devModulesInfo.by)
 			}
 
 			soundPatch.init(ctx)

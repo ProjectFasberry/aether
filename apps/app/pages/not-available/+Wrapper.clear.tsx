@@ -8,7 +8,7 @@ import { type ReactNode } from "react";
 export default function Layout({ children }: { children: ReactNode }) {
   return (
     <WrapperChild>
-      <Header compact={true} />
+      <Header asCompact={true} />
       <div id="page-content" className="min-h-dvh py-6 lg:py-8">
         {children}
       </div>

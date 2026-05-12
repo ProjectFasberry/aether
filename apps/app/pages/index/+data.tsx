@@ -1,6 +1,6 @@
 import { type PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { logRouting } from "@/shared/lib/log";
 import { env } from "@/shared/env";
@@ -32,19 +32,24 @@ function metadata(pageCtx: PageContextServer) {
   }
 }
 
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name);
-
-  const headers = pageCtx.headers ?? undefined;
-
+export async function data(pageCtx: PageContextServer) {
   const config = useConfig()
+  const headers = pageCtx.headers
+  if (!headers) return;
+
+  logRouting(pageCtx.urlPathname, "data");
+
   config(metadata(pageCtx))
 
   const ctx = createCtx()
-  const news = await getNews({ limit: 3, asc: false }, { headers })
-  const events = await getEvents({ limit: 3 }, { headers });
+
+  const [news, events] = await Promise.all([
+    getNews({ limit: 3, asc: false }, { headers }),
+    getEvents({ limit: 3 }, { headers })
+  ])
 
   newsState.data(ctx, news.data)
-  eventsState.data(ctx, events)
+  eventsState.data(ctx, events);
+  
   pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

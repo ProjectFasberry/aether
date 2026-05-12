@@ -1,4 +1,4 @@
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { reatomComponent } from "@reatom/npm-react"
 import { storeItems, storeItemsState } from "../../models/store.model"
 import { getStaticImage } from "@/shared/lib/volume-helpers"

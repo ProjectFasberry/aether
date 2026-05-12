@@ -1,18 +1,20 @@
 import { spawn } from "@reatom/framework";
 import { tv } from "tailwind-variants";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Skeleton } from "@repo/ui/skeleton";
-import { Typography } from "@repo/ui/typography";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Typography } from "@/shared/ui/typography"
 import React, { useEffect, useRef, useState } from "react";
 import { IconButterfly, IconManFilled, IconPlus, IconRotate, IconRun, IconUpload, IconX, type TablerIcon } from "@tabler/icons-react";
 import { pageState } from "@/shared/models/page-context.model";
-import { Button } from "@repo/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
+import { Button } from "@/shared/ui/button";
 import { type SkinAnimationType, skinModel, type SkinVariant, type SkinsHistory } from "../models/skin.model";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { ReactSkinview3d } from "react-skinview3d"
 import { ClientOnly } from "vike-react/ClientOnly"
 import { appState } from "@/shared/models/app/index.model";
+import { Dialog, DialogTitle } from "@ark-ui/react/dialog";
+import { Portal } from "@ark-ui/react/portal";
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 
 const {
   getIsSelectSkinAtom,
@@ -352,43 +354,47 @@ const SkinControlChangeSkin = reatomComponent(({ ctx }) => {
   if (!isVisible) return null;
 
   return (
-    <Dialog
-      open={ctx.spy(skinsState.control.isOpen)}
-      onOpenChange={v => skinsState.control.isOpen(ctx, v)}
-    >
-      <DialogTrigger asChild>
+    <Dialog.Root open={ctx.spy(skinsState.control.isOpen)} onOpenChange={v => skinsState.control.isOpen(ctx, v.open)}>
+      <Dialog.Trigger asChild>
         <Button
           className={skinControlVariants({ variant: "default", className: "p-0 hover:bg-neutral-800" })}
         >
           <IconUpload size={18} />
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogTitle className="text-2xl text-center">Загрузка скина</DialogTitle>
-        <div className="flex flex-col gap-6 w-full">
-          <div className='flex flex-col items-start gap-2 w-full'>
-            <div className="flex flex-col">
-              <Typography className="font-bold leading-4 tracking-6">
-                Загрузи файл скина (в формате .png)
-              </Typography>
-              <Typography className="text-neutral-400 text-sm">
-                Размер должен быть не больше 1 МБ
-              </Typography>
+      </Dialog.Trigger>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} />
+        <Dialog.Positioner className={dialogPositionerVariant()}>
+          <Dialog.Content className={dialogContentVariant({ className: "overflow-hidden h-2/3" })}>
+            <DialogTitle>
+              Загрузка скина
+            </DialogTitle>
+            <div className="flex flex-col gap-6 w-full">
+              <div className='flex flex-col items-start gap-2 w-full'>
+                <div className="flex flex-col">
+                  <Typography className="font-bold leading-4 tracking-6">
+                    Загрузи файл скина (в формате .png)
+                  </Typography>
+                  <Typography className="text-neutral-400 text-sm">
+                    Размер должен быть не больше 1 МБ
+                  </Typography>
+                </div>
+                <SkinControlContent />
+              </div>
+              <div className="flex flex-col items-start gap-2 w-full">
+                <Typography className="font-bold tracking-6">
+                  Выбери тип скина
+                </Typography>
+                <div className="flex bg-neutral-800 rounded-lg *:h-10 items-center *:rounded-lg justify-between p-1 w-full">
+                  {SKIN_VARIANTS.map((d) => <SkinVariantItem key={d} variant={d} />)}
+                </div>
+              </div>
+              <SkinControlChangeSubmit />
             </div>
-            <SkinControlContent />
-          </div>
-          <div className="flex flex-col items-start gap-2 w-full">
-            <Typography className="font-bold tracking-6">
-              Выбери тип скина
-            </Typography>
-            <div className="flex bg-neutral-800 rounded-lg *:h-10 items-center *:rounded-lg justify-between p-1 w-full">
-              {SKIN_VARIANTS.map((d) => <SkinVariantItem key={d} variant={d} />)}
-            </div>
-          </div>
-          <SkinControlChangeSubmit />
-        </div>
-      </DialogContent>
-    </Dialog>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }, 'SkinControlChangeSkin')
 

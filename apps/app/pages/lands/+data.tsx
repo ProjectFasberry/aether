@@ -1,6 +1,6 @@
 import { type PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 
@@ -15,8 +15,8 @@ function metadata() {
   }
 }
 
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name);
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data");
   
   const config = useConfig()
   config(metadata())

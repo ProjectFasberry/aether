@@ -27,11 +27,9 @@ export const DEBUG_MODULES = [
   }
 ]
 
-export let LOG_SNAPSHOTS = true
-export let LOG_ACTIONS = true;
-
 export const LOGGING = {
-  snapshots: true,
+  snapshots: false,
   actions: true,
-  atoms: true
+  atoms: true,
+  page: true
 }

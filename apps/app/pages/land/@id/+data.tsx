@@ -1,5 +1,5 @@
 import dayjs from "@/shared/lib/create-dayjs"
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { type PageContextServer } from "vike/types";
@@ -40,23 +40,20 @@ function metadata(
   }
 }
 
-async function loadLand(ulid: string, headers?: Record<string, string>): Promise<Land | null> {
-  try {
-    const land = await client<Land>(`server/lands/${ulid}`, { headers }).exec()
-    return land
-  } catch (e) {
-    return null;
-  }
-}
-
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name);
-
+export async function data(pageCtx: PageContextServer) {
   const config = useConfig()
-  const headers = pageCtx.headers ?? undefined
+  const headers = pageCtx.headers
+  if (!headers) return;
+
+  logRouting(pageCtx.urlPathname, "data");
+
   const ulid = pageCtx.routeParams.id;
 
-  const land = await loadLand(ulid, headers)
+  const land = await client<Land>(`server/lands/${ulid}`, { headers }).exec().catch(e => {
+    console.error("Land error", e);
+    return null;
+  })
+
   if (!land) throw render("/not-exist?type=land")
 
   config(metadata(land, pageCtx))

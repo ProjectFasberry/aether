@@ -1,11 +1,12 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general-database-types";
 import { defineRequiredUser } from "#/lib/define";
-import * as z from "zod";
 import { getRedis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
+import { withData, withError } from "#/shared/schemas";
+import { wrapError } from "@repo/shared/lib/utils";
 
 type PlayerSocialsValuePayload = {
 	id: string | number;
@@ -44,16 +45,23 @@ const playerSocialsAvailable = new Elysia()
 
 		const data = query
 			.map((i) =>
-				all
-					.map((t) => t.social).includes(i.social) &&
-				all
-					.find((t) => t.social !== i.social)
+				all.map((t) => t.social).includes(i.social) &&
+				all.find((t) => t.social !== i.social)
 			)
 			.filter(Boolean);
 
-		console.log(data);
-
 		return { data };
+	}, {
+		response: {
+			200: withData(
+				t.Array(
+					t.Object({
+						title: t.String(),
+						social: t.String()
+					})
+				)
+			)
+		}
 	});
 
 const playerSocialsAddEvents = new Elysia().get("/add/events", async (ctx) => {
@@ -82,7 +90,9 @@ const playerSocialsAdd = new Elysia()
 			.where("value", "=", social)
 			.executeTakeFirst();
 
-		if (!socialIsExist || !socialIsExist.value) throw status(400, "SOCIAL_NOT_FOUND");
+		if (!socialIsExist || !socialIsExist.value) {
+			throw status(400, wrapError("SOCIAL_NOT_FOUND"));
+		}
 
 		const query = await general
 			.selectFrom("players_socials")
@@ -91,13 +101,17 @@ const playerSocialsAdd = new Elysia()
 			.where("nickname", "=", nickname)
 			.executeTakeFirst();
 
-		if (query && query.social) throw status(400, "SAVED_SOCIAL_EXISTS");
+		if (query && query.social) {
+			throw status(400, wrapError("SAVED_SOCIAL_EXISTS"));
+		}
 
 		const redis = getRedis();
 		const socialRedisKey = getSocialsAddCacheKey(nickname, social);
 
 		const existsRequestStr = await redis.get(socialRedisKey);
-		if (existsRequestStr) throw status(400, "SOCIAL_REQUEST_EXISTS");
+		if (existsRequestStr) {
+			throw status(400, wrapError("SOCIAL_REQUEST_EXISTS"));
+		}
 
 		const code = nanoid(4);
 
@@ -107,20 +121,31 @@ const playerSocialsAdd = new Elysia()
 		};
 
 		await redis.set(
-			socialRedisKey, 
+			socialRedisKey,
 			JSON.stringify(reqPayload), "EX", 5 * 60
 		);
 
 		const data = {
-			code,
+			payload: code,
 			target: social,
 		};
 
 		return { data };
 	}, {
-		body: z.object({
-			social: z.string().min(2),
+		body: t.Object({
+			social: t.String({ minLength: 2 }),
 		}),
+		response: {
+			200: withData(
+				t.Object({
+					payload: t.String(),
+					target: t.String()
+				})
+			),
+			400: withError(
+				t.UnionEnum(["SOCIAL_REQUEST_EXISTS", "SAVED_SOCIAL_EXISTS", "SOCIAL_NOT_FOUND"])
+			)
+		}
 	});
 
 const playerSocialsDelete = new Elysia()
@@ -132,13 +157,23 @@ const playerSocialsDelete = new Elysia()
 			.where("nickname", "=", nickname)
 			.executeTakeFirstOrThrow();
 
-		if (!query.numDeletedRows) throw status(500)
+		if (!query.numDeletedRows) throw status(500, wrapError("NOT_DELETED"))
 
 		return { data: { social } };
 	}, {
-		params: z.object({
-			social: z.string().min(2),
+		params: t.Object({
+			social: t.String({ minLength: 2 }),
 		}),
+		response: {
+			200: withData(
+				t.Object({
+					social: t.String()
+				})
+			),
+			500: withError(
+				t.UnionEnum(["NOT_DELETED"])
+			)
+		}
 	});
 
 const playerSocialsList = new Elysia()
@@ -164,6 +199,17 @@ const playerSocialsList = new Elysia()
 		const data: PlayerSocialsPayload[] = payload;
 
 		return { data };
+	}, {
+		response: {
+			200: withData(
+				t.Array(
+					t.Object({
+						id: t.Union([t.String(), t.Number()]),
+						username: t.String()
+					})
+				)
+			)
+		}
 	});
 
 export const playerSocials = new Elysia()

@@ -1,13 +1,13 @@
 import { createLink, Link } from "@/shared/components/config/link"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { getItemStatus, type StoreItem as StoreItemProps, storeItem } from "../../models/store-item.model"
-import { Skeleton } from "@repo/ui/skeleton"
+import { Skeleton } from "@/shared/ui/skeleton"
 import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent } from "@reatom/npm-react"
 import { CURRENCIES } from "../cart/cart-price"
 import { tv } from "tailwind-variants"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { translate } from "@/shared/locales/helpers"
 
 const buyButtonVariants = tv({

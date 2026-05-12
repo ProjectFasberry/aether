@@ -1,8 +1,8 @@
 import { Link } from "@/shared/components/config/link";
 import { env } from "@/shared/env";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { Button } from "@repo/ui/button";
-import { Typography } from "@repo/ui/typography";
+import { Button } from "@/shared/ui/button";
+import { Typography } from "@/shared/ui/typography";
 import { IconArrowRight } from "@tabler/icons-react";
 
 const Back = () => {

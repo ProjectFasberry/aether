@@ -1,7 +1,6 @@
 import { AuthError, Verify } from "@/shared/components/app/auth/components/auth";
 import { type AuthType, auth, authIsDisabledAtom, authState, authTriggerIsDisabledAtom } from "@/shared/components/app/auth/models/auth.model";
 import { reatomComponent, useAtom } from "@reatom/npm-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Link } from "@/shared/components/config/link";
 import { createPageModel } from "@/shared/lib/events";
 import { pageState } from "@/shared/models/page-context.model";
@@ -10,6 +9,9 @@ import { LoginForm } from "@/shared/components/app/auth/components/login";
 import { RegisterForm } from "@/shared/components/app/auth/components/register";
 import { register } from "@/shared/components/app/auth/models/register.model";
 import { translate } from "@/shared/locales/helpers";
+import { getDevModulesInfo } from "@/shared/models/app/index.model";
+import { tabsTriggerVariants } from "@repo/ui/tabs"
+import { Tabs } from '@ark-ui/react/tabs'
 
 const ResetPassword = reatomComponent(({ ctx }) => {
   if (!ctx.spy(showResetPasswordAtom)) return null;
@@ -21,31 +23,41 @@ const ResetPassword = reatomComponent(({ ctx }) => {
   )
 }, "ResetPassword")
 
+const AUTH_VARIANTS = [
+  { label: translate["auth.navigation.auth.loginTitle"](), value: "login" },
+  { label: translate["auth.navigation.auth.regTitle"](), value: "register" }
+]
+
 const Auth = reatomComponent(({ ctx }) => {
   return (
-    <Tabs
-      onValueChange={value => authState.type(ctx, value as AuthType)}
-      value={ctx.spy(authState.type)}
+    <Tabs.Root
+      defaultValue={AUTH_VARIANTS[0].value}
       inert={ctx.spy(authIsDisabledAtom)}
+      onValueChange={(details) => {
+        authState.type(ctx, details.value as AuthType)
+      }}
       className="flex flex-col gap-4 w-full p-3 sm:p-4 lg:p-6 max-w-lg rounded-lg bg-neutral-900 inert:opacity-70 inert:pointer-events-none"
     >
-      <TabsList
+      <Tabs.List
         data-disabled={ctx.spy(authTriggerIsDisabledAtom)}
         className="flex flex-col sm:flex-row min-h-24 h-24 sm:min-h-fit sm:h-fit w-full gap-2 *:h-10 *:w-full"
       >
-        <TabsTrigger value="login">{translate["auth.navigation.auth.loginTitle"]()}</TabsTrigger>
-        <TabsTrigger value="register">{translate["auth.navigation.auth.regTitle"]()}</TabsTrigger>
-      </TabsList>
+        {AUTH_VARIANTS.map((item) => (
+          <Tabs.Trigger key={item.value} value={item.value} className={tabsTriggerVariants()}>
+            {item.label}
+          </Tabs.Trigger >
+        ))}
+      </Tabs.List>
       <div className="flex flex-col gap-6 min-w-0 w-full h-full">
-        <TabsContent value="register">
+        <Tabs.Content value="register">
           <RegisterForm />
-        </TabsContent>
-        <TabsContent value="login">
+        </Tabs.Content>
+        <Tabs.Content value="login">
           <LoginForm />
-        </TabsContent>
+        </Tabs.Content>
         <ResetPassword />
       </div>
-    </Tabs>
+    </Tabs.Root>
   )
 }, "Auth")
 
@@ -53,10 +65,12 @@ const page = createPageModel({
   name: "auth",
   onConnAction: async (ctx, dataAtom, isConnected) => {
     authState.searchParams(ctx, (state) => ctx.get(pageState.urlParsed)?.search ?? state)
-    
+
     if (!isConnected()) return;
 
-    if (import.meta.env.DEV) {
+    const devModulesInfo = getDevModulesInfo(ctx);
+
+    if (devModulesInfo?.isImport) {
       const { startAuthWidget } = await import("@/shared/components/app/auth/models/dev-only.model")
       const unsubscribe = await startAuthWidget(ctx)
 

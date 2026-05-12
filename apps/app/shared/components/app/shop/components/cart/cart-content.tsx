@@ -1,9 +1,9 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { cartIsValidAtom, cartDataSelectedAtom, cartState, cartDataIsEmptyAtom } from "../../models/store-cart.model";
 import { CartPrice } from "./cart-price";
 import { Link } from "@/shared/components/config/link";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import { spawn } from "@reatom/framework";
 import { CartItem } from "./cart-item";
 import { ChangeRecipientDialog } from "../recipient/change-recipient";

@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { tv } from "tailwind-variants"
 import { widgetsState } from "../models/widgets.model"
 import { AuthWidgetActions } from "./widget-variants"

@@ -1,13 +1,13 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { type AuthRestoreType, restoreNavigationModel, restoreSeedPhraseModel, restoreState } from "../models/restore.model";
 import { SeedPhrase, SeedPhraseBody } from "@/shared/ui/seed-phrase";
-import { Typography } from "@repo/ui/typography";
-import { Button } from "@repo/ui/button";
+import { Typography } from "@/shared/ui/typography"
+import { Button } from "@/shared/ui/button";
 import { NicknameInput } from "./auth";
 import { type ReactNode } from "react";
 import { spawn } from "@reatom/framework";
 import { Link } from "@/shared/components/config/link";
-import { Input } from "@repo/ui/input";
+import { Input } from "@/shared/ui/input";
 
 const RestoreSeedPhrase = reatomComponent(({ ctx }) => {
   const words = ctx.spy(restoreSeedPhraseModel.state.words);

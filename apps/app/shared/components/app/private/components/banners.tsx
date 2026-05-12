@@ -1,11 +1,10 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { bannersAction, deleteBanner } from "../models/banner.model"
-import { Skeleton } from "@repo/ui/skeleton"
-import { Typography } from "@repo/ui/typography"
+import { Skeleton } from "@/shared/ui/skeleton"
+import { Typography } from "@/shared/ui/typography"
 import { action, atom, type AtomState } from "@reatom/framework"
 import { sleep, withReset } from "@reatom/framework"
 import { IconEye } from "@tabler/icons-react"
-import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog"
 import { type ReactNode } from "react"
 import { actionsTypeAtom, getSelectedParentAtom } from "../models/actions.model"
 import { ToActionButtonX } from "./global"
@@ -17,8 +16,11 @@ import {
   createBannerHrefValueAtom,
   createBannerTitleAtom
 } from "../models/banner.model"
-import { Input } from "@repo/ui/input"
+import { Input } from "@/shared/ui/input"
 import { ButtonXSubmit } from "./global"
+import { Dialog, DialogTitle } from "@ark-ui/react/dialog"
+import { Portal } from "@ark-ui/react/portal"
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog"
 
 type BannerPayload = ExtractApiData<"getSharedBannerList">["data"]["data"][number]
 
@@ -112,24 +114,29 @@ const ShowBannerDialog = reatomComponent(({ ctx }) => {
   if (!item) return null;
 
   return (
-    <Dialog open={ctx.spy(showBannerDialogIsOpenAtom)} onOpenChange={v => controlShowBannerAction(ctx, v)}>
-      <DialogContent>
-        <DialogTitle className="hidden"></DialogTitle>
-        <div className="flex flex-col justify-center w-full h-full items-center">
-          <Typography className='font-semibold'>
-            {item.title}
-          </Typography>
-          <Typography>
-            {item.description}
-          </Typography>
-          <a href={item.href.value} className="text-green-500 text-sm">
-            {item.href.title}
-          </a>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Dialog.Root open={ctx.spy(showBannerDialogIsOpenAtom)} onOpenChange={v => controlShowBannerAction(ctx, v.open)}>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} />
+        <Dialog.Positioner className={dialogPositionerVariant()}>
+          <Dialog.Content className={dialogContentVariant({ className: "overflow-hidden h-2/3" })}>
+            <DialogTitle>Подтверждение действия</DialogTitle>
+            <div className="flex flex-col justify-center w-full h-full items-center">
+              <Typography className='font-semibold'>
+                {item.title}
+              </Typography>
+              <Typography>
+                {item.description}
+              </Typography>
+              <a href={item.href.value} className="text-green-500 text-sm">
+                {item.href.title}
+              </a>
+            </div>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
-})
+}, "ShowBannerDialog")
 
 const BannerListItem = reatomComponent<BannerPayload>(({ ctx, id, title, description, href }) => {
   return (
@@ -162,7 +169,7 @@ export const BannersList = reatomComponent(({ ctx }) => {
   useUpdate(bannersAction, [])
 
   if (ctx.spy(bannersAction.statusesAtom).isPending) return <Skeleton className="h-16 w-full" />
-  
+
   const data = ctx.spy(bannersAction.dataAtom)?.data;
   if (!data) return null;
 

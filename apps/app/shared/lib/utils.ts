@@ -18,30 +18,37 @@ export const createWsUrl = (config: {
 };
 
 export function detectMobile(): boolean {
-  const ua = navigator.userAgent.toLowerCase();
+  const nav = navigator as any;
 
+  if (nav.userAgentData?.mobile !== undefined) {
+    return nav.userAgentData.mobile;
+  }
+
+  const ua = nav.userAgent.toLowerCase();
   const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(ua);
-  if (!isMobileUA) return false;
+  const isIPadOS = ua.includes("macintosh") && nav.maxTouchPoints > 1;
 
-  try {
-    const canvas = document.createElement("canvas");
-    const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+  if (isMobileUA || isIPadOS) {
+    try {
+      const canvas = document.createElement("canvas");
+      const gl = (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")) as WebGLRenderingContext;
+      if (gl) {
+        const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
 
-    if (gl) {
-      const debugInfo = (gl as any).getExtension("WEBGL_debug_renderer_info");
-      // @ts-expect-error
-      const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_ID).toLowerCase();
+        if (debugInfo) {
+          const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
 
-      const isDesktopGPU = /nvidia|intel|amd|swiftshader|microsoft/i.test(renderer);
-      if (isDesktopGPU) return false;
-    }
-  } catch (e) { }
+          const isDesktopGPU = /nvidia|intel|amd|swiftshader|microsoft/i.test(renderer);
+          if (isDesktopGPU) return false;
+        }
+      }
+    } catch (e) { }
 
-  const platform = (navigator as any).platform?.toLowerCase() || "";
-  if (/win32|macintel/i.test(platform)) return false;
+    return true;
+  }
 
-  return true;
-};
+  return nav.maxTouchPoints > 0 && !/win32|macintel/i.test(nav.platform || "");
+}
 
 export function validateNumber(input: string): number | null {
   const num = Number(input);
@@ -207,3 +214,4 @@ export function subOnchange(data: unknown, visited = new Set<unknown>()): Unsubs
 
   return subs
 }
+export const wrapTitle = (i: string) => `Fasberry > ${i}`;

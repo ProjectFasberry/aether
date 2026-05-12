@@ -1,5 +1,5 @@
 import { CartOrdersFilters, CartOrdersList } from "@/shared/components/app/shop/components/cart/cart-orders";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 
 export default function Page() {
   return (

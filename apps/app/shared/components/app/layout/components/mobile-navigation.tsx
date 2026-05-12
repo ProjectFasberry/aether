@@ -1,5 +1,7 @@
 import { Link } from "@/shared/components/config/link"
-import { HEADERS_LINKS } from "./navigation.model"
+import { navigationModel } from "./navigation.model"
+
+const { HEADERS_LINKS } = navigationModel();
 
 export const MobileBottomBar = () => {
   return (

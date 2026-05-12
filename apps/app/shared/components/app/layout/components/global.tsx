@@ -6,7 +6,7 @@ import { AlertDialog } from "@/shared/components/config/alert-dialog";
 import { Toaster } from "@/shared/components/config/toaster";
 import { userState } from "@/shared/models/app/index.model";
 
-const SettingsDialog = lazy(() => import("@/shared/components/app/settings/components/settings").then(d => ({ default: d.SettingsDialog })))
+const Settings = lazy(() => import("@/shared/components/app/settings/components/settings").then(d => ({ default: d.Settings })))
 
 export const Global = reatomComponent(({ ctx }) => {
   const isAuthed = ctx.spy(userState.isAuthed)
@@ -18,7 +18,7 @@ export const Global = reatomComponent(({ ctx }) => {
       </ClientOnly>
       <AlertDialog />
       <ClientOnly>
-        {isAuthed && <SettingsDialog />}
+        {isAuthed && <Settings />}
       </ClientOnly>
       <Toaster />
     </>

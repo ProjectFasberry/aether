@@ -1,8 +1,8 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { widgetsState } from "../models/widgets.model"
 import { IconArrowRight, IconX } from "@tabler/icons-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 
 export const AuthWidgetActions = reatomComponent(({ ctx }) => {
   const current = ctx.spy(widgetsState.current);

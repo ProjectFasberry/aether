@@ -1,45 +1,66 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { landAtom, landBannerAtom, landGalleryAtom, landIsOwnerAtom, landOwnerAtom } from "../models/land.model"
+import { landAtom, landBannerAtom, landGalleryAtom, landOwnerAtom } from "../models/land.model"
 import { Avatar } from "@/shared/ui/avatar"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
-import useEmblaCarousel from 'embla-carousel-react'
 import { FormattedText } from "./land-title"
 import { IconCircleFilled, IconCrown, IconLink } from "@tabler/icons-react"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { navigate } from "vike/client/router"
 import { changesIsExist, landMode, saveChanges } from "../models/edit-land.model"
 import { LandBanner } from "./land-banner"
+import { Carousel } from '@ark-ui/react/carousel'
 
 const LandGallery = reatomComponent(({ ctx }) => {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center" })
   const landGallery = ctx.spy(landGalleryAtom)
 
   return (
-    <div
-      id="gallery"
-      ref={emblaRef}
-      className="flex w-full items-center rounded-xl overflow-hidden h-[200px] sm:h-[350px]"
+    <Carousel.Root
+      slideCount={landGallery.length}
+      allowMouseDrag={true}
+      defaultPage={2}
+      autoplay={true}
+      loop={true}
+      slidesPerPage={1.4}
+      id="land-gallery"
+      className="
+          flex w-full relative items-center rounded-xl sm:overflow-hidden mb-6
+          [--slide-spacing:8px]! sm:[--slide-spacing:16px]! h-[160px] sm:h-[350px]
+        "
     >
-      <div className="flex gap-4 w-full px-4 h-full py-0">
-        {landGallery.map((image, idx) => (
-          <div
-            key={idx}
-            className="flex-[0_0_70%] sm:flex-[0_0_60%] rounded-xl overflow-hidden min-w-0 w-full"
-          >
-            <img
-              src={image}
-              draggable={false}
-              className="w-full h-[200px] sm:h-[350px] select-none object-cover"
-              width={1920}
-              height={1080}
-              loading="lazy"
-              alt=""
+      <Carousel.Control>
+        <Carousel.ItemGroup>
+          {landGallery.map((image, idx) => (
+            <Carousel.Item
+              key={idx}
+              index={idx}
+              className="flex-[0_0_70%] sm:flex-[0_0_60%] h-[160px] sm:h-[350px] rounded-xl overflow-hidden min-w-0 w-full"
+            >
+              <img
+                src={image}
+                draggable={false}
+                className="w-full h-full select-none object-cover"
+                width={1920}
+                height={1080}
+                loading="lazy"
+                alt=""
+              />
+            </Carousel.Item>
+          ))}
+        </Carousel.ItemGroup>
+      </Carousel.Control>
+      <Carousel.IndicatorGroup className="absolute -bottom-8 sm:bottom-2 left-0 w-full right-0 z-1 flex items-center justify-center">
+        <div className="flex gap-2 px-2 rounded-xl py-1 w-fit bg-black/30 backdrop-blur-2xl">
+          {landGallery.map((_, idx) => (
+            <Carousel.Indicator
+              key={idx}
+              index={idx}
+              className="h-4 sm:h-3 cursor-pointer data-current:bg-neutral-50 bg-neutral-500 rounded-full aspect-square"
             />
-          </div>
-        ))}
-      </div>
-    </div>
+          ))}
+        </div>
+      </Carousel.IndicatorGroup>
+    </Carousel.Root>
   )
 }, "LandGallery")
 

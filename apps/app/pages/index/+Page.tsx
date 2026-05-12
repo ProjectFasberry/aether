@@ -1,4 +1,4 @@
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography";
 import { IconArrowRight } from "@tabler/icons-react";
 import { Intro } from "@/shared/components/app/intro/components/intro";
 import { EventsList } from "@/shared/components/app/events/components/events";
@@ -6,7 +6,6 @@ import { CONTACTS } from "@/shared/consts/contacts";
 import { action } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { LandsListShorted } from "@/shared/components/app/lands/components/lands-list";
-import { scrollableVariant } from "@/shared/consts/style-variants";
 import { NewsList } from "@/shared/components/app/news/components/news";
 import { translate } from "@/shared/locales/helpers";
 import { userState } from "@/shared/models/app/index.model";
@@ -57,7 +56,7 @@ export default function Page() {
         <Typography variant="title">
           {translate["index.news"]()}
         </Typography>
-        <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+        <div className="flex flex-col sm:flex-row scrollbar-h-2 overflow-x-auto gap-4 pb-2">
           <NewsList />
         </div>
       </div>
@@ -65,7 +64,7 @@ export default function Page() {
         <Typography variant="title">
           {translate["index.latest-events"]()}
         </Typography>
-        <div className={scrollableVariant({ className: "flex scrollbar-h-2 overflow-x-auto gap-4 pb-2" })}>
+        <div className="flex flex-col sm:flex-row scrollbar-h-2 overflow-x-auto gap-4 pb-2">
           <EventsList />
         </div>
       </div>

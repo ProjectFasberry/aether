@@ -1,9 +1,11 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Button } from "@repo/ui/button"
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
-import { Typography } from "@repo/ui/typography"
+import { Button } from "@/shared/ui/button"
+import { Typography } from "@/shared/ui/typography"
 import { type SettingsSectionItem } from "../models/settings.model"
 import { SettingsContentWrapper, SettingsSection } from "./ui"
+import { Dialog, DialogPositioner } from "@ark-ui/react/dialog"
+import { Portal } from "@ark-ui/react/portal"
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog"
 
 const SettingsMainDeleteAccount = reatomComponent(({ ctx }) => {
   return (
@@ -23,21 +25,25 @@ const SettingsMainDeleteAccount = reatomComponent(({ ctx }) => {
 
 const SettingsMainChangePassword = reatomComponent(({ ctx }) => {
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <Dialog.Root>
+      <Dialog.Trigger asChild>
         <Button background="white" disabled={true} className="w-fit">
           <Typography className="leading-5 font-semibold">
             Изменить пароль
           </Typography>
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogTitle className="text-center text-xl">Изменение пароля</DialogTitle>
-        <Typography>
-
-        </Typography>
-      </DialogContent>
-    </Dialog>
+      </Dialog.Trigger>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} />
+        <DialogPositioner className={dialogPositionerVariant()}>
+          <Dialog.Content className={dialogContentVariant()}>
+            <Dialog.Title className="text-center text-xl">Изменение пароля</Dialog.Title>
+            <Typography>
+            </Typography>
+          </Dialog.Content>
+        </DialogPositioner>
+      </Portal>
+    </Dialog.Root>
   )
 }, "ChangePassword")
 

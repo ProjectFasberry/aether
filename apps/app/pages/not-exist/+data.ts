@@ -24,8 +24,8 @@ const TITLE = {
 
 type TitleType = keyof typeof TITLE
 
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name);
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data");
   
   const type = pageCtx.urlParsed.search["type"] as TitleType | undefined ?? "default"
   const title = m[`${type}.not-found`]()

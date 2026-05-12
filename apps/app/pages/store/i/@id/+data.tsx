@@ -1,6 +1,6 @@
 import { type PageContextServer } from "vike/types";
 import { useConfig } from 'vike-react/useConfig'
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { render } from "vike/abort";
 import { cart } from "@/shared/components/app/shop/models/store-cart.model";
 import { logRouting } from "@/shared/lib/log";
@@ -34,8 +34,8 @@ function metadata(
   }
 }
 
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name)
+export async function data(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "data");
 
   const config = useConfig()
   const headers = pageCtx.headers ?? undefined

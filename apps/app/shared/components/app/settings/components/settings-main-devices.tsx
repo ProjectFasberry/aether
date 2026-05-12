@@ -2,16 +2,18 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { login, authLoginQRIsErrorAtom, loginState } from "../../auth/models/login.model";
 import { IconArrowLeft, IconCheck, IconDeviceDesktop, IconQrcode, IconX } from "@tabler/icons-react";
 import { type ReactNode } from "react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import { spawn } from "@reatom/framework";
 import { IconLoader } from "@/shared/ui/icon-loader";
 import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, type SessionPayload } from "../models/settings-security.model";
 import { type IDetectedBarcode, Scanner, type TrackFunction } from "@yudiel/react-qr-scanner";
-import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
 import { appState } from "@/shared/models/app/index.model";
-import { Skeleton } from "@repo/ui/skeleton.js";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
 import { type SettingsSectionItem } from "../models/settings.model";
+import { Dialog } from "@ark-ui/react/dialog";
+import { Portal } from "@ark-ui/react/portal";
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 
 const VerifyExpiredOrNotfound = () => {
   return (
@@ -205,17 +207,21 @@ const ScanReader = reatomComponent(({ ctx }) => {
 }, "ScanReader")
 
 const AccountSessionsConnectNewConfirmDialog = reatomComponent(({ ctx }) => {
-  const open = ctx.spy(scanState.confirmDialogIsOpen)
-
   return (
-    <Dialog open={open} onOpenChange={v => scanState.confirmDialogIsOpen(ctx, v)}>
-      <DialogContent>
-        <DialogTitle>Подтверждение нового входа</DialogTitle>
-        <div className="flex items-center justify-center w-full h-full">
-          <VerifyLogin />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Dialog.Root open={ctx.spy(scanState.confirmDialogIsOpen)} onOpenChange={v => scanState.confirmDialogIsOpen(ctx, v.open)}>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} />
+        <Dialog.Positioner className={dialogPositionerVariant()}>
+          <Dialog.Content className={dialogContentVariant()}>
+            <Dialog.Title>Подтверждение нового входа</Dialog.Title>
+            <div className="flex items-center justify-center w-full h-full">
+              <VerifyLogin />
+            </div>
+            <Dialog.CloseTrigger />
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }, "AccountSessionsConnectNewConfirmDialog")
 

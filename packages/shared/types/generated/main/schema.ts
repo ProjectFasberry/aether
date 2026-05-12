@@ -5465,7 +5465,37 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            payload: string;
+                            target: string;
+                        };
+                    };
+                };
+            };
+            /** @description Response for status 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @default SOCIAL_REQUEST_EXISTS
+                         * @enum {string}
+                         */
+                        error: "SOCIAL_REQUEST_EXISTS" | "SAVED_SOCIAL_EXISTS" | "SOCIAL_NOT_FOUND";
+                    };
+                };
+            };
+        };
     };
     getServerSocialsAddList: {
         parameters: {
@@ -5497,7 +5527,36 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            social: string;
+                        };
+                    };
+                };
+            };
+            /** @description Response for status 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @default NOT_DELETED
+                         * @enum {string}
+                         */
+                        error: "NOT_DELETED";
+                    };
+                };
+            };
+        };
     };
     getServerSocialsAvailable: {
         parameters: {
@@ -5507,7 +5566,22 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            title: string;
+                            social: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     getServerSocialsListByNickname: {
         parameters: {
@@ -5519,7 +5593,22 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string | number;
+                            username: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     "postStoreHooksProcess-order": {
         parameters: {

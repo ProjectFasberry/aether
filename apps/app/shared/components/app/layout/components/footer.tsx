@@ -1,6 +1,6 @@
 import { IconBrandDiscordFilled, IconBrandTelegram } from "@tabler/icons-react"
 import { Link } from "../../../config/link"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { CONTACTS } from "../../../../consts/contacts"
 import { env } from "@/shared/env"
 import { Logotype } from "./logotype"

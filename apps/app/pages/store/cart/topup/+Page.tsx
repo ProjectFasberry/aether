@@ -4,7 +4,7 @@ import { createPageModel } from "@/shared/lib/events";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { pageState } from "@/shared/models/page-context.model";
 import { useAtom } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 
 const boostsImg = getStaticImage("icons/boosts_icon.png")
 

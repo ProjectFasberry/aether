@@ -37,3 +37,7 @@ export const env = {
   VITE_SOCIAL_VK_URL: import.meta.env.VITE_SOCIAL_VK_URL,
   VITE_SOCIAL_DISCORD_URL: import.meta.env.VITE_SOCIAL_DISCORD_URL
 }
+
+if (typeof window === 'undefined') {
+  console.log(env)
+}

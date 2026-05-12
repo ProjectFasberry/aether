@@ -1,20 +1,21 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
-import { Button } from "@repo/ui/button";
+import { Typography } from "@/shared/ui/typography"
+import { Button } from "@/shared/ui/button";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { IconPlus, IconSettings } from "@tabler/icons-react";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@repo/ui/hover-card";
-import { Switch } from "@repo/ui/switch";
 import { balance, balanceState } from "../models/balance.model";
 import { navigate } from "vike/client/router";
 import { getFromDictionary } from "@/shared/models/app/utils";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { pageState } from "@/shared/models/page-context.model";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { scrollableVariant } from "@/shared/consts/style-variants";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import NumberFlow from '@number-flow/react'
 import { translate } from "@/shared/locales/helpers";
+import { Switch } from "@/shared/ui/switch";
+import { Menu } from '@ark-ui/react/menu'
+import { HoverCard } from '@ark-ui/react/hover-card'
+import { Portal } from '@ark-ui/react/portal'
 
 const cardImage = getStaticImage("arts/steve_night.jpg")
 
@@ -43,34 +44,54 @@ const BalanceServerSelect = reatomComponent(({ ctx }) => {
   const current = ctx.spy(balanceState.targetServer);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button className="py-0.5 gap-1" background="default">
-          Сервер:
-          <span className="text-nowrap capitalize text-neutral-400">{current}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="min-w-[140px]">
-        <div className="flex flex-col gap-1 w-full">
-          {SERVERS.map((server) => (
-            <DropdownMenuItem
-              key={server.value}
-              data-state={current === server.value ? "active" : "inactive"}
-              className="text-base group"
-              onClick={() => balanceState.targetServer(ctx, server.value)}
-              disabled={ctx.spy(balance.fetch.statusesAtom).isPending}
+    <>
+      <Menu.Root
+        onSelect={details => {
+          balanceState.targetServer(ctx, details.value)
+        }}
+      >
+        <Menu.Trigger asChild>
+          <Menu.Indicator />
+          <Button className="py-0.5 px-2" background="default">
+            Сервер:&nbsp;
+            <span className="text-nowrap text-sm capitalize text-neutral-400">{current}</span>
+          </Button>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <div
+              className="min-w-[140px] flex-col gap-2 bg-neutral-900 p-2 flex rounded-xl items-center justify-center"
             >
-              <Typography
-                className="capitalize 
-                      group-data-[state=active]:text-green-500 group-data-[state=inactive]:text-neutral-50"
-              >
-                {server.value}
+              <Typography className="text-sm" color="gray">
+                Доступные сервера:
               </Typography>
-            </DropdownMenuItem>
-          ))}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              <div className="flex flex-col gap-1 w-full">
+                {SERVERS.map((server) => (
+                  <Menu.Item key={server.value} value={server.value} asChild>
+                    <Button
+                      data-state={current === server.value ? "active" : "inactive"}
+                      className="text-base hover:bg-neutral-800 justify-start group py-1 px-2"
+                      disabled={ctx.spy(balance.fetch.statusesAtom).isPending}
+                    >
+                      <Typography
+                        className="capitalize text-sm
+                      group-data-[state=active]:text-green-500 group-data-[state=inactive]:text-neutral-50"
+                      >
+                        {server.value}
+                      </Typography>
+                    </Button>
+                  </Menu.Item>
+                ))}
+              </div>
+              <Menu.Separator />
+            </div>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
+    </>
   )
 }, "BalanceServerSelect")
 
@@ -133,31 +154,38 @@ const CharismCard = reatomComponent(({ ctx }) => (
 
 const BalanceSettingsOptions = reatomComponent(({ ctx }) => {
   return (
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <Button background="default" className="p-1">
-          <IconSettings size={18} className="text-neutral-50" />
-        </Button>
-      </HoverCardTrigger>
-      <HoverCardContent align="end" side="bottom">
-        <div className="flex flex-col gap-2 w-full h-full">
-          <Typography className="text-neutral-400 text-md">
-            {translate['player.balance.settings.title']()}
-          </Typography>
-          <div className="flex flex-col w-full h-full">
-            <div className="flex items-center justify-between gap-1 w-full">
-              <Typography className="cursor-pointer text-neutral-100">
-                {translate["player.balance.settings.variants.animation"]()}
+    <>
+      <HoverCard.Root positioning={{ placement: "bottom-end" }}>
+        <HoverCard.Trigger>
+          <Button background="default" className="p-1">
+            <IconSettings size={18} className="text-neutral-50" />
+          </Button>
+        </HoverCard.Trigger>
+        <HoverCard.Positioner>
+          <HoverCard.Arrow>
+            <HoverCard.ArrowTip />
+          </HoverCard.Arrow>
+          <HoverCard.Content>
+            <div className="flex flex-col gap-2 w-full h-full">
+              <Typography className="text-neutral-400 text-md">
+                {translate['player.balance.settings.title']()}
               </Typography>
-              <Switch
-                checked={ctx.spy(balanceState.settings.animateBalance)}
-                onCheckedChange={v => balanceState.settings.animateBalance(ctx, v)}
-              />
+              <div className="flex flex-col w-full h-full">
+                <div className="flex items-center justify-between gap-1 w-full">
+                  <Typography className="cursor-pointer text-neutral-100">
+                    {translate["player.balance.settings.variants.animation"]()}
+                  </Typography>
+                  <Switch
+                    checked={ctx.spy(balanceState.settings.animateBalance)}
+                    onCheckedChange={v => balanceState.settings.animateBalance(ctx, v)}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </HoverCardContent>
-    </HoverCard>
+          </HoverCard.Content>
+        </HoverCard.Positioner>
+      </HoverCard.Root>
+    </>
   )
 }, "BalanceSettingsOptions")
 

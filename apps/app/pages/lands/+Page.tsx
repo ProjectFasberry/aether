@@ -1,4 +1,4 @@
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { LandsList } from "@/shared/components/app/lands/components/lands-list";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
 import { PageHeaderImage } from "@/shared/ui/header-image";

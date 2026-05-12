@@ -1,13 +1,14 @@
+import type { AtomMut } from "@reatom/framework"
+import { reatomComponent } from "@reatom/npm-react"
 import { createContext, type PropsWithChildren, useContext } from "react"
 import { tv } from "tailwind-variants"
 import { Drawer } from "vaul"
 
 const vaulVariants = tv({
-  base: `bg-neutral-800 fixed p-2 h-fit max-h-3/4 z-50 flex flex-col gap-4 border-neutral-700/60`,
+  base: `bg-neutral-900 fixed p-2 h-fit max-h-3/4 z-50 flex flex-col gap-4 border-neutral-700/60`,
   variants: {
     side: {
       bottom: "rounded-t-xl inset-x-0 bottom-0 h-auto border-t",
-      top: "rounded-b-xl inset-x-0 top-0 h-auto border-b",
       left: "rounded-r-xl inset-y-0 left-0 h-full w-3/4 border-r",
       right: "rounded-l-xl inset-y-0 right-0 h-full w-3/4 border-l"
     }
@@ -27,13 +28,13 @@ const useVaul = () => {
 }
 
 type VaulContentProps = PropsWithChildren & {
-  side?: "left" | "right" | "bottom" | "top",
+  side?: "left" | "right" | "bottom",
   className?: string,
 }
 
-const VaulTrigger = ({ children }: PropsWithChildren) => {
+const VaulTrigger = ({ children, asChild }: PropsWithChildren & { asChild?: boolean }) => {
   return (
-    <Drawer.Trigger asChild>{children}</Drawer.Trigger>
+    <Drawer.Trigger asChild={asChild}>{children}</Drawer.Trigger>
   )
 }
 
@@ -59,12 +60,13 @@ const VaulHeader = ({
 
 type VaulProps = {
   open: boolean,
-  onOpenChange: (val: boolean) => void,
+  onOpenChange: (val: boolean) => void
 } & PropsWithChildren
 
-const Vaul = ({
-  children, open, onOpenChange
-}: VaulProps) => {
+const Vaul = reatomComponent<PropsWithChildren & { openAtom: AtomMut<boolean> }>(({ ctx, children, openAtom }) => {
+  const open = ctx.spy(openAtom);
+  const onOpenChange = (value: boolean) => openAtom(ctx, value)
+
   return (
     <vaulCtx.Provider
       value={{
@@ -77,7 +79,7 @@ const Vaul = ({
       </Drawer.Root>
     </vaulCtx.Provider>
   )
-}
+}, "Vaul")
 
 const VaulContent = ({
   side = "bottom", className, children

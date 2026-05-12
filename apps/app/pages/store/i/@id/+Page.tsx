@@ -1,5 +1,5 @@
 import { reatomComponent, } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { renderToHTMLString } from "@tiptap/static-renderer";
 import { editorExtensions } from "@/shared/components/config/editor";
 import type { JSONContent } from "@tiptap/react";

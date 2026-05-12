@@ -1,18 +1,24 @@
 import { reatomComponent } from "@reatom/npm-react";
-import { Input } from "@repo/ui/input";
-import { Typography } from "@repo/ui/typography";
+import { Input } from "@/shared/ui/input";
+import { Typography } from "@/shared/ui/typography"
 import { topup, topupErrorAtom, type TopupMethodListPayload, topupNavigationModel, topupState, type TopupType } from "../../models/store-top-up.model";
-import { Button } from "@repo/ui/button";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { TARGET_TITLE } from "../cart/cart-price";
-import { IconCheck, IconExchange, IconX } from "@tabler/icons-react";
+import { IconCheck, IconExchange, IconSelector, IconX } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { isEmptyArray } from "@/shared/lib/helpers";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@repo/ui/select";
 import React, { type ReactNode } from "react";
 import { type Ctx, spawn } from "@reatom/framework";
 import { IconLoader } from "@/shared/ui/icon-loader";
 import { ErrorBlock } from "@/shared/ui/error-block";
+import { Select, createListCollection } from '@ark-ui/react/select'
+import { Portal } from "@ark-ui/react/portal";
+import {
+  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant,
+  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant,
+  selectItemTextVariant, selectItemVariant, selectTriggerVariant
+} from "@/shared/ui/select"
 
 type TopupTargetProps = {
   variant?: "compact", title?: never, img: string
@@ -78,19 +84,55 @@ const TopUpRecipient = reatomComponent(({ ctx }) => {
 const TopUpCurrencies = reatomComponent(({ ctx }) => {
   const data = ctx.spy(topupState.method.type)?.currencies;
 
+  const collection = createListCollection({
+    items: data!,
+  })
+
+  const item = ctx.spy(topupState.method.currency)
+
   return (
-    <Select
-      disabled={ctx.spy(topup.fetchMethods.statusesAtom).isPending}
-      value={ctx.spy(topupState.method.currency) ?? ""}
-      onValueChange={(v) => topupState.method.currency(ctx, v)}
-    >
-      <SelectTrigger className="w-full">
-        {ctx.spy(topupState.method.currency) ?? "Не выбрано"}
-      </SelectTrigger>
-      <SelectContent>
-        {data?.map((currency, idx) => <SelectItem key={idx} value={currency}>{currency}</SelectItem>)}
-      </SelectContent>
-    </Select>
+    <>
+      <Select.Root
+        collection={collection}
+        value={item ? [item] : []}
+        onValueChange={({ value }) => topupState.method.currency(ctx, value[0])}
+      >
+        <Select.Control className={selectControlVariant()}>
+          <Select.Trigger className={selectTriggerVariant()}>
+            <Select.ValueText className="border border-neutral-800 h-8 px-4">
+              Не выбрано
+            </Select.ValueText>
+          </Select.Trigger>
+          <div className={selectIndicatorsVariant()}>
+            <Select.ClearTrigger className={selectClearTriggerVariant()}>
+              <IconX size={20} />
+            </Select.ClearTrigger>
+            <Select.Indicator className={selectIndicatorVariant()}>
+              <IconSelector size={20} />
+            </Select.Indicator>
+          </div>
+        </Select.Control>
+        <Portal>
+          <Select.Positioner>
+            <Select.Content className={selectContentVariant()} style={selectContentBaseStyle}>
+              <Select.ItemGroup className={selectItemGroupVariant()}>
+                {data?.map((item, idx) => (
+                  <Select.Item key={idx} item={item} className={selectItemVariant()}>
+                    <Select.ItemText className={selectItemTextVariant()}>
+                      {item}
+                    </Select.ItemText>
+                    <Select.ItemIndicator className={selectItemIndicatorVariant()}>
+                      <IconCheck size={16} />
+                    </Select.ItemIndicator>
+                  </Select.Item>
+                ))}
+              </Select.ItemGroup>
+            </Select.Content>
+          </Select.Positioner>
+        </Portal>
+        <Select.HiddenSelect />
+      </Select.Root>
+    </>
   )
 }, "TopUpCurrencies")
 
@@ -164,6 +206,10 @@ export const TopUpExchanges = reatomComponent(({ ctx }) => {
 const WALLETS_IMGS: Record<string, string> = { "CHARISM": charismImage, "BELKOIN": belkoinImage }
 
 const TopupValue = reatomComponent(({ ctx }) => {
+  const collection = createListCollection({
+    items: topupState.WALLETS!,
+  })
+
   return (
     <div className="flex w-full justify-between gap-1 items-center">
       <Input
@@ -173,18 +219,38 @@ const TopupValue = reatomComponent(({ ctx }) => {
         value={ctx.spy(topupState.value)}
         onChange={e => topupState.value.onChangeEvent(ctx, e)}
       />
-      <Select value={ctx.spy(topupState.wallet)} onValueChange={v => topupState.wallet(ctx, v)}>
-        <SelectTrigger className="max-w-max">
-          <TopUpTarget img={WALLETS_IMGS[ctx.spy(topupState.wallet)]} />
-        </SelectTrigger>
-        <SelectContent>
-          {topupState.WALLETS.map((wallet) => (
-            <SelectItem key={wallet.value} value={wallet.value}>
-              <TopUpTarget variant="full" title={wallet.title} img={WALLETS_IMGS[wallet.value]} />
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Select.Root
+        collection={collection}
+        value={[ctx.spy(topupState.wallet)]}
+        onValueChange={({ value }) => topupState.wallet(ctx, value[0])}
+      >
+        <Select.Label>Framework</Select.Label>
+        <Select.Control>
+          <Select.Trigger >
+            <Select.ValueText placeholder={"Не выбрано"} />
+            <TopUpTarget img={WALLETS_IMGS[ctx.spy(topupState.wallet)]} />
+          </Select.Trigger>
+          <div>
+            <Select.ClearTrigger>
+              <IconX />
+            </Select.ClearTrigger>
+            <Select.Indicator />
+          </div>
+        </Select.Control>
+        <Portal>
+          <Select.Positioner>
+            <Select.Content>
+              <Select.ItemGroup>
+                <Select.ItemGroupLabel>Frameworks</Select.ItemGroupLabel>
+                {topupState.WALLETS.map((wallet) => (
+                  <TopUpTarget key={wallet.value} variant="full" title={wallet.title} img={WALLETS_IMGS[wallet.value]} />
+                ))}
+              </Select.ItemGroup>
+            </Select.Content>
+          </Select.Positioner>
+        </Portal>
+        <Select.HiddenSelect />
+      </Select.Root>
     </div>
   )
 }, "TopupValue")

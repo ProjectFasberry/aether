@@ -3,7 +3,7 @@ import { Link } from "@/shared/components/config/link"
 import { translate } from "@/shared/locales/helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { IconChevronRight, IconTrophy } from "@tabler/icons-react"
 
 const RatingItem = ({

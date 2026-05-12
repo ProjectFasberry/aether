@@ -1,7 +1,7 @@
 import { type PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { useConfig } from "vike-react/useConfig";
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { DONATE_GROUPS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { logRouting } from "@/shared/lib/log";
 import { createCtx } from "@reatom/framework";
@@ -59,11 +59,13 @@ function definePlayerTags(group: Player["group"]) {
   return tags
 }
 
-export const data = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, data.name);
-
+export async function data(pageCtx: PageContextServer) {
   const config = useConfig();
-  const headers = pageCtx.headers ?? undefined
+  const headers = pageCtx.headers
+  if (!headers) return;
+  
+  logRouting(pageCtx.urlPathname, "data");
+
   const nickname = pageCtx.routeParams.nickname;
 
   const player = await getPlayer(nickname, { headers })

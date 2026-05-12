@@ -28,7 +28,6 @@ export const alertDialog = atom(null).pipe(
     }, `${name}.open`),
     confirm: action(async (ctx) => {
       const config = ctx.get(alertDialogConfigAtom)
-      console.log(config);
       if (!config) return
 
       config.confirmAction(ctx)
@@ -50,9 +49,9 @@ export const alertDialog = atom(null).pipe(
       alertDialogIsOpenAtom(ctx, false)
     }),
     close: action(async (ctx) => {
+      alertDialogIsOpenAtom(ctx, false)
       await ctx.schedule(() => sleep(DIALOG_DELAY))
       alertDialogConfigAtom.reset(ctx)
-      alertDialogIsOpenAtom(ctx, false)
     }),
   }))
 )

@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Skeleton } from "@repo/ui/skeleton"
-import { Typography } from "@repo/ui/typography"
+import { Skeleton } from "@/shared/ui/skeleton"
+import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "../../../config/link"
 import { playerLands, playerLandsState } from "../models/player-lands.model"
 import { atom } from "@reatom/framework"

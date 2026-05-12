@@ -3,17 +3,17 @@ import {
   getIsCheckedAtom, getIsSelectedUser, type PrivatedUser, users,
   usersControl, usersControlRoles, usersControlState, usersDataArrAtom
 } from "../models/users.model";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { tv } from "tailwind-variants";
 import { currentUserState } from "@/shared/models/current-user/index.model";
-import { Checkbox } from "@repo/ui/checkbox";
-import { createLink, Link } from "@/shared/components/config/link";
+import { Link } from "@/shared/components/config/link";
 import { Avatar } from "../../../../ui/avatar";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { UserActionsChangeRoleLocal } from "./users.change-role";
 import { UserActionsWrapper } from "./users.restrict";
 import { useInView } from "react-intersection-observer";
-import { ContextMenu, ContextMenuTrigger, ContextMenuContent } from "@repo/ui/context-menu"
+import { Checkbox } from "@/shared/ui/checkbox";
+import { Menu } from '@ark-ui/react/menu'
 
 const userItemVariant = tv({
   base: `flex flex-col rounded-lg w-full px-4 border`,
@@ -33,7 +33,6 @@ const userItemVariant = tv({
 })
 
 const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, nickname, uuid, premium_uuid }) => {
-  const isChecked = ctx.spy(getIsCheckedAtom(nickname));
   const isExpanded = ctx.spy(getIsSelectedUser(nickname));
   const isIdentity = ctx.get(currentUserState)?.nickname === nickname;
 
@@ -42,17 +41,19 @@ const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, ni
 
   return (
     <div className={userItemVariant({ variant, state })}>
-      <ContextMenu onOpenChange={(v) => {
-        if (v) {
-          usersControlState.selectedUser(ctx, nickname)
-        } else {
-          usersControlState.selectedUser.reset(ctx)
-        }
-      }}>
-        <ContextMenuTrigger>
+      <Menu.Root
+        onOpenChange={({ open: v }) => {
+          if (v) {
+            usersControlState.selectedUser(ctx, nickname)
+          } else {
+            usersControlState.selectedUser.reset(ctx)
+          }
+        }}
+      >
+        <Menu.Trigger>
           <div className="flex items-center gap-3 h-12 min-w-0 justify-start">
             <Checkbox
-              checked={isChecked}
+              checked={ctx.spy(getIsCheckedAtom(nickname))}
               onCheckedChange={v => usersControl.selectSingle(ctx, v, nickname)}
             />
             <Link href={`/private/users/${nickname}`} className="flex items-center min-w-0 gap-2">
@@ -65,13 +66,18 @@ const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, ni
               <UserActionsChangeRoleLocal nickname={nickname} role_id={role.id} role_name={role.name} />
             )}
           </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent>
-          <div className="flex pb-2 gap-1 items-center justify-end w-full">
-            <UserActionsWrapper nickname={nickname} type="single" />
-          </div>
-        </ContextMenuContent>
-      </ContextMenu>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <div className="flex pb-2 gap-1 items-center justify-end w-full">
+              <UserActionsWrapper nickname={nickname} type="single" />
+            </div>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
     </div>
   )
 }, "UsersItem")

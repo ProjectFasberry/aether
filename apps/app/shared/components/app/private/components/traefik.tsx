@@ -1,6 +1,6 @@
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import { IconCircleDashed } from "@tabler/icons-react";
 import { configAtom, saveConfig, traefikConfig } from "../models/traefik.model";
 

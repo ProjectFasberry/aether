@@ -1,4 +1,4 @@
-import { Skeleton } from "@repo/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { tv } from "tailwind-variants";
 import { Avatar } from "../../../../ui/avatar";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
@@ -7,31 +7,36 @@ import { atom } from "@reatom/framework";
 import { pageState } from "@/shared/models/page-context.model";
 import { playerSLP, playerSLPState } from "../models/player-seems-like.model";
 import { IconX } from "@tabler/icons-react";
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@repo/ui/tooltip"
 import { scrollableVariant } from "@/shared/consts/style-variants";
 import { translate } from "@/shared/locales/helpers";
+import { Tooltip } from '@ark-ui/react/tooltip'
+import { Portal } from '@ark-ui/react/portal'
 
 const playerSeemsLikePlayersCountAtom = atom((ctx) => ctx.spy(playerSLP.fetch.dataAtom)?.meta.count ?? 0)
 
 const PlayerSeemsLikeShowToggle = reatomComponent(({ ctx }) => {
   return (
-    <TooltipProvider>
-      <Tooltip delayDuration={1}>
-        <TooltipTrigger
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <button
           id="hide-section-seems-like"
           aria-label={translate["player.seems-like-players.notShow"]()}
           onClick={() => playerSLPState.settings.isShow.toggle(ctx)}
           className="cursor-pointer"
         >
           <IconX size={22} className="text-neutral-400" />
-        </TooltipTrigger>
-        <TooltipContent>
-          <span className="text-neutral-400 text-md">
-            {translate["player.seems-like-players.notShow"]()}
-          </span>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+        </button>
+      </Tooltip.Trigger>
+      <Portal>
+        <Tooltip.Positioner>
+          <Tooltip.Content>
+            <span className="text-neutral-400 text-md">
+              {translate["player.seems-like-players.notShow"]()}
+            </span>
+          </Tooltip.Content>
+        </Tooltip.Positioner>
+      </Portal>
+    </Tooltip.Root>
   )
 }, "PlayerSeemsLikeShowToggle")
 

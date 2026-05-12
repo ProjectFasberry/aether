@@ -1,6 +1,6 @@
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { BackButton } from "@/shared/ui/back-button"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { usePageContext } from "vike-react/usePageContext"
 import { navigate } from "vike/client/router"
 

@@ -3,7 +3,7 @@ import { Link } from "@/shared/components/config/link"
 import { locales } from "@/shared/locales"
 import { translate } from "@/shared/locales/helpers"
 import { reatomComponent } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { usePageContext } from "vike-react/usePageContext"
 
 const ChangeLanguage = reatomComponent(({ ctx }) => {

@@ -8,9 +8,9 @@ import { reatomComponent } from "@reatom/npm-react"
 import { action, atom } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
 import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
 import Image from '@tiptap/extension-image'
 import { env } from "@/shared/env"
+import { Menu } from '@ark-ui/react/menu'
 
 export const editorExtensions = [
   TextStyleKit,
@@ -191,29 +191,36 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
         >
           <IconArrowForwardUp />
         </button>
-        <DropdownMenu>
-          <DropdownMenuTrigger className={controlVariant()} data-state={"inactive"}>
-            <IconSettings />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem asChild>
-              <button
-                onClick={() => editor.chain().focus().unsetAllMarks().run()}
-                className={controlVariant()}
-              >
-                Clear marks
+        <div>
+          <Menu.Root>
+            <Menu.Trigger asChild>
+              <button className={controlVariant()} data-state={"inactive"}>
+                <IconSettings />
               </button>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <button
-                onClick={() => editor.chain().focus().clearNodes().run()}
-                className={controlVariant()}
-              >
-                Clear nodes
-              </button>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </Menu.Trigger>
+            <Menu.Positioner>
+              <Menu.Content>
+                <Menu.Arrow>
+                  <Menu.ArrowTip />
+                </Menu.Arrow>
+                <Menu.Item
+                  value="clear_marks"
+                  className={controlVariant()}
+                  onClick={() => editor.chain().focus().unsetAllMarks().run()}
+                >
+                  Clear marks
+                </Menu.Item>
+                <Menu.Item
+                  value="clear_nodes"
+                  className={controlVariant()}
+                  onClick={() => editor.chain().focus().clearNodes().run()}
+                >
+                  Clear nodes
+                </Menu.Item>
+              </Menu.Content>
+            </Menu.Positioner>
+          </Menu.Root >
+        </div>
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
           disabled={!editorState.canBold}

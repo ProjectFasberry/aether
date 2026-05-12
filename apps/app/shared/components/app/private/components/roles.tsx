@@ -1,8 +1,7 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from "@repo/ui/dropdown-menu"
-import { Skeleton } from "@repo/ui/skeleton"
-import { Typography } from "@repo/ui/typography"
-import { Button } from "@repo/ui/button"
+import { Skeleton } from "@/shared/ui/skeleton"
+import { Typography } from "@/shared/ui/typography"
+import { Button } from "@/shared/ui/button"
 import { ActionButton, AddButton, DeleteButton, EditButton } from "./ui"
 import { tv } from "tailwind-variants"
 import { IconArrowBackUp, IconCheck, IconPlus } from "@tabler/icons-react"
@@ -23,6 +22,7 @@ import {
 } from "../models/roles.model"
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { scrollableVariant } from "@/shared/consts/style-variants"
+import { Menu } from '@ark-ui/react/menu'
 
 type RolePayload = {
   id: number;
@@ -176,28 +176,34 @@ const RolesListItemAddPerm = reatomComponent(({ ctx }) => {
   const isDisabled = availablePerms.length === 0
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger disabled={isDisabled} asChild>
+    <Menu.Root>
+      <Menu.Trigger asChild>
         <Button
           className="gap-2 font-semibold text-lg bg-neutral-800"
+          disabled={isDisabled}
         >
           Добавить
           <IconPlus size={18} />
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="right">
-        <div className="flex flex-col gap-2 p-2 w-full h-fit">
-          <Typography className="text-neutral-400 text-sm">
-            Доступные разрешения
-          </Typography>
-          <div className="flex flex-col scrollbar scrollbar-thumb-neutral-800 gap-1 max-h-[200px] overflow-y-auto w-full">
-            {availablePerms.map((permission) => (
-              <RolesListItemAvailableItem key={permission.id} {...permission} />
-            ))}
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col gap-2 p-2 w-full h-fit">
+            <Typography className="text-neutral-400 text-sm">
+              Доступные разрешения
+            </Typography>
+            <div className="flex flex-col scrollbar scrollbar-thumb-neutral-800 gap-1 max-h-[200px] overflow-y-auto w-full">
+              {availablePerms.map((permission) => (
+                <RolesListItemAvailableItem key={permission.id} {...permission} />
+              ))}
+            </div>
           </div>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
   )
 }, "RolesListItemAddPerm")
 

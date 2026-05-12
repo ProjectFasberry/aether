@@ -3,13 +3,13 @@ import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { useInView } from "react-intersection-observer";
 import { UserActionsChangeRoleGlobal } from "./users.change-role";
 import { users, usersState, usersLengthAtom, usersSelectedLengthAtom, usersSelectedOverAtom, usersControl, usersControlState } from "../models/users.model";
-import { Skeleton } from "@repo/ui/skeleton";
-import { Button } from "@repo/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Button } from "@/shared/ui/button";
 import { IconArrowDown, IconArrowUp, IconBan } from "@tabler/icons-react";
-import { Checkbox } from "@repo/ui/checkbox";
-import { Input } from "@repo/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
+import { Input } from "@/shared/ui/input";
+import { Menu } from '@ark-ui/react/menu'
 import { UserActionsWrapper } from "./users.restrict";
+import { Checkbox } from "@/shared/ui/checkbox";
 
 const UsersGlobalActions = reatomComponent(({ ctx }) => {
   const isSelectedOver = ctx.spy(usersSelectedOverAtom);
@@ -17,14 +17,21 @@ const UsersGlobalActions = reatomComponent(({ ctx }) => {
 
   return (
     <div className="flex items-center justify-center gap-1">
-      <DropdownMenu>
-        <DropdownMenuTrigger className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
-          <IconBan size={16} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <UserActionsWrapper type="global" />
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Menu.Root>
+        <Menu.Trigger asChild>
+          <button className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
+            <IconBan size={16} />
+          </button>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <UserActionsWrapper type="global" />
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root >
       <UserActionsChangeRoleGlobal />
     </div>
   )
@@ -67,14 +74,12 @@ const UsersFiltersAsc = reatomComponent(({ ctx }) => {
 }, 'UsersFiltersAsc')
 
 const UsersFiltersSelect = reatomComponent(({ ctx }) => {
-  const isChecked = ctx.spy(usersControlState.isCheckedAll)
-
   return (
     <div className="flex justify-between h-10 px-4 w-full items-center">
       <div className="flex items-center gap-2">
         <Checkbox
           id="users-filter-selectAll"
-          checked={isChecked}
+          checked={ctx.spy(usersControlState.isCheckedAll)}
           onCheckedChange={(v) => typeof v === 'boolean' && usersControl.selectAll(ctx, v)}
         />
         <label htmlFor="users-filter-selectAll">Выбрать все</label>
@@ -108,24 +113,31 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
   if (!targetSort) return null;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Menu.Root>
+      <Menu.Trigger asChild>
         <Button className="px-4 h-8 w-full text-nowrap truncate min-w-0" background="default">
           {targetSort}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="flex flex-col gap-1 w-full h-full">
-        {SORTS.map((sort) => (
-          <DropdownMenuItem
-            key={sort.value}
-            className="flex items-center px-2 py-1 justify-start w-full h-10"
-            onClick={() => usersState.filters.sortBy(ctx, sort.value)}
-          >
-            {sort.title}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col gap-1 w-full h-full">
+            {SORTS.map((sort) => (
+              <Button
+                key={sort.value}
+                className="flex items-center px-2 py-1 justify-start w-full h-10"
+                onClick={() => usersState.filters.sortBy(ctx, sort.value)}
+              >
+                {sort.title}
+              </Button>
+            ))}
+          </div>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root >
   )
 }, "UsersFiltersSort")
 

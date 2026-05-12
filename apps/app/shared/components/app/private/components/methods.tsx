@@ -1,9 +1,9 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Skeleton } from "@repo/ui/skeleton";
-import { Switch } from "@repo/ui/switch";
-import { Typography } from "@repo/ui/typography";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Typography } from "@/shared/ui/typography";
 import { tv } from "tailwind-variants";
 import { editMethodAction, methodsAction, type PrivatedMethodsPayload } from "../models/methods.model";
+import { Switch } from "@/shared/ui/switch";
 
 const methodVariant = tv({
   base: `flex items-center justify-between gap-1 border border-neutral-800 rounded-lg p-2 h-14 w-full`,

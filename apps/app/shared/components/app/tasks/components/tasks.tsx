@@ -1,17 +1,16 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { tasks, tasksFilter, type TasksFilterSortBy } from "../models/tasks.model"
 import { IconArrowDown, IconArrowUp, IconSearch } from "@tabler/icons-react"
-import { Button } from "@repo/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
-import { Typography } from "@repo/ui/typography"
-import { Input } from "@repo/ui/input"
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog"
-import { Skeleton } from "@repo/ui/skeleton"
+import { Button } from "@/shared/ui/button"
+import { Typography } from "@/shared/ui/typography"
+import { Input } from "@/shared/ui/input"
+import { Skeleton } from "@/shared/ui/skeleton"
 import { tv } from "tailwind-variants"
 import { type ReactNode } from "react"
 import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
+import { Menu } from '@ark-ui/react/menu'
 
 type TaskItemProps = ExtractApiData<"getServerTaskById">["data"];
 
@@ -88,7 +87,7 @@ const TaskItem = (
         </Typography>
       </div>
       <div className={taskItemVariant().secondGroup()}>
-        <Dialog>
+        {/* <Dialog>
           <DialogTrigger asChild>
             <Button background="default" className="w-full lg:w-fit h-10">
               <Typography className="text-base">
@@ -107,7 +106,7 @@ const TaskItem = (
               </div>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
         {action}
       </div>
     </div>
@@ -137,30 +136,39 @@ const TasksFilterSearch = reatomComponent(({ ctx }) => {
 
 const TasksFilterType = reatomComponent(({ ctx }) => {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          background="default"
-          className="
-            w-full min-w-0 px-0 text-sm sm:text-base font-semibold text-nowrap truncate
+    <div>
+      <Menu.Root onSelect={(details) => tasksFilter.sortBy(ctx, details.value as TasksFilterSortBy)}>
+        <Menu.Trigger asChild>
+          <Button
+            background="default"
+            className="
+            w-full min-w-0 text-sm sm:text-base font-semibold text-nowrap truncate
           "
-          disabled={ctx.spy(tasks.fetch.statusesAtom).isPending}
-        >
-          Сортировать по:&nbsp;<span className="text-neutral-400">Актуальности</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="bottom" className="w-full min-w-56">
-        {tasksFilter.FILTERS.map((filter) => (
-          <DropdownMenuItem
-            key={filter.value}
-            onClick={() => tasksFilter.sortBy(ctx, filter.value as TasksFilterSortBy)}
-            className="font-semibold w-full text-sm sm:text-base"
+            disabled={ctx.spy(tasks.fetch.statusesAtom).isPending}
           >
-            {filter.title}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+            Сортировать по:&nbsp;<span className="text-neutral-400">Актуальности</span>
+          </Button>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content >
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <div className="w-full min-w-56 bg-neutral-900 p-2 rounded-xl">
+              {tasksFilter.FILTERS.map((filter) => (
+                <Button
+                  key={filter.value}
+                  onClick={() => tasksFilter.sortBy(ctx, filter.value as TasksFilterSortBy)}
+                  className="font-semibold w-full text-sm sm:text-base justify-start hover:bg-neutral-800"
+                >
+                  {filter.title}
+                </Button>
+              ))}
+            </div>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
+    </div>
   )
 }, "TasksFilterType")
 

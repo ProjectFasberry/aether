@@ -1,7 +1,7 @@
 import { WithLoader } from "@/shared/components/app/layout/components/with-loader";
 import { CartActions, CartListContent } from "@/shared/components/app/shop/components/cart/cart-content";
 import { loaderIsActiveAtom } from "@/shared/components/app/shop/models/store-order.model";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 
 export default function Page() {
   return (

@@ -1,9 +1,9 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Skeleton } from "@repo/ui/skeleton";
-import { Switch } from "@repo/ui/switch";
-import { Typography } from "@repo/ui/typography";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Typography } from "@/shared/ui/typography"
 import { type Option, optionsAction, optionsAtom, updateOptionAction } from "../models/options.model";
 import { atom } from "@reatom/framework";
+import { Switch } from "@/shared/ui/switch";
 
 const OptionsListSkeleton = () => {
   return (

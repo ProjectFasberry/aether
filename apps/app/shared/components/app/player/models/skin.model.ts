@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { DEFAULT_SOFT_DELAY, DIALOG_DELAY, ENVIRONMENT } from "@/shared/consts";
 import { FlyingAnimation, IdleAnimation, RunningAnimation, SkinViewer } from "skinview3d";
 import { appState } from "@/shared/models/app/index.model";
-import { withLog } from "@/shared/lib/reatom/helpers";
 import { isEmptyArray } from "@/shared/lib/helpers";
 
 type SkinSelected = {
@@ -238,8 +237,6 @@ const skins = atom(null, "skins").pipe(
 
 playerState.nickname.onChange((ctx, state) => state && skins.init(ctx))
 skinsState.control.file.onChange((ctx, state) => state && skins.control.setupSkinData(ctx))
-
-skins.fetch.statusesAtom.onChange((_, s) => console.log(skins.fetch.statusesAtom.__reatom.name, s))
 
 export const skinModel = () => ({
   skin,

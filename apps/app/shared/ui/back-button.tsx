@@ -1,4 +1,4 @@
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { IconArrowLeft } from "@tabler/icons-react"
 import { navigate } from "vike/client/router"
 

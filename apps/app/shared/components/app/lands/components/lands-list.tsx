@@ -1,10 +1,9 @@
-import { Skeleton } from "@repo/ui/skeleton"
+import { Skeleton } from "@/shared/ui/skeleton"
 import { landsAction } from "../models/lands.model"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { createLink, Link } from "@/shared/components/config/link"
 import { tv } from 'tailwind-variants'
-import { Typography } from '@repo/ui/typography'
-import { useState } from "react"
+import { Typography } from "@/shared/ui/typography"
 import { FormattedText } from "../../land/components/land-title"
 import { DefaultBanner } from "../../land/components/land-banner"
 import { Avatar } from "../../../../ui/avatar"
@@ -14,6 +13,7 @@ import { NotFound } from "@/shared/ui/not-found"
 import { pageState } from "@/shared/models/page-context.model"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { translate } from "@/shared/locales/helpers"
+import { atom } from "@reatom/framework"
 
 type Lands = ExtractApiData<"getServerLandsList">["data"]["data"][number]
 
@@ -73,13 +73,13 @@ const masonryOpts = {
 const SKELETON_HEIGHTS = ['h-32', 'h-44', 'h-36', 'h-40', 'h-56', 'h-64', 'h-72'];
 const SKELETON_COUNT = 12;
 
-const LandsSkeleton = () => {
-  const [randomHeights] = useState(() =>
-    Array.from({ length: SKELETON_COUNT }).map(() => {
-      const randomIdx = Math.floor(Math.random() * SKELETON_HEIGHTS.length);
-      return SKELETON_HEIGHTS[randomIdx];
-    })
-  );
+const randomHeightsAtom = atom(Array.from({ length: SKELETON_COUNT }).map(() => {
+  const randomIdx = Math.floor(Math.random() * SKELETON_HEIGHTS.length);
+  return SKELETON_HEIGHTS[randomIdx];
+}))
+
+const LandsSkeleton = reatomComponent(({ ctx }) => {
+  const randomHeights = ctx.spy(randomHeightsAtom)
 
   return (
     <MasonryGrid
@@ -88,7 +88,7 @@ const LandsSkeleton = () => {
       renderItem={((height, idx) => <Skeleton key={idx} className={`${height} w-full`} />)}
     />
   )
-}
+}, "LandsSkeleton")
 
 const landsListVariant = scrollableVariant({ className: "flex rounded-lg scrollbar-h-2 overflow-x-auto gap-4 pb-2" })
 

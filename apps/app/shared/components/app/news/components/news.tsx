@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
 import { NotFound } from "@/shared/ui/not-found"
 import { tv } from "tailwind-variants"
@@ -12,11 +12,11 @@ type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
 const newsItemVariant = tv({
   base: `
     flex flex-col flex-shrink-0 md:flex-[0_0_calc((100%/2)-0.5rem)] w-full lg:flex-1 
-    h-56 sm:h-72 bg-neutral-900 rounded-xl overflow-hidden
+    h-57 sm:h-72 bg-neutral-900 rounded-xl overflow-hidden
   `,
   slots: {
     img: `object-cover h-[148px] sm:h-[200px]`,
-    content: `flex flex-col gap-1 justify-between p-2 sm:p-4 w-full`
+    content: `flex flex-col gap-1 justify-between p-3 sm:p-4 w-full`
   }
 })
 

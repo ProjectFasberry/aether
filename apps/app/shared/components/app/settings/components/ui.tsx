@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { type ReactNode } from "react"
 import { type SettingsSectionItem, settings, settingsState } from "../models/settings.model"
 import { BackButton } from "@/shared/ui/back-button"

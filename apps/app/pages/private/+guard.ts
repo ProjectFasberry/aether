@@ -4,8 +4,8 @@ import { logRouting } from "@/shared/lib/log";
 import { CONFIG_PANEL_READ_PERMISSION } from "@/shared/models/current-user/index.model";
 import { getDataFromSnapshot } from "@/shared/models/app/utils";
 
-export const guard = async (pageCtx: PageContextServer) => {
-  logRouting(pageCtx.urlPathname, guard.name);
+export function guard(pageCtx: PageContextServer) {
+  logRouting(pageCtx.urlPathname, "guard");
 
   const user = getDataFromSnapshot("currentUser", pageCtx.snapshot)
   if (!user) throw redirect("/")

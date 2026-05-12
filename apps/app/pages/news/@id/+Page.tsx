@@ -1,6 +1,6 @@
 import dayjs from "@/shared/lib/create-dayjs";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { IconEye, IconPencil } from "@tabler/icons-react";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 import { renderToHTMLString } from '@tiptap/static-renderer'
@@ -9,13 +9,13 @@ import { editorExtensions } from "@/shared/components/config/editor";
 import { Avatar } from "@/shared/ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
-import { useState } from "react";
 import { getDataFromSnapshot } from "@/shared/models/app/utils";
 import { usePageContext } from "vike-react/usePageContext";
+import { atom } from "@reatom/framework";
+
+const editLinkAtom = atom("");
 
 const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
-  const [editLink, setEditLink] = useState<string>("")
-
   useUpdate(() => {
     const params = new URLSearchParams(
       createActionsLinkValueAction(ctx, {
@@ -23,11 +23,11 @@ const NewsEdit = reatomComponent<{ id: number }>(({ ctx, id }) => {
       }).next
     )
 
-    setEditLink(`/private/config?${params}`)
+    editLinkAtom(ctx, `/private/config?${params}`)
   }, [])
 
   return (
-    <Link href={editLink} className="flex items-center font-semibold gap-2 bg-neutral-800 w-fit">
+    <Link href={ctx.spy(editLinkAtom)} className="flex items-center font-semibold gap-2 bg-neutral-800 w-fit">
       <Typography color="gray">
         Редактировать
       </Typography>

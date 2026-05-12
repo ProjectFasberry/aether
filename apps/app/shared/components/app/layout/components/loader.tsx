@@ -1,18 +1,9 @@
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { IconLoader2 } from "@tabler/icons-react";
-import { useEffect } from "react";
 
 export type LoaderProps = { title: string, subtitle?: string }
 
 export const LoaderNode = ({ title, subtitle }: LoaderProps) => {
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-
-    return () => {
-      document.body.style.overflow = ''
-    }
-  }, [])
-
   return (
     <div
       className="

@@ -1,7 +1,7 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logRouting } from "@/shared/lib/log";
 import { getStaticImage } from "@/shared/lib/volume-helpers";
-import { wrapTitle } from "@/shared/lib/wrap-title";
+import { wrapTitle } from "@/shared/lib/utils";
 import { useConfig } from "vike-react/useConfig";
 import { render } from "vike/abort";
 import { type PageContextServer } from "vike/types";
@@ -27,14 +27,17 @@ function metadata(
 }
 
 export async function data(pageCtx: PageContextServer) {
-  logRouting(pageCtx.urlPathname, data.name);
-
   const config = useConfig()
-  const headers = pageCtx.headers ?? undefined;
+
+  const headers = pageCtx.headers
+  if (!headers) return;
+
+  logRouting(pageCtx.urlPathname, "data");
+
   const id = pageCtx.routeParams.id
 
   const news = await getNewsById(id, { headers }).catch(e => {
-    console.error(e)
+    console.error("News error", e)
     return null;
   })
 
@@ -44,5 +47,6 @@ export async function data(pageCtx: PageContextServer) {
 
   const ctx = createCtx()
   newsState.item(ctx, news)
+  
   pageCtx.snapshot = snapshots.merge(ctx, pageCtx)
 }

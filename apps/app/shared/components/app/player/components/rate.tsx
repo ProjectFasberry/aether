@@ -1,5 +1,5 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { IconHeart } from "@tabler/icons-react"
 import { tv } from "tailwind-variants"
 import { isIdentityAtom, player } from "../models/player.model"
@@ -44,7 +44,7 @@ export const Rate = reatomComponent<RateProps>(({
     <>
       <Button
         data-state="filled"
-        disabled={ctx.spy(player.rate.rate.statusesAtom).isPending}
+        disabled={ctx.spy(player.rate.submit.statusesAtom).isPending}
         className={likeButtonVariants({ variant: "filled" })}
         onClick={() => navigate(`/player/${nickname}/rates`)}
       >
@@ -62,8 +62,8 @@ export const Rate = reatomComponent<RateProps>(({
   return (
     <Button
       data-state={isRated ? "rated" : "unrated"}
-      disabled={ctx.spy(player.rate.rate.statusesAtom).isPending}
-      onClick={() => player.rate.rate(ctx, nickname)}
+      disabled={ctx.spy(player.rate.submit.statusesAtom).isPending}
+      onClick={() => player.rate.submit(ctx, nickname)}
       className={likeButtonVariants({ variant: parentVariant })}
     >
       <IconHeart className={rateButtonChildVariants({ variant: childVariant })} />

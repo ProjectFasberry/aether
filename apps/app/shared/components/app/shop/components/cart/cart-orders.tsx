@@ -1,11 +1,11 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { type OrdersFilterOption, cartOrders, cartOrdersState } from "../../models/store-orders.model"
 import { Link } from "@/shared/components/config/link"
-import { Button } from "@repo/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
+import { Button } from "@/shared/ui/button"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { type AtomMut, type Ctx } from "@reatom/framework"
+import { Menu } from '@ark-ui/react/menu'
 
 const STATUSES: Record<string, string> = {
   "pending": "Ждёт оплаты",
@@ -38,29 +38,42 @@ const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, 
   const activeOption = options.find(o => o.value === current);
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button background="default" className="truncate min-w-0 py-1">
-          {label}: &nbsp;<span className="text-neutral-400">{activeOption?.title}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col gap-1 w-full">
-          {options.map((item) => (
-            <DropdownMenuItem
-              key={item.value}
-              data-state={current === item.value ? "active" : "inactive"}
-              className="group"
-              onClick={() => currentValue(ctx, item.value)}
+    <div>
+      <Menu.Root
+        onSelect={({ value }) => {
+          currentValue(ctx, value)
+        }}
+      >
+        <Menu.Trigger asChild>
+          <Button background="default" className="truncate min-w-0 py-1">
+            {label}: &nbsp;<span className="text-neutral-400">{activeOption?.title}</span>
+          </Button>
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content>
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <div
+              className="flex flex-col gap-1 w-full bg-neutral-900 p-2 rounded-xl"
             >
-              <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
-                {item.title}
-              </Typography>
-            </DropdownMenuItem>
-          ))}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+              {options.map((item) => (
+                <Menu.Item
+                  key={item.value}
+                  value={item.value}
+                  data-state={current === item.value ? "active" : "inactive"}
+                  className="group justify-start hover:bg-neutral-800"
+                >
+                  <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
+                    {item.title}
+                  </Typography>
+                </Menu.Item>
+              ))}
+            </div>
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
+    </div>
   );
 }, "OrdersFilterDropdown");
 

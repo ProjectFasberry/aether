@@ -5,44 +5,56 @@ import {
   chatEdit, getChatItemIsEditAtom, chatItemViewsAction, getChatItemViews, type ChatItem, chatDisabledAtom,
   type ChatItemViews, chatWs, chatDelete
 } from "../models/chat.model";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import { IconBrandTelegram, IconCheck, IconDotsVertical, IconEye, IconPencil, IconTrash, IconX } from "@tabler/icons-react";
-import { Input } from "@repo/ui/input";
+import { Input } from "@/shared/ui/input";
 import { isEmptyArray } from "@/shared/lib/helpers";
 import { Avatar } from "../../../../ui/avatar";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
-import { useState } from "react";
 import { ActionButton, DeleteButton } from "./ui";
 import { currentUserState } from "@/shared/models/current-user/index.model";
 import { createPageModel } from "@/shared/lib/events";
+import { atom } from "@reatom/framework";
+import { Menu } from '@ark-ui/react/menu'
 
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger>
-        <IconDotsVertical size={14} className="text-neutral-400" />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent side="left">
-        <div className="flex flex-col text-sm gap-2 w-full h-full">
-          <Typography className="text-neutral-400">Действия</Typography>
-          <div className="flex flex-col gap-1 w-full">
-            <DropdownMenuItem
-              disabled={ctx.spy(chatDelete.submit.statusesAtom).isPending}
-              onClick={() => chatDelete.submit(ctx, id)}
-            >
-              <IconTrash size={16} />
-              Удалить
-            </DropdownMenuItem>
-            <DropdownMenuItem className="" onClick={() => chatEdit.start(ctx, id)}>
-              <IconPencil size={16} />
-              Изменить
-            </DropdownMenuItem>
+    <Menu.Root>
+      <Menu.Trigger>
+        <Menu.Indicator>
+          <IconDotsVertical size={14} className="text-neutral-400" />
+        </Menu.Indicator>
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col text-sm gap-2 w-full h-full">
+            <Typography className="text-neutral-400">Действия</Typography>
+            <div className="flex flex-col gap-1 w-full">
+              <Menu.Item
+                value="delete"
+                disabled={ctx.spy(chatDelete.submit.statusesAtom).isPending}
+                onClick={() => chatDelete.submit(ctx, id)}
+              >
+                <IconTrash size={16} />
+                Удалить
+              </Menu.Item>
+              <Menu.Item
+                className=""
+                value="edit"
+                onClick={() => chatEdit.start(ctx, id)}
+              >
+                <IconPencil size={16} />
+                Изменить
+              </Menu.Item>
+            </div>
           </div>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
   )
 }, "ChatMessagesItemActions")
 
@@ -102,25 +114,40 @@ const ChatMessagesItemViewsItem = ({
   )
 }
 
+const openAtom = atom(false);
+
 const ChatMessagesItemViews = reatomComponent<Pick<ChatItem, "id" | "views">>(({ ctx, id, views }) => {
-  const [open, setOpen] = useState(false);
-  useUpdate((ctx) => open && chatItemViewsAction(ctx, id), [open])
+  useUpdate((ctx) => {
+    const un = ctx.subscribe(openAtom, (state) => {
+      if (state) {
+        chatItemViewsAction(ctx, id)
+      }
+    })
+
+    return un
+  }, [])
+
   const data = ctx.spy(getChatItemViews(id))
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger>
+    <Menu.Root>
+      <Menu.Trigger>
         <div className="flex items-center gap-1">
           <IconEye size={14} />
           <span>{views ?? 0}</span>
         </div>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col gap-1 w-full">
-          {data.map((item) => <ChatMessagesItemViewsItem key={item.id} {...item} />)}
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col gap-1 w-full">
+            {data.map((item) => <ChatMessagesItemViewsItem key={item.id} {...item} />)}
+          </div>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
   )
 }, "ChatMessagesItemViews")
 

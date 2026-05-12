@@ -1,10 +1,10 @@
 import { Link } from "@/shared/components/config/link";
 import { reatomComponent } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { IconX } from "@tabler/icons-react";
 import { bannerIsExistsAtom, banner } from "../models/banner.model";
-import { Button } from "@repo/ui/button";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Button } from "@/shared/ui/button";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { tv } from "tailwind-variants";
 
 type BannerPayload = ExtractApiData<"getSharedBannerList">["data"]["data"][number]

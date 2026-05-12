@@ -1,4 +1,4 @@
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 
 export const NotFound = ({ title }: { title: string }) => {
   return (

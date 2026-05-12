@@ -3,10 +3,10 @@ import {
   deleteNews,
   newsListAction,
 } from "../models/news.model";
-import { Skeleton } from "@repo/ui/skeleton";
+import { Skeleton } from "@/shared/ui/skeleton";
 import { Avatar } from "../../../../ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { type ReactNode } from "react";
 import { DeleteButton, EditButton, ToLink } from "./ui";
 import {
@@ -25,7 +25,7 @@ import {
   editNews,
   editNewsState
 } from "../models/news.model"
-import { Input } from "@repo/ui/input"
+import { Input } from "@/shared/ui/input"
 import { type Atom, type AtomMut, type Ctx } from "@reatom/framework"
 import { ActionButton } from "./ui"
 import { IconCheck } from "@tabler/icons-react"

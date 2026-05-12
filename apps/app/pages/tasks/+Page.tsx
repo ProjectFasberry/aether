@@ -1,4 +1,4 @@
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { Tasks, TasksFilter } from "@/shared/components/app/tasks/components/tasks"
 
 export default function Page() {

@@ -6,7 +6,7 @@ import { tv, type VariantProps } from "tailwind-variants";
 import { currentUserState } from "@/shared/models/current-user/index.model";
 import { type RatingBelkoin, type RatingCharism, type RatingLands, type RatingParkour, type RatingPlaytime, type RatingReputation } from "@repo/shared/types/entities/rating";
 import "dayjs/locale/ru";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { atom } from "@reatom/framework";
 import dayjs from "@/shared/lib/create-dayjs"
 

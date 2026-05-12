@@ -1,4 +1,6 @@
 import { type Action, type Atom, atom, type AtomMut, type Ctx, onConnect, onDisconnect, withReset } from "@reatom/framework";
+import { LOGGING } from "../models/devtools/debug";
+import { logger } from "./logger";
 
 type WithReset<T> = AtomMut<T | null> & {
   reset: Action<[], T | null>;
@@ -16,14 +18,26 @@ type PageModelConfig<TSpy> = {
     | { spyedAtom?: never; onSpyAction?: never }
   )
 
+const pageLogger = logger.withTag("Page");
+
 export const createPageModel = <TSpy = unknown>({
   name, onConnAction, onDisconnAction, onAfterDisconn, spyedAtom, onSpyAction
 }: PageModelConfig<TSpy>) => {
   const dataAtom = atom<Nullable<Page>>(null, `${name}.page`).pipe(withReset());
 
-  onConnect(dataAtom, (ctx) => onConnAction?.(ctx, dataAtom, ctx.isConnected));
+  onConnect(dataAtom, (ctx) => {
+    if (LOGGING.page) {
+      pageLogger.info(`${name}.page connected`)
+    }
+
+    return onConnAction?.(ctx, dataAtom, ctx.isConnected)
+  });
 
   onDisconnect(dataAtom, (ctx) => {
+    if (LOGGING.page) {
+      pageLogger.info(`${name}.page disconnected`)
+    }
+
     const pageData = ctx.get(dataAtom);
 
     onDisconnAction?.(ctx, dataAtom);

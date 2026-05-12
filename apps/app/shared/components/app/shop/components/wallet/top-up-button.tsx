@@ -1,5 +1,5 @@
-import { Button } from "@repo/ui/button"
-import { Typography } from "@repo/ui/typography"
+import { Button } from "@/shared/ui/button"
+import { Typography } from "@/shared/ui/typography"
 import { navigate } from "vike/client/router"
 
 export const TopUpButton = () => {

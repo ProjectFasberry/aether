@@ -8,8 +8,6 @@ export const pageState = atom(null, "pageState").pipe(
     urlParsed: atom<Nullable<PageContextClient["urlParsed"]>>(null, `${name}.urlParsed`).pipe(withSsr(`${name}.urlParsed`)),
     routeParams: atom<PageContextClient["routeParams"]>({}, `${name}.routeParams`).pipe(withSsr(`${name}.routeParams`)),
     urlPathname: atom<PageContextClient["urlPathname"]>("/", `${name}.urlPathname`).pipe(withSsr(`${name}.urlPathname`)),
-    isClientside: atom<boolean>(false, `${name}.isClientside`).pipe(withSsr(`${name}.isClientside`))
+    isClientside: atom<boolean>(false, `${name}.isClientside`)
   }))
 )
-
-pageState.isClientside.onChange((_, s) => console.log(pageState.isClientside.__reatom.name, s))

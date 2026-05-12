@@ -3,9 +3,9 @@ import { login, type AuthLoginQRStatus, loginState, type AuthLoginVariant, authL
 import { type ReactNode, useRef } from "react"
 import { IconCheck, IconHandStop, IconRefresh } from "@tabler/icons-react"
 // import { Copy } from "@/shared/ui/copy"
-import { Button } from "@repo/ui/button"
+import { Button } from "@/shared/ui/button"
 import { spawn } from "@reatom/framework"
-import { Separator } from "@repo/ui/separator"
+import { Separator } from "@/shared/ui/separator"
 import { NicknameInput, PasswordInput } from "./auth"
 import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"

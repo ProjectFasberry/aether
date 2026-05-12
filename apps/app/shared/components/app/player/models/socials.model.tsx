@@ -43,11 +43,6 @@ export const playerSocials = atom(null, "playerSocials").pipe(
 
 playerState.nickname.onChange((ctx, state) => state && playerSocials.fetch(ctx, state))
 
-export const SOCIAL_ICONS: Record<PlayerSocialsPayload["type"], () => ReactNode> = {
-  telegram: () => <Icon name="sprite:telegram-icon" className="size-5" />,
-  discord: () => <Icon name="sprite:discord-icon" className="size-5" />,
-}
-
 type SocialEventMap = {
   link: (value: PlayerSocialsValuePayload) => string
   fn: (value: PlayerSocialsValuePayload) => void

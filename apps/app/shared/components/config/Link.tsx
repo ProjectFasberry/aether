@@ -1,8 +1,8 @@
-import { type AnchorHTMLAttributes } from "react";
+import type { ComponentPropsWithRef } from "react";
 import { tv } from "tailwind-variants";
 import { usePageContext } from "vike-react/usePageContext";
 
-type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
+type LinkProps = ComponentPropsWithRef<"a"> & {
   href: string,
   locale?: string
 }

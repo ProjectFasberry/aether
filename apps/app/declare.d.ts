@@ -6,6 +6,7 @@ declare global {
   declare module "*.jpg"
   declare module "*.png"
   declare module "*.gif"
+  declare module "@bprogress/core/*"
 
   type WrappedResponse<T> = { data: T } | { error: string }
 

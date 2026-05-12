@@ -1,6 +1,6 @@
 import dayjs from "@/shared/lib/create-dayjs"
 import { reatomComponent } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { NotFound } from "@/shared/ui/not-found";
 import { tv } from "tailwind-variants";
 import { eventsState } from "../models/events.model";
@@ -12,7 +12,7 @@ type EventCardProps = ExtractApiData<"getServerEventsList">["data"][number]
 const eventCardVariant = tv({
   base: `
     flex flex-col md:flex-[0_0_calc((100%/3)-0.666rem)] flex-shrink-0 w-full
-    h-48 p-2 sm:p-4 bg-neutral-900 rounded-xl overflow-hidden justify-between
+    h-49 p-3 sm:p-4 bg-neutral-900 rounded-xl overflow-hidden justify-between
   `,
   slots: {
     firstGroup: "flex items-center justify-start bg-neutral-50 rounded-md p-2 w-full truncate",

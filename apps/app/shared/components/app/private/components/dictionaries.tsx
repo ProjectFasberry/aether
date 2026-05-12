@@ -6,9 +6,9 @@ import {
   type DictionariesItem,
   dictionariesListAction
 } from "../models/dictionaries.model";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import { ActionButton, DeleteButton, EditButton } from "./ui";
-import { Input } from "@repo/ui/input";
+import { Input } from "@/shared/ui/input";
 import { IconArrowBackUp, IconCheck } from "@tabler/icons-react";
 import { type ReactNode } from "react";
 import { actionsTypeAtom, type ActionType, getSelectedParentAtom } from "../models/actions.model";

@@ -1,7 +1,7 @@
 import { Avatar } from "@/shared/ui/avatar"
 import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent, useAtom } from "@reatom/npm-react"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs"
 import { createPageModel } from "@/shared/lib/events"
 import { users } from "@/shared/components/app/private/models/users.model"

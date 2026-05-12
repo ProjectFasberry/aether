@@ -3,31 +3,25 @@ import { createLink, Link } from "@/shared/components/config/link";
 import { isEmptyArray } from "@/shared/lib/helpers";
 import { pageState } from "@/shared/models/page-context.model";
 import { PageLoader } from "@/shared/ui/page-loader";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
-import dayjs from "dayjs";
+import { reatomComponent, useAtom } from "@reatom/npm-react";
+import { Typography } from "@/shared/ui/typography"
 import { player, type RateUser } from "@/shared/components/app/player/models/player.model";
+import { createPageModel } from "@/shared/lib/events";
+import { usePageContext } from "vike-react/usePageContext";
+import { BackButton } from "@/shared/ui/back-button";
+import type { PropsWithChildren } from "react";
 
-const ListCard = ({ initiator, created_at, avatar }: RateUser) => {
+const ListCard = ({ initiator, avatar }: RateUser) => {
   return (
-    <div className="flex items-center gap-2 bg-neutral-800 rounded-lg p-2">
+    <div className="flex flex-col items-center min-w-0 w-full justify-center gap-2 bg-neutral-900 rounded-xl p-2">
       <Link href={createLink("player", initiator)}>
-        <Avatar
-          nickname={initiator}
-          url={avatar}
-          className="size-8 aspect-square"
-        />
+        <Avatar nickname={initiator} url={avatar} className="size-16" />
       </Link>
-      <div className="flex flex-col">
-        <Link href={createLink("player", initiator)}>
-          <Typography className="text-base font-semibold">
-            {initiator}
-          </Typography>
-        </Link>
-        <Typography color="gray" className="text-sm leading-3">
-          {dayjs(created_at).fromNow()}
+      <Link href={createLink("player", initiator)} className="flex flex-col w-full min-w-0 overflow-hidden">
+        <Typography className="block font-semibold text-nowrap text-center truncate">
+          {initiator}
         </Typography>
-      </div>
+      </Link>
     </div>
   )
 }
@@ -38,33 +32,44 @@ const RateList = reatomComponent(({ ctx }) => {
   }
 
   const data = ctx.spy(player.rate.fetchList.dataAtom)?.data;
-
-  if (!data || isEmptyArray(data)) {
-    return <Typography color="gray">пусто</Typography>
-  }
+  if (!data || isEmptyArray(data)) return <Typography color="gray">пусто</Typography>
 
   return (
-    <div className="flex flex-col overflow-y-auto max-h-[400px] gap-2 w-full h-full">
-      {data.map(user => (
-        <ListCard
-          key={user.initiator}
-          initiator={user.initiator}
-          created_at={user.created_at}
-          avatar={user.avatar}
-        />
-      ))}
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-auto gap-2 w-full h-full">
+      {data.map(user => <ListCard key={user.initiator} {...user} />)}
     </div>
   )
 }, "RateList")
 
+const page = createPageModel({
+  name: "player-rates",
+  onConnAction: (ctx) => {
+    const nickname = ctx.get(pageState.routeParams).nickname;
+    player.rate.refetchAll(ctx, nickname)
+  },
+  onDisconnAction: (ctx) => {
+    player.rate.fetchList.abort(ctx)
+  },
+})
+
+const PageHeaderWrapper = ({ children, href }: PropsWithChildren & Partial<{ href: string }>) => {
+  return (
+    <div className="flex items-center gap-2 w-full justify-start">
+      <BackButton href={href} />
+      {children}
+    </div>
+  )
+}
+
 export default function Page() {
-  useUpdate(player.rate.refetchAll, []);
+  const [_] = useAtom(page.dataAtom)
+  const nickname = usePageContext().routeParams.nickname;
 
   return (
     <div className='flex flex-col gap-8 w-full h-full'>
-      <Typography variant="title">
-        Оценившие вас
-      </Typography>
+      <PageHeaderWrapper href={createLink("player", nickname)}>
+        <Typography variant="title">Оценившие {nickname}</Typography>
+      </PageHeaderWrapper>
       <RateList />
     </div>
   )

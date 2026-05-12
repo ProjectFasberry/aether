@@ -46,8 +46,11 @@ const STAGES: Record<Stage, StageOpts> = {
 const CHUNK_GROUPS = [
   { name: 'lib', matches: ['reatom', 'zod', 'ky', '@scure'] },
   { name: 'editor', matches: ['@monaco-editor', 'tiptap'] },
-  { name: 'ui', matches: ['embla-carousel', '@radix-ui', "floating-ui", 'vaul', 'number-flow'] },
-  { name: "dev", matches: ["tweakpane"]}
+  { name: 'ui', matches: ['embla-carousel', 'react-qrcode-logo', '@radix-ui', "floating-ui", 'vaul', '@monaco-editor', 'number-flow'] },
+  { name: "dev", matches: ["tweakpane"] },
+  { name: "setting-base", matches: ["@yudiel/react-qr-scanner"] },
+  { name: "captcha", matches: ["@better-captcha"] },
+  { name: "ui-zagjs", matches: ["@zag-js"] }
 ];
 
 export default defineConfig(({ mode }) => {
@@ -103,27 +106,26 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       target: "esnext",
       rollupOptions: {
+        external: [
+          '@scure/bip39/wordlists/english.js',
+        ],
         output: {
           chunkFileNames: target.buildOpts?.chunkHashing ? 'assets/[name]-[hash].js' : undefined,
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
 
-
             for (const group of CHUNK_GROUPS) {
-              if (group.matches.some(match => id.includes(match))) {
-                return group.name;
-              }
+              if (group.matches.some(match => id.includes(match))) return group.name;
             }
 
             const parts = id.split('node_modules/');
-            const lastPart = parts[parts.length - 1];
+            const pathParts = parts[parts.length - 1].split('/');
 
-            if (lastPart.startsWith('@')) {
-              const [scope, name] = lastPart.split('/');
-              return `${scope}-${name}`.split('@')[0];
-            }
+            const name = pathParts[0].startsWith('@')
+              ? `${pathParts[0]}/${pathParts[1]}`
+              : pathParts[0];
 
-            return lastPart.split('/')[0].split('@')[0];
+            return name.split('@')[0];
           }
         }
       }

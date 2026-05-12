@@ -1,6 +1,6 @@
 import { createLink, Link } from "@/shared/components/config/link";
 import { reatomComponent } from "@reatom/npm-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs";
 import { useData } from "vike-react/useData";
 import { type Data } from "@/pages/store/order/@id/+data";

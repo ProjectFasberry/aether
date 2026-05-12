@@ -1,5 +1,5 @@
-import { Button } from "@repo/ui/button";
-import { Typography } from "@repo/ui/typography";
+import { Button } from "@/shared/ui/button";
+import { Typography } from "@/shared/ui/typography"
 import { Link } from "@/shared/components/config/link";
 import { translate } from "@/shared/locales/helpers";
 

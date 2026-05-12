@@ -20,7 +20,7 @@
 		"paths": {
 			"@/*": ["./*"],
 			"@repo/ui/*": ["../../packages/ui/components/*"],
-			"@ui-styles/*": ["../../packages/ui/styles/*"]
+			"@ui-styles/*": ["../../packages/ui/styles/*"],
 		}
 	},
 	"include": [

@@ -1,60 +1,45 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog.js"
-import { type SettingsParent, settingsState } from "../models/settings.model"
-import { SettingsAppWidgets } from "./settings-app-widgets";
-import { SettingsMainSecurity } from "./settings-main-security";
-import { SettingsMainConnections } from "./settings-main-connections";
+import { settingsState } from "../models/settings.model"
 import { Vaul, VaulContent, VaulHeader } from "@/shared/ui/vaul";
 import { appState } from "@/shared/models/app/index.model";
-import { type ReactNode } from "react";
-import { SettingsNavigationDesktop, SettingsNavigationMobile } from "./settings-navigation";
-import { SettingsStore } from "./settings-store";
-import { SettingsMainDevices } from "./settings-main-devices";
-import { SettingsMainAccount } from "./settings-main-account";
+import { SettingsNavigationDesktop } from "./settings-navigation";
+import { SettingsContentDesktop, SettingsContentMobile } from "./settings-content";
+import { Dialog } from '@ark-ui/react/dialog'
+import { Portal } from '@ark-ui/react/portal'
+import { dialogBackdropVariant, dialogBaseStyle, dialogCloseVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
+import { IconX } from "@tabler/icons-react";
 
-const SETTINGS_NODES: Partial<Record<SettingsParent, Record<string, ReactNode>>> = {
-  main: {
-    account: <SettingsMainAccount />,
-    devices: <SettingsMainDevices />,
-    security: <SettingsMainSecurity />,
-    connections: <SettingsMainConnections />,
-    store: <SettingsStore />
-  },
-  app: {
-    appearance: <SettingsAppWidgets />
-  }
-}
+const SettingsDialog = reatomComponent(({ ctx }) => {
+  return (
+    <Dialog.Root open={ctx.spy(settingsState.isOpen)} onOpenChange={v => settingsState.isOpen(ctx, v.open)}>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} style={dialogBaseStyle} />
+        <Dialog.Positioner className={dialogPositionerVariant()} >
+          <Dialog.Content className={dialogContentVariant({ className: "p-0 h-2/3" })} style={dialogBaseStyle}>
+            <div className="flex items-start w-full min-h-0 h-full">
+              <div className="flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-950 h-full w-[clamp(120px,30%,400px)]">
+                <SettingsNavigationDesktop />
+              </div>
+              <div className="flex-1 flex flex-col pb-[clamp(0.5rem,3vw,1rem)] px-[clamp(0.5rem,3vw,1rem)] pt-10 overflow-y-auto overflow-x-hidden h-full">
+                <SettingsContentDesktop />
+              </div>
+            </div>
+            <Dialog.CloseTrigger className={dialogCloseVariant()}>
+              <IconX className="text-red" />
+            </Dialog.CloseTrigger>
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
+  )
+}, "SettingsDialog")
 
-const SettingsContentMobile = reatomComponent(({ ctx }) => {
-  const child = ctx.spy(settingsState.target)?.child;
-  if (!child) return <SettingsNavigationMobile />
-
-  const parent = ctx.spy(settingsState.target).parent;
-  return SETTINGS_NODES[parent]?.[child]
-}, "SettingsContentMobile")
-
-const SettingsContentDesktop = reatomComponent(({ ctx }) => {
-  const child = ctx.spy(settingsState.target)?.child;
-  if (!child) return null;
-
-  const parent = ctx.spy(settingsState.target).parent
-  const node = SETTINGS_NODES[parent]
-  if (!node) return null;
-
-  const component = node[child]
-
-  return component
-}, "SettingsContent")
-
-export const SettingsDialog = reatomComponent(({ ctx }) => {  
-  const open = ctx.spy(settingsState.isOpen)
+export const Settings = reatomComponent(({ ctx }) => {
   const isMobile = ctx.spy(appState.current.isMobile);
-
-  const handle = (v: boolean) => settingsState.isOpen(ctx, v)
 
   if (isMobile) {
     return (
-      <Vaul open={open} onOpenChange={handle}>
+      <Vaul openAtom={settingsState.isOpen}>
         <VaulContent className="h-2/3">
           <VaulHeader title="Настройки" />
           <SettingsContentMobile />
@@ -63,19 +48,5 @@ export const SettingsDialog = reatomComponent(({ ctx }) => {
     )
   }
 
-  return (
-    <Dialog open={open} onOpenChange={handle}>
-      <DialogContent className="p-0! overflow-hidden h-2/3">
-        <DialogTitle className="hidden"></DialogTitle>
-        <div className="flex items-start w-full min-h-0 h-full">
-          <div className="flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-950 h-full w-[clamp(120px,30%,400px)]">
-            <SettingsNavigationDesktop />
-          </div>
-          <div className="flex-1 flex flex-col pb-[clamp(0.5rem,3vw,1rem)] px-[clamp(0.5rem,3vw,1rem)] pt-10 overflow-y-auto overflow-x-hidden h-full">
-            <SettingsContentDesktop />
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}, "SettingsDialog")
+  return <SettingsDialog />
+}, "Settings")

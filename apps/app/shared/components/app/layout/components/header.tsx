@@ -1,61 +1,60 @@
-import { IconBuildingStore, IconChevronUp } from "@tabler/icons-react";
+import { IconBuildingStore, IconMenu, IconX } from "@tabler/icons-react";
 import { createLink, Link } from '@/shared/components/config/link';
 import { reatomComponent } from "@reatom/npm-react";
 import { currentUserState } from "@/shared/models/current-user/index.model";
 import { Avatar } from "@/shared/ui/avatar";
-import { Typography } from "@repo/ui/typography";
-import { Separator } from "@repo/ui/separator";
-import { Fragment } from "react/jsx-runtime";
+import { Typography } from "@/shared/ui/typography"
+import { Separator } from "@/shared/ui/separator";
 import { cartDataSelectedItemsLengthAtom, cartState } from "../../shop/models/store-cart.model";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@repo/ui/dropdown-menu";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
-import { HEADERS_LINKS, MENU_ACTIONS, type MenuActionItem, type MenuLink, showCartIconAtom, showCurrentUserMenuAtom, validatedLinksAtom } from "./navigation.model";
+import { navigationModel, type MenuActionItem as MenuActionItemType, type MenuLink, validatedLinksAtom } from "./navigation.model";
 import { MobileBottomBar } from "./mobile-navigation";
 import { appState } from "@/shared/models/app/index.model";
 import { Banner } from "../../widgets/components/banner";
 import { cn } from "@/shared/lib/cn";
 import { translate } from "@/shared/locales/helpers";
-import { Switch } from "@repo/ui/switch";
- 
-const HeaderMenuActionItem = reatomComponent<MenuActionItem>(({ ctx, label, value, type, cb, disabled, className }) => {
-  if (type === 'switch') {
-    return (
-      <div className="flex items-center px-2 justify-between font-semibold text-neutral-400 w-full">
-        {label}
-        <Switch
-          onCheckedChange={v => cb(ctx)}
-          checked={ctx.spy(value)}
-          disabled={disabled?.(ctx) ?? false}
-        />
-      </div>
-    )
-  }
+import { Vaul, VaulContent, VaulTrigger } from "@/shared/ui/vaul";
+import { action } from "@reatom/framework";
+import { dropdownMenuItemVariants } from "@repo/ui/dropdown-menu";
+import { Menu, type MenuItemProps } from '@ark-ui/react/menu'
 
-  if (type === 'button') {
-    return (
-      <DropdownMenuItem
-        className={cn("gap-2 w-full text-neutral-400 font-semibold", className)}
-        disabled={disabled?.(ctx) ?? false}
-        onClick={() => cb(ctx)}
-      >
-        {label}
-      </DropdownMenuItem>
-    )
-  }
-  
-  return null;
-}, "HeaderMenuActionItem")
+const {
+  HEADERS_LINKS, headerUserMenuIsOpenAtom, MENU_ACTIONS, showCartIconAtom, showCurrentUserMenuAtom
+} = navigationModel()
 
-const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
+type ItemVariant = "dropdown" | "default";
+
+type MenuActionItemProps = MenuActionItemType & { variant: ItemVariant };
+const MenuActionItem = reatomComponent<MenuActionItemProps>(({
+  ctx, label, cb, variant, disabled, className
+}) => {
+  const { Item, itemProps } = defineItem(variant, {
+    onClick: () => {
+      cb(ctx)
+    },
+    className: cn("gap-2 w-full font-semibold", className),
+    disabled: disabled?.(ctx) ?? false,
+    value: label
+  })
+
+  return <Item {...itemProps}>{label}</Item>
+}, "MenuActionItem")
+
+const MenuCurrentUser = reatomComponent<{ variant: ItemVariant }>(({ ctx, variant }) => {
   const currentUser = ctx.spy(currentUserState);
   if (!currentUser) return null;
 
+  const { Item, itemProps } = defineItem(variant, {
+    className: "active:scale-[0.98] min-h-10 select-none cursor-pointer rounded-lg p-2 bg-neutral-800 w-full overflow-hidden flex gap-2 items-center",
+    onClick: () => {
+      navigate(createLink("player", currentUser.nickname))
+    },
+    value: "current-user"
+  })
+
   return (
-    <DropdownMenuItem
-      className="active:scale-[0.98] min-h-10 select-none cursor-pointer py-2 bg-neutral-800 w-full overflow-hidden"
-      onClick={() => navigate(createLink("player", currentUser.nickname))}
-    >
+    <Item {...itemProps}>
       <Avatar
         nickname={currentUser.nickname}
         url={currentUser.avatar}
@@ -69,33 +68,56 @@ const HeaderMenuCurrentUser = reatomComponent(({ ctx }) => {
           игрок
         </Typography>
       </div>
-    </DropdownMenuItem>
+    </Item>
   )
-}, "HeaderMenuCurrentUser")
+}, "MenuCurrentUser")
 
-const HeaderMenuLinkItem = reatomComponent<MenuLink & { idx: number }>(({ ctx, type, title, idx, href }) => {
-  const arr = ctx.spy(validatedLinksAtom)
+function defineItem<T extends ItemVariant>(
+  variant: T,
+  props: MenuItemProps
+) {
+  const Item = variant === 'default' ? "div" : Menu.Item
 
-  const isPrivated = type === 'privated'
-  const firstPrivatedIdx = arr.findIndex(l => l.type === 'privated')
-  const lastPrivatedIdx = arr.map(l => l.type).lastIndexOf('privated')
+  return {
+    Item,
+    itemProps: {
+      ...props,
+      className: dropdownMenuItemVariants({ className: props?.className })
+    }
+  };
+}
+
+type MenuLinkItemProps = MenuLink & { idx: number, variant: ItemVariant }
+const MenuLinkItem = reatomComponent<MenuLinkItemProps>(({
+  ctx, variant, type, title, idx, href
+}) => {
+  const data = ctx.spy(validatedLinksAtom)
+  const firstPrivatedIdx = data.findIndex(link => link.type === 'privated')
+  const lastPrivatedIdx = data.map(link => link.type).lastIndexOf('privated')
+  const showSepartor = type === 'privated' && idx;
+
+  const { Item, itemProps } = defineItem(variant, {
+    className: "font-semibold",
+    onClick: () => {
+      navigate(href)
+    },
+    value: href
+  })
 
   return (
-    <Fragment>
-      {isPrivated && idx === firstPrivatedIdx && <Separator className="my-2" />}
-      <DropdownMenuItem onClick={() => navigate(href)} className="font-semibold text-neutral-400">
-        {title}
-      </DropdownMenuItem>
-      {isPrivated && idx === lastPrivatedIdx && <Separator className="my-2" />}
-    </Fragment>
+    <>
+      {showSepartor === firstPrivatedIdx && <Separator className="my-2" />}
+      <Item {...itemProps}>{title}</Item>
+      {showSepartor === lastPrivatedIdx && <Separator className="my-2" />}
+    </>
   )
-}, "HeaderMenuLinkItem")
+}, "MenuLinkItem")
 
 const AuthorizeButton = () => {
   return (
     <Link
       href="/auth"
-      aria-label="Вход"
+      aria-label={translate["shared.header.authorizeTitle"]()}
       className="flex items-center justify-center gap-1 h-9 min-w-10 px-4 py-2 bg-green-600 rounded-xl"
     >
       <Typography className="leading-5 font-semibold select-none text-neutral-50 text-sm">
@@ -105,7 +127,7 @@ const AuthorizeButton = () => {
   )
 }
 
-const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
+const UserCurrentTrigger = reatomComponent(({ ctx }) => {
   const currentUser = ctx.spy(currentUserState);
   if (!currentUser) return null;
 
@@ -117,83 +139,184 @@ const HeaderUserCurrentTrigger = reatomComponent(({ ctx }) => {
       <Avatar
         nickname={currentUser.nickname}
         url={currentUser.avatar}
-        className="min-w-8 min-h-8 w-8 h-8 aspect-square"
+        className="min-w-8 w-8"
       />
     </Link>
   )
-}, "HeaderUserCurrentTrigger")
+}, "UserCurrentTrigger")
 
-const HeaderCartTrigger = reatomComponent(({ ctx }) => {
-  const isTriggered = ctx.spy(cartState.isTriggered);
-  const cartLength = ctx.spy(cartDataSelectedItemsLengthAtom)
+const syncCartTrigger = action((ctx) => (el: Nullable<HTMLAnchorElement>) => {
+  if (!el) return;
+
+  return ctx.subscribe(cartState.isTriggered, (state) => {
+    el.dataset.trigger = String(state)
+  })
+})
+
+const CartTrigger = reatomComponent(({ ctx }) => {
+  const showCartIcon = ctx.spy(showCartIconAtom)
+  if (!showCartIcon) return null;
+
+  const cartItemsLength = ctx.spy(cartDataSelectedItemsLengthAtom)
+  const initial = ctx.get(cartState.isTriggered);
 
   return (
     <Link
       aria-label="Перейти в корзину"
       href="/store/cart"
-      data-trigger={isTriggered}
+      data-trigger={initial}
       className="
-        flex items-center justify-center group duration-150 max-h-6 w-6 max-w-8 aspect-square
-        data-[trigger=true]:scale-[1.15] data-[trigger=false]:scale-100
+        flex items-center justify-center group duration-150 max-h-6 w-6 aspect-square 
+        data-[trigger=true]:scale-[1.15] font-semibold data-[trigger=false]:scale-100
       "
+      ref={syncCartTrigger(ctx)}
     >
       <IconBuildingStore
         size={24}
         className="group-data-[trigger=true]:text-green-500 group-data-[trigger=false]:text-neutral-400"
       />
-      {cartLength > 0 && (
+      {cartItemsLength > 0 && (
         <div
-          className="absolute font-semibold -bottom-1 -right-1
-          bg-neutral-50 text-neutral-950 rounded-sm aspect-square w-4 h-4 flex items-center justify-center"
+          className="
+            flex items-center justify-center absolute -bottom-1 -right-1 
+            bg-neutral-50 text-[12px] leading-none text-neutral-950 rounded-sm 
+            aspect-square min-w-4 w-4
+          "
         >
-          <span className="text-[12px] leading-none">{cartLength}</span>
+          {cartItemsLength}
         </div>
       )}
     </Link>
   )
-}, "HeaderCartTrigger")
+}, "CartTrigger")
 
-const HeaderUserMenu = reatomComponent(({ ctx }) => {
-  const links = ctx.spy(validatedLinksAtom);
+const syncState = action((ctx) => (el: Nullable<HTMLDivElement>) => {
+  if (!el) return;
+
+  return ctx.subscribe(headerUserMenuIsOpenAtom, (state) => {
+    el.dataset.active = String(state)
+  });
+})
+
+const USER_MENU_TRIGGER_ICONS = [{ icon: IconX, value: true }, { icon: IconMenu, value: false }];
+
+const UserMenuTrigger = reatomComponent(({ ctx }) => {
+  const initial = ctx.get(headerUserMenuIsOpenAtom);
 
   return (
-    <div className="flex items-center w-fit min-w-0 cursor-pointer h-10 px-2">
-      <HeaderUserCurrentTrigger />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger className="group cursor-pointer h-8 w-8 flex items-center justify-center">
-          <IconChevronUp
-            size={20}
-            className="group-data-[state=open]:rotate-0 group-data-[state=closed]:rotate-180 duration-100 text-neutral-400"
-          />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" side="bottom" className="min-w-[260px]">
-          <div className="flex flex-col gap-1 w-full">
-            <HeaderMenuCurrentUser />
-            <Separator className="my-2" />
-            {links.map((l, idx) => <HeaderMenuLinkItem key={l.href} idx={idx} {...l} />)}
-            {MENU_ACTIONS.map((a, idx) => <HeaderMenuActionItem key={idx} {...a} />)}
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div
+      data-active={initial}
+      className="
+        flex items-center justify-center group hover:bg-neutral-800 
+        bg-neutral-900 text-neutral-400 rounded-lg cursor-pointer h-8 w-8
+      "
+      ref={syncState(ctx)}
+    >
+      {USER_MENU_TRIGGER_ICONS.map(({ icon: Icon, value }, idx) => (
+        <Icon
+          key={idx}
+          size={20}
+          className={`absolute duration-300 opacity-0 ${value
+            ? "group-data-[active=true]:opacity-100" : "group-data-[active=false]:opacity-100"
+            }`}
+        />
+      ))}
     </div>
   )
-}, "HeaderUserMenu")
+}, "UserMenuTrigger")
 
-const HeaderUserBar = reatomComponent(({ ctx }) => {
-  const showCurrentUserMenu = ctx.spy(showCurrentUserMenuAtom)
-  const showCartIcon = ctx.spy(showCartIconAtom)
+const UserMenuContent = reatomComponent<{ variant: ItemVariant }>(({ ctx, variant }) => {
+  return (
+    <div className="flex flex-col gap-1 w-full">
+      <MenuCurrentUser variant={variant} />
+      <Separator className="my-2" />
+      {ctx.spy(validatedLinksAtom).map((link, idx) => (
+        <MenuLinkItem variant={variant} key={link.href} idx={idx} {...link} />)
+      )}
+      {MENU_ACTIONS.map((action, idx) => (
+        <MenuActionItem variant={variant} key={idx} {...action} />
+      ))}
+    </div>
+  )
+}, "UserMenuContent")
 
+const UserMenuVaul = () => {
+  return (
+    <Vaul openAtom={headerUserMenuIsOpenAtom}>
+      <VaulTrigger>
+        <UserMenuTrigger />
+      </VaulTrigger>
+      <VaulContent>
+        <UserMenuContent variant="default" />
+      </VaulContent>
+    </Vaul>
+  )
+}
+
+const UserMenuDropdown = reatomComponent(({ ctx }) => {
+  return (
+    <>
+      <Menu.Root
+        open={ctx.spy(headerUserMenuIsOpenAtom)}
+        positioning={{
+          placement: "bottom"
+        }}
+        onOpenChange={(details) => {
+          headerUserMenuIsOpenAtom(ctx, details.open)
+        }}
+      >
+        <Menu.Trigger>
+          <Menu.Indicator />
+          <UserMenuTrigger />
+        </Menu.Trigger>
+        <Menu.Positioner>
+          <Menu.Content className="min-w-[240px] bg-neutral-900 rounded-xl p-2" >
+            <Menu.Arrow>
+              <Menu.ArrowTip />
+            </Menu.Arrow>
+            <UserMenuContent variant="dropdown" />
+          </Menu.Content>
+        </Menu.Positioner>
+      </Menu.Root>
+    </>
+  )
+}, "UserMenuDropdown");
+
+const UserMenu = reatomComponent(({ ctx }) => {
+  return (
+    <div className="flex items-center w-fit gap-2 min-w-0 h-10 px-2">
+      <UserCurrentTrigger />
+      {ctx.spy(appState.current.isMobile) ? <UserMenuVaul /> : <UserMenuDropdown />}
+    </div>
+  )
+}, "UserMenu")
+
+const UserBar = reatomComponent(({ ctx }) => {
   return (
     <div className="flex gap-2 items-center w-full justify-end">
-      {showCartIcon && <HeaderCartTrigger />}
-      {showCurrentUserMenu ? <HeaderUserMenu /> : <AuthorizeButton />}
+      <CartTrigger />
+      {ctx.spy(showCurrentUserMenuAtom) ? <UserMenu /> : <AuthorizeButton />}
     </div>
   )
-}, "HeaderUserBar")
+}, "UserBar")
 
-export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = false }) => {
-  const isMobile = ctx.spy(appState.current.isMobile)
+const LinkItem = ({ title, label, href }: typeof HEADERS_LINKS[number]) => {
+  return (
+    <Link
+      aria-label={label}
+      href={href}
+      className="
+        inline-flex justify-center items-center h-full px-8 border-b-2 hover:bg-neutral-800
+        data-[state=inactive]:border-transparent data-[state=active]:border-green-500
+        font-semibold text-sm truncate
+      "
+    >
+      {title}
+    </Link>
+  )
+}
 
+export const Header = reatomComponent<{ asCompact?: boolean }>(({ ctx, asCompact = false }) => {
   return (
     <div className="flex flex-col w-full border-b rounded-b-xl border-neutral-800 relative z-20">
       <div className="flex items-center justify-start w-full h-20 max-h-20 top-0">
@@ -201,41 +324,24 @@ export const Header = reatomComponent<{ compact?: boolean }>(({ ctx, compact = f
           <div className="w-1/5 bg-transparent h-14 relative">
             <Logotype />
           </div>
-          {!isMobile && (
+          {!ctx.spy(appState.current.isMobile) && (
             <div className="flex w-3/5 justify-center items-center h-full text-neutral-400">
-              {HEADERS_LINKS.map(link => (
-                <Link
-                  key={link.title}
-                  aria-label={link.label}
-                  href={link.href}
-                  className="
-                    inline-flex justify-center items-center h-full px-8 border-b-2 hover:bg-neutral-800
-                    data-[state=inactive]:border-transparent data-[state=active]:border-green-500
-                    font-semibold text-sm truncate
-                  "
-                >
-                  {link.title}
-                </Link>
-              ))}
+              {HEADERS_LINKS.map((link, idx) => <LinkItem key={idx} {...link} />)}
             </div>
           )}
           <div className="w-full md:w-1/5">
-            {compact ? <div /> : <HeaderUserBar />}
+            {asCompact ? <div /> : <UserBar />}
           </div>
         </div>
       </div>
-      {!compact && <Banner />}
+      {!asCompact && <Banner />}
     </div>
   )
 }, "Header")
 
-export const Navigation = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.current.isMobile)
-
-  return (
-    <>
-      {isMobile && <MobileBottomBar />}
-      <Header />
-    </>
-  )
-}, "Navigation")
+export const Navigation = reatomComponent(({ ctx }) => (
+  <>
+    {ctx.spy(appState.current.isMobile) && <MobileBottomBar />}
+    <Header />
+  </>
+), "Navigation")

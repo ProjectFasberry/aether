@@ -1,13 +1,15 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { playerActivity, type PlayerActivityPayload } from "../models/activity.model";
-import { Skeleton } from "@repo/ui/skeleton";
-import { Typography } from "@repo/ui/typography";
+import { Skeleton } from "@/shared/ui/skeleton";
+import { Typography } from "@/shared/ui/typography"
 import { pageState } from "@/shared/models/page-context.model";
 import { expImage } from "@/shared/consts/images";
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@repo/ui/dialog";
-import { onConnect, sleep } from "@reatom/framework";
+import { atom, onConnect, sleep } from "@reatom/framework";
 import { playerState } from "../models/player.model";
 import { translate } from "@/shared/locales/helpers";
+import { Dialog, DialogTitle } from "@ark-ui/react/dialog";
+import { Portal } from "@ark-ui/react/portal";
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 
 const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
   useUpdate((ctx) => playerActivity.location.fetch(ctx, nickname), [nickname]);
@@ -36,31 +38,48 @@ const PlayerLocation = reatomComponent<{ nickname: string }>(({ ctx, nickname })
   )
 }, "PlayerLocation")
 
+const openAtom = atom(false);
+
 const PlayerServer = reatomComponent(({ ctx }) => {
   const { server, nickname } = ctx.get(playerActivity.online.fetch.dataAtom) as Extract<PlayerActivityPayload, { type: "online" }>
 
   return (
-    <Dialog>
-      {server === 'Lobby' ? (
-        <div className="flex justify-start cursor-pointer items-center overflow-x-auto gap-2 w-full">
-          <Typography className="text-neutral-400 font-semibold text-sm">
-            на сервере <span className="text-neutral-50">{server}</span>
-          </Typography>
-        </div>
-      ) : (
-        <DialogTrigger>
+    <>
+      <Dialog.Root open={ctx.spy(openAtom)} onOpenChange={v => openAtom(ctx, v.open)}>
+        {server === 'Lobby' ? (
           <div className="flex justify-start cursor-pointer items-center overflow-x-auto gap-2 w-full">
             <Typography className="text-neutral-400 font-semibold text-sm">
               на сервере <span className="text-neutral-50">{server}</span>
             </Typography>
           </div>
-        </DialogTrigger>
-      )}
-      <DialogContent>
-        <DialogTitle className="text-center text-xl">Локация игрока</DialogTitle>
-        <PlayerLocation nickname={nickname} />
-      </DialogContent>
-    </Dialog>
+        ) : (
+          <Dialog.Trigger>
+            <div className="flex justify-start cursor-pointer items-center overflow-x-auto gap-2 w-full">
+              <Typography className="text-neutral-400 font-semibold text-sm">
+                на сервере <span className="text-neutral-50">{server}</span>
+              </Typography>
+            </div>
+          </Dialog.Trigger>
+        )}
+        <Dialog.Trigger>
+          <div className="flex justify-start cursor-pointer items-center overflow-x-auto gap-2 w-full">
+            <Typography className="text-neutral-400 font-semibold text-sm">
+              на сервере <span className="text-neutral-50">{server}</span>
+            </Typography>
+          </div>
+        </Dialog.Trigger>
+        <Portal>
+          <Dialog.Backdrop className={dialogBackdropVariant()} />
+          <Dialog.Positioner className={dialogPositionerVariant()}>
+            <Dialog.Content className={dialogContentVariant({ className: "overflow-hidden h-2/3" })}>
+              <DialogTitle>Локация игрока</DialogTitle>
+              <PlayerLocation nickname={nickname} />
+              <Dialog.CloseTrigger />
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
+    </>
   )
 }, "PlayerLocation")
 
@@ -85,7 +104,7 @@ export const PlayerActivity = reatomComponent(({ ctx }) => {
 
   useUpdate((ctx) => {
     if (!nickname) return;
-    
+
     playerActivity.online.fetch(ctx, nickname)
   }, [nickname])
 

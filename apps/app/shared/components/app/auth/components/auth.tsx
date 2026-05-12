@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { auth, authState } from "../models/auth.model";
-import { Input } from "@repo/ui/input"
+import { Input } from "@/shared/ui/input"
 import { env } from "@/shared/env";
 import { CapWidget } from "@better-captcha/react/provider/cap-widget";
 import { pof } from "../../../../models/shared.model";
@@ -27,7 +27,7 @@ export const NicknameInput = reatomComponent(({ ctx }) => (
 
 const PasswordVisibility = reatomComponent(({ ctx }) => (
   <div
-    className="flex *:m-auto text-neutral-400 absolute p-1 right-0 top-1/2 -translate-1/2"
+    className="flex *:m-auto hover:text-neutral-50 duration-150 ease text-neutral-400 absolute p-1 right-0 top-1/2 -translate-1/2"
     onClick={() => authState.settings.showPassword(ctx, (state) => !state)}
   >
     {ctx.spy(authState.settings.showPassword) ? <IconEye size={18} /> : <IconEyeOff size={18} />}

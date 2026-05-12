@@ -1,13 +1,13 @@
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { reatomComponent } from "@reatom/npm-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@repo/ui/dropdown-menu"
-import { Typography } from "@repo/ui/typography"
+import { Typography } from "@/shared/ui/typography"
 import { usersControlRoles, usersControlState } from "../models/users.model"
 import { IconDotsVertical, IconPencil } from "@tabler/icons-react"
-import { Button } from "@repo/ui/button"
-import { Skeleton } from "@repo/ui/skeleton"
+import { Button } from "@/shared/ui/button"
+import { Skeleton } from "@/shared/ui/skeleton"
 import { type Role as RoleType } from "@/shared/components/app/private/models/users.model"
 import { itemVariant } from "./ui"
+import { Menu } from '@ark-ui/react/menu'
 
 const UserActionsChangeRoleGlobalSubmit = reatomComponent(({ ctx }) => {
   const isDisabled = !ctx.spy(usersControlState.targetRoleId)
@@ -80,22 +80,29 @@ const Roles = reatomComponent<Pick<RoleProps, "onClick" | "selectedId">>(({ ctx,
 
 export const UserActionsChangeRoleGlobal = reatomComponent(({ ctx }) => {
   return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
-        <IconDotsVertical size={16} />
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
-          <Typography className="text-neutral-400">
-            Доступные роли
-          </Typography>
-          <div className="flex flex-col gap-1 w-full h-full">
-            <Roles onClick={(roleId) => usersControlState.targetRoleId(ctx, roleId)} />
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <button className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
+          <IconDotsVertical size={16} />
+        </button>
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
+            <Typography className="text-neutral-400">
+              Доступные роли
+            </Typography>
+            <div className="flex flex-col gap-1 w-full h-full">
+              <Roles onClick={(roleId) => usersControlState.targetRoleId(ctx, roleId)} />
+            </div>
+            <UserActionsChangeRoleGlobalSubmit />
           </div>
-          <UserActionsChangeRoleGlobalSubmit />
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root >
   )
 }, "UserActionsChangeRoleGlobal")
 
@@ -110,32 +117,34 @@ export const UserActionsChangeRoleLocal = reatomComponent<{
   const roleTitle = getFromDictionary(ctx, role_name)
 
   return (
-    <DropdownMenu
-      open={isThisOpen}
-      onOpenChange={(isOpen) => {
-        usersControlState.selectedId(ctx, isOpen ? nickname : null);
-      }}
-    >
-      <DropdownMenuTrigger className="flex rounded-lg gap-1 items-center text-neutral-950 justify-center max-w-36 px-2 bg-neutral-50 h-5">
-        <IconPencil size={12} />
-        <Typography className='select-none text-sm leading-4'>
-          {roleTitle}
-        </Typography>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
-          <Typography className="text-sm text-neutral-400">
-            Доступные роли
+    <Menu.Root>
+      <Menu.Trigger asChild>
+        <button className="flex rounded-lg gap-1 items-center text-neutral-950 justify-center max-w-36 px-2 bg-neutral-50 h-5">
+          <IconPencil size={12} />
+          <Typography className='select-none text-sm leading-4'>
+            {roleTitle}
           </Typography>
-          <div className="flex flex-col gap-1 w-full h-full">
-            <Roles
-              selectedId={ctx.spy(usersControlState.targetRoleId) ?? role_id}
-              onClick={(roleId) => usersControlState.targetRoleId(ctx, roleId)}
-            />
+        </button>
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content>
+          <Menu.Arrow>
+            <Menu.ArrowTip />
+          </Menu.Arrow>
+          <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
+            <Typography className="text-sm text-neutral-400">
+              Доступные роли
+            </Typography>
+            <div className="flex flex-col gap-1 w-full h-full">
+              <Roles
+                selectedId={ctx.spy(usersControlState.targetRoleId) ?? role_id}
+                onClick={(roleId) => usersControlState.targetRoleId(ctx, roleId)}
+              />
+            </div>
+            <UserActionsChangeRoleSubmit nickname={nickname} />
           </div>
-          <UserActionsChangeRoleSubmit nickname={nickname} />
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
   )
 }, "UserActionsChangeRoleLocal")

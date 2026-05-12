@@ -1,8 +1,8 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { type ActionParent, actionsGoBackAction, type ActionType, createActionsLinkAction, getIsSelectedActionAtom } from "../models/actions.model";
-import { Button } from "@repo/ui/button";
+import { Button } from "@/shared/ui/button";
 import { IconCheck, IconPlus, IconX } from "@tabler/icons-react";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography"
 
 export const ToActionButtonX = reatomComponent<{
   parent: ActionParent, type: ActionType, title?: string

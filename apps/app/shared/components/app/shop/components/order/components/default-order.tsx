@@ -1,16 +1,18 @@
 import { PageLoader } from "@/shared/ui/page-loader";
 import { atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
-import { Dialog, DialogContent, DialogTrigger } from "@repo/ui/dialog";
-import { Typography } from "@repo/ui/typography";
+import { Typography } from "@/shared/ui/typography";
 import { IconCheck, IconCopy, IconEye } from "@tabler/icons-react";
 import { QRCode } from "react-qrcode-logo";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { type Payment } from "../../../models/store.model";
 import { AutoWidthInput } from "@/shared/ui/autowidth-input";
 import { defaultOrderEvents, isCopiedAtom, orderIsLoadingAtom } from "../models/default-order.model";
 import { onDisconnect } from "@reatom/framework";
 import { orderState } from "../../../models/store-order.model";
+import { Dialog } from "@ark-ui/react/dialog";
+import { Portal } from "@ark-ui/react/portal";
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 
 const STATUSES: Record<Payment["status"], { title: string, color: string }> = {
   "canceled": {
@@ -29,22 +31,25 @@ const STATUSES: Record<Payment["status"], { title: string, color: string }> = {
 
 const showOrderLoaderAtom = atom(false, "showOrderLoader")
 
+const isVisibleAtom = atom(false);
+const animatOutAtom = atom(false);
+
 const OrderLoader = reatomComponent(({ ctx }) => {
   const isShow = ctx.spy(showOrderLoaderAtom);
 
-  const [visible, setVisible] = useState(false);
-  const [animateOut, setAnimateOut] = useState(false);
+  const visible = ctx.spy(isVisibleAtom)
+  const animateOut = ctx.spy(animatOutAtom)
 
   useEffect(() => {
     if (isShow) {
-      setVisible(true);
-      setAnimateOut(false);
+      isVisibleAtom(ctx, true);
+      animatOutAtom(ctx, false);
       document.body.style.overflow = "hidden";
     } else if (visible) {
-      setAnimateOut(true);
+      animatOutAtom(ctx, true);
 
       const timer = setTimeout(() => {
-        setVisible(false);
+        isVisibleAtom(ctx, false);
         document.body.style.overflow = "";
       }, 1000);
 
@@ -93,8 +98,8 @@ const OrderDetails = reatomComponent(({ ctx }) => {
 
 const OrderQR = ({ url }: { url: string }) => {
   return (
-    <Dialog>
-      <DialogTrigger
+    <Dialog.Root>
+      <Dialog.Trigger
         className="flex items-center justify-center order-first sm:order-last 
         max-w-44 max-h-44 relative cursor-pointer p-0.5 group overflow-hidden rounded-md"
       >
@@ -104,11 +109,16 @@ const OrderQR = ({ url }: { url: string }) => {
           <IconEye size={24} />
         </div>
         <QRCode value={url} style={{ width: "100%", height: "100%" }} />
-      </DialogTrigger>
-      <DialogContent className="flex p-0 items-center justify-center">
-        <QRCode value={url} style={{ width: "100%", height: "100%" }} />
-      </DialogContent>
-    </Dialog>
+      </Dialog.Trigger>
+      <Portal>
+        <Dialog.Backdrop className={dialogBackdropVariant()} />
+        <Dialog.Positioner className={dialogPositionerVariant()}>
+          <Dialog.Content className={dialogContentVariant({ className: "flex p-0 items-center justify-center" })}>
+            <QRCode value={url} style={{ width: "100%", height: "100%" }} />
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
 }
 

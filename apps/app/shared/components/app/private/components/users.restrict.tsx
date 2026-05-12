@@ -1,10 +1,8 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { usersControlState, usersControl, USER_ACTIONS, usersActionsChildsByGroupAtom } from "../models/users.model"
-import { Button } from "@repo/ui/button"
-import { Input } from "@repo/ui/input"
-import { ContextMenuItem } from "@repo/ui/context-menu"
+import { Button } from "@/shared/ui/button"
+import { Input } from "@/shared/ui/input"
 import { atom } from "@reatom/framework"
-import { DropdownMenuItem } from "@repo/ui/dropdown-menu"
 import { Fragment } from "react/jsx-runtime"
 
 const buttonIsDisabledAtom = atom((ctx) => !ctx.spy(usersControlState.eventGroup) || ctx.spy(usersControl.submit.statusesAtom).isPending)
@@ -60,24 +58,24 @@ export const UserActionsWrapper = reatomComponent<
       {USER_ACTIONS.map((group) => (
         <Fragment key={group.type}>
           {type === 'single' && (
-            <ContextMenuItem
+            <div
               onClick={(e) => {
                 e.preventDefault()
                 usersControlState.eventGroup(ctx, group.type)
               }}
             >
               {group.label}
-            </ContextMenuItem>
+            </div>
           )}
           {type === 'global' && (
-            <DropdownMenuItem
+            <div
               onClick={(e) => {
                 e.preventDefault()
                 usersControlState.eventGroup(ctx, group.type)
               }}
             >
               {group.label}
-            </DropdownMenuItem>
+            </div>
           )}
         </Fragment>
       ))}
