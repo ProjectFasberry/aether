@@ -69,7 +69,9 @@ export default defineConfig(({ mode }) => {
       vike(),
       react(),
       tailwindcss(),
-      tsconfigPaths(),
+      tsconfigPaths({
+        ignoreConfigErrors: true
+      }),
       analyzer({
         analyzerMode: "static",
         enabled: target?.pluginOpts?.analyzerIsEnabled ?? false
