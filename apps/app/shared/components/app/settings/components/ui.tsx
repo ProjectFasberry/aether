@@ -6,7 +6,7 @@ import { BackButton } from "@/shared/ui/back-button"
 import { appState } from "@/shared/models/app/index.model"
 
 export const SettingsSection = ({
-  title, description, component
+  title, description, children
 }: SettingsSectionItem) => {
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -14,11 +14,11 @@ export const SettingsSection = ({
         <Typography className="text-lg leading-5 font-semibold">
           {title}
         </Typography>
-        <Typography className="truncate text-wrap leading-4! text-neutral-400 text-sm sm:text-base">
+        <Typography color="gray" className="truncate text-wrap leading-4! text-sm">
           {description}
         </Typography>
       </div>
-      {component}
+      {children}
     </div>
   )
 }

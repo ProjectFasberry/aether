@@ -2,6 +2,7 @@ import { type Atom, type CtxSpy, isAtom, type Unsubscribe } from "@reatom/framew
 import { isDeepEqual } from "@reatom/framework";
 import { logger } from "./logger";
 import { ENVIRONMENT } from "../consts";
+import { env } from "../env";
 
 export const createWsUrl = (config: {
   host: string;
@@ -215,3 +216,5 @@ export function subOnchange(data: unknown, visited = new Set<unknown>()): Unsubs
   return subs
 }
 export const wrapTitle = (i: string) => `Fasberry > ${i}`;
+
+export const createEs = (path: string, init: EventSourceInit) => new EventSource(`${env.VITE_API_URL}/${path}`, init)

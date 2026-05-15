@@ -1,13 +1,13 @@
 import { invariant } from "#/helpers/invariant";
 import { client } from "#/shared/api/client";
-import { MERCHANT_KEY, PAYMENT_KEY, PAYOUT_KEY } from "#/shared/env";
+import { env } from "#/shared/env";
 import type { OrderInputPayload, OutputPayload } from "@repo/shared/schemas/payment";
 
 const heleketClient = client.extend((opts) => ({
   ...opts,
   baseUrl: "https://api.heleket.com",
   headers: {
-    "merchant": MERCHANT_KEY,
+    "merchant": env.HELEKET_MERCHANT_KEY,
   },
   method: "post",
   retry: 1

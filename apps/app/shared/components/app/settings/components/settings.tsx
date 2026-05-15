@@ -6,8 +6,7 @@ import { SettingsNavigationDesktop } from "./settings-navigation";
 import { SettingsContentDesktop, SettingsContentMobile } from "./settings-content";
 import { Dialog } from '@ark-ui/react/dialog'
 import { Portal } from '@ark-ui/react/portal'
-import { dialogBackdropVariant, dialogBaseStyle, dialogCloseVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
-import { IconX } from "@tabler/icons-react";
+import { dialogBackdropVariant, dialogBaseStyle, DialogClose, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 
 const SettingsDialog = reatomComponent(({ ctx }) => {
   return (
@@ -24,9 +23,7 @@ const SettingsDialog = reatomComponent(({ ctx }) => {
                 <SettingsContentDesktop />
               </div>
             </div>
-            <Dialog.CloseTrigger className={dialogCloseVariant()}>
-              <IconX className="text-red" />
-            </Dialog.CloseTrigger>
+            <DialogClose />
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>
@@ -42,7 +39,9 @@ export const Settings = reatomComponent(({ ctx }) => {
       <Vaul openAtom={settingsState.isOpen}>
         <VaulContent className="h-2/3">
           <VaulHeader title="Настройки" />
-          <SettingsContentMobile />
+          <div className="overflow-y-auto">
+            <SettingsContentMobile />
+          </div>
         </VaulContent>
       </Vaul>
     )

@@ -4,7 +4,7 @@ import { action, atom } from "@reatom/framework";
 import { type AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorAtom, withReset, withStatusesAtom } from "@reatom/framework";
 import { onEvent } from "@reatom/web";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
-import { type AuthErrorType, authState, type ErrorKey, getError, isPofActiveAtom, SCOPE_ACTIONS } from "./auth.model";
+import { type AuthErrorType, authState, defineError, isPofActiveAtom } from "./auth.model";
 import type { QREventsPayload, QREventsEvent } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
 import { env } from "@/shared/env";
@@ -117,14 +117,7 @@ export const login = atom(null, "login").pipe(
             logError(e);
             authState.isProcessing(ctx, false);
 
-            if (e instanceof Error) {
-              const error = getError(e.message as ErrorKey);
-              if (!error) return;
-
-              const { scope, message } = error;
-              authState.globalError(ctx, message);
-              SCOPE_ACTIONS[scope](ctx)
-            }
+            defineError(ctx, e)
           }
         }).pipe(
           withErrorAtom(),

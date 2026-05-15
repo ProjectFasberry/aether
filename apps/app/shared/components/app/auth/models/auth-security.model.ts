@@ -6,8 +6,12 @@ export const authSecurity = atom(null, "authSecurity").pipe(
   withAssign(() => ({
     mnToHash: async (mn: string) => {
       const seed = await mnemonicToSeed(mn);
-      // @ts-ignore
-      const buff = await crypto.subtle.digest('SHA-256', seed);
+
+      if (seed.buffer instanceof SharedArrayBuffer) {
+        throw new Error("Crypto operations are not supported on SharedArrayBuffer");
+      }
+      
+      const buff = await crypto.subtle.digest('SHA-256', seed.buffer);
 
       const hash = Array.from(new Uint8Array(buff))
         .map(b => b.toString(16).padStart(2, '0'))

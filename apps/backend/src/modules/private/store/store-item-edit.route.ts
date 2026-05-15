@@ -1,5 +1,5 @@
-import Elysia from "elysia";
-import * as z from "zod";
+import Elysia, { t } from "elysia";
+import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import type { StoreItems } from "@repo/shared/types/db/general-database-types";
 import { validatePermission } from "#/lib/validators";
@@ -32,7 +32,7 @@ const storeItemEdit = new Elysia()
 		const data = await editStoreItem(id, body);
 		return { data };
 	}, {
-		params: z.object({ id: z.coerce.number() }),
+		params: t.Object({ id: t.Number() }),
 		body: storeItemEditSchema,
 		afterResponse: ({ permission, nickname: initiator }) => {
 			createAdminActivityLog({ initiator, event: permission });

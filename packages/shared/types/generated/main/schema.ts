@@ -2558,38 +2558,60 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            ok: boolean;
+                            type: "unlogin" | ("ban" | "unban" | "unmute" | "mute" | "kick") | ("change_role" | "reset") | ("add" | "remove");
+                            payload: string[];
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedUserRestrictRemove: {
         parameters: {
@@ -2601,38 +2623,60 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
-                    type: "ban" | "unban" | "unmute" | "mute" | "kick" | "unregister";
+                    /**
+                     * @default ban
+                     * @enum {string}
+                     */
+                    type: "ban" | "unban" | "unmute" | "mute" | "kick";
                     nicknames: string[];
-                } & {
-                    args?: {
+                    args: {
                         reason?: string;
                         time?: string;
                     };
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            ok: boolean;
+                            type: "unlogin" | ("ban" | "unban" | "unmute" | "mute" | "kick") | ("change_role" | "reset") | ("add" | "remove");
+                            payload: string[];
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedUserRoles: {
         parameters: {
@@ -2644,26 +2688,51 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default change_role
+                     * @enum {string}
+                     */
                     type: "change_role" | "reset";
                     nicknames: string[];
                     targetRoleId: number;
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default change_role
+                     * @enum {string}
+                     */
                     type: "change_role" | "reset";
                     nicknames: string[];
                     targetRoleId: number;
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default change_role
+                     * @enum {string}
+                     */
                     type: "change_role" | "reset";
                     nicknames: string[];
                     targetRoleId: number;
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            ok: boolean;
+                            type: "unlogin" | ("ban" | "unban" | "unmute" | "mute" | "kick") | ("change_role" | "reset") | ("add" | "remove");
+                            payload: string[];
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedUserPermission: {
         parameters: {
@@ -2675,26 +2744,47 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default add
+                     * @enum {string}
+                     */
                     type: "add" | "remove";
                     target: number;
                     nicknames: string[];
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default add
+                     * @enum {string}
+                     */
                     type: "add" | "remove";
                     target: number;
                     nicknames: string[];
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default add
+                     * @enum {string}
+                     */
                     type: "add" | "remove";
                     target: number;
                     nicknames: string[];
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: Record<string, never>;
+                    };
+                };
+            };
+        };
     };
     postPrivatedUserAuthRegister: {
         parameters: {
@@ -2722,7 +2812,22 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            nickname: string;
+                            created_at: string;
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedUserAuthUnregister: {
         parameters: {
@@ -2753,7 +2858,21 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            nickname: string;
+                        };
+                    };
+                };
+            };
+        };
     };
     getPrivatedUserByNickname: {
         parameters: {

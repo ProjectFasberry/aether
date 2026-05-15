@@ -1,7 +1,7 @@
 // @ts-expect-error
 import Rcon from "modern-rcon";
 import { rconLogger } from "#/utils/config/logger";
-import { RCON_PASSWORD } from "#/shared/env";
+import { env } from "#/shared/env";
 import { invariant } from "#/helpers/invariant";
 import { urls } from "../constants/urls";
 
@@ -27,7 +27,7 @@ export const rcon = {
 			const ip = list.get("server_proxy");
 			invariant(ip, "Server proxy ip is not defined");
 
-			instance = new Rcon(ip, RCON_PASSWORD);
+			instance = new Rcon(ip, env.RCON_PASSWORD);
 			invariant(instance, "RCON instance is not defined");
 
 			await instance.connect();

@@ -10,7 +10,7 @@ import { RegisterForm } from "@/shared/components/app/auth/components/register";
 import { register } from "@/shared/components/app/auth/models/register.model";
 import { translate } from "@/shared/locales/helpers";
 import { getDevModulesInfo } from "@/shared/models/app/index.model";
-import { tabsTriggerVariants } from "@repo/ui/tabs"
+import { tabsTriggerVariants } from "@/shared/ui/tabs"
 import { Tabs } from '@ark-ui/react/tabs'
 
 const ResetPassword = reatomComponent(({ ctx }) => {

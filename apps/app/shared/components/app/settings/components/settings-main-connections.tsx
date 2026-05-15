@@ -7,7 +7,7 @@ import { Skeleton } from "@/shared/ui/skeleton";
 import { getSocialStatusAtom, socials, socialsIsProcessingAtom, socialsState } from "../models/settings-profile.socials.model";
 import { type PlayerSocialsPayload } from "../../player/models/socials.model";
 import { SettingsContentWrapper } from "./ui";
-import { onDisconnect } from "@reatom/framework";
+import { action, onDisconnect } from "@reatom/framework";
 import { SOCIALS_ICONS } from "@/shared/consts/icons";
 import { Icon } from "@/shared/ui/icon";
 import { IconLoader } from "@/shared/ui/icon-loader";
@@ -97,8 +97,7 @@ const ProfileSocialsListItem = reatomComponent<PlayerSocialsPayload>(({ ctx, typ
         onClick={() => socials.control.removeWrapper(ctx, type)}
       >
         {isLoading
-          ? <IconCircleDotted className="animate-spin" size={18} />
-          : <IconX size={18} />
+          ? <IconLoader2 className="animate-spin duration-300" size={18} /> : <IconX size={18} />
         }
       </Button>
     </div>
@@ -123,20 +122,29 @@ const ProfileSocials = reatomComponent(({ ctx }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 auto-rows-auto gap-2">
-      <ProfileSocialAdd />
       {data?.map((social) => <ProfileSocialsListItem key={social.type} {...social} />)}
     </div>
   )
 }, "ProfileSocials")
 
+const onMainConnections = action((ctx) => {
+  socials.fetchAvailable(ctx)
+  socials.fetchList(ctx)
+})
+
 export const SettingsMainConnections = () => {
-  useUpdate((ctx) => {
-    socials.fetchAvailable(ctx)
-    socials.fetchList(ctx)
-  }, []);
+  useUpdate(onMainConnections, []);
 
   return (
     <SettingsContentWrapper title="Подключения">
+      <div className="flex flex-col gap-1">
+        <Typography className="text-lg leading-5 font-semibold">
+          Добавьте аккаунты к своему профилю
+        </Typography>
+        <Typography color="gray" className="text-sm">
+        </Typography>
+        <ProfileSocialAdd />
+      </div>
       <ProfileSocials />
     </SettingsContentWrapper>
   )

@@ -1,24 +1,25 @@
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@/shared/ui/typography"
-import { usersControlRoles, usersControlState } from "../models/users.model"
+import { usersRoles, usersControlState } from "../models/users.model"
 import { IconDotsVertical, IconPencil } from "@tabler/icons-react"
 import { Button } from "@/shared/ui/button"
 import { Skeleton } from "@/shared/ui/skeleton"
 import { type Role as RoleType } from "@/shared/components/app/private/models/users.model"
 import { itemVariant } from "./ui"
 import { Menu } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
 
 const UserActionsChangeRoleGlobalSubmit = reatomComponent(({ ctx }) => {
   const isDisabled = !ctx.spy(usersControlState.targetRoleId)
-    || ctx.spy(usersControlRoles.submit.statusesAtom).isPending
+    || ctx.spy(usersRoles.submit.statusesAtom).isPending
 
   return (
     <Button
       background="white"
       className="font-semibold"
       disabled={isDisabled}
-      onClick={() => usersControlRoles.before(ctx, [], { type: "change_role" })}
+      onClick={() => usersRoles.before(ctx, [], { type: "change_role" })}
     >
       Применить
     </Button>
@@ -27,14 +28,14 @@ const UserActionsChangeRoleGlobalSubmit = reatomComponent(({ ctx }) => {
 
 const UserActionsChangeRoleSubmit = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
   const isDisabled = !ctx.spy(usersControlState.targetRoleId)
-    || ctx.spy(usersControlRoles.submit.statusesAtom).isPending
+    || ctx.spy(usersRoles.submit.statusesAtom).isPending
 
   return (
     <Button
       background="white"
       className="font-semibold"
       disabled={isDisabled}
-      onClick={() => usersControlRoles.before(ctx, [nickname], { type: "change_role" })}
+      onClick={() => usersRoles.before(ctx, [nickname], { type: "change_role" })}
     >
       Применить
     </Button>
@@ -63,9 +64,9 @@ type RoleProps = RoleType & {
 }
 
 const Roles = reatomComponent<Pick<RoleProps, "onClick" | "selectedId">>(({ ctx, selectedId, onClick }) => {
-  const data = ctx.spy(usersControlRoles.fetch.dataAtom)
+  const data = ctx.spy(usersRoles.fetch.dataAtom)
 
-  if (ctx.spy(usersControlRoles.fetch.statusesAtom).isPending) return <RolesSkeleton />;
+  if (ctx.spy(usersRoles.fetch.statusesAtom).isPending) return <RolesSkeleton />;
   if (!data) return null;
 
   return data.map((role) => (
@@ -87,9 +88,9 @@ export const UserActionsChangeRoleGlobal = reatomComponent(({ ctx }) => {
         </button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Arrow>
-            <Menu.ArrowTip />
+        <Menu.Content className={menuContentVariant()}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
           </Menu.Arrow>
           <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
             <Typography className="text-neutral-400">
@@ -119,17 +120,17 @@ export const UserActionsChangeRoleLocal = reatomComponent<{
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
-        <button className="flex rounded-lg gap-1 items-center text-neutral-950 justify-center max-w-36 px-2 bg-neutral-50 h-5">
+        <Button background="white" className="flex py-1 gap-1 items-center justify-center max-w-36 px-2 h-5">
           <IconPencil size={12} />
           <Typography className='select-none text-sm leading-4'>
             {roleTitle}
           </Typography>
-        </button>
+        </Button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Arrow>
-            <Menu.ArrowTip />
+        <Menu.Content className={menuContentVariant()}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
           </Menu.Arrow>
           <div className="flex flex-col gap-2 p-2 w-full h-full min-w-40">
             <Typography className="text-sm text-neutral-400">

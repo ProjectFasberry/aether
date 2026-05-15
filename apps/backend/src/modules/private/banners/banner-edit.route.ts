@@ -1,6 +1,5 @@
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import * as z from "zod";
 import { banner, bannerEditSchema } from "./banner.model";
 
 export const bannerEdit = new Elysia()
@@ -9,8 +8,8 @@ export const bannerEdit = new Elysia()
 		return { data };
 	}, {
 		body: bannerEditSchema,
-		params: z.object({
-			id: z.coerce.number()
+		params: t.Object({
+			id: t.Number()
 		}),
 		response: {
 			200: withData(

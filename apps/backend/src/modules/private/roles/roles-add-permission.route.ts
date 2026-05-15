@@ -1,13 +1,13 @@
 import { validatePermission } from "#/lib/validators"
 import { Permissions } from "#/shared/constants/permissions"
 import { general } from "#/shared/database/general-db"
-import Elysia from "elysia"
-import * as z from "zod"
+import Elysia, { type Static, t } from "elysia"
 import { createAdminActivityLog } from "../private.model"
+import { withData } from "#/shared/schemas"
 
 async function addPermissionForRole(
   roleId: number,
-  { permissions }: z.infer<typeof rolesAddPermissionForRoleSchema>
+  { permissions }: Static<typeof rolesAddPermissionForRoleSchema>
 ) {
   const values = permissions.map((p) => ({
     role_id: roleId,
@@ -24,8 +24,8 @@ async function addPermissionForRole(
   return Number(result);
 }
 
-const rolesAddPermissionForRoleSchema = z.object({
-  permissions: z.array(z.coerce.number()).min(1)
+const rolesAddPermissionForRoleSchema = t.Object({
+  permissions: t.Array(t.Number(), { minItems: 1 })
 })
 
 export const rolesAddPermissionForRole = new Elysia()
@@ -35,8 +35,13 @@ export const rolesAddPermissionForRole = new Elysia()
     return { data }
   }, {
     body: rolesAddPermissionForRoleSchema,
-    params: z.object({ id: z.coerce.number() }),
+    params: t.Object({ id: t.Number() }),
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
+    },
+    response: {
+      200: withData(
+        t.Number()
+      )
     }
   })

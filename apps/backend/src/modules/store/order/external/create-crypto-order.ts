@@ -1,7 +1,7 @@
-import { FRONTEND_URL } from "#/shared/env";
+import { env } from "#/shared/env";
 import { general } from "#/shared/database/general-db";
 
-export const getOrderLink = (uniqueId: string) => `${FRONTEND_URL}/store/order/${uniqueId}`
+export const getOrderLink = (uniqueId: string) => `${env.FRONTEND_URL}/store/order/${uniqueId}`
 export const getOrderKey = (uniqueId: string) => `order:${uniqueId}`
 export const getOrderInitiatorIndexKey = (initiator: string) => `index:initiator:${initiator}`
 export const getOrderRateKey = (initiator: string) => `rate:order_limit:${initiator}`

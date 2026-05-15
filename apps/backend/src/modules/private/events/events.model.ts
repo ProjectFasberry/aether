@@ -1,23 +1,25 @@
 import { invariant } from "#/helpers/invariant";
 import { EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY } from "#/modules/server/events/events.model";
 import { getRedis } from "#/shared/redis/client";
+import { type Static, t } from "elysia";
 
-export type EventPayload = {
-  id: string;
-  type: string;
-  title: string;
-  content: {
-    created_at: string | Date;
-    description: string | null;
-    initiator: string;
-  };
-};
+export const eventPayloadSchema = t.Object({
+  id: t.String(),
+  type: t.String(),
+  title: t.String(),
+  content: t.Object({
+    created_at: t.String(),
+    description: t.Nullable(t.String()),
+    initiator: t.String()
+  })
+})
+export type EventPayload = Static<typeof eventPayloadSchema>
 
 export async function deleteEvent(id: string) {
   const redis = getRedis();
 
   const eventStr = await redis.get(EVENTS_TARGET_KEY(id));
-  if (!eventStr) return false;
+  if (!eventStr) return null;
 
   const event: EventPayload = JSON.parse(eventStr);
   const type = event.type;

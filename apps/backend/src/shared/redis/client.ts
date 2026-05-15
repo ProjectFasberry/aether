@@ -1,6 +1,6 @@
 import Redis, { type RedisOptions } from "ioredis";
 import { redisLogger } from "#/utils/config/logger";
-import { REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_USER } from "../env";
+import { env } from "../env";
 import { invariant } from "#/helpers/invariant";
 
 const instances: { main: Redis | null; bridge: Redis | null } = {
@@ -9,10 +9,10 @@ const instances: { main: Redis | null; bridge: Redis | null } = {
 };
 
 export const config: RedisOptions = {
-	host: REDIS_HOST,
-	port: REDIS_PORT,
-	password: REDIS_PASSWORD,
-	username: REDIS_USER,
+	host: env.REDIS_HOST,
+	port: env.REDIS_PORT,
+	password: env.REDIS_PASSWORD,
+	username: env.REDIS_USER,
 	maxRetriesPerRequest: 3,
 };
 

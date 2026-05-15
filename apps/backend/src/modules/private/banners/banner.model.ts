@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { Banners } from "@repo/shared/types/db/general-database-types";
+import { type Static, t } from "elysia";
 import type { Selectable } from "kysely";
 import * as z from "zod";
 
@@ -13,10 +14,10 @@ export const createBannerSchema = z.object({
   })
 })
 
-export const bannerEditSchema = z.array(
-  z.object({
-    field: z.enum(["title", "description"]),
-    value: z.union([z.string()]),
+export const bannerEditSchema = t.Array(
+  t.Object({
+    field: t.UnionEnum(["title", "description"]),
+    value: t.Union([t.String()]),
   }),
 );
 
@@ -43,7 +44,7 @@ export const banner = {
       }
     };
   },
-  async edit(id: number, values: z.infer<typeof bannerEditSchema>) {
+  async edit(id: number, values: Static<typeof bannerEditSchema>) {
     const updates = buildUpdates<Selectable<Banners>>(values);
     const keys = values.map((o) => o.field);
 

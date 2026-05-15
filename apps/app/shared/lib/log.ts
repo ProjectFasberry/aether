@@ -8,8 +8,8 @@ export function logError(e: unknown, { type = 'console' }: { type?: 'console' | 
 
   const EVENTS = {
     "console": null,
-    "toast": () => void toast(msg),
-    "combined": () => void toast(msg)
+    "toast": () => void toast.error(msg),
+    "combined": () => void toast.error(msg)
   }
 
   const exec = EVENTS[type]

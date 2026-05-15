@@ -10,7 +10,7 @@ const inputVariants = tv({
     variant: {
       default: "bg-neutral-800",
       ghost: "bg-transparent",
-      danger: "border-red"
+      danger: "ring-2 ring-inset ring-red"
     }
   },
   defaultVariants: {

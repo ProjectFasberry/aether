@@ -16,23 +16,21 @@ import { cn } from "@/shared/lib/cn";
 import { translate } from "@/shared/locales/helpers";
 import { Vaul, VaulContent, VaulTrigger } from "@/shared/ui/vaul";
 import { action } from "@reatom/framework";
-import { dropdownMenuItemVariants } from "@repo/ui/dropdown-menu";
+import { dropdownMenuItemVariants } from "@/shared/ui/menu";
 import { Menu, type MenuItemProps } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant, menuTriggerVariant } from "@/shared/ui/menu";
 
 const {
   HEADERS_LINKS, headerUserMenuIsOpenAtom, MENU_ACTIONS, showCartIconAtom, showCurrentUserMenuAtom
 } = navigationModel()
 
-type ItemVariant = "dropdown" | "default";
+type ItemVariant = "menu" | "drawer";
 
-type MenuActionItemProps = MenuActionItemType & { variant: ItemVariant };
-const MenuActionItem = reatomComponent<MenuActionItemProps>(({
+const MenuActionItem = reatomComponent<MenuActionItemType & { variant: ItemVariant }>(({
   ctx, label, cb, variant, disabled, className
 }) => {
   const { Item, itemProps } = defineItem(variant, {
-    onClick: () => {
-      cb(ctx)
-    },
+    onClick: () => cb(ctx),
     className: cn("gap-2 w-full font-semibold", className),
     disabled: disabled?.(ctx) ?? false,
     value: label
@@ -47,9 +45,7 @@ const MenuCurrentUser = reatomComponent<{ variant: ItemVariant }>(({ ctx, varian
 
   const { Item, itemProps } = defineItem(variant, {
     className: "active:scale-[0.98] min-h-10 select-none cursor-pointer rounded-lg p-2 bg-neutral-800 w-full overflow-hidden flex gap-2 items-center",
-    onClick: () => {
-      navigate(createLink("player", currentUser.nickname))
-    },
+    onClick: () => navigate(createLink("player", currentUser.nickname)),
     value: "current-user"
   })
 
@@ -72,23 +68,15 @@ const MenuCurrentUser = reatomComponent<{ variant: ItemVariant }>(({ ctx, varian
   )
 }, "MenuCurrentUser")
 
-function defineItem<T extends ItemVariant>(
-  variant: T,
-  props: MenuItemProps
-) {
-  const Item = variant === 'default' ? "div" : Menu.Item
-
+function defineItem<T extends ItemVariant>(variant: T, props: MenuItemProps) {
+  const Item = variant === 'drawer' ? "div" : Menu.Item
   return {
     Item,
-    itemProps: {
-      ...props,
-      className: dropdownMenuItemVariants({ className: props?.className })
-    }
+    itemProps: { ...props, className: dropdownMenuItemVariants({ className: props?.className }) }
   };
 }
 
-type MenuLinkItemProps = MenuLink & { idx: number, variant: ItemVariant }
-const MenuLinkItem = reatomComponent<MenuLinkItemProps>(({
+const MenuLinkItem = reatomComponent<MenuLink & { idx: number, variant: ItemVariant }>(({
   ctx, variant, type, title, idx, href
 }) => {
   const data = ctx.spy(validatedLinksAtom)
@@ -98,9 +86,7 @@ const MenuLinkItem = reatomComponent<MenuLinkItemProps>(({
 
   const { Item, itemProps } = defineItem(variant, {
     className: "font-semibold",
-    onClick: () => {
-      navigate(href)
-    },
+    onClick: () => navigate(href),
     value: href
   })
 
@@ -137,9 +123,7 @@ const UserCurrentTrigger = reatomComponent(({ ctx }) => {
       className="flex items-center gap-2 h-8 overflow-hidden"
     >
       <Avatar
-        nickname={currentUser.nickname}
-        url={currentUser.avatar}
-        className="min-w-8 w-8"
+        nickname={currentUser.nickname} url={currentUser.avatar} className="min-w-8 w-8"
       />
     </Link>
   )
@@ -247,7 +231,7 @@ const UserMenuVaul = () => {
         <UserMenuTrigger />
       </VaulTrigger>
       <VaulContent>
-        <UserMenuContent variant="default" />
+        <UserMenuContent variant="drawer" />
       </VaulContent>
     </Vaul>
   )
@@ -255,30 +239,23 @@ const UserMenuVaul = () => {
 
 const UserMenuDropdown = reatomComponent(({ ctx }) => {
   return (
-    <>
-      <Menu.Root
-        open={ctx.spy(headerUserMenuIsOpenAtom)}
-        positioning={{
-          placement: "bottom"
-        }}
-        onOpenChange={(details) => {
-          headerUserMenuIsOpenAtom(ctx, details.open)
-        }}
-      >
-        <Menu.Trigger>
-          <Menu.Indicator />
-          <UserMenuTrigger />
-        </Menu.Trigger>
-        <Menu.Positioner>
-          <Menu.Content className="min-w-[240px] bg-neutral-900 rounded-xl p-2" >
-            <Menu.Arrow>
-              <Menu.ArrowTip />
-            </Menu.Arrow>
-            <UserMenuContent variant="dropdown" />
-          </Menu.Content>
-        </Menu.Positioner>
-      </Menu.Root>
-    </>
+    <Menu.Root
+      open={ctx.spy(headerUserMenuIsOpenAtom)}
+      positioning={{ placement: "bottom-end" }}
+      onOpenChange={(details) => headerUserMenuIsOpenAtom(ctx, details.open)}
+    >
+      <Menu.Trigger className={menuTriggerVariant()}>
+        <UserMenuTrigger />
+      </Menu.Trigger>
+      <Menu.Positioner>
+        <Menu.Content className={menuContentVariant({ className: "min-w-[240px]" })}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
+          </Menu.Arrow>
+          <UserMenuContent variant="menu" />
+        </Menu.Content>
+      </Menu.Positioner>
+    </Menu.Root>
   )
 }, "UserMenuDropdown");
 

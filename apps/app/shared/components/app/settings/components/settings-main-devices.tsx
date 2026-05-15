@@ -327,7 +327,7 @@ const DEVICES_SECTIONS: SettingsSectionItem[] = [
   {
     title: "Сессии",
     description: "Активные сессии вашего аккаунта",
-    component: <SettingsMainAccountSessions />
+    children: <SettingsMainAccountSessions />
   },
 ]
 

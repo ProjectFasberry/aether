@@ -11,6 +11,7 @@ import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { getStaticImage } from "@/shared/lib/volume-helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { Menu } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
 
 type TaskItemProps = ExtractApiData<"getServerTaskById">["data"];
 
@@ -150,21 +151,19 @@ const TasksFilterType = reatomComponent(({ ctx }) => {
           </Button>
         </Menu.Trigger>
         <Menu.Positioner>
-          <Menu.Content >
-            <Menu.Arrow>
-              <Menu.ArrowTip />
+          <Menu.Content className={menuContentVariant({ className: "w-full min-w-56" })}>
+            <Menu.Arrow className={menuArrowVariant()}>
+              <Menu.ArrowTip className={menuArrowTipVariant()} />
             </Menu.Arrow>
-            <div className="w-full min-w-56 bg-neutral-900 p-2 rounded-xl">
-              {tasksFilter.FILTERS.map((filter) => (
-                <Button
-                  key={filter.value}
-                  onClick={() => tasksFilter.sortBy(ctx, filter.value as TasksFilterSortBy)}
-                  className="font-semibold w-full text-sm sm:text-base justify-start hover:bg-neutral-800"
-                >
-                  {filter.title}
-                </Button>
-              ))}
-            </div>
+            {tasksFilter.FILTERS.map((filter) => (
+              <Button
+                key={filter.value}
+                onClick={() => tasksFilter.sortBy(ctx, filter.value as TasksFilterSortBy)}
+                className="font-semibold w-full text-sm sm:text-base justify-start hover:bg-neutral-800"
+              >
+                {filter.title}
+              </Button>
+            ))}
           </Menu.Content>
         </Menu.Positioner>
       </Menu.Root>

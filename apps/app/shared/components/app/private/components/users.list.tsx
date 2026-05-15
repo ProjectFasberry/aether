@@ -1,7 +1,6 @@
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { reatomComponent } from "@reatom/npm-react";
 import {
-  getIsCheckedAtom, getIsSelectedUser, type PrivatedUser, users,
-  usersControl, usersControlRoles, usersControlState, usersDataArrAtom
+  isCheckedAtom, userIsSelectedAtom, type PrivatedUser, users, usersControl, usersControlState, usersDataArrAtom
 } from "../models/users.model";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { tv } from "tailwind-variants";
@@ -11,9 +10,13 @@ import { Avatar } from "../../../../ui/avatar";
 import { Typography } from "@/shared/ui/typography"
 import { UserActionsChangeRoleLocal } from "./users.change-role";
 import { UserActionsWrapper } from "./users.restrict";
-import { useInView } from "react-intersection-observer";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { Menu } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu";
+import { Portal } from "@ark-ui/react/portal";
+import { atom } from "@reatom/framework";
+import { createViewerModel } from "@/shared/models/shared.model";
+import { isEmptyArray } from "@/shared/lib/helpers";
 
 const userItemVariant = tv({
   base: `flex flex-col rounded-lg w-full px-4 border`,
@@ -32,52 +35,81 @@ const userItemVariant = tv({
   }
 })
 
+const coordsAtom = atom({ x: 0, y: 0 }, "coords");
+
+usersControlState.selectedUser.onChange((ctx, state) => {
+  const isOpen = !!state;
+
+  if (isOpen) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "auto";
+  }
+})
+
+export const UsersItemMenu = reatomComponent(({ ctx }) => {
+  const nickname = ctx.spy(usersControlState.selectedUser);
+  const coords = ctx.spy(coordsAtom);
+
+  return (
+    <Menu.Root
+      open={!!nickname}
+      onOpenChange={({ open }) => !open && usersControlState.selectedUser.reset(ctx)}
+    >
+      <Portal>
+        {nickname && (
+          <Menu.Positioner
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              transform: `translate3d(${coords.x}px, ${coords.y}px, 0)`,
+              zIndex: 9999,
+            }}
+          >
+            <Menu.Content className={menuContentVariant({ className: "min-w-40" })}>
+              <Menu.Arrow className={menuArrowVariant()}>
+                <Menu.ArrowTip className={menuArrowTipVariant()} />
+              </Menu.Arrow>
+              <UserActionsWrapper nickname={nickname} type="single" />
+            </Menu.Content>
+          </Menu.Positioner>
+        )}
+      </Portal>
+    </Menu.Root>
+  )
+}, "UsersItemMenu")
+
 const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, nickname, uuid, premium_uuid }) => {
-  const isExpanded = ctx.spy(getIsSelectedUser(nickname));
+  const isExpanded = ctx.spy(userIsSelectedAtom(nickname));
   const isIdentity = ctx.get(currentUserState)?.nickname === nickname;
 
   const variant = isIdentity ? "selected" : "default"
   const state = isExpanded ? "active" : "default"
 
+  const handleContextMenu = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    usersControlState.selectedUser(ctx, nickname);
+    coordsAtom(ctx, { x: e.clientX, y: e.clientY });
+  };
+
   return (
-    <div className={userItemVariant({ variant, state })}>
-      <Menu.Root
-        onOpenChange={({ open: v }) => {
-          if (v) {
-            usersControlState.selectedUser(ctx, nickname)
-          } else {
-            usersControlState.selectedUser.reset(ctx)
-          }
-        }}
-      >
-        <Menu.Trigger>
-          <div className="flex items-center gap-3 h-12 min-w-0 justify-start">
-            <Checkbox
-              checked={ctx.spy(getIsCheckedAtom(nickname))}
-              onCheckedChange={v => usersControl.selectSingle(ctx, v, nickname)}
-            />
-            <Link href={`/private/users/${nickname}`} className="flex items-center min-w-0 gap-2">
-              <Avatar url={avatar} nickname={nickname} className="h-6 w-6" />
-              <Typography className="font-semibold text-sm truncate">
-                {nickname}
-              </Typography>
-            </Link>
-            {role && (
-              <UserActionsChangeRoleLocal nickname={nickname} role_id={role.id} role_name={role.name} />
-            )}
-          </div>
-        </Menu.Trigger>
-        <Menu.Positioner>
-          <Menu.Content>
-            <Menu.Arrow>
-              <Menu.ArrowTip />
-            </Menu.Arrow>
-            <div className="flex pb-2 gap-1 items-center justify-end w-full">
-              <UserActionsWrapper nickname={nickname} type="single" />
-            </div>
-          </Menu.Content>
-        </Menu.Positioner>
-      </Menu.Root>
+    <div className={userItemVariant({ variant, state })} onContextMenu={handleContextMenu}>
+      <div className="flex items-center gap-3 h-12 min-w-0 justify-start">
+        <Checkbox
+          checked={ctx.spy(isCheckedAtom(nickname))}
+          onCheckedChange={v => usersControl.select.single(ctx, v, nickname)}
+        />
+        <Link href={`/private/users/${nickname}`} className="flex items-center min-w-0 gap-2">
+          <Avatar url={avatar} nickname={nickname} className="h-6 w-6" />
+          <Typography className="font-semibold text-sm truncate">
+            {nickname}
+          </Typography>
+        </Link>
+        {role && (
+          <UserActionsChangeRoleLocal nickname={nickname} role_id={role.id} role_name={role.name} />
+        )}
+      </div>
     </div>
   )
 }, "UsersItem")
@@ -95,15 +127,10 @@ const UsersUpdatingSkeleton = reatomComponent(({ ctx }) =>
 )
 
 export const Users = reatomComponent(({ ctx }) => {
-  useUpdate((ctx) => {
-    users.fetch(ctx)
-    usersControlRoles.fetch(ctx)
-  }, []);
-
   if (ctx.spy(users.fetch.statusesAtom).isPending) return <UsersSkeleton />
 
   const data = ctx.spy(usersDataArrAtom);
-  if (!data) return null;
+  if (!data || isEmptyArray(data)) return <p>пусто</p>
 
   return (
     <div className="flex flex-col gap-1 w-full h-full">
@@ -113,8 +140,6 @@ export const Users = reatomComponent(({ ctx }) => {
   )
 }, "Users")
 
-export const UsersViewer = () => {
-  const { ref, inView } = useInView({ triggerOnce: false, threshold: 0 })
-  useUpdate((ctx) => usersControlState.inView(ctx, inView), [inView])
-  return <div ref={ref} className="h-px" />
-}
+export const { Component: UsersViewer } = createViewerModel({
+  atomForUpdate: usersControlState.inView
+})

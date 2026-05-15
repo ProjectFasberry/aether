@@ -1,15 +1,15 @@
-import Elysia from "elysia";
-import * as z from "zod";
+import Elysia, { type Static, t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
+import { withData } from "#/shared/schemas";
 
-const updateOptionsSchema = z.object({
-  value: z.boolean()
+const updateOptionsSchema = t.Object({
+  value: t.Boolean()
 })
 
-async function updateOptions(name: string, { value }: z.infer<typeof updateOptionsSchema>) {
+async function updateOptions(name: string, { value }: Static<typeof updateOptionsSchema>) {
   const query = await general
     .updateTable("options")
     .set({ name, value })
@@ -29,5 +29,12 @@ export const optionsUpdate = new Elysia()
     body: updateOptionsSchema,
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
+    },
+    response: {
+      200: withData(
+        t.Object({
+          value: t.Boolean()
+        })
+      )
     }
   })

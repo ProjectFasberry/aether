@@ -1,8 +1,7 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
-import * as z from "zod";
 import { general } from "#/shared/database/general-db";
 
 export const dictionariesEdit = new Elysia()
@@ -22,11 +21,11 @@ export const dictionariesEdit = new Elysia()
 
     return { data }
   }, {
-    body: z.object({
-      key: z.enum(["title", "key"]),
-      value: z.string()
+    body: t.Object({
+      key: t.UnionEnum(["title", "key"]),
+      value: t.String()
     }),
-    params: z.object({ id: z.coerce.number() }),
+    params: t.Object({ id: t.Number() }),
     afterResponse: ({ permission, nickname: initiator }) => {
       createAdminActivityLog({ initiator, event: permission })
     }

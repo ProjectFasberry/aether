@@ -1,9 +1,9 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
-import * as z from "zod"
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
+import { withData } from "#/shared/schemas";
 
 async function removeStoreItem(id: number) {
   const query = await general
@@ -21,8 +21,15 @@ export const storeItemDelete = new Elysia()
     const data = await removeStoreItem(id);
     return { data }
   }, {
-    params: z.object({ id: z.coerce.number() }),
+    params: t.Object({ id: t.Number() }),
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
+    },
+    response: {
+      200: withData(
+        t.Object({
+          id: t.Number()
+        })
+      )
     }
   })

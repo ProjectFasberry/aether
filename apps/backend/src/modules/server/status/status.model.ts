@@ -4,7 +4,7 @@ import { getStaticUrl } from "#/helpers/volume";
 import { client as rootClient } from "#/shared/api/client";
 import { urls } from "#/shared/constants/urls";
 import { general } from "#/shared/database/general-db";
-import { PANEL_PASSWORD, PANEL_USER } from "#/shared/env";
+import { env } from "#/shared/env";
 import { getRedis } from "#/shared/redis/client";
 import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
@@ -61,7 +61,7 @@ function getClient() {
 }
 
 const authHeaders = {
-	authorization: `Basic ${btoa(PANEL_USER + ":" + PANEL_PASSWORD)}`,
+	authorization: `Basic ${btoa(env.PANEL_USER + ":" + env.PANEL_PASSWORD)}`,
 };
 
 export async function getPlayerStatusGlobal(nickname: string) {

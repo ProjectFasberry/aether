@@ -1,10 +1,11 @@
-import { type RatingItem as RatingItemProps, ratingList } from "@/shared/components/app/ratings/models/ratings.model"
+import { type RatingItem as RatingItemProps, rating } from "@/shared/components/app/ratings/models/ratings.model"
 import { Link } from "@/shared/components/config/link"
 import { translate } from "@/shared/locales/helpers"
 import { PageLoader } from "@/shared/ui/page-loader"
-import { reatomComponent, useUpdate } from "@reatom/npm-react"
+import { reatomComponent, useAtom, useUpdate } from "@reatom/npm-react"
 import { Typography } from "@/shared/ui/typography"
 import { IconChevronRight, IconTrophy } from "@tabler/icons-react"
+import { createPageModel } from "@/shared/lib/events"
 
 const RatingItem = ({
   title, parentValue, childs
@@ -51,9 +52,9 @@ const RatingItem = ({
 }
 
 const RatingsList = reatomComponent(({ ctx }) => {
-  if (ctx.spy(ratingList.statusesAtom).isPending) return <PageLoader />
+  if (ctx.spy(rating.fetch.statusesAtom).isPending) return <PageLoader />
 
-  const data = ctx.spy(ratingList.dataAtom)
+  const data = ctx.spy(rating.fetch.dataAtom)
   if (!data) return null;
 
   return (
@@ -65,8 +66,18 @@ const RatingsList = reatomComponent(({ ctx }) => {
   )
 }, "RatingsList")
 
+const page = createPageModel({
+  name: "rating",
+  onConnAction: (ctx) => {
+    rating.fetch(ctx)
+  },
+  onDisconnAction: (ctx) => {
+    rating.fetch.abort(ctx)
+  }
+})
+
 export default function Page() {
-  useUpdate(ratingList, []);
+  const [_] = useAtom(page.dataAtom)
 
   return <RatingsList />
 }

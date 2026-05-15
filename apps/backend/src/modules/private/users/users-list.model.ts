@@ -70,7 +70,7 @@ async function process(nicknames: string[]) {
 
   const mapper = (user: RawPlayer): Static<typeof privatedUserSchema> => {
     const {
-      id, role_id, role_name, nickname, uuid, 
+      id, role_id, role_name, nickname, uuid,
       premium_uuid, created_at, lower_case_nickname
     } = user;
 
@@ -120,6 +120,9 @@ export async function getPlayer(nickname: string): Promise<Static<typeof private
   return mapper(query)
 }
 
+const fallbackMeta = { hasNextPage: false, hasPrevPage: false }
+const fallbackPaginateResult = { data: [], meta: fallbackMeta }
+
 export async function getPlayersList({
   asc, startCursor, searchQuery, endCursor, limit, sort
 }: Static<typeof userListSchema>): Promise<Static<typeof privatedUsersSchema>> {
@@ -139,31 +142,32 @@ export async function getPlayersList({
     ])
     .$narrowType<{ uuid: string }>()
 
+  console.log((await general.selectFrom("AUTH").selectAll().execute()).length);
+  console.log((await general.selectFrom("players").selectAll().execute()).length);
+
   if (searchQuery) {
     query = query
       .where(sql<boolean>`"AUTH"."NICKNAME" % ${searchQuery}`)
       .orderBy(sql`"AUTH"."NICKNAME" <-> ${searchQuery}`, "asc")
   }
 
-  const config = {
-    after: endCursor!,
-    before: startCursor!,
-    perPage: limit,
-    direction: getDirection(asc),
-    expression: EXPRESSIONS[sort ?? USER_SORT[0]]
-  }
-
   const result = await executeWithCursorPagination(query, {
-    ...config,
+    after: endCursor,
+    before: startCursor,
+    perPage: limit,
     fields: [
-      { expression: config.expression, direction: config.direction }
+      { expression: EXPRESSIONS[sort ?? USER_SORT[0]], direction: getDirection(asc) },
     ],
+    /* Because the input is received as a timestamp in ms, but the cursor requires it in date format */
+    // @ts-expect-error
     parseCursor: (cursor) => ({
       nickname: cursor.nickname,
-      created_at: dayjs(cursor.created_at).toISOString(),
+      created_at: new Date(Number(cursor.created_at)),
       role_id: Number(cursor.role_id)
     })
   })
+
+  if (result.rows.length === 0) return fallbackPaginateResult;
 
   const mapper = await process(result.rows.map(r => r.nickname))
   const data = result.rows.map((user) => mapper(user))

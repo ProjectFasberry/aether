@@ -4,14 +4,16 @@ import { register } from "#/modules/auth/register.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { nats } from "#/shared/nats/client";
 import { registerSchema } from "@repo/shared/schemas/auth";
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import * as z from "zod";
 import { SUBJECTS } from "#/shared/nats/subjects";
+import { withData } from "#/shared/schemas";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = nats.get()
   nc.publish(SUBJECTS.EVENTS.AUTHORIZATION[event], JSON.stringify({ nickname, created_at }))
 }
+const getWrappedData = <T>(value?: any): T | null => value ? value?.data ?? null : null;
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())
@@ -19,10 +21,21 @@ const playersAuthReg = new Elysia()
     const query = await register.create({ nickname, ip, password, hash });
     return { data: query }
   }, {
-    body: registerSchema.pick({ nickname: true, password: true, hash: true }),
+    body: registerSchema.pick({ 
+      nickname: true, password: true, hash: true 
+    }),
     afterResponse: ({ responseValue }) => {
-      const res = responseValue as { data: { nickname: string, created_at: Date } }
-      publishAuth("REGISTER", res.data);
+      const res = getWrappedData<{ nickname: string, created_at: Date }>(responseValue)
+      if (!res) return;
+      publishAuth("REGISTER", res);
+    },
+    response: {
+      200: withData(
+        t.Object({
+          nickname: t.String(),
+          created_at: t.String()
+        })
+      )
     }
   })
 
@@ -38,8 +51,16 @@ const playersAuthUnreg = new Elysia()
       })
     ),
     afterResponse: ({ responseValue }) => {
-      const res = responseValue as { data: { nickname: string } }
-      publishAuth("UNREGISTER", res.data);
+      const res = getWrappedData<{ nickname: string }>(responseValue)
+      if (!res) return;
+      publishAuth("UNREGISTER", res);
+    },
+    response: {
+      200: withData(
+        t.Object({
+          nickname: t.String()
+        })
+      )
     }
   })
 

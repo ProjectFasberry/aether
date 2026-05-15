@@ -1,5 +1,6 @@
 import "../imports";
 import "../declare.d.ts";
+import "./assign";
 
 import { handleProcessOnEvent } from "./utils/config/handle-log";
 import { checkDatabasesHealth } from "./shared/database/init";

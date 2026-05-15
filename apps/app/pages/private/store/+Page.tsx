@@ -1,5 +1,5 @@
 import { StorePrivated } from "@/shared/components/app/private/components/store";
-import { searchParamsAtom } from "@/shared/components/app/private/models/store.model";
+import { storeState } from "@/shared/components/app/private/models/store.model";
 import { createPageModel } from "@/shared/lib/events";
 import { pageState } from "@/shared/models/page-context.model";
 import { useAtom } from "@reatom/npm-react";
@@ -7,7 +7,7 @@ import { useAtom } from "@reatom/npm-react";
 const page = createPageModel({
   name: "store",
   onSpyAction: (ctx, dataAtom, urlParsed) => {
-    searchParamsAtom(ctx, (state) => urlParsed?.search ?? state)
+    storeState.searchParams(ctx, (state) => urlParsed?.search ?? state)
   },
   spyedAtom: pageState.urlParsed
 })

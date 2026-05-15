@@ -1,9 +1,9 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
-import Elysia from "elysia";
-import * as z from "zod";
-import type { RolesRolePermissionListPayload } from "./roles-list.route";
+import Elysia, { t } from "elysia";
+import { rolesRolePermissionListSchema, type RolesRolePermissionListPayload } from "./roles-list.route";
+import { withData } from "#/shared/schemas";
 
 export const rolesRolePermissionList = new Elysia()
   .use(validatePermission(Permissions.get("ROLES.READ")))
@@ -28,7 +28,12 @@ export const rolesRolePermissionList = new Elysia()
 
     return { data }
   }, {
-    params: z.object({ 
-      id: z.coerce.number() 
-    })
+    params: t.Object({ 
+      id: t.Number()
+    }),
+    response: {
+      200: withData(
+        rolesRolePermissionListSchema
+      )
+    }
   })

@@ -1,5 +1,5 @@
-import Elysia from "elysia";
-import * as z from "zod";
+import Elysia, { t } from "elysia";
+import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import { Permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/validators";
@@ -25,11 +25,11 @@ async function updateNews(id: number, values: z.infer<typeof newsUpdateSchema>) 
 
 export const newsUpdateRoute = new Elysia()
 	.use(validatePermission(Permissions.get("NEWS.UPDATE")))
-	.post("/:id/edit", async ({ params: { id }, status, body }) => {
+	.post("/:id/edit", async ({ params: { id }, body }) => {
 		const data = await updateNews(id, body);
 		return { data }
 	}, {
-		params: z.object({ id: z.coerce.number() }),
+		params: t.Object({ id: t.Number() }),
 		body: newsUpdateSchema,
 		afterResponse: ({ nickname: initiator, permission }) => {
 			createAdminActivityLog({ initiator, event: permission });

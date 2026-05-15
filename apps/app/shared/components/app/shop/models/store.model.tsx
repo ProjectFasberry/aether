@@ -1,7 +1,6 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/framework"
 import { action, atom, type AtomMut, createCtx, type Ctx } from "@reatom/framework"
 import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
-import type { Selectable } from "kysely"
 import { type Payments } from "@repo/shared/types/db/payments-database-types"
 import { logError } from '@/shared/lib/log';
 import { snapshots } from '@/shared/models/ssr';
@@ -16,7 +15,8 @@ import { parseBoolean } from "@/shared/lib/utils"
 import { pageState } from "@/shared/models/page-context.model"
 import { translate } from "@/shared/locales/helpers"
 
-export type Payment = Selectable<Payments>
+// todo: replace any assertion
+export type Payment = any
 
 type StoreCategory = "donate" | "event" | "all"
 type StoreWallet = "CHARISM" | "BELKOIN" | "ALL"

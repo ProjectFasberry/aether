@@ -27,7 +27,7 @@
 			"@repo/shared/*": ["../../packages/shared/*"]
 		}
 	},
-	"include": ["src/**/*", "scripts/**/*", "imports.ts", "drizzle.config.ts", "env.d.ts", "declare.d.ts"],
+	"include": ["src/**/*", "scripts/**/*", "imports.ts", "drizzle.config.ts", "declare.d.ts"],
 	"exclude": ["node_modules", "dist", "./src/drizzle"],
 	"references": [
 		{ 

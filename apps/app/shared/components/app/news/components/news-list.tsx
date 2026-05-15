@@ -6,8 +6,8 @@ import { PageLoader } from "@/shared/ui/page-loader"
 import { isEmptyArray } from "@/shared/lib/helpers"
 import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
-import { useInView } from "react-intersection-observer"
 import { NewsFilters } from "./news-list-filters"
+import { createViewerModel } from "@/shared/models/shared.model"
 
 const newsNotFoundTitleAtom = atom((ctx) => {
   const data = ctx.get(newsState.searchQuery)
@@ -21,8 +21,6 @@ const NewsListNotFound = reatomComponent(({ ctx }) =>
 )
 
 const NewsList = reatomComponent(({ ctx }) => {
-  useUpdate(news.fetch, [])
-
   if (ctx.spy(news.fetch.statusesAtom).isPending) return <PageLoader />
 
   const data = ctx.spy(newsAllDataArrAtom);
@@ -54,13 +52,13 @@ const NewsList = reatomComponent(({ ctx }) => {
   )
 }, "NewsList")
 
-const NewsViewer = () => {
-  const { ref, inView } = useInView()
-  useUpdate((ctx) => newsState.isView(ctx, inView), [inView])
-  return <div ref={ref} className="h-[1px] w-full" />
-}
+const { Component: NewsViewer } = createViewerModel({
+  atomForUpdate: newsState.isView
+})
 
 export const NewsContent = () => {
+  useUpdate(news.fetch, [])
+
   return (
     <div className="flex flex-col gap-4 h-full w-full">
       <NewsFilters />

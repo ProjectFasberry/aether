@@ -1,22 +1,12 @@
 import { action, atom, withAssign, withReset } from "@reatom/framework";
 
-let modelCounter = 0;
-
-/**
- * Creates a reactive model for seed phrase management.
- * @param {Object} config - Model configuration.
- * @param {string} [config.name] - Base name for the model atoms.
- */
 export const createPhraseModel = ({
   name
 }: {
   name?: string
 }) => {
-  const modelId = name ?? `seedPhrase${++modelCounter}`;
+  const modelId = name ?? `seedPhrase.${Date.now()}`;
 
-  /**
-   * Main state container including errors, words, and repeatWords.
-   */
   const state = atom(null, `_${modelId}.state`).pipe(
     withAssign((_, name) => ({
       errors: atom<Record<string, string>>({}, `${name}.errors`).pipe(withReset()),
@@ -24,10 +14,6 @@ export const createPhraseModel = ({
       repeatWords: atom<string[]>([], `${name}.repeatWords`).pipe(withReset()),
     }))
   )
-
-  /**
-   * Action controllers for state manipulation.
-   */
   const events = atom(null, `_${modelId}.events`).pipe(
     withAssign((_, name) => ({
       updateWords: action((ctx, value: string, vIdx: number) => {
@@ -47,11 +33,6 @@ export const createPhraseModel = ({
       }, `${name}.updateRepeatWords`)
     }))
   )
-
-  /**
-   * Computes whether the specified phrase type is filled and error-free.
-   * @param {"default" | "repeat"} type - The phrase list to validate.
-   */
   const isValid = (type: "default" | "repeat" = "default") => atom<boolean>((ctx) => {
     const words = type === 'default' ? ctx.spy(state.words) : ctx.spy(state.repeatWords)
     const hasErrors = Object.keys(ctx.spy(state.errors)).length > 0;

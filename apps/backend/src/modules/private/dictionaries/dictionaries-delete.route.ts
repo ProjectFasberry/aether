@@ -1,9 +1,8 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
-import * as z from "zod";
 
 export const dictionariesDelete = new Elysia()
   .use(validatePermission(Permissions.get("DICTIONARIES.DELETE")))
@@ -18,7 +17,7 @@ export const dictionariesDelete = new Elysia()
 
     return { data }
   }, {
-    params: z.object({ id: z.coerce.number() }),
+    params: t.Object({ id: t.Number() }),
     afterResponse: ({ permission, nickname: initiator }) => {
       createAdminActivityLog({ initiator, event: permission })
     }

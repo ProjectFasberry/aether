@@ -1,7 +1,7 @@
 import { appLogger, natsLogger } from "#/utils/config/logger";
 import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
-import { NATS_HOST, NATS_PASSWORD, NATS_USER } from "#/shared/env"
+import { env } from "#/shared/env"
 import { invariant } from "#/helpers/invariant";
 import { subs } from "./subscribers";
 import { NATS_CONSUMERS, NATS_JS_STREAMS } from "./cons";
@@ -10,10 +10,10 @@ import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 
 const config: ConnectionOptions = {
   servers: [
-    `nats://${NATS_HOST}`
+    `nats://${env.NATS_HOST}`
   ],
-  user: NATS_USER,
-  pass: NATS_PASSWORD,
+  user: env.NATS_USER,
+  pass: env.NATS_PASSWORD,
   reconnect: true,
   maxReconnectAttempts: -1,
   reconnectTimeWait: 2000,

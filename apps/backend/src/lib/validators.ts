@@ -6,17 +6,18 @@ import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
-import { CAP_URL, CAP_SECRET, CAP_SITE_KEY, isProduction } from "#/shared/env";
+import { env } from "#/shared/env";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { safeJsonParse } from "#/utils/config/transforms";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
 import { validateLogger } from "#/utils/config/logger";
+import { LOGGING } from "#/shared/constants";
 
 export const validatePermission = (permission: string) => new Elysia({ name: "validatePermission" })
   .use(defineUserRole())
   .derive(async ({ role, nickname, status }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("validatePermission")
     }
     const perms = await getPermissions(nickname, role.id)
@@ -31,7 +32,7 @@ export const validatePermission = (permission: string) => new Elysia({ name: "va
 export const validateAuthStatus = () => new Elysia({ name: "validateAuthStatus" })
   .use(defineOptionalSession())
   .onBeforeHandle(async ({ session, status }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("validateAuthStatus")
     }
     if (!session) return;
@@ -44,7 +45,7 @@ export const validateAuthStatus = () => new Elysia({ name: "validateAuthStatus" 
 export const validateBannedStatus = () => new Elysia({ name: "validateBannedStatus" })
   .use(defineOptionalUser())
   .onBeforeHandle(async ({ nickname, status }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("validateBannedStatus");
     }
     if (!nickname) return;
@@ -74,7 +75,7 @@ export const validateBannedStatus = () => new Elysia({ name: "validateBannedStat
   .as("scoped")
 
 const capClient = client.extend((opts) => ({
-  ...opts, baseUrl: `${CAP_URL}/${CAP_SITE_KEY}`
+  ...opts, baseUrl: `${env.CAP_URL}/${env.CAP_SITE_KEY}`
 }))
 
 const ERRORS: Record<string, string> = {
@@ -82,7 +83,7 @@ const ERRORS: Record<string, string> = {
 }
 
 async function verifyRequest(token: string): Promise<{ ok: boolean; error?: string }> {
-  const json = { secret: CAP_SECRET, response: token }
+  const json = { secret: env.CAP_SECRET, response: token }
 
   try {
     const result = await capClient.post("siteverify", { json, retry: 1, timeout: 4000 })
@@ -113,7 +114,7 @@ export const botValidator = () => new Elysia({ name: "botValidator" })
   .use(ipPlugin())
   .resolve(({ query }) => ({ token: query.token }))
   .onBeforeHandle(async ({ status, token, ip }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("botValidator");
     }
 

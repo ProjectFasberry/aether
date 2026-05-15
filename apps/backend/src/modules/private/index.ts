@@ -6,7 +6,6 @@ import { storePrivate } from "./store";
 import { users } from "./users";
 import { roles } from "./roles";
 import { validateBannedStatus } from "#/lib/validators";
-import { analytics } from "./analytics";
 import { news } from "./news";
 import { banners } from "./banners";
 import { modpacks } from "./modpacks";
@@ -32,7 +31,6 @@ export const privated = new Elysia()
     .use(banners)
     .use(modpacks)
     .use(events)
-    .use(analytics)
     .use(history)
     .use(chat)
     .use(dictionaries)

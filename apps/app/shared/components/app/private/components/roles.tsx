@@ -23,6 +23,7 @@ import {
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { Menu } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
 
 type RolePayload = {
   id: number;
@@ -187,9 +188,9 @@ const RolesListItemAddPerm = reatomComponent(({ ctx }) => {
         </Button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Arrow>
-            <Menu.ArrowTip />
+        <Menu.Content className={menuContentVariant()}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
           </Menu.Arrow>
           <div className="flex flex-col gap-2 p-2 w-full h-fit">
             <Typography className="text-neutral-400 text-sm">

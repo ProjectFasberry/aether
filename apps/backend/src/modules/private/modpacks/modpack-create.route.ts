@@ -1,15 +1,14 @@
 import { validatePermission } from "#/lib/validators"
 import { Permissions } from "#/shared/constants/permissions"
-import Elysia from "elysia"
-import * as z from "zod"
+import Elysia, { type Static, t } from "elysia"
 import { createAdminActivityLog } from "../private.model"
 
-async function createModpack({ }: z.infer<typeof modpackCreateSchema>) {
-  
+async function createModpack({ }: Static<typeof modpackCreateSchema>) {
+
 }
 
-const modpackCreateSchema = z.object({
-  title: z.string()
+const modpackCreateSchema = t.Object({
+  title: t.String()
 })
 
 export const modpackCreate = new Elysia()

@@ -1,4 +1,4 @@
-import { type Action, action, atom, reatomAsync } from "@reatom/framework"
+import { type Action, action, atom, reatomAsync, spawn } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
 import { isDeepEqual, sleep, withInit, withReset } from "@reatom/framework"
 import { type ReactNode } from "react"
@@ -22,11 +22,7 @@ export type SettingsNavigation = {
 }
 
 export type SettingsParent = "profile" | "main" | "app" | "account"
-export type SettingsSectionItem = {
-  title: string,
-  description: string,
-  component: ReactNode
-}
+export type SettingsSectionItem = { title: string, description: string, children: ReactNode }
 
 export const SETTINGS_NAVIGATION: Partial<Record<SettingsParent, SettingsNavigation>> = {
   main: {
@@ -84,7 +80,9 @@ export const settingsState = atom(null, "settingsState").pipe(
     )
   }))
 )
-settingsState.isOpen.onChange((ctx, state) => state ? settings.open(ctx) : settings.close(ctx))
+settingsState.isOpen.onChange((ctx, state) => 
+  spawn(ctx, (spawnCtx) => state ? settings.open(spawnCtx) : settings.close(spawnCtx))
+)
 
 export const settings = atom(null, "settings").pipe(
   withAssign((_, name) => ({

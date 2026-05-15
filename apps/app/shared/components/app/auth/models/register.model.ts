@@ -2,7 +2,7 @@ import { action, atom, type AtomMut, reatomAsync, withAssign, withDataAtom, with
 import { invariant } from "@/shared/lib/invariant";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
-import { auth, type AuthFindoutType, authState, type ErrorKey, getError, SCOPE_ACTIONS } from "./auth.model";
+import { auth, type AuthFindoutType, authState, defineError } from "./auth.model";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import { isEmptyArray } from "@/shared/lib/helpers";
@@ -149,15 +149,7 @@ export const register = atom(null, "register").pipe(
       onReject: (ctx, e) => {
         logError(e);
         authState.isProcessing(ctx, false);
-
-        if (e instanceof Error) {
-          const error = getError(e.message as ErrorKey);
-          if (!error) return;
-
-          const { scope, message } = error;
-          authState.globalError(ctx, message);
-          SCOPE_ACTIONS[scope](ctx)
-        }
+        defineError(ctx, e)
       }
     }).pipe(
       withStatusesAtom(),

@@ -4,7 +4,7 @@ import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
 import { bearer } from "@elysia/bearer";
 import { validateLogger } from "#/utils/config/logger";
-import { isProduction } from "#/shared/env";
+import { LOGGING } from "#/shared/constants";
 
 async function handleByBearer(bearer: string): Promise<{ nickname: string } | null> {
   const hash = new Bun.CryptoHasher("sha256").update(bearer).digest("hex");
@@ -24,7 +24,7 @@ export const defineOptionalUser = () => new Elysia({ name: "defineOptionalUser" 
   .use(defineOptionalSession())
   .use(bearer())
   .derive(async ({ session, bearer }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("defineOptionalUser");
     }
 
@@ -50,7 +50,7 @@ export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" 
   .use(defineOptionalSession())
   .use(bearer())
   .derive(async ({ session, status, bearer }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("defineRequiredUser");
     }
     if (!session) throw status(401)
@@ -78,7 +78,7 @@ export const defineUserRole = () => new Elysia({ name: "defineUserRole" })
   .use(defineOptionalUser())
   .use(bearer())
   .derive(async ({ nickname, status, bearer }) => {
-    if (!isProduction) {
+    if (LOGGING.validators) {
       validateLogger.log("defineUserRole");
     }
 

@@ -29,7 +29,7 @@ const OptionItem = reatomComponent<Option>(({ ctx, name, title, value }) => {
       <Switch
         checked={value}
         disabled={ctx.spy(updateOptionAction.statusesAtom).isPending}
-        onCheckedChange={v => updateOptionAction(ctx, name, v)}
+        onCheckedChange={({ checked }) => updateOptionAction(ctx, name, checked)}
       />
     </div>
   )

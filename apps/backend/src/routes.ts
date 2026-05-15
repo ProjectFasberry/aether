@@ -26,12 +26,27 @@ export const main = new Elysia()
 export const root = new Elysia()
 	.get("/", ({ redirect }) => redirect(`/openapi`))
 	.group("/health", app => app
-		.get("/", () => ({ data: { status: "OK", uptime: process.uptime() } }), {
+		.get("/", () => ({ 
+			data: { 
+				status: "OK",
+				uptime: process.uptime(),
+				memory: process.memoryUsage(),
+				availableMemory: process.availableMemory() 
+			} 
+		}), {
 			response: {
 				200: withData(
 					t.Object({
 						status: t.Literal("OK"),
-						uptime: t.Number()
+						uptime: t.Number(),
+						memory: t.Object({
+							rss: t.Number(),
+							heapTotal: t.Number(),
+							heapUsed: t.Number(),
+							external: t.Number(),
+							arrayBuffers: t.Number()
+						}),
+						availableMemory: t.Number(),
 					})
 				)
 			}

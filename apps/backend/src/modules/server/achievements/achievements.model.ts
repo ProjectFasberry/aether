@@ -1,5 +1,5 @@
 import { luckperms } from "#/shared/database/luckperms-db"
-import { VOLUME_URL } from "#/shared/env"
+import { env } from "#/shared/env"
 import * as z from "zod"
 
 export async function getAchievementsMeta() {
@@ -40,7 +40,7 @@ export const ACHIEVEMENTS_RAW: Record<string, AchievementDetails> = {
 async function getAchievementDetails(achievement: string) {
   const v = ACHIEVEMENTS_RAW[achievement]
 
-  const publicImage = `${VOLUME_URL}/static/achievements/${v.img}`
+  const publicImage = `${env.VOLUME_URL}/static/achievements/${v.img}`
 
   return { ...v, img: publicImage }
 }

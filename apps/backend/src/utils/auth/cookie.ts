@@ -17,13 +17,10 @@ const FALLBACK_DOMAIN = "127.0.0.1";
 export const SESSION_KEY = "session";
 
 function getDomain() {
-  const list = urls.get()
-  const domain = list.get("domain")
-  invariant(domain, "Domain is not defined");
+  if (!isProduction) return FALLBACK_DOMAIN;
 
-  if (!isProduction) {
-    return FALLBACK_DOMAIN
-  }
+  const domain = urls.get().get("domain")
+  invariant(domain, "Domain is not defined");
 
   return `.${domain}`
 }

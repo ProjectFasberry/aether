@@ -1,5 +1,4 @@
 import Elysia from "elysia";
-import { minecraftItems } from "#/modules/server/favorite-item/minecraft-items.route";
 import { rating } from "#/modules/server/rating";
 import { status } from "#/modules/server/status";
 import { events } from "#/modules/server/events";
@@ -17,7 +16,6 @@ export const serverGroup = new Elysia()
 			.use(lands)
 			.use(status)
 			.use(events)
-			.use(minecraftItems)
 			.use(tasks)
 			.use(skinGroup)
 			.use(referrals)

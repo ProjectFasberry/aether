@@ -83,7 +83,7 @@ export default function Layout({ children }: PropsWithChildren) {
         <AppSidebar />
         <div className="flex flex-col gap-2 min-h-dvh w-full p-2 sm:p-6">
           <SidebarTrigger />
-          <div className="flex flex-col overflow-hidden w-full">
+          <div className="flex flex-col h-full w-full">
             {children}
           </div>
         </div>

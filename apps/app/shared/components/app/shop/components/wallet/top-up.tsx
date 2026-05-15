@@ -83,56 +83,53 @@ const TopUpRecipient = reatomComponent(({ ctx }) => {
 
 const TopUpCurrencies = reatomComponent(({ ctx }) => {
   const data = ctx.spy(topupState.method.type)?.currencies;
+  if (!data || ctx.spy(topup.fetchMethods.statusesAtom).isPending) return null;
 
   const collection = createListCollection({
-    items: data!,
+    items: data,
   })
 
   const item = ctx.spy(topupState.method.currency)
 
   return (
-    <>
-      <Select.Root
-        collection={collection}
-        value={item ? [item] : []}
-        onValueChange={({ value }) => topupState.method.currency(ctx, value[0])}
-      >
-        <Select.Control className={selectControlVariant()}>
-          <Select.Trigger className={selectTriggerVariant()}>
-            <Select.ValueText className="border border-neutral-800 h-8 px-4">
-              Не выбрано
-            </Select.ValueText>
-          </Select.Trigger>
-          <div className={selectIndicatorsVariant()}>
-            <Select.ClearTrigger className={selectClearTriggerVariant()}>
-              <IconX size={20} />
-            </Select.ClearTrigger>
-            <Select.Indicator className={selectIndicatorVariant()}>
-              <IconSelector size={20} />
-            </Select.Indicator>
-          </div>
-        </Select.Control>
-        <Portal>
-          <Select.Positioner>
-            <Select.Content className={selectContentVariant()} style={selectContentBaseStyle}>
-              <Select.ItemGroup className={selectItemGroupVariant()}>
-                {data?.map((item, idx) => (
-                  <Select.Item key={idx} item={item} className={selectItemVariant()}>
-                    <Select.ItemText className={selectItemTextVariant()}>
-                      {item}
-                    </Select.ItemText>
-                    <Select.ItemIndicator className={selectItemIndicatorVariant()}>
-                      <IconCheck size={16} />
-                    </Select.ItemIndicator>
-                  </Select.Item>
-                ))}
-              </Select.ItemGroup>
-            </Select.Content>
-          </Select.Positioner>
-        </Portal>
-        <Select.HiddenSelect />
-      </Select.Root>
-    </>
+    <Select.Root
+      collection={collection}
+      value={item ? [item] : []}
+      onValueChange={({ value }) => topupState.method.currency(ctx, value[0])}
+    >
+      <Select.Control className={selectControlVariant()}>
+        <Select.Trigger className={selectTriggerVariant()}>
+          <Select.ValueText placeholder="Не выбрано" />
+        </Select.Trigger>
+        <div className={selectIndicatorsVariant()}>
+          <Select.ClearTrigger className={selectClearTriggerVariant()}>
+            <IconX size={20} />
+          </Select.ClearTrigger>
+          <Select.Indicator className={selectIndicatorVariant()}>
+            <IconSelector size={20} />
+          </Select.Indicator>
+        </div>
+      </Select.Control>
+      <Portal>
+        <Select.Positioner>
+          <Select.Content className={selectContentVariant()} style={selectContentBaseStyle}>
+            <Select.ItemGroup className={selectItemGroupVariant()}>
+              {data?.map((item, idx) => (
+                <Select.Item key={idx} item={item} className={selectItemVariant()}>
+                  <Select.ItemText className={selectItemTextVariant()}>
+                    {item}
+                  </Select.ItemText>
+                  <Select.ItemIndicator className={selectItemIndicatorVariant()}>
+                    <IconCheck size={16} />
+                  </Select.ItemIndicator>
+                </Select.Item>
+              ))}
+            </Select.ItemGroup>
+          </Select.Content>
+        </Select.Positioner>
+      </Portal>
+      <Select.HiddenSelect />
+    </Select.Root>
   )
 }, "TopUpCurrencies")
 
@@ -207,7 +204,7 @@ const WALLETS_IMGS: Record<string, string> = { "CHARISM": charismImage, "BELKOIN
 
 const TopupValue = reatomComponent(({ ctx }) => {
   const collection = createListCollection({
-    items: topupState.WALLETS!,
+    items: topupState.WALLETS,
   })
 
   return (
@@ -223,27 +220,28 @@ const TopupValue = reatomComponent(({ ctx }) => {
         collection={collection}
         value={[ctx.spy(topupState.wallet)]}
         onValueChange={({ value }) => topupState.wallet(ctx, value[0])}
+        className="min-w-36"
       >
-        <Select.Label>Framework</Select.Label>
-        <Select.Control>
-          <Select.Trigger >
-            <Select.ValueText placeholder={"Не выбрано"} />
-            <TopUpTarget img={WALLETS_IMGS[ctx.spy(topupState.wallet)]} />
+        <Select.Control className={selectControlVariant({ className: "w-full" })}>
+          <Select.Trigger className={selectTriggerVariant()}>
+            <Select.ValueText className="w-fit">
+              <TopUpTarget img={WALLETS_IMGS[ctx.spy(topupState.wallet)]} />
+            </Select.ValueText>
           </Select.Trigger>
-          <div>
-            <Select.ClearTrigger>
-              <IconX />
-            </Select.ClearTrigger>
-            <Select.Indicator />
+          <div className={selectIndicatorsVariant()}>
+            <Select.Indicator className={selectIndicatorVariant()}>
+              <IconSelector size={20} />
+            </Select.Indicator>
           </div>
         </Select.Control>
         <Portal>
           <Select.Positioner>
-            <Select.Content>
-              <Select.ItemGroup>
-                <Select.ItemGroupLabel>Frameworks</Select.ItemGroupLabel>
+            <Select.Content className={selectContentVariant()}>
+              <Select.ItemGroup className={selectItemGroupVariant()}>
                 {topupState.WALLETS.map((wallet) => (
-                  <TopUpTarget key={wallet.value} variant="full" title={wallet.title} img={WALLETS_IMGS[wallet.value]} />
+                  <Select.Item key={wallet.value} item={wallet} className={selectItemVariant()}>
+                    <TopUpTarget variant="full" title={wallet.title} img={WALLETS_IMGS[wallet.value]} />
+                  </Select.Item>
                 ))}
               </Select.ItemGroup>
             </Select.Content>

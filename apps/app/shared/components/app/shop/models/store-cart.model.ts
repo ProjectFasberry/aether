@@ -4,7 +4,7 @@ import { type PageContextServer } from "vike/types";
 import { logError } from "@/shared/lib/log";
 import { snapshots } from "@/shared/models/ssr";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { getRecipient } from "./store-recipient.model";
+import { getRecipient } from "../../settings/models/settings-store.model";
 import { navigate } from "vike/client/router";
 import { withSsr } from "@/shared/models/ssr";
 import { invariant } from "@/shared/lib/invariant";

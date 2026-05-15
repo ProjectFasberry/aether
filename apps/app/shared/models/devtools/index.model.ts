@@ -137,7 +137,9 @@ export const devtools = atom(null, "_devtools").pipe(
             flexDirection: "column",
             resize: "both",
             overflow: "hidden",
-            touchAction: "none"
+            touchAction: "none",
+            height: "600px",
+            width: "600px"
           });
 
           const throttledSave = throttle((c: Partial<DevtoolsCoords>) => devtoolsCoords.set(c), 200);
@@ -163,17 +165,6 @@ export const devtools = atom(null, "_devtools").pipe(
               ...sanitized
             }));
           }
-
-          const handleWindowResize = () => {
-            const current = ctx.get(devtoolsState.coords);
-            const sanitized = clampCoords(current.x, current.y, current.w, current.h);
-
-            if (sanitized.x !== current.x || sanitized.y !== current.y) {
-              devtoolsState.coords(ctx, (prev) => ({ ...prev, ...sanitized }));
-            }
-          };
-
-          window.addEventListener('resize', throttle(handleWindowResize, 100));
 
           ctx.subscribe(devtoolsState.coords, (c) => {
             el.style.transform = `translate3d(${c.x}px, ${c.y}px, 0)`;
@@ -202,20 +193,6 @@ export const devtools = atom(null, "_devtools").pipe(
               document.removeEventListener("pointermove", onMove);
             }, { once: true });
           };
-
-          const ro = new ResizeObserver(entries => {
-            for (let entry of entries) {
-              const { width, height } = entry.contentRect;
-              const current = ctx.get(devtoolsState.coords);
-
-              if (Math.abs(current.w - width) > 1 || Math.abs(current.h - height) > 1) {
-                devtoolsState.coords(ctx, (prev) => ({ ...prev, w: width, h: height }));
-                throttledSave({ w: width, h: height });
-              }
-            }
-          });
-
-          ro.observe(el);
         }, `${name}.define`)
       }))
     ),

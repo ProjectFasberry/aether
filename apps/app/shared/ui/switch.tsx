@@ -1,30 +1,37 @@
-import { Switch as SwitchDefault } from "@ark-ui/react/switch"
+import { Switch as SwitchDefault, type SwitchRootProps } from "@ark-ui/react/switch"
+import { tv } from "tailwind-variants"
 
-export const Switch = ({ disabled, label, checked, onCheckedChange }: {
-  checked: boolean, onCheckedChange: (v: boolean) => void, disabled?: boolean, label?: string
-}) => {
+export type SwitchProps = SwitchRootProps & {
+  label?: string
+}
+
+const switchControlVariant = tv({
+  base: `
+    inline-flex duration-300 ease
+    data-[state=checked]:bg-green-500 px-0.5 focus-visible:outline-2 focus-visible:outline-offset-2
+    items-center shrink-0 w-9 h-5 bg-neutral-800 rounded-full
+  `
+})
+const switchThumbVariant = tv({
+  base: `
+    flex items-center justify-center w-4 h-4 rounded-full bg-neutral-50
+    data-[state=checked]:translate-x-4 duration-300 shadow-sm shadow-black/20 ease`
+})
+const switchLabelVariant = tv({
+  base: `text-neutral text-sm select-none`
+})
+
+export const Switch = ({ label, ...props }: SwitchProps) => {
   return (
     <SwitchDefault.Root
-      checked={checked}
-      disabled={disabled}
-      onCheckedChange={(e) => onCheckedChange(e.checked)}
+      {...props}
       className="inline-flex items-center gap-1 relative disabled:opacity-50"
     >
-      <SwitchDefault.Control
-        className="
-          inline-flex duration-300 ease 
-        data-[state=checked]:bg-green-500 px-0.5 focus-visible:outline-2 focus-visible:outline-offset-2
-          items-center shrink-0 w-10 h-6 bg-neutral-800 rounded-full
-        "
-      >
-        <SwitchDefault.Thumb
-          className="flex items-center justify-center w-5 h-5 rounded-full bg-neutral-50
-            data-[state=checked]:translate-x-4 duration-300 shadow-sm shadow-black/20 ease
-          "
-        />
+      <SwitchDefault.Control className={switchControlVariant()}>
+        <SwitchDefault.Thumb className={switchThumbVariant()} />
       </SwitchDefault.Control>
       {label && (
-        <SwitchDefault.Label className="text-neutral text-sm select-none">
+        <SwitchDefault.Label className={switchLabelVariant()}>
           {label}
         </SwitchDefault.Label>
       )}

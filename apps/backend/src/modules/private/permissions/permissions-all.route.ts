@@ -1,7 +1,8 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
-import Elysia from "elysia";
+import { withData } from "#/shared/schemas";
+import Elysia, { t } from "elysia";
 
 async function getPermissions() {
   const query = await general
@@ -17,4 +18,15 @@ export const permissionsListAll = new Elysia()
   .get("/list/all", async () => {
     const data = await getPermissions();
     return { data }
+  }, {
+    response: {
+      200: withData(
+        t.Array(
+          t.Object({
+            name: t.String(),
+            id: t.Number()
+          })
+        )
+      )
+    }
   })

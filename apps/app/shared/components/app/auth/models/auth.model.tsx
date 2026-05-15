@@ -49,14 +49,6 @@ authState.searchParams.onChange((ctx, state) => {
 authState.type.onChange((ctx) => auth.resetErrors(ctx));
 pof.token.onChange((ctx, state) => state !== null && pof.showTokenVerifySectionAtom.reset(ctx))
 
-export const isPofActiveAtom = atom((ctx) =>
-	spyOptionAtom(ctx, "flags", "isPof", true) ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
-);
-
-export const authIsDisabledAtom = atom((ctx) =>
-	ctx.spy(isPofActiveAtom) || ctx.spy(authState.isProcessing),
-);
-
 export const auth = atom(null, "auth").pipe(
 	withAssign((_, name) => ({
 		resetErrors: action((ctx) => {
@@ -90,39 +82,37 @@ export const auth = atom(null, "auth").pipe(
 export const authTriggerIsDisabledAtom = atom((ctx) =>
 	spyOptionAtom(ctx, "flags", "isPof", true) ? Boolean(ctx.spy(pof.token)) : false,
 );
+export const isPofActiveAtom = atom((ctx) =>
+	spyOptionAtom(ctx, "flags", "isPof", true) ? ctx.spy(pof.showTokenVerifySectionAtom) : false,
+);
+export const authIsDisabledAtom = atom((ctx) => ctx.spy(isPofActiveAtom) || ctx.spy(authState.isProcessing));
 
-const ERRORS_RECORDS = {
+const ERRORS = {
 	auth: {
 		"EXISTS": "Такой игрок уже зарегистрирован",
 		"NOT_EXISTS": "Такой игрок не зарегистрирован",
 		"PASSWORD_OR_LOGIN_INCORRECT": "Неверный никнейм или пароль",
-	},
-	system: {
 		"AUTHORIZATION_DISABLED": "Авторизация недоступна",
 		"IP_RESTRICTS": "Превышен лимит регистраций",
 	},
 	captcha: {
 		"TOKEN_NOT_FOUND": "Нужна проверка",
-		"PASSWORD_UNSAFE": "Пароль ненадежный",
+		"PASSWORD_IS_UNSAFE": "Пароль ненадежный",
 	},
 } as const;
 
-type ScopeName = keyof typeof ERRORS_RECORDS;
+type ScopeName = keyof typeof ERRORS;
+type ErrorKey = { [S in ScopeName]: keyof (typeof ERRORS)[S] }[ScopeName];
 
-export type ErrorKey = {
-	[S in ScopeName]: keyof (typeof ERRORS_RECORDS)[S];
-}[ScopeName] & string;
-
-export function getError(key: ErrorKey): { scope: ScopeName; message: string } | null {
-	for (const [name, errors] of Object.entries(ERRORS_RECORDS)) {
+function getError(key: ErrorKey): { scope: ScopeName; message: string } | null {
+	for (const [name, errors] of Object.entries(ERRORS)) {
 		if (key in errors) {
 			return { scope: name as ScopeName, message: (errors as Record<string, string>)[key] };
 		}
 	}
 	return null;
 }
-
-export const SCOPE_ACTIONS: Record<ScopeName, (ctx: Ctx) => void> = {
+const SCOPE_ACTIONS: Record<ScopeName, (ctx: Ctx) => void> = {
 	auth: (ctx) => {
 		authState.errorsType(ctx, (state) => [...state, "password"]);
 		authState.errorsType(ctx, (state) => [...state, "nickname"]);
@@ -130,6 +120,16 @@ export const SCOPE_ACTIONS: Record<ScopeName, (ctx: Ctx) => void> = {
 	captcha: (ctx) => {
 		pof.showTokenVerifySectionAtom(ctx, true);
 		pof.token.reset(ctx);
-	},
-	system: () => { },
+	}
 };
+
+export function defineError(ctx: Ctx, e: Error | unknown) {
+	if (e instanceof Error) {
+		const error = getError(e.message as ErrorKey);
+		if (!error) return;
+	
+		const { scope, message } = error;
+		authState.globalError(ctx, message);
+		SCOPE_ACTIONS[scope](ctx)
+	}
+}

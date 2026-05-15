@@ -88,7 +88,7 @@ export const register = {
 
     registerLogger.log(eventsExec, nickname);
   },
-  async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
+  async create(args: RegisterUser): Promise<{ nickname: string; created_at: string }> {
     const { trx, ip, nickname, password, hash } = args;
     const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
@@ -157,7 +157,10 @@ export const register = {
         this.afterRegistrationEvents({ nickname });
       }
 
-      return result;
+      return {
+        nickname: result.nickname,
+        created_at: result.created_at.toString()
+      };
     } catch (e) {
       registerLogger.error(e)
       throw e;

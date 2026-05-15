@@ -33,6 +33,12 @@ export function getIsAuthed(snapshot?: Snapshot): boolean {
   return isAuthed ?? false;
 }
 
+/** @constructor
+* @param {AppOptionsPayloadExtend} parentKey - is parent key
+* @param {AppOptionsPayloadExtend[K]} nestedKey - is nested key
+* @param {string} nestedKey2 - is nested key
+* @param {unknown} defaultValue - fallback value
+*/
 export function spyOptionAtom<
 	K extends keyof AppOptionsPayloadExtend,
 	S extends keyof AppOptionsPayloadExtend[K]

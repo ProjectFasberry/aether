@@ -6,7 +6,7 @@ import { createLink } from "@/shared/components/config/link"
 import { storeItem } from "../../models/store-item.model"
 import { CURRENCIES } from "./cart-price"
 import { cart, cartDataItemIsSelectAtom, type CartItem as CartItemProps } from "../../models/store-cart.model"
-import { changeRecipient } from "../../models/store-recipient.model"
+import { changeLocalRecipient } from "../../../settings/models/settings-store.model"
 import { Checkbox } from "@/shared/ui/checkbox"
 
 const CartItemRemoveFromCart = reatomComponent<{ id: number }>(({ ctx, id }) => {
@@ -71,7 +71,7 @@ export const CartItem = reatomComponent<CartItemProps>(({
             <Button
               background="default"
               className="p-0 h-8 aspect-square"
-              onClick={() => changeRecipient.openDialog(ctx, item)}
+              onClick={() => changeLocalRecipient.openDialog(ctx, item)}
             >
               <IconGift size={20} />
             </Button>

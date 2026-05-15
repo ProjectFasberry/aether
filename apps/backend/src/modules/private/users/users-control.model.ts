@@ -1,107 +1,112 @@
 import { general } from "#/shared/database/general-db"
-import * as z from "zod"
 import { rcon } from "#/shared/rcon/client";
 import { invariant } from "#/helpers/invariant";
+import { type Static, t } from "elysia";
 
-type ControlPayload = {
-  ok: boolean,
-  type: UsersControlSchema["type"] | UsersControlRestrictSchema["type"] | UsersControlRolesSchema["type"] | UsersControlPermissionsSchema["type"],
-  payload: string[]
-}
+const userControlTypeSchemaT = t.UnionEnum(["unlogin"])
+const userRestrictTypeSchemaT = t.UnionEnum(["ban", "unban", "unmute", "mute", "kick"])
+const userPermissionTypeSchema = t.UnionEnum(["change_role", "reset"]);
+const userPermissionsTypeSchema = t.UnionEnum(["add", "remove"]);
 
-const usersControlTargetsSchema = z.array(z.string())
+const nicknamesSchema = t.Array(t.String())
 
-export const usersControlRestrictSchema = z.object({
-  type: z.enum(["ban", "unban", "unmute", "mute", "kick", "unregister"]),
-  nicknames: usersControlTargetsSchema
+export const controlPayloadSchema = t.Object({
+  ok: t.Boolean(),
+  type: t.Union([
+    userControlTypeSchemaT,
+    userRestrictTypeSchemaT,
+    userPermissionTypeSchema,
+    userPermissionsTypeSchema
+  ]),
+  payload: nicknamesSchema
 })
 
-export const usersControlSchema = z.object({
-  type: z.enum(["unlogin"]),
-  nicknames: usersControlTargetsSchema
+export const userRestrictSchema = t.Object({
+  type: userRestrictTypeSchemaT,
+  nicknames: nicknamesSchema
+})
+export const userControlSchemaT = t.Object({
+  type: userControlTypeSchemaT,
+  nicknames: nicknamesSchema
+})
+export const userRolesSchema = t.Object({
+  type: userPermissionTypeSchema,
+  nicknames: nicknamesSchema,
+  targetRoleId: t.Number()
+})
+export const playersPermissionsSchema = t.Object({
+  type: userPermissionsTypeSchema,
+  target: t.Number(),
+  nicknames: nicknamesSchema
 })
 
-export const usersControlRolesSchema = z.object({
-  type: z.enum(["change_role", "reset"]),
-  nicknames: usersControlTargetsSchema,
-  targetRoleId: z.coerce.number()
-})
+type Payload = Static<typeof controlPayloadSchema>
 
-export const playersControlPermissionsSchema = z.object({
-  type: z.enum(["add", "remove"]),
-  target: z.coerce.number(),
-  nicknames: z.array(z.string())
-})
+type UserControlSchema = Static<typeof userControlSchemaT>
+type UserRolesSchema = Static<typeof userRolesSchema>
+type UserRestrictSchema = Static<typeof userRestrictSchema>
+type UserPermissionsSchema = Static<typeof playersPermissionsSchema>
 
-type UsersControlSchema = z.infer<typeof usersControlSchema>
-type UsersControlRolesSchema = z.infer<typeof usersControlRolesSchema>
-type UsersControlRestrictSchema = z.infer<typeof usersControlRestrictSchema>
-type UsersControlPermissionsSchema = z.infer<typeof playersControlPermissionsSchema>
+type BanCmdArgs =
+  | { type: "ban", time?: string, reason?: string }
+  | { type: "unban", time: never, reason: never }
 
-type BaseCmd = { nickname: string }
-
-type BanCmdArgs = | {
-  type: "ban",
-  time?: string,
-  reason?: string
-} | {
-  type: "unban",
-  time: never,
-  reason: never
-}
-
-type MuteCmdArgs = | {
-  type: "mute",
-  time: string,
-  reason?: string
-} | {
-  type: "unmute",
-  time: never,
-  reason: never
-}
+type MuteCmdArgs =
+  | { type: "mute", time: string, reason?: string }
+  | { type: "unmute", time: never, reason: never }
 
 type KickCmdArgs = { reason?: string }
 
-const getBanCmd = ({ type, nickname, reason, time }: BaseCmd & BanCmdArgs) => `${type} ${nickname} ${time} ${reason}`
-const getKickCmd = ({ nickname, reason }: BaseCmd & KickCmdArgs) => `kick ${nickname} ${reason}`
-const getMuteCmd = ({ type, nickname, time, reason }: BaseCmd & MuteCmdArgs) => `${type} ${nickname} ${time} ${reason}`
+type ExecCmdArgs =
+  | { type: "ban", args: BanCmdArgs }
+  | { type: "mute", args: MuteCmdArgs }
+  | { type: "kick", args: KickCmdArgs }
+  | { type: "unban", args?: never }
+  | { type: "unmute", args?: never }
 
-type ExecCmdFnReturn = string
-type ExecCmdFn = (payload: any) => ExecCmdFnReturn;
-
-const EXEC_CMDS: Record<UsersControlRestrictSchema["type"], ExecCmdFn> = {
-  ban: getBanCmd,
-  unban: getBanCmd,
-  mute: getMuteCmd,
-  unmute: getMuteCmd,
-  kick: getKickCmd,
+const EXEC_CMDS: Record<UserRestrictSchema["type"], (payload: any) => string> = {
+  ban: ({ type, nickname, time, reason }) => `${type} ${nickname} ${time} ${reason}`,
+  unban: ({ type, nickname, time, reason }) => `${type} ${nickname} ${time} ${reason}`,
+  mute: ({ type, nickname, reason, time }) => `${type} ${nickname} ${time} ${reason}`,
+  unmute: ({ type, nickname, reason, time }) => `${type} ${nickname} ${time} ${reason}`,
+  kick: ({ nickname, reason }) => `kick ${nickname} ${reason}`,
 }
 
-type ExecCmdArgs = | {
-  type: "ban",
-  args: BanCmdArgs
-} | {
-  type: "mute",
-  args: MuteCmdArgs
-} | {
-  type: "kick",
-  args: KickCmdArgs
-} | {
-  type: "unban",
-  args?: never
-} | {
-  type: "unmute",
-  args?: never
-} | {
-  type: "unregister",
-  args: KickCmdArgs
+const RESTRICT_EVENTS: Record<UserRestrictSchema["type"], (t: Nicknames, a: unknown) => Promise<Payload>> = {
+  ban: async (nicknames, args) => {
+    const type = "ban"
+    await execCmd({ type, nicknames, args: { ...args as Omit<BanCmdArgs, "type">, type } })
+    return { ok: true, type, payload: nicknames }
+  },
+  unban: async (nicknames) => {
+    const type = "unban"
+    await execCmd({ type, nicknames })
+    return { ok: true, type, payload: nicknames }
+  },
+  mute: async (nicknames, args) => {
+    const type = "mute"
+    await execCmd({ type, nicknames, args: { ...args as Omit<MuteCmdArgs, "type">, type } })
+    return { ok: true, type, payload: nicknames }
+  },
+  unmute: async (nicknames) => {
+    const type = "unmute"
+    await execCmd({ type, nicknames })
+    return { ok: true, type, payload: nicknames }
+  },
+  kick: async (nicknames, args) => {
+    const type = "kick"
+    await execCmd({ type, nicknames, args: args as KickCmdArgs });
+    return { ok: true, type, payload: nicknames }
+  },
 }
 
-type ExecCmd = ExecCmdArgs & { nicknames: UsersControlSchema["nicknames"] }
+const CONTROL_EVENTS: Record<UserControlSchema["type"], (t: Nicknames) => Promise<Payload>> = {
+  unlogin: (t) => unloginUsers(t),
+}
 
 async function execCmd({
   type, nicknames, args: rawArgs
-}: ExecCmd) {
+}: ExecCmdArgs & { nicknames: UserControlSchema["nicknames"] }): Promise<string[]> {
   const client = rcon.get()
 
   function stripMinecraftColors(text: string): string {
@@ -121,68 +126,22 @@ async function execCmd({
     const cmd = await client.send(toExec);
     return stripMinecraftColors(cmd.toString());
   });
-  
-  let result: string[];
 
-  try {
-    result = await Promise.all(tasks);
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-
+  const result: string[] = await Promise.all(tasks)
   invariant(nicknames.length === result.length, "Not updated")
-
   return result
 }
 
-type Nicknames = UsersControlSchema["nicknames"]
+type Nicknames = Static<typeof nicknamesSchema>
 
 async function alert(msg: string) {
-  const client = rcon.get()
-  await client.send(`alert ${msg}`)
-}
-
-async function banUsers(nicknames: Nicknames, args: Omit<BanCmdArgs, "type">): Promise<ControlPayload> {
-  const type = "ban"
-  await execCmd({ type, nicknames, args: { ...args, type } })
-  return { ok: true, type, payload: nicknames }
-}
-
-async function unbanUsers(nicknames: Nicknames): Promise<ControlPayload> {
-  const type = "unban"
-  await execCmd({ type, nicknames })
-  return { ok: true, type, payload: nicknames }
-}
-
-async function muteUsers(nicknames: Nicknames, args: Omit<MuteCmdArgs, "type">): Promise<ControlPayload> {
-  const type = "mute"
-  await execCmd({ type, nicknames, args: { ...args, type } })
-  return { ok: true, type, payload: nicknames }
-}
-
-async function unmuteUsers(nicknames: Nicknames): Promise<ControlPayload> {
-  const type = "unmute"
-  await execCmd({ type, nicknames })
-  return { ok: true, type, payload: nicknames }
-}
-
-async function kickUsers(nicknames: Nicknames, args: KickCmdArgs): Promise<ControlPayload> {
-  const type = "kick"
-  await execCmd({ type, nicknames, args });
-  return { ok: true, type, payload: nicknames }
-}
-
-async function unregisterUsers(nicknames: Nicknames, args: KickCmdArgs): Promise<ControlPayload> {
-  console.log(nicknames, args);
-
-  return { ok: true, type: "unregister", payload: nicknames }
+  await rcon.get().send(`alert ${msg}`)
 }
 
 export async function changeRoleUsers(
-  nicknames: UsersControlSchema["nicknames"],
-  { type, targetRoleId }: Omit<UsersControlRolesSchema, "nicknames">
-): Promise<ControlPayload> {
+  nicknames: UserControlSchema["nicknames"],
+  { type, targetRoleId }: Omit<UserRolesSchema, "nicknames">
+) {
   if (type === 'change_role') {
     const query = await general
       .updateTable("players")
@@ -190,8 +149,6 @@ export async function changeRoleUsers(
       .where("nickname", "in", nicknames)
       .returning("nickname")
       .execute()
-
-    console.log(query);
 
     return { ok: true, type, payload: nicknames }
   }
@@ -203,38 +160,32 @@ export async function changeRoleUsers(
   throw new Error(`Change role type is not defined "${type}"`)
 }
 
-async function unloginUsers(nicknames: Nicknames): Promise<ControlPayload> {
+async function unloginUsers(nicknames: Nicknames): Promise<Payload> {
   return { ok: true, type: "unlogin", payload: nicknames }
 }
 
-const TARGETS_EVENTS: Record<UsersControlRestrictSchema["type"], (t: Nicknames, a: unknown) => Promise<ControlPayload>> = {
-  ban: (t, args) => banUsers(t, args as BanCmdArgs),
-  unban: (t) => unbanUsers(t),
-  mute: (t, args) => muteUsers(t, args as MuteCmdArgs),
-  unmute: (t) => unmuteUsers(t),
-  kick: (t, args) => kickUsers(t, args as KickCmdArgs),
-  unregister: (t, args) => unregisterUsers(t, args as KickCmdArgs)
-}
+export async function restrictUser({ nicknames, args, type }: UserRestrictSchema & { args: unknown }) {
+  const event = RESTRICT_EVENTS[type];
+  invariant(event, "Event is not defined");
 
-export async function controlRestrictUsers({ nicknames, args, type }: UsersControlRestrictSchema & { args: unknown }) {
-  const event = TARGETS_EVENTS[type];
   const result = await event(nicknames, args)
   alert(`${JSON.stringify(result)}`)
+
   return result
 }
 
-export async function controlUsers({ nicknames, type }: UsersControlSchema) {
-  const TARGETS_EVENTS: Record<UsersControlSchema["type"], (t: UsersControlSchema["nicknames"]) => Promise<ControlPayload>> = {
-    unlogin: (targets) => unloginUsers(targets),
-  }
+export async function controlUser({ nicknames, type }: UserControlSchema) {
+  const event = CONTROL_EVENTS[type];
+  invariant(event, "Event is not defined");
 
-  const event = TARGETS_EVENTS[type];
-  return event(nicknames)
+  const result = await event(nicknames);
+  alert(`${JSON.stringify(result)}`)
+
+  return result
 }
 
 export async function editPlayerRole(
-  nicknames: string[],
-  { target, type }: Omit<UsersControlPermissionsSchema, "nicknames">
+  { nicknames, target, type }: Omit<UserPermissionsSchema, "nicknames"> & { nicknames: string[] }
 ) {
   return {}
 }

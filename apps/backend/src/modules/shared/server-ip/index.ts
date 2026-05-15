@@ -1,9 +1,9 @@
 import { urls } from "#/shared/constants/urls";
-import { MAP_URL } from "#/shared/env";
+import { env } from "#/shared/env";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 
-const getServerMapUrl = (v: string) => MAP_URL.replace("[X]", v)
+const getServerMapUrl = (v: string) => env.MAP_URL.replace("[X]", v)
 
 const servers = [
   { name: "Bisquite", value: "bisquite", href: getServerMapUrl("bisquite"), img: "" },

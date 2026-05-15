@@ -1,20 +1,10 @@
 import {
-  IconAspectRatio,
-  IconBuildingStore,
-  IconDeviceDesktop,
-  IconLink,
-  IconLogout2,
-  IconShieldHalfFilled,
-  IconUserCircle,
+  IconAspectRatio, IconBuildingStore, IconDeviceDesktop, IconLink, IconLogout2, IconShieldHalfFilled, IconUserCircle,
   type TablerIcon
 } from "@tabler/icons-react"
 import {
-  settings,
-  SETTINGS_NAVIGATION,
-  type SettingsNavigation,
-  type SettingsNavigationNode,
-  settingsNavigationItemIsActiveAtom,
-  type SettingsParent
+  settings, SETTINGS_NAVIGATION, settingsNavigationItemIsActiveAtom,
+  type SettingsNavigation, type SettingsNavigationNode, type SettingsParent
 } from "../models/settings.model"
 import { tv } from "tailwind-variants"
 import { reatomComponent } from "@reatom/npm-react"
@@ -25,41 +15,20 @@ type SettingsNavigationItem = { icon: TablerIcon, className?: string }
 
 const SETTINGS_NAVIGATION_ICONS: Partial<Record<SettingsParent, Record<string, SettingsNavigationItem>>> = {
   main: {
-    account: {
-      icon: IconUserCircle
-    },
-    devices: {
-      icon: IconDeviceDesktop
-    },
-    security: {
-      icon: IconShieldHalfFilled
-    },
-    connections: {
-      icon: IconLink
-    },
-    store: {
-      icon: IconBuildingStore
-    }
+    account: { icon: IconUserCircle },
+    devices: { icon: IconDeviceDesktop },
+    security: { icon: IconShieldHalfFilled },
+    connections: { icon: IconLink },
+    store: { icon: IconBuildingStore }
   },
   app: {
-    appearance: {
-      icon: IconAspectRatio
-    }
+    appearance: { icon: IconAspectRatio }
   },
   account: {
     logout: {
-      className: "text-red",
-      icon: IconLogout2
+      className: "text-red", icon: IconLogout2
     }
   }
-}
-
-type NavigationItemProps = SettingsNavigation & {
-  parent: SettingsParent
-}
-type NavigationItemNodeProps = {
-  parent: SettingsParent,
-  node: SettingsNavigationNode
 }
 
 const navigationItemNodeVariant = tv({
@@ -81,17 +50,18 @@ const AS_EVENTS: Record<NonNullable<SettingsNavigationNode["as"]>, Handler> = {
   "link": (ctx, node, parent) => settings.navigate(ctx, parent, node.value)
 }
 
-const NavigationItemNode = reatomComponent<NavigationItemNodeProps>(({ ctx, node, parent }) => {
+const NavigationItemNode = reatomComponent<{ parent: SettingsParent, node: SettingsNavigationNode }>(({ 
+  ctx, node, parent 
+}) => {
   const isActive = ctx.spy(settingsNavigationItemIsActiveAtom(parent, node.value))
   const variant = isActive ? "active" : "default"
 
   const Icon: TablerIcon | undefined = SETTINGS_NAVIGATION_ICONS[parent]?.[node.value]?.icon
   const className = SETTINGS_NAVIGATION_ICONS[parent]?.[node.value]?.className
-  const handle = (): void => AS_EVENTS[node.as ?? "link"](ctx, node, parent)
 
   return (
     <Button
-      onClick={handle}
+      onClick={() => AS_EVENTS[node.as ?? "link"](ctx, node, parent)}
       className={navigationItemNodeVariant({ variant, className })}
     >
       {Icon && <Icon size={20} />}
@@ -100,7 +70,7 @@ const NavigationItemNode = reatomComponent<NavigationItemNodeProps>(({ ctx, node
   )
 }, "NavigationItemNode")
 
-const NavigationItem = ({ parent, title, nodes }: NavigationItemProps) => {
+const NavigationItem = ({ parent, title, nodes }: SettingsNavigation & { parent: SettingsParent }) => {
   return (
     <div className="flex flex-col gap-2">
       {title && (
@@ -117,13 +87,9 @@ const NavigationItem = ({ parent, title, nodes }: NavigationItemProps) => {
   )
 }
 
-const SettingsNavigationList = () => {
-  const data = Object.entries(SETTINGS_NAVIGATION)
-  return data.map(([key, section]) => (
-    <NavigationItem key={key} parent={key as SettingsParent} {...section} />
-  ))
-}
-
+const SettingsNavigationList = () => Object.entries(SETTINGS_NAVIGATION).map(([key, section]) => (
+  <NavigationItem key={key} parent={key as SettingsParent} {...section} />
+))
 export const SettingsNavigationDesktop = () => {
   return (
     <div className="flex flex-col w-full gap-6">
@@ -131,7 +97,6 @@ export const SettingsNavigationDesktop = () => {
     </div>
   )
 }
-
 export const SettingsNavigationMobile = () => {
   return (
     <div className="flex flex-col gap-6 mt-4 w-full h-full overflow-x-hidden overflow-y-auto">

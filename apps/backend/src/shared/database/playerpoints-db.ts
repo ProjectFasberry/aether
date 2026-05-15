@@ -3,18 +3,28 @@ import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { poolOptsHooks } from "./lobby-db";
-import { PLAYERPOINTS_MYSQL_URI as uri } from "../env";
+import { env } from "../env";
 
 const config: PoolOptions = {
-  uri,
+  uri: env.PLAYERPOINTS_MYSQL_URI,
   connectionLimit: 10
 }
 
 export const playerPointsPool: Pool = createPool(config)
+const opts = poolOptsHooks("Playerpoints")
 
 export const playerpoints = new Kysely<playerPointsDBType>({
   dialect: new MysqlDialect({
     pool: playerPointsPool,
-    ...poolOptsHooks("Playerpoints")
-  })
+    ...opts.hooks
+  }),
+  log(event) {
+    if (event.level === "error") {
+      opts.dbLogger.error("Query failed : ", {
+        durationMs: event.queryDurationMillis,
+        error: event.error,
+        sql: event.query.sql
+      });
+    }
+  }
 });

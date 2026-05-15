@@ -1,51 +1,64 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@/shared/ui/input";
-import { changeRecipient, changeRecipientState, changeGlobalRecipientIsValidAtom } from "../../shop/models/store-recipient.model";
+import { changeGlobalRecipient, changeGlobalRecipientState, changeGlobalRecipientIsValidAtom } from "../models/settings-store.model";
 import { Button } from "@/shared/ui/button";
-import { atom } from "@reatom/framework";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
-import { IconDeviceFloppy } from "@tabler/icons-react";
-
-const isDisabledAtom = atom((ctx) =>
-  !ctx.spy(changeGlobalRecipientIsValidAtom) || 
-  ctx.spy(changeRecipient.submitGlobal.statusesAtom).isPending,
-)
+import { IconX } from "@tabler/icons-react";
+import { currentUserState } from "@/shared/models/current-user/index.model";
 
 const GlobalRecipient = reatomComponent(({ ctx }) => {
-  const oldRecipient = ctx.get(changeRecipientState.global.oldRecipient) ?? ""
-  const newRecipient = ctx.spy(changeRecipientState.global.newRecipient)
+  const oldRecipient = ctx.spy(changeGlobalRecipientState.oldRecipient) ?? ""
+  const newRecipient = ctx.spy(changeGlobalRecipientState.newRecipient)
+  const error = ctx.spy(changeGlobalRecipientState.error)
 
-  const error = ctx.spy(changeRecipientState.global.error)
+  const handle = (e: React.FormEvent) => {
+    e.preventDefault();
+    changeGlobalRecipient.submit(ctx)
+  }
 
   return (
     <SettingsSection
       title="Текущий получатель"
       description="Получатель, который присваивается всем добавленным товарам в корзину."
-      component={
-        <div className="flex items-center w-full min-w-0 justify-between gap-2">
+    >
+      <form onSubmit={handle} className="flex items-start w-full min-w-0 justify-between gap-2">
+        <div className="flex flex-col flex-1 gap-1 w-[70%]">
           <Input
             value={newRecipient ?? oldRecipient}
             placeholder="Введите никнейм"
-            onChange={e => changeRecipientState.global.newRecipient(ctx, e.target.value)}
+            onChange={e => changeGlobalRecipientState.newRecipient(ctx, e.target.value)}
             maxLength={32}
-            onClick={() => changeRecipientState.global.error.reset(ctx)}
-            aria-invalid={!!error}
-            className="flex-1 w-[70%] h-10 bg-neutral-700"
+            variant={error ? "danger" : "default"}
+            onClick={() => changeGlobalRecipientState.error.reset(ctx)}
+            className="w-full h-10 bg-neutral-700"
           />
-          <Button
-            onClick={() => changeRecipient.submitGlobal(ctx)}
-            className="p-0! aspect-square h-10 font-semibold"
-            background="white"
-            disabled={ctx.spy(isDisabledAtom)}
-          >
-            <IconDeviceFloppy />
-          </Button>
-          {error && (
-            <span className="text-red text-sm">{error}</span>
-          )}
+          {error && <span className="text-red text-sm">{error}</span>}
         </div>
-      }
-    />
+        <div className="flex gap-1 items-center">
+          {ctx.spy(currentUserState)?.nickname !== oldRecipient && (
+            <Button
+              type="button"
+              className="h-10 w-10 p-0 font-semibold aspect-square"
+              background="white"
+              disabled={ctx.spy(changeGlobalRecipient.submit.statusesAtom).isPending}
+              onClick={() => changeGlobalRecipient.resetToDefault(ctx)}
+            >
+              <IconX size={18} />
+            </Button>
+          )}
+          <Button
+            type="submit"
+            className="h-10 text-sm font-semibold"
+            background="white"
+            withSpinner
+            isLoading={ctx.spy(changeGlobalRecipient.submit.statusesAtom).isPending}
+            disabled={!ctx.spy(changeGlobalRecipientIsValidAtom) || ctx.spy(changeGlobalRecipient.submit.statusesAtom).isPending}
+          >
+            Сохранить
+          </Button>
+        </div>
+      </form>
+    </SettingsSection>
   )
 }, "GlobalRecipient")
 

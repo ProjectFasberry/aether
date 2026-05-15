@@ -1,5 +1,4 @@
 import Elysia from "elysia";
-import { favoriteItem } from "#/modules/server/favorite-item/favorite-item.route";
 import { playerLocation } from "#/modules/server/location";
 import { playerStats } from "./player-stats.route";
 import { player } from "#/modules/user/player.route";
@@ -18,7 +17,6 @@ export const playerGroup = new Elysia()
     .use(playerActivity)
     .use(playerAchievements)
     .use(playerLocation)
-    .use(favoriteItem)
     .use(seemsPlayers)
     .use(balance)
     .use(playerSocials)

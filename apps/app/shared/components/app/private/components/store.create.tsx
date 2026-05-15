@@ -4,17 +4,7 @@ import { type AtomState, type Ctx } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { Input } from "@/shared/ui/input";
 import { EditorContent, useEditor } from "@tiptap/react";
-import {
-  createStoreItemAction,
-  createStoreItemContentAtom,
-  createStoreItemСommandAtom,
-  createStoreItemCurrencyAtom,
-  createStoreItemImageUrlAtom,
-  createStoreItemPriceAtom,
-  createStoreItemTitleAtom,
-  createStoreItemValueAtom,
-  createStoreItemTypeAtom
-} from "../models/store.model";
+import { createStoreItem, createStoreItemState } from "../models/store.model";
 import { Button } from "@/shared/ui/button";
 import { Typography } from "@/shared/ui/typography";
 import { IconCheck, IconSelector, IconX } from "@tabler/icons-react";
@@ -43,7 +33,7 @@ export const CreateItem = reatomComponent(({ ctx }) => {
   const editor = useEditor({
     extensions: editorExtensions,
     onUpdate: ({ editor }) => {
-      createStoreItemContentAtom(ctx, editor.getJSON())
+      createStoreItemState.content(ctx, editor.getJSON())
     }
   })
 
@@ -60,18 +50,18 @@ export const CreateItem = reatomComponent(({ ctx }) => {
   return (
     <div className="flex flex-col gap-2 w-full h-full">
       <Input
-        value={ctx.spy(createStoreItemTitleAtom)}
-        onChange={e => createStoreItemTitleAtom(ctx, e.target.value)}
+        value={ctx.spy(createStoreItemState.title)}
+        onChange={e => createStoreItemState.title(ctx, e.target.value)}
         placeholder="Заголовок"
       />
       <Input
-        value={ctx.spy(createStoreItemValueAtom) ?? ""}
-        onChange={e => createStoreItemValueAtom(ctx, e.target.value)}
+        value={ctx.spy(createStoreItemState.value) ?? ""}
+        onChange={e => createStoreItemState.value(ctx, e.target.value)}
         placeholder="Значение"
       />
       <Input
-        value={ctx.spy(createStoreItemСommandAtom) ?? ""}
-        onChange={e => createStoreItemСommandAtom(ctx, e.target.value)}
+        value={ctx.spy(createStoreItemState.command) ?? ""}
+        onChange={e => createStoreItemState.command(ctx, e.target.value)}
         placeholder="Команда для выдачи"
       />
       <Input
@@ -80,26 +70,26 @@ export const CreateItem = reatomComponent(({ ctx }) => {
           if (!e.target.files) return;
           const file = e.target.files[0]
 
-          createStoreItemImageUrlAtom(ctx, URL.createObjectURL(file))
+          createStoreItemState.imgUrl(ctx, URL.createObjectURL(file))
         }}
       />
       <div className="flex items-center gap-2 w-full">
         <Input
-          value={ctx.spy(createStoreItemPriceAtom) ?? ""}
-          onChange={e => createStoreItemPriceAtom(ctx, e.target.value)}
+          value={ctx.spy(createStoreItemState.price) ?? ""}
+          onChange={e => createStoreItemState.price(ctx, e.target.value)}
           placeholder="Цена"
           type="number"
           className="bg-transparent border border-neutral-800 text-sm h-8 w-fit"
         />
         <Select.Root
           collection={collectionf}
-          onValueChange={({ value }) => createStoreItemCurrencyAtom(ctx, value[0] as AtomState<typeof createStoreItemCurrencyAtom>)}
+          onValueChange={({ value }) => createStoreItemState.currency(ctx, value[0] as AtomState<typeof createStoreItemState.currency>)}
           className="flex flex-col gap-1 w-full"
         >
           <Select.Control className={selectControlVariant()}>
             <Select.Trigger className={selectTriggerVariant()}>
               <Select.ValueText className="border border-neutral-800 h-8 px-4">
-                {getCurrencyTitle(ctx, ctx.spy(createStoreItemCurrencyAtom))}
+                {getCurrencyTitle(ctx, ctx.spy(createStoreItemState.currency))}
               </Select.ValueText>
             </Select.Trigger>
             <div className={selectIndicatorsVariant()}>
@@ -133,13 +123,13 @@ export const CreateItem = reatomComponent(({ ctx }) => {
         </Select.Root>
         <Select.Root
           collection={collectionss}
-          onValueChange={({ value }) => createStoreItemTypeAtom(ctx, value[0] as AtomState<typeof createStoreItemTypeAtom>)}
+          onValueChange={({ value }) => createStoreItemState.type(ctx, value[0] as AtomState<typeof createStoreItemState.type>)}
           className="flex flex-col gap-1 w-full"
         >
           <Select.Control className={selectControlVariant()}>
             <Select.Trigger className={selectTriggerVariant()}>
               <Select.ValueText className="border border-neutral-800 h-8 px-4">
-                {getCurrencyTitle(ctx, ctx.spy(createStoreItemCurrencyAtom))}
+                {getCurrencyTitle(ctx, ctx.spy(createStoreItemState.currency))}
               </Select.ValueText>
             </Select.Trigger>
             <div className={selectIndicatorsVariant()}>
@@ -179,8 +169,8 @@ export const CreateItem = reatomComponent(({ ctx }) => {
       <div className="flex items-center justify-end w-full">
         <Button
           className="h-10 w-fit items-center gap-2 justify-center px-4 bg-neutral-800"
-          onClick={() => createStoreItemAction(ctx)}
-          disabled={ctx.spy(createStoreItemAction.statusesAtom).isPending}
+          onClick={() => createStoreItem.submit(ctx)}
+          disabled={ctx.spy(createStoreItem.submit.statusesAtom).isPending}
         >
           <Typography className="font-semibold text-lg text-neutral-50">
             Создать

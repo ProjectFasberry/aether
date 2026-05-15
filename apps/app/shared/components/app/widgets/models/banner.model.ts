@@ -1,7 +1,7 @@
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { appState } from "@/shared/models/app/index.model";
-import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework";
+import { reatomAsync, withCache, withDataAtom, withStatusesAtom, type AtomState } from "@reatom/framework";
 import { action, atom } from "@reatom/framework";
 import { withAssign } from "@reatom/framework";
 
@@ -27,15 +27,21 @@ export const banner = atom(null, "banner").pipe(
     ),
     createView: reatomAsync(async (ctx, id: number) => {
       return await ctx.schedule(() =>
-        client.post<unknown>(`shared/banner/view/${id}`).exec()
+        client.post<ExtractApiData<"postSharedBannerViewById">["data"]>(`shared/banner/view/${id}`).exec()
       )
     }, {
       name: `${name}.createView`,
       onFulfill: (ctx, res) => {
-        // appState.options(ctx, (state) => ({ ...state, bannerIsExists: false }))
+        if (!res) return;
+
+        appState.options(ctx, (state) => {
+          const prev = state as NonNullable<AtomState<typeof appState.options>>
+          return { ...prev, flags: { ...prev.flags, isBanner: false } }
+        })
+
         banner.refetchAll(ctx)
       },
-      onReject: (ctx, e) => logError(e)
+      onReject: (_, e) => logError(e)
     }).pipe(
       withStatusesAtom()
     )

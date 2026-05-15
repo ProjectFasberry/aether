@@ -1,102 +1,24 @@
 import dayjs from "@/shared/lib/create-dayjs"
-import { client } from "@/shared/lib/client-wrapper"
-import { reatomAsync, withDataAtom, withStatusesAtom } from "@reatom/framework"
-import { reatomComponent, useAtom, useUpdate } from "@reatom/npm-react"
-import { Skeleton } from "@/shared/ui/skeleton"
+import { reatomComponent, useAtom } from "@reatom/npm-react"
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/table"
-import { action, atom } from "@reatom/framework"
-import { env } from "@/shared/env"
-import { toast } from "sonner"
-import { reatomMap, sleep, withReset } from "@reatom/framework"
-import { onDisconnect } from "@reatom/framework"
 import { tv } from "tailwind-variants"
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { createPageModel } from "@/shared/lib/events"
-
-type HistoryPayload = {
-  event: string;
-  id: number;
-  created_at: Date;
-  initiator: string;
-}
-
-const esAtom = atom<EventSource | null>(null, "").pipe(withReset())
-const historyItemsStatusesAtom = reatomMap<number, { loaded: boolean }>()
-
-historyItemsStatusesAtom.onChange((ctx, v) => console.log("historyItemsStatusesAtom", v))
-
-const reLoadAction = action(async (ctx, id: number) => {
-  await ctx.schedule(() => sleep(2000))
-  historyItemsStatusesAtom.delete(ctx, id)
-}, "reLoadAction")
-
-historyItemsStatusesAtom.onChange((ctx, state) => {
-  if (!state) return;
-
-  const first = state.entries().next().value;
-
-  if (first) {
-    const [id, state] = first;
-    reLoadAction(ctx, id)
-  }
-})
-
-esAtom.onChange((ctx, state) => {
-  if (!state) return;
-
-  state.onopen = () => {
-    if (import.meta.env.DEV) {
-      toast.success("Connected to history events")
-    }
-  }
-
-  state.addEventListener("config", (event) => {})
-  state.addEventListener("ping", (event) => {})
-
-  state.addEventListener("payload", (event) => {
-    try {
-      const msg = JSON.parse(event.data) as HistoryPayload
-
-      historyListAction.dataAtom(ctx, (state) => state ? [msg, ...state] : [msg])
-      historyItemsStatusesAtom.getOrCreate(ctx, msg.id, () => ({ loaded: true }))
-
-    } catch (e) {
-      console.error('Failed to parse message data:', event.data, e);
-    }
-  })
-})
-
-onDisconnect(esAtom, (ctx) => {
-  const source = ctx.get(esAtom);
-  if (!source) return;
-
-  source.close()
-  esAtom.reset(ctx)
-})
-
-const historyListAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() =>
-    client<HistoryPayload[]>("privated/history/list").exec()
-  )
-}).pipe(withDataAtom(), withStatusesAtom())
+import { PageLoader } from "@/shared/ui/page-loader"
+import { createEs } from "@/shared/lib/utils"
+import { getHistoryItemStatusAtom, history, historyState, type HistoryPayload } from "@/shared/components/app/private/models/history.model"
 
 const historyListItemVariant = tv({
   base: ``,
   variants: {
     variant: {
-      default: "",
-      selected: "animate-[flash_2s_ease-out_forwards] w-full"
+      default: "", selected: "animate-[flash_2s_ease-out_forwards] w-full"
     }
   }
 })
 
-const getHistoryItemStatusAtom = (id: number) => atom(
-  (ctx) => ctx.spy(historyItemsStatusesAtom).get(id)?.loaded ?? false,
-  "getHistoryItemStatus"
-)
-
-const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({ 
-  ctx, id, idx, initiator, event, created_at 
+const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({
+  ctx, id, idx, initiator, event, created_at
 }) => {
   const isLoaded = ctx.spy(getHistoryItemStatusAtom(id));
 
@@ -106,12 +28,8 @@ const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({
   return (
     <TableRow className={historyListItemVariant({ variant })}>
       <TableCell className="font-medium">{idx + 1}</TableCell>
-      <TableCell>
-        {initiator}
-      </TableCell>
-      <TableCell title={event}>
-        {eventTitle}
-      </TableCell>
+      <TableCell>{initiator}</TableCell>
+      <TableCell title={event}>{eventTitle}</TableCell>
       <TableHead className="text-right">
         {dayjs(created_at).format("DD.MM.YYYY hh:mm")}
       </TableHead>
@@ -119,27 +37,10 @@ const HistoryListItem = reatomComponent<HistoryPayload & { idx: number }>(({
   )
 }, "HistoryListItem")
 
-const HistoryListSkeleton = () => {
-  return (
-    <>
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-24 w-full" />
-    </>
-  )
-}
-
 const HistoryList = reatomComponent(({ ctx }) => {
-  useUpdate(historyListAction, []);
+  if (ctx.spy(history.fetch.statusesAtom).isPending) return <PageLoader />
 
-  const data = ctx.spy(historyListAction.dataAtom);
-
-  if (ctx.spy(historyListAction.statusesAtom).isPending) {
-    return <HistoryListSkeleton />
-  }
-
+  const data = ctx.spy(history.fetch.dataAtom);
   if (!data) return null;
 
   return (
@@ -154,9 +55,7 @@ const HistoryList = reatomComponent(({ ctx }) => {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.map((item, idx) => (
-          <HistoryListItem key={item.id} {...item} idx={idx} />
-        ))}
+        {data.map((item, idx) => <HistoryListItem key={item.id} {...item} idx={idx} />)}
       </TableBody>
     </Table>
   )
@@ -164,20 +63,26 @@ const HistoryList = reatomComponent(({ ctx }) => {
 
 const page = createPageModel({
   name: "private.history",
-  onConnAction: (ctx, dataAtom) => {
-    const es = new EventSource(`${env.VITE_API_URL}/privated/history/events`, { withCredentials: true })
-    if (!es) return;
+  onConnAction: (ctx) => {
+    history.fetch(ctx);
 
-    const current = ctx.get(esAtom)
+    const es = createEs("privated/history/events", { withCredentials: true })
+    const current = ctx.get(historyState.es)
 
     if (current) {
-      toast.info("Current es atom defined")
       current.close()
-      esAtom(ctx, es)
+      historyState.es(ctx, es)
       return
     }
 
-    esAtom(ctx, es)
+    historyState.es(ctx, es)
+  },
+  onDisconnAction: (ctx) => {
+    const source = ctx.get(historyState.es);
+    if (!source) return;
+
+    source.close()
+    historyState.es.reset(ctx)
   }
 })
 

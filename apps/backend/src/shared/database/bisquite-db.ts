@@ -3,18 +3,28 @@ import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { poolOptsHooks } from "./lobby-db";
-import { BISQUITE_MYSQL_URI as uri } from "../env";
+import { env } from "../env";
 
 const config: PoolOptions = {
-  uri,
+  uri: env.BISQUITE_MYSQL_URI,
   connectionLimit: 10,
 }
 
 export const bisquitePool: Pool = createPool(config)
+const opts = poolOptsHooks("Bisquite")
 
 export const bisquite = new Kysely<bisquiteDBType>({
   dialect: new MysqlDialect({
     pool: bisquitePool,
-    ...poolOptsHooks("Bisquite")
-  })
+    ...opts.hooks
+  }),
+  log(event) {
+    if (event.level === "error") {
+      opts.dbLogger.error("Query failed : ", {
+        durationMs: event.queryDurationMillis,
+        error: event.error,
+        sql: event.query.sql
+      });
+    }
+  }
 });

@@ -7,7 +7,7 @@ import pLimit from "p-limit";
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 import { BUCKETS, minio } from "#/shared/minio/client";
-import { isProduction, MINESKIN_AES_SECRET_KEY, MINESKIN_API_KEY, VOLUME_URL } from "#/shared/env";
+import { isProduction, env } from "#/shared/env";
 import { logger } from "#/utils/config/logger";
 import * as z from "zod";
 import {
@@ -135,7 +135,7 @@ export async function getSkinsHistory({ nickname }: { nickname: string }) {
 }
 
 const getDefaultSkinHead = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
-const getCustomHead = (nickname: string, identifier: string) => `${VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
+const getCustomHead = (nickname: string, identifier: string) => `${env.VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
 
 function isCustomSkin(identifier: string) {
   return identifier.startsWith("sr")
@@ -857,9 +857,9 @@ function getMineSkinErrorMessage(response: MineSkinGenericResponse): string {
 }
 
 function getMineSkinClient(): KyInstance {
-  if (!MINESKIN_API_KEY) throw new ConfigurationError("MineSkin API key is not configured")
+  if (!env.MINESKIN_API_KEY) throw new ConfigurationError("MineSkin API key is not configured")
 
-  const keyT = MINESKIN_API_KEY.trim()
+  const keyT = env.MINESKIN_API_KEY.trim()
   if (!keyT) throw new ConfigurationError("MineSkin API key is empty")
 
   const Authorization = keyT.startsWith("Bearer ") ? keyT : `Bearer ${keyT}`
@@ -948,12 +948,12 @@ function ensureHttpsTextureUrl(url?: string | null): string | undefined {
 
 function encryptMineSkinUuid(uuid: string): string {
   function getAesSecretKey(): Buffer {
-    if (!MINESKIN_AES_SECRET_KEY) {
+    if (!env.MINESKIN_AES_SECRET_KEY) {
       throw new ConfigurationError("AES_SECRET_KEY environment variable is not set");
     }
 
     // Use SHA-256 to derive a 32-byte key
-    return createHash("sha256").update(MINESKIN_AES_SECRET_KEY).digest();
+    return createHash("sha256").update(env.MINESKIN_AES_SECRET_KEY).digest();
   }
 
   const key = getAesSecretKey();

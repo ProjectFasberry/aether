@@ -1,8 +1,5 @@
 import { DeleteButton, EditButton, ToLink } from "@/shared/components/app/private/components/ui"
-import {
-  createStoreItemAction, itemToEditAtom, editStoreItemAction, removeStoreItemAction,
-  removeStoreItemBeforeAction, searchParamTargetAtom, storeItemsAction,
-} from "@/shared/components/app/private/models/store.model"
+import { itemToEditAtom, editStoreItem, deleteStoreItem, storeState, storeItems, createStoreItem } from "@/shared/components/app/private/models/store.model"
 import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
 import { createLink } from "@/shared/components/config/link"
 import { atom, type AtomState } from "@reatom/framework"
@@ -19,14 +16,14 @@ import { getFromDictionary } from "@/shared/models/app/utils"
 import { CreateItem } from "./store.create"
 import { type StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
 
-const titles: Record<AtomState<typeof searchParamTargetAtom>, string> = {
+const titles: Record<AtomState<typeof storeState.searchParamTarget>, string> = {
   "create": "Создание товара",
   "edit": "Редактирование товара",
   "view": "Просмотр товаров"
 }
 
-const headerTitleAtom = atom((ctx) => titles[ctx.spy(searchParamTargetAtom)], "headerTitle")
-const backIsVisibleAtom = atom((ctx) => !!ctx.spy(searchParamTargetAtom), "backIsVisible")
+const headerTitleAtom = atom((ctx) => titles[ctx.spy(storeState.searchParamTarget)], "headerTitle")
+const backIsVisibleAtom = atom((ctx) => !!ctx.spy(storeState.searchParamTarget), "backIsVisible")
 
 const StoreItem = reatomComponent<StoreItemProps>(({ ctx, imageUrl, description, title, id, ...base }) => {
   const item = { imageUrl, description, title, id, ...base }
@@ -53,7 +50,7 @@ const StoreItem = reatomComponent<StoreItemProps>(({ ctx, imageUrl, description,
             onClick={() => navigate(`/private/store?target=edit&id=${id}`)}
           />
           <DeleteButton
-            onClick={() => removeStoreItemBeforeAction(ctx, item)}
+            onClick={() => deleteStoreItem.before(ctx, item)}
           />
         </div>
       </div>
@@ -78,11 +75,11 @@ const StoreCreateItem = () => {
 const StoreItemsSkeleton = () => Array.from({ length: 12 }).map((_, idx) => <Skeleton key={idx} className="h-18 w-full" />)
 
 const StoreItems = reatomComponent(({ ctx }) => {
-  useUpdate(storeItemsAction, []);
+  useUpdate(storeItems.fetch, []);
 
-  const data = ctx.spy(storeItemsAction.dataAtom)?.data;
+  const data = ctx.spy(storeItems.fetch.dataAtom)?.data;
 
-  if (ctx.spy(storeItemsAction.statusesAtom).isPending) {
+  if (ctx.spy(storeItems.fetch.statusesAtom).isPending) {
     return <StoreItemsSkeleton />
   }
 
@@ -97,9 +94,9 @@ const StoreItems = reatomComponent(({ ctx }) => {
 
 const Wrapper = reatomComponent<PropsWithChildren>(({ ctx, children }) => {
   const isLoading =
-    ctx.spy(removeStoreItemAction.statusesAtom).isPending ||
-    ctx.spy(editStoreItemAction.statusesAtom).isPending ||
-    ctx.spy(createStoreItemAction.statusesAtom).isPending;
+    ctx.spy(deleteStoreItem.submit.statusesAtom).isPending ||
+    ctx.spy(editStoreItem.submit.statusesAtom).isPending ||
+    ctx.spy(createStoreItem.submit.statusesAtom).isPending;
 
   return (
     <div
@@ -129,7 +126,7 @@ const EditItem = reatomComponent(({ ctx }) => {
     editor.commands.setContent(data.content as JSONContent)
   }, [data?.content, editor])
 
-  if (ctx.spy(storeItemsAction.statusesAtom).isPending) {
+  if (ctx.spy(storeItems.fetch.statusesAtom).isPending) {
     return <Skeleton className="h-24 w-full" />
   }
 
@@ -190,8 +187,8 @@ const EditItem = reatomComponent(({ ctx }) => {
         </div>
       </div>
       <Button
-        onClick={() => editStoreItemAction(ctx, id)}
-        disabled={ctx.spy(editStoreItemAction.statusesAtom).isPending}
+        onClick={() => editStoreItem.submit(ctx, id)}
+        disabled={ctx.spy(editStoreItem.submit.statusesAtom).isPending}
         className="bg-neutral-50 text-neutral-950 font-semibold text-lg self-end"
       >
         Применить изменения
@@ -236,7 +233,7 @@ const StoreHeader = reatomComponent(({ ctx }) => {
   )
 }, "Header")
 
-const Components = reatomComponent(({ ctx }) => COMPONENTS[ctx.spy(searchParamTargetAtom)], "Components")
+const Components = reatomComponent(({ ctx }) => COMPONENTS[ctx.spy(storeState.searchParamTarget)], "Components")
 
 export const StorePrivated = () => {
   return (

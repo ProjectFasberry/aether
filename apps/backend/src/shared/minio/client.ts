@@ -1,15 +1,15 @@
 import * as Minio from "minio";
 import { appLogger, minioLogger } from "#/utils/config/logger";
-import { MINIO_ACCESS_KEY, MINIO_HOST, MINIO_PORT, MINIO_SECRET_KEY } from "../env";
+import { env } from "../env";
 import { INTERNAl_FILES, loadInternalFiles } from "#/utils/minio/load-internal-files";
 import { invariant } from "#/helpers/invariant";
 
 const config: Minio.ClientOptions = {
-	endPoint: MINIO_HOST,
-	port: MINIO_PORT,
+	endPoint: env.MINIO_HOST,
+	port: env.MINIO_PORT,
 	useSSL: false,
-	accessKey: MINIO_ACCESS_KEY,
-	secretKey: MINIO_SECRET_KEY,
+	accessKey: env.MINIO_ACCESS_KEY,
+	secretKey: env.MINIO_SECRET_KEY,
 };
 
 let instance: Minio.Client | null = null;

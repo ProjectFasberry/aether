@@ -29,7 +29,7 @@ export const appState = atom(null, "appState").pipe(
 		inited: atom(null, `${name}.inited`).pipe(
 			withAssign((_, name) => ({
 				isMobile: atom(false, `${name}.isMobile`),
-				hardwaveIsEnabled: atom(false, "hardwareAccIsEnabled").pipe(
+				hardwaveIsEnabled: atom(false, `${name}.hardwaveIsEnabled`).pipe(
 					withInit(() => detectHardwareAcceleration())
 				)
 			}))
@@ -57,15 +57,14 @@ export const userState = atom(null, "userState").pipe(
 
 export const getDevModulesInfo = (ctx: Ctx) => {
 	const stage = spyOptionAtom(ctx, "state", "stage", "prod")
-	const allowedStage: typeof stage[] = ["staging"];
-	const by = import.meta.env.DEV === true ? "environment" : "stage";
+	const ALLOWED_STAGE: typeof stage[] = ["staging"];
 
 	const isMobile = ctx.get(appState.inited.isMobile)
 	if (isMobile) return;
 
 	return {
-		isImport: import.meta.env.DEV || allowedStage.includes(stage),
-		by
+		isImport: import.meta.env.DEV === true ? true : ALLOWED_STAGE.includes(stage),
+		by: import.meta.env.DEV === true ? "environment" : "stage"
 	}
 }
 
@@ -85,12 +84,12 @@ export const app = atom(null, "app").pipe(
 		init: action((ctx) => {
 			let unsubs: Unsubscribe[] = [];
 
-			const f = appState.inited.isMobile(ctx, detectMobile());
+			appState.inited.isMobile(ctx, detectMobile());
 
-			const screen = updateReactiveIsMobile(ctx)
-			screen.onChange();
+			const { onChange, unsub } = updateReactiveIsMobile(ctx)
+			onChange();
 
-			unsubs.push(screen.unsub)
+			unsubs.push(unsub)
 
 			const devModulesInfo = getDevModulesInfo(ctx)
 
@@ -153,10 +152,8 @@ const updateReactiveIsMobile = action((ctx) => {
 	const onChange = () => appState.current.isMobile(ctx, mql.matches)
 	mql.addEventListener("change", onChange)
 
-	const unsubs = {
+	return {
 		onChange,
 		unsub: () => mql.removeEventListener("change", onChange)
 	}
-
-	return unsubs
 })

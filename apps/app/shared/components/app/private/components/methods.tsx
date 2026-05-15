@@ -57,7 +57,7 @@ const Method = reatomComponent<PrivatedMethodsPayload[number]>(({
       <div className={methodVariant().second_parent()}>
         <Switch
           checked={isAvailable}
-          onCheckedChange={v => editMethodAction(ctx, value, "isAvailable", !isAvailable)}
+          onCheckedChange={({ checked }) => editMethodAction(ctx, value, "isAvailable", !isAvailable)}
           disabled={ctx.spy(editMethodAction.statusesAtom).isPending}
         />
       </div>

@@ -17,10 +17,10 @@ import { translate } from "@/shared/locales/helpers"
 import { Checkbox } from "@/shared/ui/checkbox"
 import { Select, createListCollection } from '@ark-ui/react/select'
 import { Portal } from "@ark-ui/react/portal"
-import { 
-  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant, 
-  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant, 
-  selectItemTextVariant, selectItemVariant, selectTriggerVariant 
+import {
+  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant,
+  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant,
+  selectItemTextVariant, selectItemVariant, selectTriggerVariant
 } from "@/shared/ui/select"
 
 const FindoutReferrerInput = reatomComponent(({ ctx }) => (
@@ -234,6 +234,20 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
         <p className="text-xl w-full sm:w-2/3 leading-5 font-semibold text-center">
           {translate["auth.register.error"]()}
         </p>
+        <Button
+          background="default"
+          type="button"
+          onClick={() => {
+            spawn(ctx, (spawnCtx) => {
+              registerNavigationModel.back(spawnCtx)
+              registerNavigationModel.back(spawnCtx)
+              registerNavigationModel.back(spawnCtx)
+            })
+          }}
+          className="font-semibold"
+        >
+          Вернуться
+        </Button>
       </div>
     )
   }

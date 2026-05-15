@@ -6,6 +6,7 @@ import { Button } from "@/shared/ui/button"
 import { PageLoader } from "@/shared/ui/page-loader"
 import { type AtomMut, type Ctx } from "@reatom/framework"
 import { Menu } from '@ark-ui/react/menu'
+import { dropdownMenuItemVariants, menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
 
 const STATUSES: Record<string, string> = {
   "pending": "Ждёт оплаты",
@@ -50,21 +51,19 @@ const OrdersFilterDropdown = reatomComponent<OrdersFilterDropdownProps>(({ ctx, 
           </Button>
         </Menu.Trigger>
         <Menu.Positioner>
-          <Menu.Content>
-            <Menu.Arrow>
-              <Menu.ArrowTip />
+          <Menu.Content className={menuContentVariant()}>
+            <Menu.Arrow className={menuArrowVariant()}>
+              <Menu.ArrowTip className={menuArrowTipVariant()} />
             </Menu.Arrow>
-            <div
-              className="flex flex-col gap-1 w-full bg-neutral-900 p-2 rounded-xl"
-            >
+            <div className="flex flex-col gap-1 w-full">
               {options.map((item) => (
                 <Menu.Item
                   key={item.value}
                   value={item.value}
                   data-state={current === item.value ? "active" : "inactive"}
-                  className="group justify-start hover:bg-neutral-800"
+                  className={dropdownMenuItemVariants({ className: "data-[state=active]:text-green-600 data-[state=inactive]:text-neutral-50"})}
                 >
-                  <Typography className="group-data-[state=active]:text-green-600 group-data-[state=inactive]:text-neutral-50">
+                  <Typography>
                     {item.title}
                   </Typography>
                 </Menu.Item>

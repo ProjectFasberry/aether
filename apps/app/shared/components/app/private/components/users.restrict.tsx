@@ -1,84 +1,102 @@
 import { reatomComponent } from "@reatom/npm-react"
-import { usersControlState, usersControl, USER_ACTIONS, usersActionsChildsByGroupAtom } from "../models/users.model"
+import { usersControlState, usersControl, USER_ACTIONS } from "../models/users.model"
 import { Button } from "@/shared/ui/button"
 import { Input } from "@/shared/ui/input"
-import { atom } from "@reatom/framework"
-import { Fragment } from "react/jsx-runtime"
+import type { AtomMut } from "@reatom/framework"
+import { Menu } from "@ark-ui/react/menu"
+import { dropdownMenuItemVariants, menuContentVariant } from "@/shared/ui/menu"
+import { Portal } from "@ark-ui/react/portal"
 
-const buttonIsDisabledAtom = atom((ctx) => !ctx.spy(usersControlState.eventGroup) || ctx.spy(usersControl.submit.statusesAtom).isPending)
-
-const ApplyButton = reatomComponent<{ onClick: () => void }>(({ ctx, onClick }) => {
-  const isDisabled = ctx.spy(buttonIsDisabledAtom);
-
-  return (
-    <Button background="white" className="h-8 text-sm font-semibold" disabled={isDisabled} onClick={onClick}>
-      Применить
-    </Button>
-  )
-}, "ApplyButton")
-
-export const UserActionsWrapper = reatomComponent<
+type UserActionsWrapperProps =
   | { type: "single", nickname: string }
   | { type: "global", nickname?: never }
->(({ ctx, type, nickname }) => {
-  const eventGroup = ctx.spy(usersControlState.eventGroup);
-  const eventType = ctx.spy(usersControlState.eventType);
 
-  if (eventGroup) {
-    const selected = ctx.spy(usersActionsChildsByGroupAtom)
-    if (!selected) return null;
+const ActionInput = reatomComponent<{ atom: AtomMut<string | null>, label: string }>(({ ctx, atom, label }) => (
+  <Input
+    value={ctx.spy(atom) ?? ""}
+    onChange={e => atom(ctx, e.target.value)}
+    placeholder={label}
+  />
+), "ActionInput")
 
+const ActionButton = reatomComponent<UserActionsWrapperProps & {
+  eventGroup: string, label?: string, isMenuItem?: boolean
+}>(({ ctx, type, label, eventGroup, nickname, isMenuItem }) => {
+  const isPending = ctx.spy(usersControl.submit.statusesAtom).isPending
+
+  const handleClick = () => {
+    usersControl.before(ctx, type === 'single' ? [nickname] : [], eventGroup)
+  }
+
+  if (isMenuItem) {
     return (
-      <>
-        <div className="flex flex-col gap-1 w-full">
-          {selected.map((field) => (
-            <div key={field.type} className="flex flex-col w-full">
-              {field.label}
-              {field.fields?.map((field) => (
-                <Input
-                  key={field.value}
-                  // @ts-expect-error
-                  value={ctx.spy(usersControlState.fields[field.value]) ?? ""}
-                  // @ts-expect-error
-                  onChange={e => usersControlState.fields[field.value](ctx, e.target.value)}
-                  placeholder={field.label}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-        {type === 'single' && <ApplyButton onClick={() => usersControl.before(ctx, [nickname])} />}
-        {type === 'global' && <ApplyButton onClick={() => usersControl.before(ctx, [])} />}
-      </>
+      <Menu.Item value={eventGroup} className={dropdownMenuItemVariants()} onClick={handleClick} disabled={isPending}>
+        {label ?? "Применить"}
+      </Menu.Item>
     )
   }
 
   return (
-    <div className="flex flex-col gap-1 w-full h-full min-w-40">
-      {USER_ACTIONS.map((group) => (
-        <Fragment key={group.type}>
-          {type === 'single' && (
-            <div
-              onClick={(e) => {
-                e.preventDefault()
-                usersControlState.eventGroup(ctx, group.type)
-              }}
-            >
-              {group.label}
-            </div>
-          )}
-          {type === 'global' && (
-            <div
-              onClick={(e) => {
-                e.preventDefault()
-                usersControlState.eventGroup(ctx, group.type)
-              }}
-            >
-              {group.label}
-            </div>
-          )}
-        </Fragment>
-      ))}
-    </div>
+    <Button
+      background="white"
+      className="h-8 text-sm font-semibold"
+      disabled={isPending}
+      withSpinner
+      isLoading={isPending}
+      onClick={handleClick}
+    >
+      {label ?? "Применить"}
+    </Button>
   )
-}, "UserActionsWrapper")
+}, "ActionButton")
+
+const ActionMenuNode = reatomComponent<UserActionsWrapperProps & {
+  item: NonNullable<typeof USER_ACTIONS[number]["childs"]>[number]
+}>(({ item, ...props }) => {
+  if (item.childs) {
+    return (
+      <Menu.Root key={item.type}>
+        <Menu.TriggerItem className={dropdownMenuItemVariants()}>
+          {item.label}
+        </Menu.TriggerItem>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content className={menuContentVariant()}>
+              {item.childs.map((child) => <ActionMenuNode key={child.type} item={child} {...props} />)}
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+    )
+  }
+
+  if (item.fields) {
+    return (
+      <Menu.Root key={item.type}>
+        <Menu.TriggerItem className={dropdownMenuItemVariants()}>
+          {item.label}
+        </Menu.TriggerItem>
+        <Portal>
+          <Menu.Positioner>
+            <Menu.Content className={menuContentVariant()}>
+              <div className="flex flex-col gap-1 w-full">
+                {item.fields.map(({ value, label }: any) => (
+                  <ActionInput key={value} atom={usersControlState.fields[value]} label={label} />
+                ))}
+                <ActionButton eventGroup={item.type} {...props} />
+              </div>
+            </Menu.Content>
+          </Menu.Positioner>
+        </Portal>
+      </Menu.Root>
+    )
+  }
+
+  return (
+    <ActionButton key={item.type} isMenuItem eventGroup={item.type} label={item.label} {...props} />
+  )
+}, "ActionMenuNode")
+
+export const UserActionsWrapper = (props: UserActionsWrapperProps) => (
+  USER_ACTIONS.map((group) => <ActionMenuNode key={group.type} item={group} {...props} />)
+)

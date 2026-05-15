@@ -1,6 +1,5 @@
 import { atom } from "@reatom/framework";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { useInView } from "react-intersection-observer";
+import { reatomComponent } from "@reatom/npm-react";
 import { UserActionsChangeRoleGlobal } from "./users.change-role";
 import { users, usersState, usersLengthAtom, usersSelectedLengthAtom, usersSelectedOverAtom, usersControl, usersControlState } from "../models/users.model";
 import { Skeleton } from "@/shared/ui/skeleton";
@@ -10,6 +9,8 @@ import { Input } from "@/shared/ui/input";
 import { Menu } from '@ark-ui/react/menu'
 import { UserActionsWrapper } from "./users.restrict";
 import { Checkbox } from "@/shared/ui/checkbox";
+import { dropdownMenuItemVariants, menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu";
+import { createViewerModel } from "@/shared/models/shared.model";
 
 const UsersGlobalActions = reatomComponent(({ ctx }) => {
   const isSelectedOver = ctx.spy(usersSelectedOverAtom);
@@ -19,14 +20,14 @@ const UsersGlobalActions = reatomComponent(({ ctx }) => {
     <div className="flex items-center justify-center gap-1">
       <Menu.Root>
         <Menu.Trigger asChild>
-          <button className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
+          <Button background="default" className="flex items-center justify-center h-8 w-8 aspect-square p-0">
             <IconBan size={16} />
-          </button>
+          </Button>
         </Menu.Trigger>
         <Menu.Positioner>
-          <Menu.Content>
-            <Menu.Arrow>
-              <Menu.ArrowTip />
+          <Menu.Content className={menuContentVariant()}>
+            <Menu.Arrow className={menuArrowVariant()}>
+              <Menu.ArrowTip className={menuArrowTipVariant()} />
             </Menu.Arrow>
             <UserActionsWrapper type="global" />
           </Menu.Content>
@@ -38,12 +39,16 @@ const UsersGlobalActions = reatomComponent(({ ctx }) => {
 }, "UsersGlobalActions")
 
 const UsersSelectedLength = reatomComponent(({ ctx }) => {
-  if (!ctx.spy(usersSelectedOverAtom)) return null;
+  if (!ctx.spy(usersSelectedOverAtom)) return null
 
   const data = ctx.spy(usersSelectedLengthAtom)
   if (data < 2) return null;
 
-  return data
+  return (
+    <>
+      Выбрано:&nbsp;{data}
+    </>
+  )
 }, "UsersSelectedLength")
 
 const UsersFiltersLength = reatomComponent(({ ctx }) => {
@@ -54,7 +59,7 @@ const UsersFiltersLength = reatomComponent(({ ctx }) => {
         {ctx.spy(users.fetch.statusesAtom).isPending ? <Skeleton className="h-5 w-5" /> : ctx.spy(usersLengthAtom)}
       </div>
       <div className="flex text-sm items-center gap-1">
-        Выбрано:&nbsp;<UsersSelectedLength />
+        <UsersSelectedLength />
       </div>
     </div>
   )
@@ -80,7 +85,7 @@ const UsersFiltersSelect = reatomComponent(({ ctx }) => {
         <Checkbox
           id="users-filter-selectAll"
           checked={ctx.spy(usersControlState.isCheckedAll)}
-          onCheckedChange={(v) => typeof v === 'boolean' && usersControl.selectAll(ctx, v)}
+          onCheckedChange={(v) => typeof v === 'boolean' && usersControl.select.all(ctx, v)}
         />
         <label htmlFor="users-filter-selectAll">Выбрать все</label>
       </div>
@@ -108,31 +113,35 @@ const SORTS = [
 ] as const
 
 const UsersFiltersSort = reatomComponent(({ ctx }) => {
-  const currentSort = ctx.spy(usersState.filters.sortBy);
-  const targetSort = SORTS.find(d => d.value === currentSort)?.title
+  const targetSort = SORTS.find(d => d.value === ctx.spy(usersState.filters.sortBy))?.title
   if (!targetSort) return null;
 
   return (
-    <Menu.Root>
+    <Menu.Root
+      onTriggerValueChange={(details) => {
+        if (!details.value) return;
+        usersState.filters.sortBy(ctx, details.value as typeof SORTS[number]["value"])
+      }}
+    >
       <Menu.Trigger asChild>
         <Button className="px-4 h-8 w-full text-nowrap truncate min-w-0" background="default">
           {targetSort}
         </Button>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Arrow>
-            <Menu.ArrowTip />
+        <Menu.Content className={menuContentVariant()}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
           </Menu.Arrow>
           <div className="flex flex-col gap-1 w-full h-full">
             {SORTS.map((sort) => (
-              <Button
+              <Menu.Item
                 key={sort.value}
-                className="flex items-center px-2 py-1 justify-start w-full h-10"
-                onClick={() => usersState.filters.sortBy(ctx, sort.value)}
+                value={sort.value}
+                className={dropdownMenuItemVariants()}
               >
                 {sort.title}
-              </Button>
+              </Menu.Item>
             ))}
           </div>
         </Menu.Content>
@@ -142,28 +151,19 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
 }, "UsersFiltersSort")
 
 const usersFiltersInViewAtom = atom(true)
+usersFiltersInViewAtom.onChange((_, s) => console.log(s));
 
-export const UsersFiltersViewer = () => {
-  const { ref, inView } = useInView()
-  useUpdate((ctx) => usersFiltersInViewAtom(ctx, inView), [inView])
-  return <div ref={ref} className="h-1px w-full" />
-}
+export const { Component: UsersFiltersViewer } = createViewerModel({
+  atomForUpdate: usersFiltersInViewAtom
+})
 
 export const UsersFilters = reatomComponent(({ ctx }) => {
   const inView = ctx.spy(usersFiltersInViewAtom)
 
   return (
     <div
-      className="flex flex-col w-full gap-2 rounded-lg border p-4 top-1
-        data-[state=true]:relative 
-        data-[state=true]:bg-transparent
-        data-[state=true]:border-transparent 
-      data-[state=false]:bg-neutral-900
-      data-[state=false]:border-neutral-800 
-        data-[state=false]:z-50
-        data-[state=false]:sticky
-      "
-      data-state={inView}
+      className="flex top-1 z-10 mb-4 flex-col data-[view=false]:shadow-lg data-[view=false]:shadow-black/20 w-full sticky gap-2 p-4 bg-neutral-900 rounded-xl"
+      data-view={inView}
     >
       <UsersFiltersLength />
       {inView && (

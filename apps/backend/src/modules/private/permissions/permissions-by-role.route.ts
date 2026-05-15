@@ -1,7 +1,8 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
-import Elysia from "elysia";
+import { withData } from "#/shared/schemas";
+import Elysia, { t } from "elysia";
 import * as z from "zod";
 
 const permissionsSchema = z.object({
@@ -45,5 +46,19 @@ export const permissionsListByRole = new Elysia()
     return { data }
   }, {
     query: permissionsSchema,
-    params: z.object({ id: z.coerce.number() })
+    params: t.Object({ 
+      id: t.Number() 
+    }),
+    response: {
+      200: withData(
+        t.Array(
+          t.Object({
+            permission_id: t.Number(),
+            id: t.Number(),
+            name: t.String(),
+            role_id: t.Number()
+          })
+        )
+      )
+    }
   })

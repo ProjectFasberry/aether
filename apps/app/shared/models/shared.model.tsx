@@ -1,10 +1,12 @@
 import { client } from "../lib/client-wrapper"
-import { action, atom, type Ctx } from "@reatom/framework";
+import { action, atom, type AtomMut, type Ctx } from "@reatom/framework";
 import { withAssign, withReset } from "@reatom/framework";
 import { playerSeemsLikePlayersIsShowKey, playerSLPState } from "../components/app/player/models/player-seems-like.model";
 import { parseBoolean } from "../lib/utils";
 import { parseCookie } from "../lib/cookie-utils";
 import type { PageContextServer } from "vike/types";
+import { useInView } from "react-intersection-observer";
+import { useUpdate } from "@reatom/npm-react";
 
 type ExistNicknamePayload = ExtractApiData<"getValidateNicknameByNickname">["data"]
 export async function getExistNickname(nickname: string) {
@@ -44,3 +46,21 @@ export const initCookie = action((ctx: Ctx, headers: NonNullable<PageContextServ
     target.atom(ctx, final);
   }
 })
+
+export const createViewerModel = ({ atomForUpdate }: { atomForUpdate: AtomMut<boolean> }) => {
+  const Component = () => {
+    const { ref, inView } = useInView({ 
+      triggerOnce: false, threshold: 0 
+    })
+
+    useUpdate((ctx) => atomForUpdate(ctx, inView), [inView])
+
+    return (
+      <div ref={ref} className="h-px" />
+    )
+  }
+
+  return {
+    Component
+  }
+}

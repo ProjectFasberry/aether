@@ -11,6 +11,7 @@ import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, Ico
 import Image from '@tiptap/extension-image'
 import { env } from "@/shared/env"
 import { Menu } from '@ark-ui/react/menu'
+import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
 
 export const editorExtensions = [
   TextStyleKit,
@@ -199,9 +200,9 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
               </button>
             </Menu.Trigger>
             <Menu.Positioner>
-              <Menu.Content>
-                <Menu.Arrow>
-                  <Menu.ArrowTip />
+              <Menu.Content className={menuContentVariant()}>
+                <Menu.Arrow className={menuArrowVariant()}>
+                  <Menu.ArrowTip className={menuArrowTipVariant()} />
                 </Menu.Arrow>
                 <Menu.Item
                   value="clear_marks"

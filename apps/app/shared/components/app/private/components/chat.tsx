@@ -17,19 +17,20 @@ import { currentUserState } from "@/shared/models/current-user/index.model";
 import { createPageModel } from "@/shared/lib/events";
 import { atom } from "@reatom/framework";
 import { Menu } from '@ark-ui/react/menu'
+import { dropdownMenuItemVariants, menuArrowTipVariant, menuArrowVariant, menuContentVariant, menuTriggerVariant } from "@/shared/ui/menu";
 
 const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id }) => {
   return (
     <Menu.Root>
-      <Menu.Trigger>
+      <Menu.Trigger className={menuTriggerVariant()}>
         <Menu.Indicator>
           <IconDotsVertical size={14} className="text-neutral-400" />
         </Menu.Indicator>
       </Menu.Trigger>
       <Menu.Positioner>
-        <Menu.Content>
-          <Menu.Arrow>
-            <Menu.ArrowTip />
+        <Menu.Content className={menuContentVariant()}>
+          <Menu.Arrow className={menuArrowVariant()}>
+            <Menu.ArrowTip className={menuArrowTipVariant()} />
           </Menu.Arrow>
           <div className="flex flex-col text-sm gap-2 w-full h-full">
             <Typography className="text-neutral-400">Действия</Typography>
@@ -38,14 +39,15 @@ const ChatMessagesItemActions = reatomComponent<Pick<ChatItem, "id">>(({ ctx, id
                 value="delete"
                 disabled={ctx.spy(chatDelete.submit.statusesAtom).isPending}
                 onClick={() => chatDelete.submit(ctx, id)}
+                className={dropdownMenuItemVariants()}
               >
                 <IconTrash size={16} />
                 Удалить
               </Menu.Item>
               <Menu.Item
-                className=""
                 value="edit"
                 onClick={() => chatEdit.start(ctx, id)}
+                className={dropdownMenuItemVariants()}
               >
                 <IconPencil size={16} />
                 Изменить

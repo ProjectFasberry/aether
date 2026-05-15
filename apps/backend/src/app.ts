@@ -1,4 +1,4 @@
-import { isProduction, PORT } from "./shared/env";
+import { env } from "./shared/env";
 import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
@@ -8,6 +8,7 @@ import { session } from "./modules/auth/login.model";
 import { appLogger } from "./utils/config/logger";
 import { main, root } from "./routes";
 import { corsPlugin, ipPlugin, loggerPlugin } from "./lib/plugins";
+import { LOGGING } from "./shared/constants";
 
 const appConfig: ElysiaConfig<string> = {
 	serve: {
@@ -27,7 +28,7 @@ export function startApp() {
 		.use(loggerPlugin())
 		.onError((payload) => {
 			const { error, code } = payload;
-			if (!isProduction) appLogger.error(error, code);
+			if (LOGGING.globalError) appLogger.error(error, code)
 
 			let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
@@ -65,7 +66,7 @@ export function startApp() {
 		.use(main);
 
 	showRoutes(app);
-	app.listen(PORT);
+	app.listen(env.PORT);
 
 	appLogger.success(`Starting app finished. Server is running at ${app.server?.hostname}: ${app.server?.port}`);
 

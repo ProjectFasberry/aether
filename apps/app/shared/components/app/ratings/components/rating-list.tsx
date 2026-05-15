@@ -6,8 +6,7 @@ import {
   type RatingPlaytime,
   type RatingReputation
 } from "@repo/shared/types/entities/rating"
-import { useInView } from "react-intersection-observer";
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
+import { reatomComponent } from "@reatom/npm-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { type ReactNode } from "react";
 import { type AtomState } from "@reatom/framework";
@@ -29,6 +28,7 @@ import { createLink, Link } from "@/shared/components/config/link";
 import dayjs from "@/shared/lib/create-dayjs"
 import { PageLoader } from "@/shared/ui/page-loader";
 import { NotFound } from "@/shared/ui/not-found";
+import { createViewerModel } from "@/shared/models/shared.model";
 
 const RatingListParkourHeaderU = () => {
   return (
@@ -108,11 +108,9 @@ const RatingListLandsHeaderU = () => {
   )
 }
 
-const RatingsViewer = () => {
-  const { inView, ref } = useInView({ triggerOnce: false, threshold: 1 });
-  useUpdate((ctx) => ratingIsViewAtom(ctx, inView), [inView]);
-  return <div ref={ref} className="h-[1px] border-transparent w-full" />
-}
+const { Component: RatingsViewer } = createViewerModel({
+  atomForUpdate: ratingIsViewAtom
+})
 
 const RatingTableBodyParkour = reatomComponent(({ ctx }) => {
   const data = ctx.spy(ratingDataAtom) as RatingParkour[]
