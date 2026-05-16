@@ -93,7 +93,7 @@ export const app = atom(null, "app").pipe(
 
 			const devModulesInfo = getDevModulesInfo(ctx)
 
-			if (devModulesInfo) {
+			if (devModulesInfo?.isImport) {
 				async function lazyInitDevModules(by: string) {
 					try {
 						const [{ devtools }] = await Promise.all([

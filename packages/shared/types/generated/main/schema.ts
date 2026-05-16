@@ -580,38 +580,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/privated/analytics/registrations": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getPrivatedAnalyticsRegistrations"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/privated/analytics/activity": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getPrivatedAnalyticsActivity"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/privated/history/list": {
         parameters: {
             query?: never;
@@ -1556,22 +1524,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/server/minecraft-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getServerMinecraft-items"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/server/task/list": {
         parameters: {
             query?: never;
@@ -1804,22 +1756,6 @@ export interface paths {
             cookie?: never;
         };
         get: operations["getServerLocationByNickname"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/server/fv-item/{nickname}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["getServerFv-itemByNickname"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2302,6 +2238,14 @@ export interface operations {
                             /** @constant */
                             status: "OK";
                             uptime: number;
+                            memory: {
+                                rss: number;
+                                heapTotal: number;
+                                heapUsed: number;
+                                external: number;
+                                arrayBuffers: number;
+                            };
+                            availableMemory: number;
                         };
                     };
                 };
@@ -2356,7 +2300,23 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            name: string;
+                            value: string;
+                            title: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     postPrivatedOptionsByNameEdit: {
         parameters: {
@@ -2380,7 +2340,21 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            value: boolean;
+                        };
+                    };
+                };
+            };
+        };
     };
     getPrivatedPermissionsListAll: {
         parameters: {
@@ -2390,7 +2364,22 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            name: string;
+                            id: number;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     getPrivatedPermissionsListById: {
         parameters: {
@@ -2404,7 +2393,24 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            permission_id: number;
+                            id: number;
+                            name: string;
+                            role_id: number;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     postPrivatedStoreItemCreate: {
         parameters: {
@@ -2426,7 +2432,21 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                        };
+                    };
+                };
+            };
+        };
     };
     "getPrivatedStoreItemEditable-fields": {
         parameters: {
@@ -2941,7 +2961,19 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: number;
+                    };
+                };
+            };
+        };
     };
     deletePrivatedRoleByIdPermissionRemove: {
         parameters: {
@@ -2965,7 +2997,19 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: number;
+                    };
+                };
+            };
+        };
     };
     getPrivatedRoleByIdPermissionList: {
         parameters: {
@@ -2977,7 +3021,25 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            role_id: number;
+                            permissions: {
+                                id: number;
+                                name: string;
+                            }[];
+                        };
+                    };
+                };
+            };
+        };
     };
     getPrivatedRoleList: {
         parameters: {
@@ -3073,17 +3135,26 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     field: "title" | "description";
                     value: string;
                 }[];
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     field: "title" | "description";
                     value: string;
                 }[];
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     field: "title" | "description";
                     value: string;
                 }[];
@@ -3184,7 +3255,28 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: string;
+                            type: string;
+                            title: string;
+                            content: {
+                                created_at: string;
+                                description: (string | null) | null;
+                                initiator: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedEventsById: {
         parameters: {
@@ -3196,30 +3288,34 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
-    };
-    getPrivatedAnalyticsRegistrations: {
-        parameters: {
-            query: {
-                period: "day" | "month" | "hour";
-                day: number;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: string;
+                    };
+                };
             };
-            header?: never;
-            path?: never;
-            cookie?: never;
+            /** @description Response for status 404 */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @default ITEM_NOT_FOUND
+                         * @enum {string}
+                         */
+                        error: "ITEM_NOT_FOUND";
+                    };
+                };
+            };
         };
-        requestBody?: never;
-        responses: never;
-    };
-    getPrivatedAnalyticsActivity: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: never;
     };
     getPrivatedHistoryList: {
         parameters: {
@@ -3229,7 +3325,24 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            created_at: string;
+                            event: string;
+                            initiator: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     getPrivatedHistoryEvents: {
         parameters: {
@@ -3276,7 +3389,24 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            value: string;
+                            created_at: string;
+                            key: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     postPrivatedDictionariesCreate: {
         parameters: {
@@ -3288,17 +3418,26 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
@@ -3318,17 +3457,26 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default title
+                     * @enum {string}
+                     */
                     key: "title" | "key";
                     value: string;
                 };
@@ -5054,33 +5202,6 @@ export interface operations {
             };
         };
     };
-    "getServerMinecraft-items": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Response for status 200 */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            image: string;
-                            description: (string | null) | null;
-                            title: string;
-                            id: number;
-                        }[];
-                    };
-                };
-            };
-        };
-    };
     getServerTaskList: {
         parameters: {
             query?: {
@@ -5467,35 +5588,6 @@ export interface operations {
                             yaw: number;
                             customLocation: (string | null) | null;
                         } | null) | null;
-                    };
-                };
-            };
-        };
-    };
-    "getServerFv-itemByNickname": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                nickname: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Response for status 200 */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        data: {
-                            image: string;
-                            description: (string | null) | null;
-                            title: string;
-                            id: number;
-                        };
                     };
                 };
             };

@@ -3,7 +3,7 @@ import { tv } from "tailwind-variants";
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Typography } from "@/shared/ui/typography"
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { IconButterfly, IconManFilled, IconPlus, IconRotate, IconRun, IconUpload, IconX, type TablerIcon } from "@tabler/icons-react";
 import { pageState } from "@/shared/models/page-context.model";
 import { Button } from "@/shared/ui/button";
@@ -170,10 +170,6 @@ const SkinMainHeadSkeleton = () => {
 
 const Avatar = reatomComponent<{ width: number, height: number, src: string }>(({ ctx, src, ...props }) => {
   const [avatar, setAvatar] = useState<string | null>(src);
-
-  useEffect(() => {
-    src !== null && setAvatar(src)
-  }, [src])
 
   return (
     <img

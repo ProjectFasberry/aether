@@ -16,7 +16,8 @@ type StagePluginOpts = {
 
 type StageOpts = {
   buildOpts: BuildEnvironmentOptions & {
-    chunkHashing?: true
+    chunkHashing?: boolean,
+    chunkGroping?: boolean
   },
   pluginOpts: Partial<StagePluginOpts>
 }
@@ -26,7 +27,8 @@ const STAGES: Record<Stage, StageOpts> = {
     buildOpts: {
       sourcemap: true,
       minify: "esbuild",
-      chunkHashing: true
+      chunkHashing: true,
+      chunkGroping: true
     },
     pluginOpts: {
       analyzerIsEnabled: true
@@ -112,12 +114,16 @@ export default defineConfig(({ mode }) => {
           '@scure/bip39/wordlists/english.js',
         ],
         output: {
-          chunkFileNames: target.buildOpts?.chunkHashing ? 'assets/[name]-[hash].js' : undefined,
+          chunkFileNames: 'assets/[name]-[hash].js',
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
 
-            for (const group of CHUNK_GROUPS) {
-              if (group.matches.some(match => id.includes(match))) return group.name;
+            if (target.buildOpts?.chunkGroping) {
+              for (const group of CHUNK_GROUPS) {
+                if (group.matches.some(match => id.includes(match))) {
+                  return group.name;
+                }
+              }
             }
 
             const parts = id.split('node_modules/');
