@@ -13,7 +13,9 @@ import { SettingsContentWrapper, SettingsSection } from "./ui";
 import { type SettingsSectionItem } from "../models/settings.model";
 import { Dialog } from "@ark-ui/react/dialog";
 import { Portal } from "@ark-ui/react/portal";
-import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
+import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant, dialogTitleVariant } from "@/shared/ui/dialog";
+import { Noop } from "@/shared/ui/noop";
+import { isEmptyArray } from "@/shared/lib/helpers";
 
 const VerifyExpiredOrNotfound = () => {
   return (
@@ -208,12 +210,15 @@ const ScanReader = reatomComponent(({ ctx }) => {
 
 const AccountSessionsConnectNewConfirmDialog = reatomComponent(({ ctx }) => {
   return (
-    <Dialog.Root open={ctx.spy(scanState.confirmDialogIsOpen)} onOpenChange={v => scanState.confirmDialogIsOpen(ctx, v.open)}>
+    <Dialog.Root
+      open={ctx.spy(scanState.confirmDialogIsOpen)}
+      onOpenChange={v => scanState.confirmDialogIsOpen(ctx, v.open)}
+    >
       <Portal>
         <Dialog.Backdrop className={dialogBackdropVariant()} />
         <Dialog.Positioner className={dialogPositionerVariant()}>
           <Dialog.Content className={dialogContentVariant()}>
-            <Dialog.Title>Подтверждение нового входа</Dialog.Title>
+            <Dialog.Title className={dialogTitleVariant()}>Подтверждение нового входа</Dialog.Title>
             <div className="flex items-center justify-center w-full h-full">
               <VerifyLogin />
             </div>
@@ -265,19 +270,11 @@ const SessionItem = ({ id, browser, geo }: SessionPayload) => {
 
 const AccountSessionsListActive = reatomComponent(({ ctx }) => {
   if (ctx.spy(accountActiveSessionsAction.statusesAtom).isPending) {
-    return (
-      <>
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-      </>
-    )
+    return Array.from({ length: 2 }).map((_, idx) => <Skeleton key={idx} className="h-12 w-full" />)
   }
 
   const data = ctx.spy(accountActiveSessionsAction.dataAtom);
-
-  if (!data || !data.length) {
-    return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
-  }
+  if (!data || isEmptyArray(data)) return <Noop title="пусто" />
 
   return data?.map((session) => <SessionItem key={session.id} {...session} />)
 }, "AccountSessionsListActive")
@@ -288,7 +285,7 @@ const AccountSessionsListCurrent = reatomComponent(({ ctx }) => {
   }
 
   const current = ctx.spy(accountCurrentSessionAction.dataAtom)
-  if (!current) return <p className='text-neutral-400 text-sm leading-3'>пусто</p>
+  if (!current) return <Noop title="пусто" />
 
   return <SessionItem {...current} />
 }, "AccountSessionsListCurrent")

@@ -17,9 +17,9 @@ export const restoreState = atom(null, "restoreState").pipe(
   withAssign((_, name) => ({
     type: atom<AuthRestoreType>("input-nickname", `${name}.type`),
     setNewPassword: atom(null, `${name}.`).pipe(
-      withAssign(() => ({
-        value: atom<string>(""),
-        repeatValue: atom<string>("")
+      withAssign((_, name) => ({
+        value: atom<string>("", `${name}.value`),
+        repeatValue: atom<string>("", `${name}.repeatValue`)
       }))
     )
   }))

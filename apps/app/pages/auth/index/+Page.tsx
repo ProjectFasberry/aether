@@ -31,8 +31,8 @@ const AUTH_VARIANTS = [
 const Auth = reatomComponent(({ ctx }) => {
   return (
     <Tabs.Root
-      defaultValue={AUTH_VARIANTS[0].value}
       inert={ctx.spy(authIsDisabledAtom)}
+      value={ctx.spy(authState.type)}
       onValueChange={(details) => {
         authState.type(ctx, details.value as AuthType)
       }}

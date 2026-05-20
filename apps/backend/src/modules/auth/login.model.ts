@@ -115,10 +115,7 @@ export const session = {
 		const { expires_at, nickname } = refreshResult;
 
 		setCookie({
-			cookie,
-			key: SESSION_KEY,
-			expires: expires_at,
-			value: token,
+			cookie,	key: SESSION_KEY,	expires: expires_at,	value: token,
 		});
 	},
 	generateSessionToken(): string {
@@ -127,10 +124,11 @@ export const session = {
 		return encodeBase32LowerCaseNoPadding(bytes);
 	},
 	async afterLoginEvents({ nickname }: { nickname: string }) {
-		const nc = nats.get()
-		const payload = { created_at: dayjs().toDate(), nickname }
+    const payload = { created_at: dayjs().toDate(), nickname };
 
-		nc.publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
+    nats
+      .get()
+      .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
 	},
 	async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
 		const redis = getRedis();
@@ -221,10 +219,6 @@ export const session = {
 	}
 }
 
-// targets:
-// AUTH, players, bisquite, shared (lobby), reputation, playerpoints, luckperms
-async function deleteAccount({ nickname }: { nickname: string }) { }
-
 type LoginQRKeyPayload = {
 	ua: string;
 	vId: string;
@@ -249,10 +243,11 @@ export const loginQR = {
 	createAuthQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
 	getAuthQRSubject: (token: string) => `auth.qr.*.${token}`,
 	_notify(type: QREventsEvent, token: string) {
-		const nc = nats.get()
-		const payload = { data: token }
+    const payload = { data: token }
 
-		nc.publish(this.createAuthQRSubject(type, token), JSON.stringify(payload));
+    nats
+      .get()
+      .publish(this.createAuthQRSubject(type, token), JSON.stringify(payload));
 	},
 	async generate({
 		visitorId, ip, ua
@@ -272,7 +267,7 @@ export const loginQR = {
 			.hset(key, payload)
 			.expire(key, this.QR_VERIFY_TIMEOUT_S)
 			.exec();
-		
+
 		if (!results) {
 			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
 		}

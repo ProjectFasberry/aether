@@ -83,9 +83,9 @@ export const UserActionsChangeRoleGlobal = reatomComponent(({ ctx }) => {
   return (
     <Menu.Root>
       <Menu.Trigger asChild>
-        <button className="flex items-center justify-center h-8 w-8 aspect-square bg-neutral-800 rounded-md">
+        <Button background="default" className="p-0 h-8 w-8 aspect-square">
           <IconDotsVertical size={16} />
-        </button>
+        </Button>
       </Menu.Trigger>
       <Menu.Positioner>
         <Menu.Content className={menuContentVariant()}>

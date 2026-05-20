@@ -13,6 +13,7 @@ import {
 	type RatingsPayload,
 } from "@repo/shared/types/entities/rating";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
+import { createViewerModel } from "@/shared/models/shared.model";
 
 type RatingMap = {
 	playtime: RatingPlaytime[];
@@ -24,6 +25,11 @@ type RatingMap = {
 };
 
 //#region
+
+export const { Component: RatingsViewer, inViewAtom: ratingIsViewAtom } = createViewerModel({
+  name: "ratings-list",
+})
+
 export const ratingByAtom = atom<string>("playtime", "ratingBy").pipe(withHistory(1));
 export const ratingServerAtom = atom<Maybe<string>>(undefined, "ratingServer");
 
@@ -101,8 +107,6 @@ export const updateRatingAction = reatomAsync(async (ctx) => {
 		logError(e);
 	},
 }).pipe(withStatusesAtom());
-
-export const ratingIsViewAtom = atom(false, "ratingIsView");
 
 ratingIsViewAtom.onChange((ctx, state) => {
 	if (!state) return;

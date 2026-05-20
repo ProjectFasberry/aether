@@ -1,4 +1,7 @@
-import { action, atom, type AtomMut, reatomAsync, withAssign, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
+import {
+  action, atom, reatomAsync, spawn, withAssign, withDataAtom, withReset, withStatusesAtom,
+  type AtomMut
+} from "@reatom/framework";
 import { invariant } from "@/shared/lib/invariant";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
@@ -12,6 +15,8 @@ import { authSecurity } from "./auth-security.model";
 import { getExistNickname } from "@/shared/models/shared.model";
 import { spyOptionAtom } from "@/shared/models/app/utils";
 import { translate } from "@/shared/locales/helpers";
+import * as z from "zod";
+import { downloadFile } from "@/shared/lib/utils";
 
 export type AuthRegisterType = |
   "start-input" |
@@ -19,124 +24,115 @@ export type AuthRegisterType = |
   "seed-phrase-confirm" |
   "confirm"
 
-const fieldsOnlyRegisterSchema = registerSchema.omit({ hash: true })
+const fieldsOnlyRegisterSchema = z.intersection(
+  registerSchema.omit({ hash: true }),
+  z.object({ acceptRules: z.literal(true) })
+)
 
-export const registerSeedPhraseModel = createPhraseModel({ name: "authRegister" })
+export const registerSeedPhraseModel = createPhraseModel({ name: "register" })
 
 export const registerState = atom(null, "registerState").pipe(
   withAssign((_, name) => ({
     type: atom<AuthRegisterType>("start-input", `${name}.type`).pipe(withReset()),
     mn: atom<string | null>(null, `${name}.mn`).pipe(withReset()),
+    skipSeedPhrase: atom(false, `${name}.skipSeedPhrase`).pipe(withReset())
   }))
 )
-
 export const register = atom(null, "register").pipe(
   withAssign((_, name) => ({
-    validators: atom(null, `${name}.validators`).pipe(
-      withAssign(() => ({
-        startInput: atom((ctx): boolean => {
-          const acceptRules = ctx.spy(authState.fields.acceptRules)
-          if (!acceptRules) return false
+    validators: {
+      startInputValidate: atom((ctx): boolean =>
+        fieldsOnlyRegisterSchema.safeParse({
+          nickname: ctx.spy(authState.fields.nickname),
+          password: ctx.spy(authState.fields.password),
+          findout: ctx.spy(authState.fields.findout),
+          findoutType: ctx.spy(authState.fields.findoutType),
+          acceptRules: ctx.spy(authState.fields.acceptRules)
+        }).success
+      ),
+      seedPhraseConfirmValidate: atom((): boolean => false),
+      confirmValidate: atom((): boolean => false)
+    },
+    cb: {
+      seedPhraseSaveGenerate: reatomAsync(async (ctx): Promise<boolean> => {
+        const nickname = ctx.get(authState.fields.nickname);
+        const isExist = await getExistNickname(nickname)
 
-          const validationRes = fieldsOnlyRegisterSchema.safeParse({
-            nickname: ctx.spy(authState.fields.nickname),
-            password: ctx.spy(authState.fields.password),
-            findout: ctx.spy(authState.fields.findout),
-            findoutType: ctx.spy(authState.fields.findoutType)
-          })
+        if (isExist) {
+          authState.globalError(ctx, "Такой игрок уже зарегистрирован")
+          return false;
+        }
 
-          return validationRes.success
-        }),
-        seedPhraseConfirmValidate: atom((ctx): boolean => false),
-        confirmValidate: atom((ctx): boolean => false)
-      }))
-    ),
-    cb: atom(null, `${name}.cb`).pipe(
-      withAssign(() => ({
-        seedPhraseConfirmValidate: action((ctx): boolean => {
-          const rWords = ctx.get(registerSeedPhraseModel.state.repeatWords)
-          const words = ctx.get(registerSeedPhraseModel.state.words)
+        authState.globalError.reset(ctx);
 
-          const isValid = rWords.length === words.length &&
-            rWords.every((val, i) => val === words[i]);
+        const mn = await authSecurity.generateMnemonic(ctx)
 
-          if (!isValid) {
-            authState.globalError(ctx, "Введенные слова не совпадают");
-            return false;
-          }
+        registerSeedPhraseModel.state.words(ctx, mn.split(" "))
+        registerState.mn(ctx, mn)
 
-          const pofIsActive = spyOptionAtom(ctx, "flags", "isPof", true)
-          const token = ctx.get(pof.token);
+        return true;
+      }, "_"),
+      savePhraseConfirmStart: action((ctx): boolean => {
+        const words = ctx.get(registerSeedPhraseModel.state.words)
 
-          if (pofIsActive && !token) {
-            pof.showTokenVerifySectionAtom(ctx, true);
-            return false;
-          }
+        const indices = [...Array(12).keys()]
+          .sort(() => Math.random() - 0.5)
+          .slice(0, 3);
 
-          authState.isProcessing(ctx, true);
+        const arrFromCheck = words.map((w, idx) =>
+          indices.includes(idx) ? "" : w
+        );
 
-          register.submit(ctx, token);
-          return true
-        }),
-        seedPhraseSaveGenerate: reatomAsync(async (ctx) => {
-          const isExist = await getExistNickname(ctx.get(authState.fields.nickname))
+        registerSeedPhraseModel.state.repeatWords(ctx, arrFromCheck)
+        return true;
+      }),
+      seedPhraseConfirm: action((ctx): boolean => {
+        const rWords = ctx.get(registerSeedPhraseModel.state.repeatWords)
+        const words = ctx.get(registerSeedPhraseModel.state.words)
 
-          if (isExist) {
-            authState.globalError(ctx, "Такой игрок уже зарегистрирован")
-            return false;
-          }
+        const isValid = rWords.length === words.length &&
+          rWords.every((val, i) => val === words[i]);
 
-          authState.globalError.reset(ctx);
+        if (!isValid) {
+          authState.globalError(ctx, "Введенные слова не совпадают");
+          return false;
+        }
 
-          const mn = await authSecurity.generateMnemonic(ctx)
+        const pofIsActive = spyOptionAtom(ctx, "flags", "isPof", true)
+        const token = ctx.get(pof.token);
 
-          registerSeedPhraseModel.state.words(ctx, mn.split(" "))
-          registerState.mn(ctx, mn)
+        if (!token && pofIsActive) {
+          pof.showTokenVerifySectionAtom(ctx, true);
+          return false;
+        }
 
-          return true;
-        }),
-        savePhraseConfirmStartValidate: action((ctx): boolean => {
-          const words = ctx.get(registerSeedPhraseModel.state.words)
+        authState.isProcessing(ctx, true);
+        register.submit(ctx, token);
 
-          const indices = [...Array(12).keys()]
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3);
-
-          const arrFromCheck = words.map((w, idx) =>
-            indices.includes(idx) ? "" : w
-          );
-
-          registerSeedPhraseModel.state.repeatWords(ctx, arrFromCheck)
-          return true;
-        }),
-      }))
-    ),
+        return true
+      }),
+    },
     submit: reatomAsync(async (ctx, token: string | null) => {
       authState.globalError.reset(ctx)
 
-      const nickname = ctx.get(authState.fields.nickname)
-      const password = ctx.get(authState.fields.password)
-      const findout = ctx.get(authState.fields.findout)
-      const findoutType = ctx.get(authState.fields.findoutType)
+      const base = {
+        nickname: ctx.get(authState.fields.nickname),
+        password: ctx.get(authState.fields.password),
+        findout: ctx.get(authState.fields.findout),
+        findoutType: ctx.get(authState.fields.findoutType)
+      }
 
       const mn = ctx.get(registerState.mn)
       invariant(mn, 'Mn is not defined')
 
       const hash = await authSecurity.mnToHash(mn)
-
-      const pd = {
-        hash,
-        password,
-        nickname,
-        findout,
-        findoutType
-      }
+      const pd = { hash, ...base }
 
       const { success, error, data } = registerSchema.safeParse(pd);
-      if (!success) return error;
+      if (!success) throw error
 
       const res = await client
-        .post<{ nickname: string }>("auth/register", {
+        .post<ExtractApiData<"postAuthRegister">["data"]>("auth/register", {
           searchParams: { token: token ?? "" },
           json: data
         })
@@ -145,11 +141,17 @@ export const register = atom(null, "register").pipe(
       return res;
     }, {
       name: `${name}.submit`,
-      onFulfill: (ctx, res) => register.afterEvent(ctx),
       onReject: (ctx, e) => {
         logError(e);
+
+        const scope = defineError(ctx, e)
+
+        if (scope === 'auth') {
+          registerState.skipSeedPhrase(ctx, true)
+        }
+      },
+      onSettle: (ctx) => {
         authState.isProcessing(ctx, false);
-        defineError(ctx, e)
       }
     }).pipe(
       withStatusesAtom(),
@@ -160,30 +162,34 @@ export const register = atom(null, "register").pipe(
       if (isEmptyArray(ph)) return;
 
       const nickname = ctx.get(authState.fields.nickname)
-
-      const fileContent = ph.join('\n');
-      const blob = new Blob([fileContent], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${nickname}-phrases.txt`
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      downloadFile(ph.join('\n'), `${nickname}-phrases.txt`)
     }),
     resetRegisterState: action((ctx) => {
       registerState.mn.reset(ctx)
       registerState.type.reset(ctx);
+      registerState.skipSeedPhrase.reset(ctx);
       registerSeedPhraseModel.events.resetAll(ctx)
     }),
-    afterEvent: action((ctx): void => {
+    toLogin: action((ctx) => {
+      authState.type(ctx, "login")
       auth.resetAuthState(ctx)
       register.resetRegisterState(ctx)
       pof.token.reset(ctx);
     }),
+    next: action((ctx) => {
+      spawn(ctx, (spawnCtx) => {
+        const skipPhrase = ctx.get(registerState.skipSeedPhrase);
+
+        if (skipPhrase) {
+          registerState.type(ctx, "confirm");
+
+          const token = ctx.get(pof.token);
+          register.submit(spawnCtx, token);
+        }
+
+        registerNavigationModel.next(spawnCtx)
+      })
+    })
   }))
 )
 
@@ -192,7 +198,7 @@ export const registerNavigationModel = createNavigationModel({
     {
       id: "start-input",
       validators: {
-        toNext: register.validators.startInput
+        toNext: register.validators.startInputValidate
       },
       cb: register.cb.seedPhraseSaveGenerate
     },
@@ -201,11 +207,11 @@ export const registerNavigationModel = createNavigationModel({
       validators: {
         toNext: registerSeedPhraseModel.state.isValid("default")
       },
-      cb: register.cb.savePhraseConfirmStartValidate
+      cb: register.cb.savePhraseConfirmStart
     },
     {
       id: "seed-phrase-confirm",
-      cb: register.cb.seedPhraseConfirmValidate,
+      cb: register.cb.seedPhraseConfirm,
       validators: {
         toNext: registerSeedPhraseModel.state.isValid("repeat"),
         toBack: false

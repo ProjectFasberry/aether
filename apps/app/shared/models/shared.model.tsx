@@ -47,20 +47,27 @@ export const initCookie = action((ctx: Ctx, headers: NonNullable<PageContextServ
   }
 })
 
-export const createViewerModel = ({ atomForUpdate }: { atomForUpdate: AtomMut<boolean> }) => {
+export const createViewerModel = ({ name, logging }: { name: string, logging?: boolean }) => {
+  const inViewAtom = atom(false, `${name}.inViewAtom`);
+
   const Component = () => {
-    const { ref, inView } = useInView({ 
-      triggerOnce: false, threshold: 0 
+    const { ref, inView } = useInView({
+      triggerOnce: false, threshold: 0
     })
 
-    useUpdate((ctx) => atomForUpdate(ctx, inView), [inView])
+    useUpdate((ctx) => inViewAtom(ctx, inView), [inView])
 
     return (
       <div ref={ref} className="h-px" />
     )
   }
 
+  if (logging) {
+    inViewAtom.onChange((_, state) => console.log(inViewAtom.__reatom.name, state))
+  }
+
   return {
-    Component
+    Component,
+    inViewAtom
   }
 }

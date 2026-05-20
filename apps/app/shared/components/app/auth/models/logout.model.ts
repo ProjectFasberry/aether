@@ -8,7 +8,7 @@ import { withAssign } from "@reatom/framework";
 export const logout = atom(null, "logout").pipe(
 	withAssign((_, name) => ({
 		exec: reatomAsync(() => client.post("auth/invalidate-session").exec(), {
-			name: `${name}.withoutConfirm`,
+			name: `${name}.exec`,
 			onFulfill: (ctx) => ctx.schedule(() => window.location.reload()),
 			onReject: (_, e) => logError(e),
 		}).pipe(
@@ -21,7 +21,6 @@ export const logout = atom(null, "logout").pipe(
 				confirmAction: logout.exec,
 				confirmLabel: "Выйти из аккаунта",
 				autoClose: true,
-				withDelay: false
 			});
 		}, `${name}.withConfirm`),
 	}))

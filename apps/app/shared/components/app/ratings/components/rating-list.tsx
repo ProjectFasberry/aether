@@ -10,7 +10,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { type ReactNode } from "react";
 import { type AtomState } from "@reatom/framework";
-import { ratingAscAtom, ratingByAtom, ratingDataAtom, ratingIsViewAtom, ratingsAction, updateRatingAction } from "../models/ratings.model";
+import { ratingAscAtom, ratingByAtom, ratingDataAtom, ratingsAction, updateRatingAction } from "../models/ratings.model";
 import { IconArrowDown, IconArrowUp } from "@tabler/icons-react";
 import { Button } from "@/shared/ui/button";
 import {
@@ -28,7 +28,6 @@ import { createLink, Link } from "@/shared/components/config/link";
 import dayjs from "@/shared/lib/create-dayjs"
 import { PageLoader } from "@/shared/ui/page-loader";
 import { NotFound } from "@/shared/ui/not-found";
-import { createViewerModel } from "@/shared/models/shared.model";
 
 const RatingListParkourHeaderU = () => {
   return (
@@ -107,10 +106,6 @@ const RatingListLandsHeaderU = () => {
     </TableRow>
   )
 }
-
-const { Component: RatingsViewer } = createViewerModel({
-  atomForUpdate: ratingIsViewAtom
-})
 
 const RatingTableBodyParkour = reatomComponent(({ ctx }) => {
   const data = ctx.spy(ratingDataAtom) as RatingParkour[]

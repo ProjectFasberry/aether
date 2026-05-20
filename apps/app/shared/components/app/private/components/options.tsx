@@ -1,35 +1,39 @@
 import { reatomComponent, useUpdate } from "@reatom/npm-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { Typography } from "@/shared/ui/typography"
-import { type Option, optionsAction, optionsAtom, updateOptionAction } from "../models/options.model";
+import { type Option, optionsModel } from "../models/options.model";
 import { atom } from "@reatom/framework";
 import { Switch } from "@/shared/ui/switch";
+import { tv } from "tailwind-variants";
 
-const OptionsListSkeleton = () => {
-  return (
-    <div className="flex flex-col gap-2 w-full h-full">
-      <div className="flex items-center justify-between w-full gap-1">
-        <Skeleton className="h-10 w-36" />
-        <Skeleton className="h-10 w-24" />
-      </div>
-      <div className="flex items-center justify-between w-full gap-1">
-        <Skeleton className="h-10 w-36" />
-        <Skeleton className="h-10 w-24" />
-      </div>
-    </div>
-  )
-}
+const { options, optionsControl, getOptionIsLoading, optionsAtom } = optionsModel()
+
+const optionItemVariant = tv({
+  base: `flex border border-neutral-800 inert:pointer-events-none inert:opacity-60 h-10 rounded-lg px-2 items-center justify-between w-full gap-1`,
+  slots: {
+    label: "font-semibold"
+  }
+})
+
+const OptionsListSkeleton = () => Array.from({ length: 3 }).map((_, idx) => (
+  <div key={idx} className={optionItemVariant().base()}>
+    <Skeleton className="w-36 h-6" />
+    <Skeleton className="w-9 h-6 rounded-full" />
+  </div>
+))
 
 const OptionItem = reatomComponent<Option>(({ ctx, name, title, value }) => {
+  const isLoading = ctx.spy(getOptionIsLoading(name));
+
   return (
-    <div className="flex border border-neutral-800 p-2 rounded-lg items-center justify-between w-full gap-1">
-      <Typography className="font-semibold">
-        {title}
-      </Typography>
+    <div
+      className={optionItemVariant().base()}
+    >
+      <Typography className={optionItemVariant().label()}>{title}</Typography>
       <Switch
         checked={value}
-        disabled={ctx.spy(updateOptionAction.statusesAtom).isPending}
-        onCheckedChange={({ checked }) => updateOptionAction(ctx, name, checked)}
+        onCheckedChange={({ checked }) => optionsControl.update(ctx, name, checked)}
+        isLoading={isLoading}
       />
     </div>
   )
@@ -38,26 +42,20 @@ const OptionItem = reatomComponent<Option>(({ ctx, name, title, value }) => {
 const optionsArrayAtom = atom((ctx) => Array.from(ctx.spy(optionsAtom).values()))
 
 const OptionsList = reatomComponent(({ ctx }) => {
-  useUpdate(optionsAction, []);
-  
-  const data = ctx.spy(optionsArrayAtom)
+  useUpdate(options.fetch, []);
 
-  if (ctx.spy(optionsAction.statusesAtom).isPending) {
-    return <OptionsListSkeleton />
-  }
+  const data = ctx.spy(optionsArrayAtom)
+  if (ctx.spy(options.fetch.statusesAtom).isPending) return <OptionsListSkeleton />
 
   if (!data) return null;
 
-  return (
-    <div className="flex flex-col gap-2 w-full h-full">
-      {data.map((option) => <OptionItem key={option.name} {...option} />)}
-    </div>
-  )
+  return data.map((option) => <OptionItem key={option.name} {...option} />)
 }, "OptionsList")
 
 export const Options = () => {
-  
   return (
-    <OptionsList />
+    <div className="flex flex-col gap-2 w-full h-full">
+      <OptionsList />
+    </div>
   )
 }

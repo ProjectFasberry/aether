@@ -37,7 +37,9 @@ const STAGES: Record<Stage, StageOpts> = {
   "prod": {
     buildOpts: {
       sourcemap: false,
-      minify: "esbuild"
+      minify: "esbuild",
+      chunkHashing: true,
+      chunkGroping: true
     },
     pluginOpts: {
       analyzerIsEnabled: false
@@ -110,13 +112,14 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       target: "esnext",
       rollupOptions: {
-        external: [
-          '@scure/bip39/wordlists/english.js',
-        ],
         output: {
           chunkFileNames: 'assets/[name]-[hash].js',
           manualChunks(id) {
             if (!id.includes('node_modules')) return;
+
+            if (id.includes('@scure/bip39/wordlists/english.js')) {
+              return 'bip39-english-wordlist';
+            }
 
             if (target.buildOpts?.chunkGroping) {
               for (const group of CHUNK_GROUPS) {

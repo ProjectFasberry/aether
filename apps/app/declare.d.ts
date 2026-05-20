@@ -25,8 +25,22 @@ declare global {
     ? Data
     : never;
 
+  type ExtractApiErr<
+    T extends keyof operations,
+    Status extends number = 400
+  > = operations[T]["responses"] extends { [K in Status]: { content: { "application/json": infer Data } } }
+    ? Data extends { error: any }
+    ? Data["error"]
+    : never
+    : never;
+
   type ExtractApiParams<T extends keyof operations> =
     operations[T] extends { parameters: infer Data }
+    ? Data
+    : never;
+
+  type ExtractApiBody<T extends keyof operations> =
+    operations[T] extends { requestBody: infer Data }
     ? Data
     : never;
 

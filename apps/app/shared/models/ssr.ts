@@ -1,6 +1,5 @@
 import { action, atom, type AtomMut, withAssign } from "@reatom/framework";
 import type { PageContextServer } from "vike/types";
-import { withLog } from "../lib/reatom/helpers";
 import { createMemStorage, reatomPersist } from "@reatom/persist";
 import { LOGGING } from "./devtools/debug";
 import { loggerWithEnv } from "../lib/log";
@@ -33,10 +32,11 @@ export const createSsrModel = ({ name, ...opts }: SSRModelParams): CreateSsrMode
     withSsr: reatomPersist(ssrStorage)
   }
 };
+
+/* Default ssr model: snapshot atom and extension */
 export const { snapshotAtom, withSsr } = createSsrModel({
   name: "default", subscribe: true, mutable: true
 });
-
 const defaultSnapshotAtom = snapshotAtom;
 
 export const snapshots = atom(null, "snapshots").pipe(
@@ -64,17 +64,13 @@ export const snapshots = atom(null, "snapshots").pipe(
         ...updSnap,
         __meta: { name }
       }
-    }, `${name}.merge`).pipe(
-      withLog()
-    ),
+    }, `${name}.merge`),
     init: action((ctx, rootSnapshot: Snapshot): void => {
       if (!rootSnapshot) return;
 
       for (const [key, snapshot] of Array.from(snapshotsMap)) {
         snapshot(ctx, rootSnapshot);
       }
-    }, `${name}.init`).pipe(
-      withLog()
-    )
+    }, `${name}.init`)
   }))
 )

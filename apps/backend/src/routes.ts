@@ -14,6 +14,7 @@ import { withData, withError } from "./shared/schemas";
 import { wrapError } from "./helpers/wrap-error";
 import { checkDatabasesHealth } from "./shared/database/init";
 import { privated } from "./modules/private";
+import { account } from "./modules/account";
 
 export const main = new Elysia()
 	.use(shared)
@@ -21,18 +22,18 @@ export const main = new Elysia()
 	.use(me)
 	.use(serverGroup)
 	.use(store)
-	.use(rate);
+	.use(rate)
+	.use(account)
 
-export const root = new Elysia()
-	.get("/", ({ redirect }) => redirect(`/openapi`))
-	.group("/health", app => app
-		.get("/", () => ({ 
-			data: { 
+const health = new Elysia()
+  .group("/health", app => app
+		.get("/", () => ({
+			data: {
 				status: "OK",
 				uptime: process.uptime(),
 				memory: process.memoryUsage(),
-				availableMemory: process.availableMemory() 
-			} 
+				availableMemory: process.availableMemory()
+			}
 		}), {
 			response: {
 				200: withData(
@@ -80,6 +81,10 @@ export const root = new Elysia()
 			}
 		})
 	)
+
+export const root = new Elysia()
+	.get("/", ({ redirect }) => redirect(`/openapi`))
+	.use(health)
 	.use(privated)
 	.use(appGroup)
 	.use(validateGroup)

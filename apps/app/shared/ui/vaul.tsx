@@ -32,9 +32,9 @@ type VaulContentProps = PropsWithChildren & {
   className?: string,
 }
 
-const VaulTrigger = ({ children, asChild }: PropsWithChildren & { asChild?: boolean }) => {
+const VaulTrigger = ({ children, asChild, className }: PropsWithChildren & { asChild?: boolean, className?: string }) => {
   return (
-    <Drawer.Trigger asChild={asChild}>{children}</Drawer.Trigger>
+    <Drawer.Trigger asChild={asChild} className={className}>{children}</Drawer.Trigger>
   )
 }
 

@@ -8,6 +8,7 @@ import type { Selectable } from "kysely";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { DB } from "@repo/shared/types/db/general-database-types";
+import { withData } from "#/shared/schemas";
 
 async function updateNews(id: number, values: z.infer<typeof newsUpdateSchema>) {
 	const updates = buildUpdates<Selectable<DB["news"]>>(values);
@@ -33,5 +34,10 @@ export const newsUpdateRoute = new Elysia()
 		body: newsUpdateSchema,
 		afterResponse: ({ nickname: initiator, permission }) => {
 			createAdminActivityLog({ initiator, event: permission });
-		},
+    },
+    response: {
+      200: withData(
+        t.Record(t.String(), t.Union([t.String(), t.Any(), t.Boolean()]))
+      )
+		}
 	});

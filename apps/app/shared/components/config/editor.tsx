@@ -1,13 +1,13 @@
 import StarterKit from "@tiptap/starter-kit"
 import { TextStyleKit } from "@tiptap/extension-text-style"
-import { Editor, EditorContent, useEditor, useEditorState } from "@tiptap/react"
+import { Editor, EditorContent, useEditor, useEditorState, type EditorStateSnapshot } from "@tiptap/react"
 import { tv } from "tailwind-variants"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { TableKit } from '@tiptap/extension-table'
 import { reatomComponent } from "@reatom/npm-react"
 import { action, atom } from "@reatom/framework"
 import { withAssign } from "@reatom/framework"
-import { IconArrowBackUp, IconArrowForwardUp, IconArrowLeft, IconArrowRight, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
+import { IconArrowBackUp, IconArrowForwardUp, IconPictureInPicture, IconSettings } from "@tabler/icons-react"
 import Image from '@tiptap/extension-image'
 import { env } from "@/shared/env"
 import { Menu } from '@ark-ui/react/menu'
@@ -96,54 +96,79 @@ const isLinkAtom = atom(false)
 
 const bar = atom(null, "bar").pipe(
   withAssign((ctx, name) => ({
-    toggleLink: action((ctx) => {
-      isLinkAtom(ctx, (state) => !state)
-    }),
-    toggleTable: action((ctx) => {
-      isTableAtom(ctx, (state) => !state)
-    })
+    toggleLink: action((ctx) =>  isLinkAtom(ctx, (state) => !state)),
+    toggleTable: action((ctx) =>  isTableAtom(ctx, (state) => !state))
   }))
 )
+
+const DEFAULT_SELECTORS = {
+  isBold: false,
+  canBold: false,
+  isItalic: false,
+  canItalic: false,
+  isStrike: false,
+  canStrike: false,
+  isCode: false,
+  canCode: false,
+  canClearMarks: false,
+  isParagraph: false,
+  isHeading1: false,
+  isHeading2: false,
+  isHeading3: false,
+  isHeading4: false,
+  isHeading5: false,
+  isHeading6: false,
+  isBulletList: false,
+  isOrderedList: false,
+  isCodeBlock: false,
+  isBlockquote: false,
+  canUndo: false,
+  canRedo: false,
+  isLink: false,
+};
+
+const editorSelectors = (editor: EditorStateSnapshot<Editor>["editor"]) => {
+  if (!editor || editor.isDestroyed) {
+    return DEFAULT_SELECTORS;
+  }
+
+  return {
+    isBold: editor.isActive('bold') ?? false,
+    canBold: editor.can().chain().toggleBold().run() ?? false,
+    isItalic: editor.isActive('italic') ?? false,
+    canItalic: editor.can().chain().toggleItalic().run() ?? false,
+    isStrike: editor.isActive('strike') ?? false,
+    canStrike: editor.can().chain().toggleStrike().run() ?? false,
+    isCode: editor.isActive('code') ?? false,
+    canCode: editor.can().chain().toggleCode().run() ?? false,
+    canClearMarks: editor.can().chain().unsetAllMarks().run() ?? false,
+    isParagraph: editor.isActive('paragraph') ?? false,
+    isHeading1: editor.isActive('heading', { level: 1 }) ?? false,
+    isHeading2: editor.isActive('heading', { level: 2 }) ?? false,
+    isHeading3: editor.isActive('heading', { level: 3 }) ?? false,
+    isHeading4: editor.isActive('heading', { level: 4 }) ?? false,
+    isHeading5: editor.isActive('heading', { level: 5 }) ?? false,
+    isHeading6: editor.isActive('heading', { level: 6 }) ?? false,
+    isBulletList: editor.isActive('bulletList') ?? false,
+    isOrderedList: editor.isActive('orderedList') ?? false,
+    isCodeBlock: editor.isActive('codeBlock') ?? false,
+    isBlockquote: editor.isActive('blockquote') ?? false,
+    canUndo: editor.can().chain().undo().run() ?? false,
+    canRedo: editor.can().chain().redo().run() ?? false,
+    isLink: editor.isActive('link'),
+  }
+}
 
 export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor }) => {
   const editorState = useEditorState({
     editor,
-    selector: ctx => {
-      return {
-        isBold: ctx.editor.isActive('bold') ?? false,
-        canBold: ctx.editor.can().chain().toggleBold().run() ?? false,
-        isItalic: ctx.editor.isActive('italic') ?? false,
-        canItalic: ctx.editor.can().chain().toggleItalic().run() ?? false,
-        isStrike: ctx.editor.isActive('strike') ?? false,
-        canStrike: ctx.editor.can().chain().toggleStrike().run() ?? false,
-        isCode: ctx.editor.isActive('code') ?? false,
-        canCode: ctx.editor.can().chain().toggleCode().run() ?? false,
-        canClearMarks: ctx.editor.can().chain().unsetAllMarks().run() ?? false,
-        isParagraph: ctx.editor.isActive('paragraph') ?? false,
-        isHeading1: ctx.editor.isActive('heading', { level: 1 }) ?? false,
-        isHeading2: ctx.editor.isActive('heading', { level: 2 }) ?? false,
-        isHeading3: ctx.editor.isActive('heading', { level: 3 }) ?? false,
-        isHeading4: ctx.editor.isActive('heading', { level: 4 }) ?? false,
-        isHeading5: ctx.editor.isActive('heading', { level: 5 }) ?? false,
-        isHeading6: ctx.editor.isActive('heading', { level: 6 }) ?? false,
-        isBulletList: ctx.editor.isActive('bulletList') ?? false,
-        isOrderedList: ctx.editor.isActive('orderedList') ?? false,
-        isCodeBlock: ctx.editor.isActive('codeBlock') ?? false,
-        isBlockquote: ctx.editor.isActive('blockquote') ?? false,
-        canUndo: ctx.editor.can().chain().undo().run() ?? false,
-        canRedo: ctx.editor.can().chain().redo().run() ?? false,
-        isLink: ctx.editor.isActive('link'),
-      }
-    },
+    selector: ({ editor }) => editorSelectors(editor)
   })
 
   const setLink = () => {
     const previousUrl = editor.getAttributes('link').href
     const url = window.prompt('URL', previousUrl)
-
-    if (url === null) {
-      return;
-    }
+    if (url === null) return;
 
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run()
@@ -153,9 +178,7 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
     try {
       editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
     } catch (e) {
-      if (e instanceof Error) {
-        alert(e.message)
-      }
+      if (e instanceof Error) alert(e.message)
     }
   }
 
@@ -164,10 +187,8 @@ export const EditorMenuBar = reatomComponent<{ editor: Editor }>(({ ctx, editor 
 
   const addImage = () => {
     const url = window.prompt('URL')
-
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
-    }
+    if (!url) return;
+    editor.chain().focus().setImage({ src: url }).run()
   }
 
   return (
@@ -527,7 +548,6 @@ const ALLOWED_HOSTNAME_RE = new RegExp(
   `^(?:[a-z0-9-]+\\.)*(?:${domainPattern})$`,
   'i'
 );
-
 
 const content = atom(`<h2>Hi there</h2>`)
 

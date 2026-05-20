@@ -5,7 +5,7 @@ import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 
-async function removeStoreItem(id: number) {
+async function removeStoreItem(id: number): Promise<{ id: number }> {
   const query = await general
     .deleteFrom("store_items")
     .where("id", "=", id)
@@ -21,7 +21,9 @@ export const storeItemDelete = new Elysia()
     const data = await removeStoreItem(id);
     return { data }
   }, {
-    params: t.Object({ id: t.Number() }),
+    params: t.Object({
+      id: t.Number()
+    }),
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
     },

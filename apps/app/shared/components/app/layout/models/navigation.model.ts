@@ -57,8 +57,9 @@ const MENU_ACTIONS: MenuActionItem[] = [
   },
 ]
 
-const showCurrentUserMenuAtom = atom((ctx) => ctx.spy(userState.isAuthed) && ctx.spy(pageState.urlPathname) !== "/auth/")
+const showCurrentUserMenuAtom = atom((ctx) => ctx.spy(userState.isAuthed) && ctx.spy(pageState.urlPathname) !== "/auth")
 const showCartIconAtom = atom((ctx) => ctx.spy(userState.isAuthed) && ctx.spy(pageState.urlPathname)?.includes("/store"))
+const showAuthorizeButtonAtom = atom((ctx) => ctx.spy(pageState.urlPathname) !== "/auth");
 
 const headerUserMenuIsOpenAtom = atom(false, "headerUserMenuIsOpen")
 
@@ -67,6 +68,7 @@ export const navigationModel = () => {
     showCurrentUserMenuAtom,
     showCartIconAtom,
     headerUserMenuIsOpenAtom,
+    showAuthorizeButtonAtom,
     MENU_ACTIONS,
     HEADERS_LINKS,
     HEADER_MENU_LINKS

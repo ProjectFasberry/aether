@@ -15,9 +15,5 @@ const page = createPageModel({
 export default function Page() {
   const [_] = useAtom(page.dataAtom)
 
-  return (
-    <div className="bg-neutral-900 rounded-xl p-4">
-      <StorePrivated />
-    </div>
-  )
+  return <StorePrivated />
 }

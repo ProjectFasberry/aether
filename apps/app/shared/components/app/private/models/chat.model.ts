@@ -5,8 +5,6 @@ import { reatomAsync, withCache, withErrorAtom, withStatusesAtom } from "@reatom
 import { action, atom, batch, type Ctx } from "@reatom/framework";
 import { reatomMap, withAssign, withReset } from "@reatom/framework";
 import * as z from "zod";
-import { withLocalStorage } from "@reatom/persist-web-storage";
-import { makeChangeValidator } from "@/shared/lib/utils";
 
 type ChatEventVariant = 'create' | 'edit' | 'delete'
 
@@ -72,8 +70,8 @@ const EVENTS: Record<ChatEventVariant, (ctx: Ctx, data: unknown) => void> = {
 chatWsAtom.onChange((ctx, state) => {
   if (!state) return;
 
-  state.onopen = () => {}
-  state.onclose = () => {}
+  state.onopen = () => { }
+  state.onclose = () => { }
 
   state.onmessage = (event: MessageEvent<any>) => {
     const msg = JSON.parse(event.data) as ChatEvent
@@ -92,37 +90,20 @@ export type ChatItemViews = {
   avatar: string
 }
 
-export const chatItemViewsAtom = reatomMap<number, ChatItemViews[]>()
-export const getChatItemViews = (id: number) => atom((ctx) => ctx.spy(chatItemViewsAtom).get(id) ?? [])
-
-export const chatItemViewsAction = reatomAsync(async (ctx, id: number) => {
-  return await ctx.schedule(() =>
-    client<{ data: ChatItemViews[], meta: PaginatedMeta }>(`privated/chat/${id}/views`).exec()
-  )
-}, {
-  name: "chatItemViewsAction",
-  onFulfill: (ctx, res) => chatItemViewsAtom(ctx, new Map(res.data.map(e => [e.message_id, res.data]))),
-  onReject: (_, e) => logError(e)
-}).pipe(
-  withStatusesAtom(), 
-  withErrorAtom(), 
-  withCache({ swr: false })
-)
-
 export const chatHistoryState = atom(null, "chatHistoryState").pipe(
   withAssign(() => ({
-    data: atom<ChatItem[] | null>((ctx) => Array.from(ctx.spy(chatDataMapAtom).values()), "chatData"),
-    meta: atom<PaginatedMeta | null>(null, "chatMeta")
+    data: atom<ChatItem[] | null>((ctx) => Array.from(ctx.spy(chatDataMapAtom).values())),
+    meta: atom<PaginatedMeta | null>(null)
   }))
 )
 export const chatHistory = atom(null, "chatHistory").pipe(
-  withAssign(() => ({
+  withAssign((_, name) => ({
     fetch: reatomAsync(async (ctx) => {
       return await ctx.schedule(() =>
         client<{ data: ChatItem[], meta: PaginatedMeta }>("privated/chat/list").exec()
       )
     }, {
-      name: "chatDataAction",
+      name: `${name}.fetch`,
       onFulfill: (ctx, res) => {
         batch(ctx, () => {
           chatDataMapAtom(ctx, new Map(res.data.map((e) => [e.id, e])))
@@ -130,11 +111,14 @@ export const chatHistory = atom(null, "chatHistory").pipe(
         })
       },
       onReject: (_, e) => logError(e)
-    }).pipe(withStatusesAtom(), withErrorAtom())
+    }).pipe(
+      withStatusesAtom(),
+      withErrorAtom()
+    )
   }))
 )
 
-export const chatCreateMessageAtom = atom<string>("", "chatCreateMessage").pipe(withReset())
+export const chatCreateMessageAtom = atom<string>("").pipe(withReset())
 
 export const chatCreate = atom(null, "chatCraete").pipe(
   withAssign((_, name) => ({
@@ -149,16 +133,16 @@ export const chatCreate = atom(null, "chatCraete").pipe(
       socket.send(payloadStr)
     }, {
       name: `${name}.submit`,
-      onFulfill: (ctx) => chatDelete.atomsReset(ctx),
+      onFulfill: (ctx) => msgDelete.atomsReset(ctx),
       onReject: (_, e) => logError(e)
     }).pipe(
-      withStatusesAtom(), 
+      withStatusesAtom(),
       withErrorAtom()
     )
   }))
 )
 
-export const chatDelete = atom(null, "chatDelete").pipe(
+const msgDelete = atom(null, "msgDelete").pipe(
   withAssign((ctx, name) => ({
     atomsReset: action((ctx) => {
       chatCreateMessageAtom.reset(ctx)
@@ -173,58 +157,61 @@ export const chatDelete = atom(null, "chatDelete").pipe(
       const payloadStr = JSON.stringify(payload)
       socket.send(payloadStr)
     }, `${name}.submit`).pipe(
-      withStatusesAtom(), 
+      withStatusesAtom(),
       withErrorAtom()
     )
   }))
 )
 
-export const chatEditState = atom(null, "chatEditState").pipe(
+const msgEditState = atom(null, "msgEditState").pipe(
   withAssign(() => ({
-    msgId: atom<Nullable<number>>(null, "chatEditMessageId").pipe(withReset()),
-    newMsg: atom<Nullable<string>>(null, "chatEditNewMessage").pipe(withReset()),
-    oldMsg: atom<string>("", "chatEditOldMessage").pipe(withReset())
+    msgId: atom<Nullable<number>>(null).pipe(withReset()),
+    newMsg: atom<Nullable<string>>(null).pipe(withReset()),
+    oldMsg: atom<string>("").pipe(withReset())
   }))
 )
 
-export const getChatItemIsEditAtom = (id: number) => atom((ctx) => ctx.spy(chatEditState.msgId) === id);
+const getChatItemIsEditAtom = (id: number) => atom((ctx) => ctx.spy(msgEditState.msgId) === id);
 
-export const chatEdit = atom(null, "chatEdit").pipe(
+const equalSchema = z.object({ oldMsg: z.string(), newMsg: z.string() })
+
+const msgEdit = atom(null, "msgEdit").pipe(
   withAssign((_, name) => ({
     start: action((ctx, id) => {
       const currentMessage = ctx.get(chatHistoryState.data)?.find(d => d.id === id)?.message
       if (!currentMessage) throw new Error("current message is not defined")
 
-      chatEditState.msgId(ctx, id)
-      chatEditState.oldMsg(ctx, currentMessage)
+      msgEditState.msgId(ctx, id)
+      msgEditState.oldMsg(ctx, currentMessage)
     }),
     end: action((ctx) => {
-      chatEditState.msgId.reset(ctx)
-      chatEditState.newMsg.reset(ctx)
-      chatEditState.oldMsg.reset(ctx)
+      msgEditState.msgId.reset(ctx)
+      msgEditState.newMsg.reset(ctx)
+      msgEditState.oldMsg.reset(ctx)
     }),
-    messageIsValid: atom<boolean>(
-      makeChangeValidator(chatEditState.oldMsg, chatEditState.newMsg)
-    ),
+    messageIsValid: atom<boolean>((ctx) => {
+      const { success } = equalSchema.safeParse({ oldMsg: ctx.spy(msgEditState.oldMsg), newMsg: ctx.spy(msgEditState.newMsg) })
+      return success;
+    }),
     isValid: atom((ctx) => {
-      const isIdentity = ctx.spy(chatEdit.messageIsValid)
+      const isIdentity = ctx.spy(msgEdit.messageIsValid)
 
       if (!isIdentity) {
-        return z.safeParse(z.string().min(1), ctx.get(chatEditState.newMsg)).success
+        return z.safeParse(z.string().min(1), ctx.get(msgEditState.newMsg)).success
       }
 
       return false
     }),
     atomsReset: action((ctx) => {
-      chatEditState.msgId.reset(ctx)
-      chatEditState.newMsg.reset(ctx)
-      chatEditState.oldMsg.reset(ctx)
+      msgEditState.msgId.reset(ctx)
+      msgEditState.newMsg.reset(ctx)
+      msgEditState.oldMsg.reset(ctx)
     }),
     submit: reatomAsync(async (ctx) => {
-      const id = ctx.get(chatEditState.msgId);
+      const id = ctx.get(msgEditState.msgId);
       if (!id) throw new Error("Id is not defined");
 
-      const message = ctx.get(chatEditState.newMsg)
+      const message = ctx.get(msgEditState.newMsg)
       if (!message) throw new Error("message is not defined");
 
       const payload: ChatEvent<{ id: number, message: string }> = {
@@ -237,19 +224,54 @@ export const chatEdit = atom(null, "chatEdit").pipe(
       socket.send(payloadStr)
     }, {
       name: `${name}.submit`,
-      onFulfill: (ctx) => chatEdit.atomsReset(ctx),
+      onFulfill: (ctx) => msgEdit.atomsReset(ctx),
       onReject: (_, e) => logError(e)
     }).pipe(
-      withStatusesAtom(), 
+      withStatusesAtom(),
       withErrorAtom()
     )
   }))
 )
 
-export const chatDisabledAtom = atom(false, "chatDisabled").pipe(withLocalStorage({ key: "privated-chat-disabled" }))
+const chatItemViewsAtom = reatomMap<number, ChatItemViews[]>()
+const getChatItemViews = (id: number) => atom((ctx) => ctx.spy(chatItemViewsAtom).get(id) ?? [])
 
-chatDisabledAtom.onChange((ctx, state) => {
-  if (state) {
-    chatWs.closeWs(ctx)
-  }
+const msgViews = atom(null).pipe(
+  withAssign(() => ({
+    fetch: reatomAsync(async (ctx, id: number) => {
+      return await ctx.schedule(() =>
+        client<{ data: ChatItemViews[], meta: PaginatedMeta }>(`privated/chat/${id}/views`).exec()
+      )
+    }, {
+      name: "chatItemViewsAction",
+      onFulfill: (ctx, res) => chatItemViewsAtom(ctx, new Map(res.data.map(e => [e.message_id, res.data]))),
+      onReject: (_, e) => logError(e)
+    }).pipe(
+      withStatusesAtom(),
+      withErrorAtom(),
+      withCache({ swr: false })
+    )
+  }))
+)
+
+const msgCopyText = action(async (ctx, id: number) => {
+  const history = ctx.get(chatHistoryState.data)
+  if (!history) return;
+
+  const msg = history.find(m => m.id === id);
+  if (!msg) return;
+
+  await navigator.clipboard.writeText(msg.message)
 })
+
+export const chatMessageModel = () => {
+  return {
+    msgViews,
+    msgEdit,
+    msgDelete,
+    msgEditState,
+    msgCopyText,
+    getChatItemViews,
+    getChatItemIsEditAtom
+  }
+}

@@ -11,15 +11,14 @@ export const eventsDelete = new Elysia()
   .delete("/:id", async ({ params: { id }, status }) => {
     const data = await deleteEvent(id)
     if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));
-
-    return { data }
+    return { data: "OK" }
   }, {
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
     },
     response: {
       200: withData(
-        t.String()
+        t.Literal("OK")
       ),
       404: withError(
         t.UnionEnum(["ITEM_NOT_FOUND"])

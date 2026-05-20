@@ -24,6 +24,7 @@ import { getFromDictionary } from "@/shared/models/app/utils"
 import { scrollableVariant } from "@/shared/consts/style-variants"
 import { Menu } from '@ark-ui/react/menu'
 import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu"
+import { Noop } from "@/shared/ui/noop"
 
 type RolePayload = {
   id: number;
@@ -33,15 +34,15 @@ type RolePayload = {
 const rolesListPermItemVariant = tv({
   base: `
     flex items-center group
-    data-[state=active]:bg-green-500/60 
+    data-[state=active]:bg-green-500/60
     data-[state=inactive]:bg-transparent
     data-[state=deleted]:bg-red/60
     border border-neutral-800 px-2 py-1 rounded-lg justify-between w-full gap-2
   `,
   slots: {
     name: `
-      text-base 
-      group-data-[state=active]:text-neutral-50 
+      text-base
+      group-data-[state=active]:text-neutral-50
       group-data-[state=inactive]:text-neutral-50
       group-data-[state=deleted]:text-neutral-50
     `,
@@ -127,7 +128,7 @@ const RolesListItemPerms = reatomComponent(({ ctx }) => {
     return <RolesListItemPermsSkeleton />
   }
 
-  if (!data) return <span>пусто</span>
+  if (!data) return <Noop title="пусто" />
 
   return data.permissions.map((p) => <RolesListItemPermsItem key={p.id} {...p} />)
 }, "RolesListItemPerms")

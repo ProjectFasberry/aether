@@ -31,7 +31,7 @@ const selectIndicatorVariant = tv({
 })
 const selectContentVariant = tv({
   base: `
-    flex flex-col rounded-xl bg-neutral-900 z-50 min-w-full
+    flex flex-col rounded-xl bg-neutral-900 z-62 min-w-full
     data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=open]:fade-in
     duration-300 ease-out overflow-y-auto outline-none
   `

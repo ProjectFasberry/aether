@@ -1,5 +1,5 @@
-import { UsersFilters, UsersFiltersViewer } from "@/shared/components/app/private/components/users.filters";
-import { Users, UsersItemMenu, UsersViewer } from "@/shared/components/app/private/components/users.list";
+import { UsersBody } from "@/shared/components/app/private/components/users-body";
+import { UsersHeader } from "@/shared/components/app/private/components/users-header";
 import { users, usersRoles } from "@/shared/components/app/private/models/users.model";
 import { createPageModel } from "@/shared/lib/events";
 import { useAtom } from "@reatom/npm-react";
@@ -20,14 +20,9 @@ export default function Page() {
   const [_] = useAtom(page.dataAtom);
 
   return (
-    <div className="flex flex-col h-full relative w-full">
-      <UsersFiltersViewer />
-      <UsersFilters />
-      <div className="flex flex-col p-4 rounded-xl bg-neutral-900">
-        <Users />
-        <UsersViewer />
-        <UsersItemMenu />
-      </div>
+    <div className="flex flex-col h-full gap-2 relative w-full">
+      <UsersHeader />
+      <UsersBody />
     </div>
   )
 }

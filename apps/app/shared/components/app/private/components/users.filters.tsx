@@ -1,4 +1,3 @@
-import { atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { UserActionsChangeRoleGlobal } from "./users.change-role";
 import { users, usersState, usersLengthAtom, usersSelectedLengthAtom, usersSelectedOverAtom, usersControl, usersControlState } from "../models/users.model";
@@ -20,7 +19,7 @@ const UsersGlobalActions = reatomComponent(({ ctx }) => {
     <div className="flex items-center justify-center gap-1">
       <Menu.Root>
         <Menu.Trigger asChild>
-          <Button background="default" className="flex items-center justify-center h-8 w-8 aspect-square p-0">
+          <Button background="default" className="h-8 w-8 aspect-square p-0">
             <IconBan size={16} />
           </Button>
         </Menu.Trigger>
@@ -44,11 +43,7 @@ const UsersSelectedLength = reatomComponent(({ ctx }) => {
   const data = ctx.spy(usersSelectedLengthAtom)
   if (data < 2) return null;
 
-  return (
-    <>
-      Выбрано:&nbsp;{data}
-    </>
-  )
+  return <>Выбрано:&nbsp;{data}</>
 }, "UsersSelectedLength")
 
 const UsersFiltersLength = reatomComponent(({ ctx }) => {
@@ -80,14 +75,14 @@ const UsersFiltersAsc = reatomComponent(({ ctx }) => {
 
 const UsersFiltersSelect = reatomComponent(({ ctx }) => {
   return (
-    <div className="flex justify-between h-10 px-4 w-full items-center">
+    <div className="flex justify-between min-h-10 h-10 duration-100 ease-in group-data-[view=true]:px-4 w-full items-center">
       <div className="flex items-center gap-2">
         <Checkbox
           id="users-filter-selectAll"
           checked={ctx.spy(usersControlState.isCheckedAll)}
           onCheckedChange={(v) => typeof v === 'boolean' && usersControl.select.all(ctx, v)}
         />
-        <label htmlFor="users-filter-selectAll">Выбрать все</label>
+        <label htmlFor="checkbox:users-filter-selectAll:input">Выбрать все</label>
       </div>
       <UsersGlobalActions />
     </div>
@@ -107,25 +102,22 @@ const UsersFiltersSearchQuery = reatomComponent(({ ctx }) => {
 }, "UsersFiltersSearchQuery")
 
 const SORTS = [
-  { title: "По дате регистрации", value: "created_at" },
-  { title: "По роли", value: "role" },
-  { title: "По алфавиту", value: "abc" }
+  { label: "По дате регистрации", value: "created_at" },
+  { label: "По роли", value: "role" },
+  { label: "По алфавиту", value: "abc" }
 ] as const
 
 const UsersFiltersSort = reatomComponent(({ ctx }) => {
-  const targetSort = SORTS.find(d => d.value === ctx.spy(usersState.filters.sortBy))?.title
-  if (!targetSort) return null;
+  const current = SORTS.find(d => d.value === ctx.spy(usersState.filters.sortBy))
+  if (!current) return null;
 
   return (
     <Menu.Root
-      onTriggerValueChange={(details) => {
-        if (!details.value) return;
-        usersState.filters.sortBy(ctx, details.value as typeof SORTS[number]["value"])
-      }}
+      onSelect={(details) => usersState.filters.sortBy(ctx, details.value as typeof SORTS[number]["value"])}
     >
       <Menu.Trigger asChild>
         <Button className="px-4 h-8 w-full text-nowrap truncate min-w-0" background="default">
-          {targetSort}
+          {current.label}
         </Button>
       </Menu.Trigger>
       <Menu.Positioner>
@@ -140,7 +132,7 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
                 value={sort.value}
                 className={dropdownMenuItemVariants()}
               >
-                {sort.title}
+                {sort.label}
               </Menu.Item>
             ))}
           </div>
@@ -150,33 +142,42 @@ const UsersFiltersSort = reatomComponent(({ ctx }) => {
   )
 }, "UsersFiltersSort")
 
-const usersFiltersInViewAtom = atom(true)
-usersFiltersInViewAtom.onChange((_, s) => console.log(s));
-
-export const { Component: UsersFiltersViewer } = createViewerModel({
-  atomForUpdate: usersFiltersInViewAtom
+export const { Component: UsersFiltersViewer,inViewAtom: usersFiltersInViewAtom } = createViewerModel({
+  name: "users-filters",
+  logging: true
 })
 
 export const UsersFilters = reatomComponent(({ ctx }) => {
-  const inView = ctx.spy(usersFiltersInViewAtom)
-
   return (
     <div
-      className="flex top-1 z-10 mb-4 flex-col data-[view=false]:shadow-lg data-[view=false]:shadow-black/20 w-full sticky gap-2 p-4 bg-neutral-900 rounded-xl"
-      data-view={inView}
+      className="
+        flex top-14 lg:top-1 z-10 group mb-4 flex-col w-full sticky gap-2 bg-neutral-900 rounded-xl duration-100 ease-in
+        border data-[view=true]:border-transparent data-[view=false]:border-neutral-800 data-[view=false]:p-4
+      "
+      ref={el => {
+        const un = ctx.subscribe(usersFiltersInViewAtom, (state) => {
+          if (!el) return;
+          el.dataset.view = state.toString()
+        })
+
+        return () => un()
+      }}
     >
       <UsersFiltersLength />
-      {inView && (
-        <div className="flex flex-col min-w-0 sm:flex-row sm:items-center justify-between w-full gap-2 h-full">
-          <div className="flex w-full sm:w-2/3">
-            <UsersFiltersSearchQuery />
-          </div>
-          <div className="flex items-center min-w-0 gap-1 w-full sm:w-1/3">
-            <UsersFiltersAsc />
-            <UsersFiltersSort />
-          </div>
+      <div
+        className="
+          flex duration-100 ease-in opacity-100 flex-col min-w-0 sm:flex-row sm:items-center justify-between w-full gap-2 h-full
+          group-data-[view=false]:h-0 group-data-[view=false]:opacity-0
+        "
+      >
+        <div className="flex w-full sm:w-2/3">
+          <UsersFiltersSearchQuery />
         </div>
-      )}
+        <div className="flex items-center min-w-0 gap-1 w-full sm:w-1/3">
+          <UsersFiltersAsc />
+          <UsersFiltersSort />
+        </div>
+      </div>
       <UsersFiltersSelect />
     </div>
   )

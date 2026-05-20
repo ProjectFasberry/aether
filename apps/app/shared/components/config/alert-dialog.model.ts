@@ -12,46 +12,62 @@ type AlertDialogConfig = {
   withDelay?: boolean
 }
 
-export const alertDialogIsOpenAtom = atom(false, "alertDialogIsOpen").pipe(withReset())
-export const alertDialogConfigAtom = atom<AlertDialogConfig | null>(null, "alertDialogConfig").pipe(withReset())
+export const alertDialogState = atom(null, "alertDialogState").pipe(
+  withAssign((_, name) => ({
+    isOpen: atom(false, `${name}.isOpen`).pipe(withReset()),
+    config: atom<AlertDialogConfig | null>(null, `${name}.config`).pipe(withReset())
+  }))
+)
+export const alertDialog = atom(null, "alertDialog").pipe(
+  withAssign((_, name) => ({
+    open: action(async (ctx, { withDelay = false, ...config }: AlertDialogConfig) => {
+      alertDialogState.config(ctx, { withDelay, ...config });
 
-export const alertDialog = atom(null).pipe(
-  withAssign((ctx, name) => ({
-    open: action(async (ctx, { withDelay = true, ...config }: AlertDialogConfig) => {
-      alertDialogConfigAtom(ctx, { withDelay, ...config });
-      
       if (withDelay) {
         await ctx.schedule(() => sleep(DIALOG_DELAY))
       }
 
-      alertDialogIsOpenAtom(ctx, true);
+      alertDialogState.isOpen(ctx, true);
     }, `${name}.open`),
     confirm: action(async (ctx) => {
-      const config = ctx.get(alertDialogConfigAtom)
+      const config = ctx.get(alertDialogState.config)
       if (!config) return
 
       config.confirmAction(ctx)
 
       if (config.autoClose) {
-        await ctx.schedule(() => sleep(DIALOG_DELAY))
+        if (config.withDelay) {
+          await ctx.schedule(() => sleep(DIALOG_DELAY))
+        }
         alertDialog.close(ctx)
       }
-    }),
+    }, `${name}.confirm`),
     cancel: action(async (ctx) => {
-      const config = ctx.get(alertDialogConfigAtom)
+      const config = ctx.get(alertDialogState.config)
 
       if (config?.cancelAction) {
         config.cancelAction(ctx)
       }
 
       await ctx.schedule(() => sleep(DIALOG_DELAY))
-      alertDialogConfigAtom.reset(ctx)
-      alertDialogIsOpenAtom(ctx, false)
-    }),
-    close: action(async (ctx) => {
-      alertDialogIsOpenAtom(ctx, false)
-      await ctx.schedule(() => sleep(DIALOG_DELAY))
-      alertDialogConfigAtom.reset(ctx)
-    }),
+
+      alertDialogState.config.reset(ctx)
+      alertDialogState.isOpen(ctx, false)
+    }, `${name}.cancel`),
+    close: action((ctx) => {
+      alertDialogState.isOpen(ctx, false)
+    }, `${name}.close`),
   }))
 )
+
+alertDialogState.isOpen.onChange(async (ctx, state) => {
+  if (!state) {
+    const config = ctx.get(alertDialogState.config)
+
+    if (config?.withDelay) {
+      await ctx.schedule(() => sleep(DIALOG_DELAY))
+    }
+
+    alertDialogState.config.reset(ctx)
+  }
+})

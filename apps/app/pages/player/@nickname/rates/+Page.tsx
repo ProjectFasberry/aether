@@ -10,6 +10,7 @@ import { createPageModel } from "@/shared/lib/events";
 import { usePageContext } from "vike-react/usePageContext";
 import { BackButton } from "@/shared/ui/back-button";
 import type { PropsWithChildren } from "react";
+import { Noop } from "@/shared/ui/noop";
 
 const ListCard = ({ initiator, avatar }: RateUser) => {
   return (
@@ -32,7 +33,7 @@ const RateList = reatomComponent(({ ctx }) => {
   }
 
   const data = ctx.spy(player.rate.fetchList.dataAtom)?.data;
-  if (!data || isEmptyArray(data)) return <Typography color="gray">пусто</Typography>
+  if (!data || isEmptyArray(data)) return <Noop title="пусто" />
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 auto-rows-auto gap-2 w-full h-full">

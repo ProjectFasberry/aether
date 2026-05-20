@@ -3,7 +3,7 @@ import { reatomComponent } from "@reatom/npm-react"
 import { auth, type AuthFindoutType, authState } from "../models/auth.model"
 import { env } from "@/shared/env"
 import { Input } from "@/shared/ui/input"
-import { type ReactNode, useState } from "react"
+import { type JSX, type ReactNode, useState } from "react"
 import { Button } from "@/shared/ui/button"
 import { SeedPhrase, SeedPhraseFooter, SeedPhraseHeader, SeedPhraseBody } from "@/shared/ui/seed-phrase"
 import { IconCheck, IconDownload, IconSelector, IconX } from "@tabler/icons-react"
@@ -22,6 +22,7 @@ import {
   selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant,
   selectItemTextVariant, selectItemVariant, selectTriggerVariant
 } from "@/shared/ui/select"
+import { Typography } from "@/shared/ui/typography"
 
 const FindoutReferrerInput = reatomComponent(({ ctx }) => (
   <Input
@@ -222,42 +223,53 @@ const RegisterSeedPhraseSave = reatomComponent(({ ctx }) => {
   )
 }, "RegisterSeedPhraseSave")
 
-const RegisterConfirm = reatomComponent(({ ctx }) => {
-  if (ctx.spy(register.submit.statusesAtom).isPending) return <IconLoader />
-
-  const error = ctx.spy(authState.globalError)
-
-  if (error) {
-    return (
-      <div className="flex flex-col gap-4 w-full items-center justify-center">
+const RegisterConfirmLoading = () => {
+  return (
+    <>
+      <IconLoader size={36} />
+      <div className="flex flex-col gap-1 justify-center items-center w-full">
+        <Typography className="text-xl font-semibold">
+          Регистрируем
+        </Typography>
+        <Typography color="gray" className="text-sm">
+          это займет немного времени...
+        </Typography>
+      </div>
+    </>
+  )
+}
+const RegisterConfirmError = reatomComponent(({ ctx }) => {
+  return (
+    <>
+      <div className="flex flex-col gap-2 w-full items-center justify-center">
         <IconX size={32} className="text-red-600" />
         <p className="text-xl w-full sm:w-2/3 leading-5 font-semibold text-center">
           {translate["auth.register.error"]()}
         </p>
-        <Button
-          background="default"
-          type="button"
-          onClick={() => {
-            spawn(ctx, (spawnCtx) => {
-              registerNavigationModel.back(spawnCtx)
-              registerNavigationModel.back(spawnCtx)
-              registerNavigationModel.back(spawnCtx)
-            })
-          }}
-          className="font-semibold"
-        >
-          Вернуться
-        </Button>
       </div>
-    )
-  }
+      <Button
+        background="default"
+        type="button"
+        onClick={() => {
+          spawn(ctx, (spawnCtx) => {
+            registerNavigationModel.back(spawnCtx)
+            registerNavigationModel.back(spawnCtx)
+            registerNavigationModel.back(spawnCtx)
+          })
+        }}
+        className="font-semibold"
+      >
+        Вернуться
+      </Button>
+    </>
+  )
+}, "RegisterConfirmError")
 
-  if (!ctx.spy(register.submit.dataAtom)) return <IconLoader />
-
+const RegisterConfirmSuccess = reatomComponent(({ ctx }) => {
   return (
-    <div className="flex flex-col gap-6 w-full items-center justify-center">
-      <div className="flex flex-col gap-4 w-full items-center justify-center">
-        <IconCheck size={32} className="text-green-600" />
+    <>
+      <div className="flex flex-col gap-2 w-full items-center justify-center">
+        <IconCheck size={32} className="text-green-400" />
         <p className="text-xl w-full sm:w-2/3 leading-5 font-semibold text-center">
           {translate["auth.register.success"]()}
         </p>
@@ -265,11 +277,31 @@ const RegisterConfirm = reatomComponent(({ ctx }) => {
       <Button
         className="w-2/3 font-semibold"
         background="white"
-        onClick={() => authState.type(ctx, "login")}
+        onClick={() => register.toLogin(ctx)}
       >
         {translate["auth.register.toLogin"]()}
       </Button>
-    </div >
+    </>
+  )
+}, "RegisterConfirmSuccess")
+
+const REGISTER_CONFIRM_COMPONENTS: Record<"loading" | "error" | "success", (props: object) => JSX.Element> = {
+  "loading": RegisterConfirmLoading,
+  "error": RegisterConfirmError,
+  "success": RegisterConfirmSuccess
+}
+
+const RegisterConfirm = reatomComponent(({ ctx }) => {
+  const error = ctx.spy(authState.globalError)
+  const isLoading = ctx.spy(register.submit.statusesAtom).isPending;
+  const currentStep = isLoading ? "loading" : error ? "error" : "success";
+
+  const Component = REGISTER_CONFIRM_COMPONENTS[currentStep]
+
+  return (
+    <div className="flex flex-col gap-6 w-full items-center justify-center">
+      <Component />
+    </div>
   )
 }, "RegisterConfirm")
 
@@ -288,7 +320,6 @@ const RegisterBack = reatomComponent(({ ctx }) => {
     </Button>
   )
 }, "RegisterBack")
-
 const RegisterContinue = reatomComponent(({ ctx }) => {
   const canGoNext = ctx.spy(registerNavigationModel.canGoNextAtom)
 
@@ -297,7 +328,7 @@ const RegisterContinue = reatomComponent(({ ctx }) => {
       type="button"
       className="w-full bg-green-600 capitalize font-semibold transition-none"
       disabled={!canGoNext || ctx.spy(registerNavigationModel.next.statusesAtom).isPending}
-      onClick={() => spawn(ctx, (spawnCtx) => registerNavigationModel.next(spawnCtx))}
+      onClick={() => register.next(ctx)}
     >
       {translate["shared.next"]()}
     </Button>
@@ -329,7 +360,7 @@ const RegisterContent = reatomComponent(({ ctx }) =>
 export const RegisterForm = reatomComponent(({ ctx }) => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    spawn(ctx, (spawnCtx) => registerNavigationModel.next(spawnCtx))
+    register.next(ctx);
   }
 
   return (

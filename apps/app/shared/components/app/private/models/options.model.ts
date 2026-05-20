@@ -1,43 +1,79 @@
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
-import { reatomAsync, withCache, withStatusesAtom } from "@reatom/framework";
+import { action, atom, reatomAsync, withAssign, withCache, withStatusesAtom } from "@reatom/framework";
 import { reatomMap } from "@reatom/framework";
 import { notifyAboutRestrictRole } from "./actions.model";
 
-export type Option = {
-  title: string,
-  name: string,
-  value: boolean
+export type OptionsPayload = ExtractApiData<"getPrivatedOptionsList">["data"];
+export type Option = OptionsPayload[number]
+
+type OptionExtended = Option & { isLoading: boolean }
+
+const optionsAtom = reatomMap<string, OptionExtended>();
+
+const getOptionIsLoading = (option: string) => atom((ctx) =>
+  ctx.spy(optionsAtom).get(option)?.isLoading ?? false
+);
+
+const optionsControl = atom(null, "optionsControl").pipe(
+  withAssign((_, name) => ({
+    updateOption: action((ctx, option: Option["name"], value: Partial<OptionExtended>) => {
+      const existsOption = optionsAtom.get(ctx, option);
+
+      if (existsOption) {
+        optionsAtom.set(ctx, option, { ...existsOption, ...value })
+      }
+    }),
+    update: reatomAsync(async (ctx, option: Option["name"], value: Option["value"]) => {
+      optionsControl.updateOption(ctx, option, { isLoading: true, value })
+
+      try {
+        const result = await client
+          .post<ExtractApiData<"postPrivatedOptionsByNameEdit">["data"]>(`privated/options/${option}/edit`,)
+          .pipe(withJsonBody({ value }))
+          .exec()
+
+        optionsControl.updateOption(ctx, option, { isLoading: false, value: result.value })
+      } catch (e) {
+        optionsControl.updateOption(ctx, option, { isLoading: false, value: !value })
+        throw e;
+      }
+    }, {
+      name: `${name}.update`,
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom()
+    )
+  }))
+)
+
+const options = atom(null, "options").pipe(
+  withAssign((_, name) => ({
+    fetch: reatomAsync(async (ctx) => {
+      return await ctx.schedule(() => client<OptionsPayload>("privated/options/list").exec())
+    }, {
+      name: `${name}.fetch`,
+      onFulfill: (ctx, res) => {
+        const defaultOpts = {
+          isLoading: false
+        }
+
+        optionsAtom(ctx, new Map(res.map(option =>
+          [option.name, { ...option, ...defaultOpts, }]))
+        )
+      },
+      onReject: (_, e) => notifyAboutRestrictRole(e)
+    }).pipe(
+      withStatusesAtom(),
+      withCache({ swr: false })
+    )
+  }))
+)
+
+export const optionsModel = () => {
+  return {
+    getOptionIsLoading,
+    options,
+    optionsControl,
+    optionsAtom
+  }
 }
-
-export const optionsAtom = reatomMap<string, Option>();
-
-export const updateOptionAction = reatomAsync(async (ctx, name: Option["name"], value: Option["value"]) => {
-  const json = { value }
-
-  const result = await client
-    .post<Pick<Option, "value">>(`privated/options/${name}/edit`,)
-    .pipe(withJsonBody(json))
-    .exec()
-
-  return { name, result }
-}, {
-  name: "updateOptionAction",
-  onFulfill: (ctx, { name, result }) => {
-    const option = optionsAtom.get(ctx, name)
-    if (!option) return;
-
-    optionsAtom.set(ctx, name, { ...option, value: result.value })
-  },
-  onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withStatusesAtom())
-
-export const optionsAction = reatomAsync(async (ctx) => {
-  return await ctx.schedule(() => client<Option[]>("privated/options/list").exec())
-}, {
-  name: "optionsAction",
-  onFulfill: (ctx, res) => {
-    const options = new Map(res.map(option => [option.name, option]));
-    optionsAtom(ctx, options)
-  },
-  onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withStatusesAtom(), withCache({ swr: false }))

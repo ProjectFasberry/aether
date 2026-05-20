@@ -2,8 +2,9 @@ import { Button } from "@/shared/ui/button";
 import { IconMoodWrrrFilled } from "@tabler/icons-react";
 import { type PropsWithChildren } from "react";
 import { ErrorBoundary, type FallbackProps } from "react-error-boundary";
+import { errorBoundary } from "../models/error.model";
 
-export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
   return (
     <div className="flex flex-col gap-4 h-dvh responsive mx-auto w-full items-center justify-center">
       <IconMoodWrrrFilled className="w-24 h-24" />
@@ -34,14 +35,13 @@ export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
   );
 }
 
-function logError(error: Error, info: React.ErrorInfo) {
-  console.error(error)
-};
-
 export const ErrorBoundaryProvider = ({ children }: PropsWithChildren) => {
   return (
-    <ErrorBoundary FallbackComponent={ErrorFallback} onError={logError}>
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onError={(e, info) => errorBoundary.log(e, info)}
+    >
       {children}
-    </ErrorBoundary>
+    </ErrorBoundary >
   )
 }

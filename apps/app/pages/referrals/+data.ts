@@ -11,8 +11,8 @@ function metadata() {
   }
 }
 
-export function guard(pageCtx: PageContext) {
-  logRouting(pageCtx.urlPathname, "guard");
+export function data(pageCtx: PageContext) {
+  logRouting(pageCtx.urlPathname, "data");
 
   const isAuth = getIsAuthed(pageCtx.snapshot)
   if (!isAuth) throw redirect("/auth")

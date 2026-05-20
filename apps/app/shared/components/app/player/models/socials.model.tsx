@@ -1,24 +1,15 @@
 import { client } from "@/shared/lib/client-wrapper"
 import { reatomAsync, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
 import { isEmptyArray } from "@/shared/lib/helpers"
-import { type ReactNode } from "react"
 import { toast } from "sonner"
-import { Icon } from "@/shared/ui/icon"
 import { action, atom, withAssign } from "@reatom/framework"
 import { playerState } from "./player.model"
 
-export type PlayerSocialsValuePayload = {
-  id: string | number,
-  username: string
-}
-
-export type PlayerSocialsPayload = {
-  type: "telegram" | "discord",
-  value: PlayerSocialsValuePayload
-}
+type PlayerSocialsPayload = ExtractApiData<"getServerSocialsListByNickname">["data"];
+export type PlayerSocialsItem = PlayerSocialsPayload[number];
 
 export async function getPlayerSocials(nickname: string, init?: RequestInit) {
-  return client<PlayerSocialsPayload[]>(`server/socials/list/${nickname}`, { ...init }).exec()
+  return client<PlayerSocialsPayload>(`server/socials/list/${nickname}`, { ...init }).exec()
 }
 
 export const playerSocials = atom(null, "playerSocials").pipe(
@@ -44,23 +35,23 @@ export const playerSocials = atom(null, "playerSocials").pipe(
 playerState.nickname.onChange((ctx, state) => state && playerSocials.fetch(ctx, state))
 
 type SocialEventMap = {
-  link: (value: PlayerSocialsValuePayload) => string
-  fn: (value: PlayerSocialsValuePayload) => void
+  link: (value: PlayerSocialsItem["value"]) => string
+  fn: (value: PlayerSocialsItem["value"]) => void
 };
 
 type SocialEvent = {
   [K in keyof SocialEventMap]: { type: K; cb: SocialEventMap[K] }
 }[keyof SocialEventMap];
 
-export const SOCIAL_EVENTS: Record<PlayerSocialsPayload["type"], SocialEvent> = {
+export const SOCIAL_EVENTS: Record<string, SocialEvent> = {
   telegram: {
     type: "link",
-    cb: (value) => "https://t.me/" + value.username
+    cb: (value) => "https://t.me/" + value
   },
   discord: {
     type: "fn",
     cb: (value) => {
-      navigator.clipboard.writeText(value.username)
+      navigator.clipboard.writeText(value)
       toast.info("Скопировано в буфер обмена")
     }
   }

@@ -1,8 +1,18 @@
 import { luckperms } from "#/shared/database/luckperms-db"
 import { env } from "#/shared/env"
-import * as z from "zod"
+import { type Static, t } from "elysia"
 
-export async function getAchievementsMeta() {
+export const achievementsMetaPayloadSchema = t.Object({
+  total: t.Number(),
+  achievementsTypes: t.Array(
+    t.Object({
+      key: t.String(),
+      title: t.String()
+    })
+  )
+})
+
+export async function getAchievementsMeta(): Promise<Static<typeof achievementsMetaPayloadSchema>> {
   return {
     total: 2,
     achievementsTypes: [
@@ -45,11 +55,21 @@ async function getAchievementDetails(achievement: string) {
   return { ...v, img: publicImage }
 }
 
-const achievementsSchema = z.enum(["lobby", "bisquite", "main"])
+const achievementsSchema = t.UnionEnum(["lobby", "bisquite", "main"])
+export const achievementsPayloadSchema = t.Array(
+  t.Object({
+    type: t.String(),
+    details: t.Object({
+      img: t.String(),
+      title: t.String(),
+      description: t.String()
+    })
+  })
+)
 
-type AchievementType = z.infer<typeof achievementsSchema>
+type AchievementType = Static<typeof achievementsSchema>
 
-export async function getAchievements(nickname: string) {
+export async function getAchievements(nickname: string): Promise<Static<typeof achievementsPayloadSchema>> {
   const query = await luckperms
     .selectFrom("luckperms_user_permissions")
     .innerJoin(
@@ -62,7 +82,7 @@ export async function getAchievements(nickname: string) {
     .where(eb =>
       eb.and([
         eb.or(
-          achievementsSchema.options.map(option =>
+          achievementsSchema.enum.map(option =>
             eb("luckperms_user_permissions.permission", "like", `${option}%`)
           )
         ),
@@ -83,4 +103,3 @@ export async function getAchievements(nickname: string) {
 
   return res
 }
-

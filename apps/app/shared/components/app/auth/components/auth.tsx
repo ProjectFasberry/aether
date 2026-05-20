@@ -58,23 +58,28 @@ export const AuthError = reatomComponent(({ ctx }) => {
   return <ErrorBlock title={error} />
 }, "AuthError")
 
+const getCapUrl = () => `${env.VITE_CAP_URL}/${env.VITE_CAP_SITE_KEY}/`;
+
+const CAP_OPTIONS = {
+  i18nInitialState: "Я человек",
+  i18nVerifyingLabel: "Проверка...",
+  i18nVerifyingAriaLabel: "Проверка...",
+  i18nVerifiedAriaLabel: "Пройдено",
+  i18nVerifyAriaLabel: "Пройти",
+  i18nErrorAriaLabel: "Ошибка",
+  i18nErrorLabel: "Ошибка",
+  i18nWasmDisabled: "У вас отключен WASM",
+  i18nSolvedLabel: "Пройдено",
+}
+
+// TODO: make CapWidget global
 export const Verify = reatomComponent(({ ctx }) => {
   if (!ctx.spy(pof.showTokenVerifySectionAtom)) return null;
 
   return (
     <CapWidget
-      endpoint={`${env.VITE_CAP_URL}/${env.VITE_CAP_SITE_KEY}/`}
-      options={{
-        i18nInitialState: "Я человек",
-        i18nVerifyingLabel: "Проверка...",
-        i18nVerifyingAriaLabel: "Проверка...",
-        i18nVerifiedAriaLabel: "Пройдено",
-        i18nVerifyAriaLabel: "Пройти",
-        i18nErrorAriaLabel: "Ошибка",
-        i18nErrorLabel: "Ошибка",
-        i18nWasmDisabled: "У вас отключен WASM",
-        i18nSolvedLabel: "Пройдено",
-      }}
+      endpoint={getCapUrl()}
+      options={CAP_OPTIONS}
       onSolve={(value) => auth.solve(ctx, value)}
       onError={(e) => authState.globalError(ctx, e instanceof Error ? e.message : e)}
     />

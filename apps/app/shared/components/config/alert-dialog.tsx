@@ -1,16 +1,16 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Button } from "@/shared/ui/button";
 import { Typography } from "@/shared/ui/typography"
-import { alertDialogIsOpenAtom, alertDialogConfigAtom, alertDialog } from "./alert-dialog.model";
+import { alertDialogState, alertDialog } from "./alert-dialog.model";
 import { Dialog } from "@ark-ui/react/dialog";
 import { Portal } from "@ark-ui/react/portal"
 import { dialogBackdropVariant, dialogBaseStyle, DialogClose, dialogContentVariant, dialogPositionerVariant, dialogTitleVariant } from "@/shared/ui/dialog";
 
 const AlertContent = reatomComponent(({ ctx }) => {
-  const opts = ctx.spy(alertDialogConfigAtom);
+  const opts = ctx.spy(alertDialogState.config);
   if (!opts) return null;
 
-  const { title, description, confirmAction, confirmLabel } = opts;
+  const { title, description, confirmLabel } = opts;
 
   return (
     <div className="w-full">
@@ -32,7 +32,7 @@ const AlertContent = reatomComponent(({ ctx }) => {
             Отмена
           </Button>
           <Button
-            onClick={() => confirmAction(ctx)}
+            onClick={() => alertDialog.confirm(ctx)}
             background="white"
             className="text-xs sm:text-base text-nowrap truncate min-w-0"
           >
@@ -46,7 +46,7 @@ const AlertContent = reatomComponent(({ ctx }) => {
 
 export const AlertDialog = reatomComponent(({ ctx }) => {
   return (
-    <Dialog.Root open={ctx.spy(alertDialogIsOpenAtom)} onOpenChange={v => alertDialogIsOpenAtom(ctx, v.open)}>
+    <Dialog.Root open={ctx.spy(alertDialogState.isOpen)} onOpenChange={v => alertDialogState.isOpen(ctx, v.open)}>
       <Portal>
         <Dialog.Backdrop className={dialogBackdropVariant()} style={dialogBaseStyle} />
         <Dialog.Positioner className={dialogPositionerVariant()} style={dialogBaseStyle} >

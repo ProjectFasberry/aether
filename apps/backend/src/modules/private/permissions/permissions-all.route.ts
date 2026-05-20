@@ -2,9 +2,16 @@ import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
-import Elysia, { t } from "elysia";
+import Elysia, { type Static, t } from "elysia";
 
-async function getPermissions() {
+const permissionsPayloadSchema = t.Array(
+  t.Object({
+    name: t.String(),
+    id: t.Number()
+  })
+);
+
+async function getPermissions(): Promise<Static<typeof permissionsPayloadSchema>> {
   const query = await general
     .selectFrom("permissions")
     .selectAll()
@@ -21,12 +28,7 @@ export const permissionsListAll = new Elysia()
   }, {
     response: {
       200: withData(
-        t.Array(
-          t.Object({
-            name: t.String(),
-            id: t.Number()
-          })
-        )
+        permissionsPayloadSchema
       )
     }
   })

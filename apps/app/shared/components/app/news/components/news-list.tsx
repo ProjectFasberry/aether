@@ -1,5 +1,5 @@
 import { atom } from "@reatom/framework"
-import { news, newsAllDataArrAtom, newsState } from "../models/news-list.model"
+import { news, newsAllDataArrAtom, newsState, NewsViewer } from "../models/news-list.model"
 import { NotFound } from "@/shared/ui/not-found"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { PageLoader } from "@/shared/ui/page-loader"
@@ -7,7 +7,6 @@ import { isEmptyArray } from "@/shared/lib/helpers"
 import { Typography } from "@/shared/ui/typography"
 import { createLink, Link } from "@/shared/components/config/link"
 import { NewsFilters } from "./news-list-filters"
-import { createViewerModel } from "@/shared/models/shared.model"
 
 const newsNotFoundTitleAtom = atom((ctx) => {
   const data = ctx.get(newsState.searchQuery)
@@ -51,10 +50,6 @@ const NewsList = reatomComponent(({ ctx }) => {
     </div>
   )
 }, "NewsList")
-
-const { Component: NewsViewer } = createViewerModel({
-  atomForUpdate: newsState.isView
-})
 
 export const NewsContent = () => {
   useUpdate(news.fetch, [])

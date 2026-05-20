@@ -39,6 +39,8 @@ async function getEvents(
   return getObjects(keys);
 }
 
+const eventsPayloadSchema = t.Array(eventPayload);
+
 export const eventsList = new Elysia()
   .get("/list", async ({ query }) => {
     const data = await getEvents(query);
@@ -46,10 +48,6 @@ export const eventsList = new Elysia()
   }, {
     query: eventsListSchema,
     response: {
-      200: withData(
-        t.Array(
-          eventPayload
-        )
-      )
+      200: withData(eventsPayloadSchema)
     }
   })

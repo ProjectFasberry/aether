@@ -15,8 +15,8 @@ import { Menu } from '@ark-ui/react/menu'
 import { menuArrowTipVariant, menuArrowVariant, menuContentVariant } from "@/shared/ui/menu";
 import { Portal } from "@ark-ui/react/portal";
 import { atom } from "@reatom/framework";
-import { createViewerModel } from "@/shared/models/shared.model";
 import { isEmptyArray } from "@/shared/lib/helpers";
+import { Noop } from "@/shared/ui/noop";
 
 const userItemVariant = tv({
   base: `flex flex-col rounded-lg w-full px-4 border`,
@@ -80,6 +80,15 @@ export const UsersItemMenu = reatomComponent(({ ctx }) => {
   )
 }, "UsersItemMenu")
 
+const UsersItemCheckbox = reatomComponent<{ nickname: string }>(({ ctx, nickname }) => {
+  return (
+    <Checkbox
+      checked={ctx.spy(isCheckedAtom(nickname))}
+      onCheckedChange={v => usersControl.select.single(ctx, v, nickname)}
+    />
+  )
+}, 'UsersItemCheckbox')
+
 const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, nickname, uuid, premium_uuid }) => {
   const isExpanded = ctx.spy(userIsSelectedAtom(nickname));
   const isIdentity = ctx.get(currentUserState)?.nickname === nickname;
@@ -96,10 +105,7 @@ const UsersItem = reatomComponent<PrivatedUser>(({ ctx, player, role, avatar, ni
   return (
     <div className={userItemVariant({ variant, state })} onContextMenu={handleContextMenu}>
       <div className="flex items-center gap-3 h-12 min-w-0 justify-start">
-        <Checkbox
-          checked={ctx.spy(isCheckedAtom(nickname))}
-          onCheckedChange={v => usersControl.select.single(ctx, v, nickname)}
-        />
+        <UsersItemCheckbox nickname={nickname} />
         <Link href={`/private/users/${nickname}`} className="flex items-center min-w-0 gap-2">
           <Avatar url={avatar} nickname={nickname} className="h-6 w-6" />
           <Typography className="font-semibold text-sm truncate">
@@ -130,7 +136,7 @@ export const Users = reatomComponent(({ ctx }) => {
   if (ctx.spy(users.fetch.statusesAtom).isPending) return <UsersSkeleton />
 
   const data = ctx.spy(usersDataArrAtom);
-  if (!data || isEmptyArray(data)) return <p>пусто</p>
+  if (!data || isEmptyArray(data)) return <Noop title="пусто" />
 
   return (
     <div className="flex flex-col gap-1 w-full h-full">
@@ -139,7 +145,3 @@ export const Users = reatomComponent(({ ctx }) => {
     </div>
   )
 }, "Users")
-
-export const { Component: UsersViewer } = createViewerModel({
-  atomForUpdate: usersControlState.inView
-})

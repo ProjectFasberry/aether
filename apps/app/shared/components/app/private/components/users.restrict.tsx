@@ -81,6 +81,7 @@ const ActionMenuNode = reatomComponent<UserActionsWrapperProps & {
             <Menu.Content className={menuContentVariant()}>
               <div className="flex flex-col gap-1 w-full">
                 {item.fields.map(({ value, label }: any) => (
+                  // @ts-expect-error
                   <ActionInput key={value} atom={usersControlState.fields[value]} label={label} />
                 ))}
                 <ActionButton eventGroup={item.type} {...props} />

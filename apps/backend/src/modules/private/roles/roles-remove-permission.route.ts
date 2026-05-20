@@ -27,17 +27,19 @@ const rolesRemovePermissionForRoleSchema = t.Object({
 export const rolesRemovePermissionForRole = new Elysia()
   .use(validatePermission(Permissions.get("ROLES.UPDATE")))
   .delete("/:id/permission/remove", async ({ params: { id }, body }) => {
-    const data = await removePermissionForRole(id, body)
-    return { data }
+    await removePermissionForRole(id, body)
+    return { data: "OK" }
   }, {
     body: rolesRemovePermissionForRoleSchema,
-    params: t.Object({ id: t.Number() }),
+    params: t.Object({
+      id: t.Number()
+    }),
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
     },
     response: {
       200: withData(
-        t.Number()
+        t.Literal("OK")
       )
     }
   })

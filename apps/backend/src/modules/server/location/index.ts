@@ -3,8 +3,18 @@ import { defineRequiredUser } from "#/lib/define"
 import { getCustomLocation, getLocation, parseWorldName, type UserLocation } from "./location.model"
 import { withData } from "#/shared/schemas"
 
+const locationPayloadSchema = t.Object({
+  world: t.String(),
+  x: t.Number(),
+  y: t.Number(),
+  z: t.Number(),
+  pitch: t.Number(),
+  yaw: t.Number(),
+  customLocation: t.Nullable(t.String())
+})
+
 export const playerLocation = new Elysia()
-  .use(defineRequiredUser())  
+  .use(defineRequiredUser())
   .get("/location/:nickname", async ({ params: { nickname } }) => {
     const rawLocation = await getLocation(nickname);
     if (!rawLocation) {
@@ -27,17 +37,7 @@ export const playerLocation = new Elysia()
   }, {
     response: {
       200: withData(
-        t.Nullable(
-          t.Object({
-            world: t.String(),
-            x: t.Number(),
-            y: t.Number(),
-            z: t.Number(),
-            pitch: t.Number(),
-            yaw: t.Number(),
-            customLocation: t.Nullable(t.String())
-          })
-        )
+        t.Nullable(locationPayloadSchema)
       )
     }
   })

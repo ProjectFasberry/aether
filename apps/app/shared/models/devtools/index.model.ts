@@ -5,10 +5,10 @@ import { type DevtoolsCookieChildKey, devtoolsCoords, type DevtoolsCoords, devto
 import { throttle } from '@/shared/lib/utils';
 import { isMap, isNullish } from "@/shared/lib/helpers";
 
-const devtoolsState = atom(null).pipe(
-  withAssign(() => ({
-    coords: atom({ x: 16, y: 16, w: 300, h: 400 }),
-    pane: atom<Nullable<Pane>>(null)
+const devtoolsState = atom(null, "_devtoolsState").pipe(
+  withAssign((_, name) => ({
+    coords: atom({ x: 16, y: 16, w: 300, h: 400 }, `${name}.coords`),
+    pane: atom<Nullable<Pane>>(null, `${name}.pane`)
   }))
 )
 
@@ -33,11 +33,7 @@ export const devtools = atom(null, "_devtools").pipe(
               title: folderName, expanded: true, index
             })
 
-            function addBinding(
-              configData: typeof bindings, 
-              folder: FolderApi, 
-              path: string
-            ) {
+            function addBinding(configData: typeof bindings, folder: FolderApi,path: string) {
               function bind(
                 keyName: string,
                 configItem: ConfigItem<unknown>,
@@ -133,9 +129,6 @@ export const devtools = atom(null, "_devtools").pipe(
             zIndex: "9999",
             top: "0px",
             left: "0px",
-            display: "flex",
-            flexDirection: "column",
-            resize: "both",
             overflow: "hidden",
             touchAction: "none",
             height: "600px",

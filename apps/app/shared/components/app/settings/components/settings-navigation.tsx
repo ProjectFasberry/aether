@@ -50,8 +50,8 @@ const AS_EVENTS: Record<NonNullable<SettingsNavigationNode["as"]>, Handler> = {
   "link": (ctx, node, parent) => settings.navigate(ctx, parent, node.value)
 }
 
-const NavigationItemNode = reatomComponent<{ parent: SettingsParent, node: SettingsNavigationNode }>(({ 
-  ctx, node, parent 
+const NavigationItemNode = reatomComponent<{ parent: SettingsParent, node: SettingsNavigationNode }>(({
+  ctx, node, parent
 }) => {
   const isActive = ctx.spy(settingsNavigationItemIsActiveAtom(parent, node.value))
   const variant = isActive ? "active" : "default"
@@ -61,6 +61,7 @@ const NavigationItemNode = reatomComponent<{ parent: SettingsParent, node: Setti
 
   return (
     <Button
+      data-sound={true}
       onClick={() => AS_EVENTS[node.as ?? "link"](ctx, node, parent)}
       className={navigationItemNodeVariant({ variant, className })}
     >

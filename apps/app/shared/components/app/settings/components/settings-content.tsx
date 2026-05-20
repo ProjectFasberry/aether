@@ -1,25 +1,25 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { settingsState, type SettingsParent } from "../models/settings.model"
 import { lazy, type JSX } from "react"
-import { SettingsMainAccount } from "./settings-main-account"
+import { SettingsAccount } from "./settings-account"
 import { SettingsNavigationMobile } from "./settings-navigation"
 
-const SettingsMainDevices = lazy(() => import("./settings-main-devices").then(m => ({ default: m.SettingsMainDevices })))
+const SettingsDevices = lazy(() => import("./settings-devices").then(m => ({ default: m.SettingsMainDevices })))
 const SettingsStore = lazy(() => import("./settings-store").then(m => ({ default: m.SettingsStore })))
-const SettingsMainSecurity = lazy(() => import("./settings-main-security").then(m => ({ default: m.SettingsMainSecurity })))
-const SettingsMainConnections = lazy(() => import("./settings-main-connections").then(m => ({ default: m.SettingsMainConnections })))
-const SettingsAppWidgets = lazy(() => import("./settings-app-widgets").then(m => ({ default: m.SettingsAppWidgets })))
+const SettingsSecurity = lazy(() => import("./settings-security").then(m => ({ default: m.SettingsMainSecurity })))
+const SettingsConnections = lazy(() => import("./settings-connections").then(m => ({ default: m.SettingsMainConnections })))
+const SettingsAppearance = lazy(() => import("./settings-appearance").then(m => ({ default: m.SettingsAppearance })))
 
-const SETTINGS_NODES: Partial<Record<SettingsParent, Record<string, typeof SettingsAppWidgets | (() => JSX.Element)>>> = {
+const SETTINGS_NODES: Partial<Record<SettingsParent, Record<string, typeof SettingsAppearance | (() => JSX.Element)>>> = {
   main: {
-    account: SettingsMainAccount,
-    devices: SettingsMainDevices,
-    security: SettingsMainSecurity,
-    connections: SettingsMainConnections,
+    account: SettingsAccount,
+    devices: SettingsDevices,
+    security: SettingsSecurity,
+    connections: SettingsConnections,
     store: SettingsStore
   },
   app: {
-    appearance: SettingsAppWidgets
+    appearance: SettingsAppearance
   }
 }
 

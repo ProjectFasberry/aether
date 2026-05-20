@@ -2,26 +2,42 @@ import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
 import { Separator } from "@/shared/ui/separator"
 import { Skeleton } from "@/shared/ui/skeleton"
-import { playerSocials, type PlayerSocialsPayload, type PlayerSocialsValuePayload, SOCIAL_EVENTS } from "../models/socials.model"
+import { playerSocials, type PlayerSocialsItem, SOCIAL_EVENTS } from "../models/socials.model"
 import { SOCIALS_ICONS } from "@/shared/consts/icons"
 import { Icon } from "@/shared/ui/icon"
+import { tv } from "tailwind-variants"
 
-const SocialCard = ({ type, value }: { type: PlayerSocialsPayload["type"], value: PlayerSocialsValuePayload }) => {
-  const icon = SOCIALS_ICONS[type]
-  const { cb, type: cbType } = SOCIAL_EVENTS[type];
+const socialCardVariant = tv({
+  base: `flex items-center cursor-pointer gap-2`,
+  slots: {
+    icon: "size-5",
+    label: "hidden sm:inline text-lg capitalize"
+  }
+})
+
+const SocialCard = ({ social, value }: PlayerSocialsItem) => {
+  const icon = SOCIALS_ICONS[social]
+  const { cb, type } = SOCIAL_EVENTS[social];
+
+  const renderContent = () => (
+    <>
+      <Icon name={icon} className={socialCardVariant().icon()} />
+      <span className={socialCardVariant().label()}>{social}</span>
+    </>
+  )
+
+  if (type === 'link') {
+    return (
+      <a href={cb(value)} className={socialCardVariant().base()}>
+        {renderContent()}
+      </a>
+    )
+  }
 
   return (
-    cbType === 'link' ? (
-      <a href={cb(value)} className="flex items-center cursor-pointer gap-2">
-        <Icon name={icon} className='size-5' />
-        <span className="hidden sm:inline text-lg">{value.username}</span>
-      </a>
-    ) : (
-      <div className="flex items-center cursor-pointer gap-2" onClick={() => cb(value)}>
-        <Icon name={icon} className='size-5' />
-        <span className="hidden sm:inline text-lg">{value.username}</span>
-      </div>
-    )
+    <div className={socialCardVariant().base()} onClick={() => cb(value)}>
+      {renderContent()}
+    </div>
   )
 }
 
@@ -43,7 +59,7 @@ const PlayerSocialsSkeleton = () => {
 }
 
 export const PlayerSocials = reatomComponent(({ ctx }) => {
-  useUpdate((ctx) => playerSocials.init(ctx), []);
+  useUpdate(playerSocials.init, []);
 
   if (!ctx.spy(pageState.isClientside) || ctx.spy(playerSocials.fetch.statusesAtom).isPending) {
     return <PlayerSocialsSkeleton />
@@ -55,7 +71,7 @@ export const PlayerSocials = reatomComponent(({ ctx }) => {
   return (
     <div className="flex flex-col w-full gap-4">
       <Separator className="hidden sm:block" />
-      {data.map((item) => <SocialCard key={item.type} type={item.type} value={item.value} />)}
+      {data.map((item) => <SocialCard key={item.social} {...item} />)}
       <Separator className="hidden sm:block" />
     </div>
   )

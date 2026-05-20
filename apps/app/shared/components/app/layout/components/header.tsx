@@ -8,7 +8,7 @@ import { Separator } from "@/shared/ui/separator";
 import { cartDataSelectedItemsLengthAtom, cartState } from "../../shop/models/store-cart.model";
 import { navigate } from "vike/client/router";
 import { Logotype } from "./logotype";
-import { navigationModel, type MenuActionItem as MenuActionItemType, type MenuLink, validatedLinksAtom } from "./navigation.model";
+import { navigationModel, type MenuActionItem as MenuActionItemType, type MenuLink, validatedLinksAtom } from "../models/navigation.model";
 import { MobileBottomBar } from "./mobile-navigation";
 import { appState } from "@/shared/models/app/index.model";
 import { Banner } from "../../widgets/components/banner";
@@ -21,7 +21,7 @@ import { Menu, type MenuItemProps } from '@ark-ui/react/menu'
 import { menuArrowTipVariant, menuArrowVariant, menuContentVariant, menuTriggerVariant } from "@/shared/ui/menu";
 
 const {
-  HEADERS_LINKS, headerUserMenuIsOpenAtom, MENU_ACTIONS, showCartIconAtom, showCurrentUserMenuAtom
+  HEADERS_LINKS, headerUserMenuIsOpenAtom, MENU_ACTIONS, showCartIconAtom, showCurrentUserMenuAtom, showAuthorizeButtonAtom
 } = navigationModel()
 
 type ItemVariant = "menu" | "drawer";
@@ -36,7 +36,7 @@ const MenuActionItem = reatomComponent<MenuActionItemType & { variant: ItemVaria
     value: label
   })
 
-  return <Item {...itemProps}>{label}</Item>
+  return <Item {...itemProps} data-sound={true}>{label}</Item>
 }, "MenuActionItem")
 
 const MenuCurrentUser = reatomComponent<{ variant: ItemVariant }>(({ ctx, variant }) => {
@@ -93,7 +93,7 @@ const MenuLinkItem = reatomComponent<MenuLink & { idx: number, variant: ItemVari
   return (
     <>
       {showSepartor === firstPrivatedIdx && <Separator className="my-2" />}
-      <Item {...itemProps}>{title}</Item>
+      <Item {...itemProps} data-sound={true}>{title}</Item>
       {showSepartor === lastPrivatedIdx && <Separator className="my-2" />}
     </>
   )
@@ -150,7 +150,7 @@ const CartTrigger = reatomComponent(({ ctx }) => {
       href="/store/cart"
       data-trigger={initial}
       className="
-        flex items-center justify-center group duration-150 max-h-6 w-6 aspect-square 
+        flex items-center justify-center group duration-150 max-h-6 w-6 aspect-square
         data-[trigger=true]:scale-[1.15] font-semibold data-[trigger=false]:scale-100
       "
       ref={syncCartTrigger(ctx)}
@@ -162,8 +162,8 @@ const CartTrigger = reatomComponent(({ ctx }) => {
       {cartItemsLength > 0 && (
         <div
           className="
-            flex items-center justify-center absolute -bottom-1 -right-1 
-            bg-neutral-50 text-[12px] leading-none text-neutral-950 rounded-sm 
+            flex items-center justify-center absolute -bottom-1 -right-1
+            bg-neutral-50 text-[12px] leading-none text-neutral-950 rounded-sm
             aspect-square min-w-4 w-4
           "
         >
@@ -191,7 +191,7 @@ const UserMenuTrigger = reatomComponent(({ ctx }) => {
     <div
       data-active={initial}
       className="
-        flex items-center justify-center group hover:bg-neutral-800 
+        flex items-center justify-center group hover:bg-neutral-800
         bg-neutral-900 text-neutral-400 rounded-lg cursor-pointer h-8 w-8
       "
       ref={syncState(ctx)}
@@ -199,6 +199,7 @@ const UserMenuTrigger = reatomComponent(({ ctx }) => {
       {USER_MENU_TRIGGER_ICONS.map(({ icon: Icon, value }, idx) => (
         <Icon
           key={idx}
+          data-sound={true}
           size={20}
           className={`absolute duration-300 opacity-0 ${value
             ? "group-data-[active=true]:opacity-100" : "group-data-[active=false]:opacity-100"
@@ -272,7 +273,9 @@ const UserBar = reatomComponent(({ ctx }) => {
   return (
     <div className="flex gap-2 items-center w-full justify-end">
       <CartTrigger />
-      {ctx.spy(showCurrentUserMenuAtom) ? <UserMenu /> : <AuthorizeButton />}
+      {ctx.spy(showCurrentUserMenuAtom) ? <UserMenu /> :
+        ctx.spy(showAuthorizeButtonAtom) ? <AuthorizeButton /> : null
+      }
     </div>
   )
 }, "UserBar")

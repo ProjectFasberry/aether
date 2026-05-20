@@ -2,13 +2,13 @@ import { action, atom, withAssign, connectLogger, type Unsubscribe, withInit, ty
 import type { PageContext } from "vike/types";
 import { withLog } from "../../lib/reatom/helpers";
 import { withSsr } from "../ssr";
-import { detectHardwareAcceleration, detectMobile } from "../../lib/utils";
+import { detectHardwareAcceleration, detectMobile, parseBoolean } from "../../lib/utils";
 import { ENVIRONMENT } from "../../consts";
 import { getIsAuthed, spyOptionAtom } from "./utils";
 import { snapshots } from "../ssr";
 import { pageState } from "../page-context.model";
 import { logger } from "@/shared/lib/logger";
-import { soundPatch } from "../sounds.model";
+import { sound } from "../sounds.model";
 
 export const APP_OPTIONS_KEY = "appState.options" as const;
 export const APP_DICTIONARIES_KEY = "appState.dict" as const;
@@ -19,141 +19,161 @@ export type AppSpecifiedOptions = { country: Nullable<string> }
 export type AppOptionsPayloadExtend = AppOptionsPayload & { specified: AppSpecifiedOptions }
 export type AppDictionaries = Record<string, string>
 
+let DEVTOOLS_ENABLED = true;
+
 export const appState = atom(null, "appState").pipe(
-	withAssign((_, name) => ({
-		current: atom(null, `${name}.current`).pipe(
-			withAssign((_, name) => ({
-				isMobile: atom(false, `${name}.isMobile`).pipe(withSsr(`${name}.isMobile`)),
-			}))
-		),
-		inited: atom(null, `${name}.inited`).pipe(
-			withAssign((_, name) => ({
-				isMobile: atom(false, `${name}.isMobile`),
-				hardwaveIsEnabled: atom(false, `${name}.hardwaveIsEnabled`).pipe(
-					withInit(() => detectHardwareAcceleration())
-				)
-			}))
-		),
-		options: atom<Nullable<AppOptionsPayloadExtend>>(null, `${name}.options`).pipe(withSsr(APP_OPTIONS_KEY)),
-		dict: atom<Nullable<AppDictionaries>>(null, `${name}.dict`).pipe(withSsr(APP_DICTIONARIES_KEY))
-	})),
+  withAssign((_, name) => ({
+    current: atom(null, `${name}.current`).pipe(
+      withAssign((_, name) => ({
+        isMobile: atom(false, `${name}.isMobile`).pipe(withSsr(`${name}.isMobile`)),
+      }))
+    ),
+    inited: atom(null, `${name}.inited`).pipe(
+      withAssign((_, name) => ({
+        isMobile: atom(false, `${name}.isMobile`),
+        hardwaveIsEnabled: atom(false, `${name}.hardwaveIsEnabled`).pipe(
+          withInit(() => detectHardwareAcceleration())
+        )
+      }))
+    ),
+    options: atom<Nullable<AppOptionsPayloadExtend>>(null, `${name}.options`).pipe(withSsr(APP_OPTIONS_KEY)),
+    dict: atom<Nullable<AppDictionaries>>(null, `${name}.dict`).pipe(withSsr(APP_DICTIONARIES_KEY))
+  })),
 );
 
 export const userState = atom(null, "userState").pipe(
-	withAssign((_, name) => ({
-		geo: atom(null, `${name}.geo`).pipe(
-			withAssign((_, name) => ({
-				country: atom((ctx) => spyOptionAtom(ctx, "specified", "country", "ru"), `${name}.country`)
-			}))
-		),
-		isAuthed: atom((ctx, snapshot?: Snapshot) => {
-			if (ENVIRONMENT === 'server') {
-				return getIsAuthed(snapshot)
-			}
-			return spyOptionAtom(ctx, "flags", "isAuthed", false)
-		})
-	}))
+  withAssign((_, name) => ({
+    geo: atom(null, `${name}.geo`).pipe(
+      withAssign((_, name) => ({
+        country: atom((ctx) => spyOptionAtom(ctx, "specified", "country", "ru"), `${name}.country`)
+      }))
+    ),
+    isAuthed: atom((ctx, snapshot?: Snapshot) => {
+      if (ENVIRONMENT === 'server') {
+        return getIsAuthed(snapshot)
+      }
+      return spyOptionAtom(ctx, "flags", "isAuthed", false)
+    })
+  }))
 )
 
 export const getDevModulesInfo = (ctx: Ctx) => {
-	const stage = spyOptionAtom(ctx, "state", "stage", "prod")
-	const ALLOWED_STAGE: typeof stage[] = ["staging"];
+  const isMobile = ctx.get(appState.inited.isMobile)
+  if (isMobile) return;
 
-	const isMobile = ctx.get(appState.inited.isMobile)
-	if (isMobile) return;
+  const stage = spyOptionAtom(ctx, "state", "stage", "prod")
+  const ALLOWED_STAGE: typeof stage[] = ["staging"];
 
-	return {
-		isImport: import.meta.env.DEV === true ? true : ALLOWED_STAGE.includes(stage),
-		by: import.meta.env.DEV === true ? "environment" : "stage"
-	}
+  return {
+    isImport: import.meta.env.DEV ? true : ALLOWED_STAGE.includes(stage),
+    by: import.meta.env.DEV ? "environment" : "stage"
+  }
 }
 
+const lazyInitDevModules = action(async (ctx, by: string) => {
+  try {
+    const validateImport = <T>(cd: boolean, fn: () => Promise<T>): Promise<T | null> =>
+      cd ? fn() : Promise.resolve(null);
+
+    const [devtools] = await Promise.all([
+      validateImport(DEVTOOLS_ENABLED, () => import("../devtools/index.model").then(m => m.devtools))
+    ]);
+
+    const modules = [
+      { name: 'Devtools', ref: devtools },
+    ];
+
+    for (const mod of modules) {
+      if (!mod || !mod.ref) return;
+
+      try {
+        mod.ref.init(ctx);
+        logger.withTag(mod.name).log(`Load by ${by}`);
+      } catch (e) {
+        logger.withTag(mod.name).warn(`${mod.name} failed to init:`, e);
+      }
+    }
+  } catch (e) {
+    console.error("Error loading optional modules:", e);
+  }
+})
+
 export const app = atom(null, "app").pipe(
-	withAssign((_, name) => ({
-		/** Executed on the server and client only one times */
-		preInit: action((ctx, pageCtx: PageContext) => {
-			if (import.meta.env.DEV && ENVIRONMENT === 'client') {
-				connectLogger(ctx)
-			}
+  withAssign((_, name) => ({
+    /** Executed once on the server and once on the client. */
+    preInit: action((ctx, pageCtx: PageContext) => {
+      if (import.meta.env.DEV && ENVIRONMENT === 'client') {
+        connectLogger(ctx)
+      }
 
-			const rootSnapshot = pageCtx.snapshot;
-			snapshots.init(ctx, rootSnapshot)
-		}, `${name}.preInit`).pipe(
-			withLog()
-		),
-		init: action((ctx) => {
-			let unsubs: Unsubscribe[] = [];
+      const rootSnapshot = pageCtx.snapshot;
+      snapshots.init(ctx, rootSnapshot)
+    }, `${name}.preInit`),
+    init: action((ctx) => {
+      let unsubs: Unsubscribe[] = [];
 
-			appState.inited.isMobile(ctx, detectMobile());
+      appState.inited.isMobile(ctx, detectMobile());
 
-			const { onChange, unsub } = updateReactiveIsMobile(ctx)
-			onChange();
+      const { onChange, unsub } = updateReactiveIsMobile(ctx)
+      onChange();
 
-			unsubs.push(unsub)
+      unsubs.push(unsub)
 
-			const devModulesInfo = getDevModulesInfo(ctx)
+      const devModulesInfo = getDevModulesInfo(ctx)
 
-			if (devModulesInfo?.isImport) {
-				async function lazyInitDevModules(by: string) {
-					try {
-						const [{ devtools }] = await Promise.all([
-							import("../devtools/index.model"),
-						]);
+      if (devModulesInfo?.isImport) {
+        /** only fire and forget */
+        lazyInitDevModules(ctx, devModulesInfo.by)
+      }
 
-						const modules = [
-							{ name: 'Devtools', ref: devtools },
-						];
+      sound.init(ctx)
+        .then(() => {
+          defineListeners(ctx);
+        })
 
-						modules.forEach(mod => {
-							try {
-								mod.ref.init(ctx);
-								logger.withTag(mod.name).log(`Load by ${by}`);
-							} catch (e) {
-								logger.withTag(mod.name).warn(`${mod.name} failed to init:`, e);
-							}
-						});
-					} catch (e) {
-						console.error("Error loading optional modules:", e);
-					}
-				}
-
-				/** only fire and forget */
-				lazyInitDevModules(devModulesInfo.by)
-			}
-
-			soundPatch.init(ctx)
-
-			return () => {
-				for (const unsub of unsubs) {
-					unsub()
-				}
-			}
-		}, `${name}.init`).pipe(
-			withLog()
-		),
-		sync: action((ctx, pageCtx: PageContext) => {
-			pageState.urlParsed(ctx, pageCtx.urlParsed);
-			pageState.urlPathname(ctx, pageCtx.urlPathname);
-			pageState.routeParams(ctx, pageCtx.routeParams);
-			pageState.isClientside(ctx, !!pageCtx.Page)
-
-			pageState.data(ctx, pageCtx.data ?? null);
-
-			snapshots.init(ctx, pageCtx.snapshot);
-		}, `${name}.sync`).pipe(
-			withLog()
-		),
-	}))
+      return () => unsubs.forEach(un => { un() })
+    }, `${name}.init`),
+    sync: action((ctx, pageCtx: PageContext) => {
+      pageState.urlParsed(ctx, pageCtx.urlParsed);
+      pageState.urlPathname(ctx, pageCtx.urlPathname);
+      pageState.routeParams(ctx, pageCtx.routeParams);
+      pageState.isClientside(ctx, !!pageCtx.Page)
+      pageState.data(ctx, pageCtx.data ?? null);
+      snapshots.init(ctx, pageCtx.snapshot);
+    }, `${name}.sync`),
+  }))
 )
 
+const defineListeners = action((ctx) => {
+  function addSoundInterceptor() {
+    document.body.addEventListener('click', (event) => {
+      if (!(event.target instanceof Element)) return;
+
+      const target = event.target.closest('button')
+        ?? event.target.closest('a')
+        ?? event.target.closest("div");
+
+      if (!target) return;
+
+      const isSound = target.dataset.sound;
+
+      if (isSound && parseBoolean(isSound)) {
+        sound.play(ctx, "click");
+      }
+    });
+  };
+
+  addSoundInterceptor()
+}, "defineListeners")
+
 const updateReactiveIsMobile = action((ctx) => {
-	const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
+  const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT}px)`)
 
-	const onChange = () => appState.current.isMobile(ctx, mql.matches)
-	mql.addEventListener("change", onChange)
+  const onChange = () => appState.current.isMobile(ctx, mql.matches)
+  mql.addEventListener("change", onChange)
 
-	return {
-		onChange,
-		unsub: () => mql.removeEventListener("change", onChange)
-	}
-})
+  return {
+    onChange,
+    unsub: () => mql.removeEventListener("change", onChange)
+  }
+}, "updateReactiveIsMobile")

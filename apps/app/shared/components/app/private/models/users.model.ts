@@ -1,6 +1,9 @@
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper"
 import { logError } from "@/shared/lib/log"
-import { reatomAsync, withAbort, withCache, withDataAtom, withStatusesAtom } from "@reatom/framework"
+import {
+  reatomAsync, withAbort, withCache, withDataAtom, withErrorAtom, withStatusesAtom,
+  type Action, type AtomMut, type SetAtom
+} from "@reatom/framework"
 import { action, atom, batch } from "@reatom/framework"
 import { reatomMap, reatomSet, sleep, withAssign, withConcurrency, withReset } from "@reatom/framework"
 import { withLocalStorage } from "@reatom/persist-web-storage"
@@ -8,6 +11,8 @@ import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
 import { DEFAULT_SOFT_DELAY } from "@/shared/consts"
 import { invariant } from "@/shared/lib/invariant"
+import { alertDialog } from "@/shared/components/config/alert-dialog.model"
+import { createViewerModel } from "@/shared/models/shared.model"
 
 export type PrivatedUser = PrivatedUsersPayload["data"][number]
 export type PrivatedUsersPayload = ExtractApiData<"getPrivatedUserList">["data"]
@@ -21,6 +26,10 @@ type Params = {
   startCursor: Nullable<string>;
   endCursor: Nullable<string>;
 }
+
+export const { Component: UsersViewer, inViewAtom: usersListInView } = createViewerModel({
+  name: "users-list",
+})
 
 export const usersState = atom(null, "usersState").pipe(
   withAssign((_, name) => ({
@@ -97,8 +106,8 @@ export const users = atom(null, "users").pipe(
       withStatusesAtom()
     ),
     fetchSingle: reatomAsync(async (ctx, nickname: string) => {
-      invariant(nickname.trim().length !== 0, "Nickname is not defined")
-    
+      if (nickname.trim().length === 0) return;
+
       return await ctx.schedule(() => client<PrivatedUser>(`privated/user/${nickname}`).exec())
     }, {
       name: `${name}.fetchSingle`,
@@ -187,7 +196,6 @@ export const usersControlState = atom(null, "_usersControlState").pipe(
       }))
     ),
     isOpen: atom(false, `${name}.isOpen`),
-    inView: atom(false, `${name}.inView`),
     selectedId: atom<Nullable<string>>(null, `${name}.selectedId`).pipe(withReset()),
     isCheckedAll: atom(false, `${name}.isCheckedAll`).pipe(withReset()),
     selectedUser: atom<Nullable<string>>(null, `${name}.selectedUser`).pipe(withReset())
@@ -407,11 +415,11 @@ usersState.meta.onChange((ctx, state) => {
   usersState.filters.endCursor(ctx, (prev) => state.endCursor ? state.endCursor : prev)
 })
 
-usersControlState.inView.onChange((ctx, state) => {
+usersListInView.onChange((ctx, state) => {
   if (!state) return;
 
   const meta = ctx.get(usersState.meta)
-  
+
   const hasNextPage = meta?.hasNextPage
   if (!hasNextPage) return;
 
@@ -420,3 +428,192 @@ usersControlState.inView.onChange((ctx, state) => {
 
 export const userIsSelectedAtom = (nickname: string) => atom((ctx) => ctx.spy(usersControlState.selectedUser) === nickname)
 export const isCheckedAtom = (nickname: string) => atom((ctx) => ctx.spy(usersControlState.nicknames).has(nickname))
+
+//#region users management
+export type CreateUserVariant = "game" | "profile";
+
+const CREATE_USER_OPTIONS: { label: string, value: CreateUserVariant }[] = [
+  { label: "Игра", value: "game" }, { label: "Профиль", value: "profile" }
+]
+
+// TODO: replace to the roles fetched data
+const CREATE_USER_ROLE_OPTIONS: { label: string, value: number }[] = [
+  { label: "Игрок", value: 0 }, { label: "Модератор", value: 1 }
+]
+
+const createUserState = atom(null, "createUserState").pipe(
+  withAssign((_, name) => ({
+    isOpen: atom(false, `${name}.isOpen`),
+    nickname: atom("", `${name}.nickname`).pipe(withReset()),
+    password: atom("", `${name}.password`).pipe(withReset()),
+    // only 0 or 1
+    role: reatomSet<number>(new Set([0]), `${name}.role`).pipe(withReset()),
+    options: reatomSet<CreateUserVariant>(new Set(["profile", "game"] as const), `${name}.options`).pipe(withReset())
+  }))
+)
+const createUser = atom(null, 'createUser').pipe(
+  withAssign((_, name) => ({
+    handle: action((ctx, e: React.FormEvent) => {
+      e.preventDefault()
+
+      const json = {
+        nickname: ctx.get(createUserState.nickname),
+        password: ctx.get(createUserState.password),
+        options: Array.from(ctx.get(createUserState.options)),
+        role: Array.from(ctx.get(createUserState.role))[0]
+      }
+
+      createUser.submit(ctx, json);
+    }),
+    submit: reatomAsync(async (ctx, json: { nickname: string, password: string, options: string[], role: number }) => {
+      createUser.submit.errorAtom.reset(ctx);
+      const result = await client.post("privated/users/register", { json }).exec();
+      return result
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx, res) => {
+        createUserState.isOpen(ctx, false)
+      }
+    }).pipe(
+      withStatusesAtom(),
+      withErrorAtom()
+    )
+  }))
+)
+createUserState.isOpen.onChange((ctx, state) => {
+  if (!state) {
+    createUserState.nickname.reset(ctx)
+    createUserState.password.reset(ctx);
+    createUserState.role.reset(ctx);
+    createUserState.options.reset(ctx);
+    createUser.submit.errorAtom.reset(ctx);
+  }
+})
+
+type CreateUserField =
+  | { type: "input", placeholder: string, value: AtomMut<string> }
+  | {
+    type: "select",
+    placeholder: string,
+    value: (SetAtom<CreateUserVariant> | SetAtom<number>) & { reset: Action<[], Set<any>> },
+    maxValues: number,
+    options: Array<{ label: string, value: string | number }>,
+    multiple: boolean
+  }
+
+const CREATE_USER_FIELDS: CreateUserField[] = [
+  {
+    placeholder: "Никнейм", type: "input", value: createUserState.nickname
+  },
+  {
+    placeholder: "Пароль", type: "input", value: createUserState.password
+  },
+  {
+    placeholder: "Роль",
+    type: "select",
+    value: createUserState.role,
+    options: CREATE_USER_ROLE_OPTIONS,
+    maxValues: 1,
+    multiple: false
+  },
+  {
+    placeholder: "Вариант",
+    type: "select",
+    value: createUserState.options,
+    options: CREATE_USER_OPTIONS,
+    maxValues: 2,
+    multiple: true
+  }
+]
+
+const onValueChange = action((ctx, value: string[], field: Extract<typeof CREATE_USER_FIELDS[number], { type: "select" }>) => {
+  if (value.length === 0) {
+    field.value.reset(ctx);
+    return;
+  }
+
+  const first = String(value[0]).trim()
+  const isNotANumber = first === "" || Number.isNaN(Number(first));
+
+  if (isNotANumber) {
+    const state = field.value as typeof createUserState.options
+    state(ctx, new Set(value as CreateUserVariant[]));
+  } else {
+    const state = field.value as typeof createUserState.role
+    state(ctx, new Set(value.map(d => Number(d))));
+  }
+})
+
+const deleteUserState = atom(null, "deleteUserState").pipe(
+  withAssign((_, name) => ({
+    isOpen: atom(false, `${name}.isOpen`),
+    nickname: atom("", `${name}.nickname`).pipe(withReset()),
+    reason: atom("", `${name}.reason`).pipe(withReset())
+  }))
+)
+const deleteUser = atom(null, "deleteUser").pipe(
+  withAssign((_, name) => ({
+    handle: action((ctx, e: React.FormEvent) => {
+      e.preventDefault();
+
+      alertDialog.open(ctx, {
+        title: "Вы точно хотите удалить этого игрока?",
+        confirmAction: deleteUser.submit,
+        confirmLabel: "Подтвердить",
+        autoClose: true
+      })
+    }, `${name}.handle`),
+    submit: reatomAsync(async (ctx) => {
+      deleteUser.submit.errorAtom.reset(ctx);
+
+      const nickname = ctx.get(deleteUserState.nickname);
+
+      const json = {
+        nickname,
+        reason: ctx.get(deleteUserState.reason)
+      }
+
+      const result = await client
+        .post("privated/users/unregister", { json })
+        .exec();
+
+      return { result, nickname }
+    }, {
+      name: `${name}.submit`,
+      onFulfill: (ctx, { nickname }) => {
+        toast.success(`Игрок ${nickname} удален`);
+        deleteUserState.isOpen(ctx, false)
+      }
+    }).pipe(
+      withStatusesAtom(),
+      withErrorAtom()
+    )
+  }))
+)
+deleteUserState.isOpen.onChange((ctx, state) => {
+  if (!state) {
+    deleteUserState.nickname.reset(ctx)
+    deleteUserState.reason.reset(ctx)
+    deleteUser.submit.errorAtom.reset(ctx)
+  }
+})
+
+const DELETE_USER_FIELDS = [
+  { placeholder: "Никнейм", value: deleteUserState.nickname, required: true },
+  { placeholder: "Причина", value: deleteUserState.reason }
+]
+
+export const usersManagementModel = () => {
+  return {
+    createUser,
+    createUserState,
+    deleteUser,
+    deleteUserState,
+    onValueChange,
+    DELETE_USER_FIELDS,
+    CREATE_USER_FIELDS,
+    CREATE_USER_OPTIONS,
+    CREATE_USER_ROLE_OPTIONS
+  }
+}
+//#endregion

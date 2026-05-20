@@ -4,8 +4,13 @@ import {
   withAssign, withCache, withConcurrency, withDataAtom, withStatusesAtom
 } from "@reatom/framework"
 import { getNews } from "./news.model"
+import { createViewerModel } from "@/shared/models/shared.model"
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
+
+export const { Component: NewsViewer, inViewAtom: newsStateInView } = createViewerModel({
+  name: "news-filter"
+})
 
 export const newsAllDataArrAtom = atom((ctx) =>
   Array.from(ctx.spy(newsState.allData).values()),
@@ -18,24 +23,6 @@ export const newsState = atom(null, "newsState").pipe(
     allData: reatomMap<number, NewsPayload["data"][number]>(new Map(), `${name}.allData`),
     allMeta: atom<Nullable<NewsPayload["meta"]>>(null, `${name}.allMeta`),
     asc: atom(false, `${name}.asc`),
-    isView: atom(false, `${name}.isView`).pipe(
-      withAssign((_, name) => ({
-        onIsViewEvent: action((ctx) => {
-          const meta = ctx.get(newsState.allMeta)
-          if (!meta) return;
-
-          const hasNextPage = meta?.hasNextPage
-          if (!hasNextPage) return;
-
-          batch(ctx, () => {
-            newsState.allOldData(ctx, ctx.get(newsState.allData))
-            newsState.endCursor(ctx, meta.endCursor ?? null)
-          })
-
-          news.refetchAll(ctx)
-        }, `${name}.onIsViewEvent`)
-      }))
-    ),
     searchQuery: atom("", `${name}.seachQuery`).pipe(
       withAssign((_, name) => ({
         onChangeEvent: action(async (ctx, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,9 +74,23 @@ export const news = atom(null, "news").pipe(
       withDataAtom(null),
       withStatusesAtom(),
       withCache({ swr: false })
-    )
+    ),
+    onIsViewEvent: action((ctx) => {
+      const meta = ctx.get(newsState.allMeta)
+      if (!meta) return;
+
+      const hasNextPage = meta?.hasNextPage
+      if (!hasNextPage) return;
+
+      batch(ctx, () => {
+        newsState.allOldData(ctx, ctx.get(newsState.allData))
+        newsState.endCursor(ctx, meta.endCursor ?? null)
+      })
+
+      news.refetchAll(ctx)
+    }, `${name}.onIsViewEvent`)
   }))
 )
 
 newsState.asc.onChange((ctx) => news.refetchAll(ctx))
-newsState.isView.onChange((ctx, state) => state && newsState.isView.onIsViewEvent(ctx))
+newsStateInView.onChange((ctx, state) => state && news.onIsViewEvent(ctx))

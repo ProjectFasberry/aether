@@ -10,16 +10,31 @@ import { dialogBackdropVariant, dialogBaseStyle, DialogClose, dialogContentVaria
 
 const SettingsDialog = reatomComponent(({ ctx }) => {
   return (
-    <Dialog.Root open={ctx.spy(settingsState.isOpen)} onOpenChange={v => settingsState.isOpen(ctx, v.open)}>
+    <Dialog.Root
+      open={ctx.spy(settingsState.isOpen)}
+      onOpenChange={v => settingsState.isOpen(ctx, v.open)}
+    >
       <Portal>
         <Dialog.Backdrop className={dialogBackdropVariant()} style={dialogBaseStyle} />
         <Dialog.Positioner className={dialogPositionerVariant()} >
-          <Dialog.Content className={dialogContentVariant({ className: "p-0 h-2/3" })} style={dialogBaseStyle}>
+          <Dialog.Content
+            className={dialogContentVariant({ className: "p-0 sm:p-0 h-2/3" })}
+            style={dialogBaseStyle}
+          >
             <div className="flex items-start w-full min-h-0 h-full">
-              <div className="flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-950 h-full w-[clamp(120px,30%,400px)]">
+              <div
+                className="
+                  flex p-[clamp(0.5rem,3vw,1rem)] bg-neutral-950 h-full w-[clamp(120px,30%,400px)]
+                "
+              >
                 <SettingsNavigationDesktop />
               </div>
-              <div className="flex-1 flex flex-col pb-[clamp(0.5rem,3vw,1rem)] px-[clamp(0.5rem,3vw,1rem)] pt-10 overflow-y-auto overflow-x-hidden h-full">
+              <div
+                className="
+                  flex-1 flex flex-col overflow-y-auto overflow-x-hidden h-full
+                  pb-[clamp(0.5rem,3vw,1rem)] px-[clamp(0.5rem,3vw,1rem)] pt-10
+                "
+              >
                 <SettingsContentDesktop />
               </div>
             </div>
@@ -31,21 +46,21 @@ const SettingsDialog = reatomComponent(({ ctx }) => {
   )
 }, "SettingsDialog")
 
+const SettingsDrawer = () => {
+  return (
+    <Vaul openAtom={settingsState.isOpen}>
+      <VaulContent className="h-2/3">
+        <VaulHeader title="Настройки" />
+        <div className="overflow-y-auto">
+          <SettingsContentMobile />
+        </div>
+      </VaulContent>
+    </Vaul>
+  )
+}
+
 export const Settings = reatomComponent(({ ctx }) => {
   const isMobile = ctx.spy(appState.current.isMobile);
-
-  if (isMobile) {
-    return (
-      <Vaul openAtom={settingsState.isOpen}>
-        <VaulContent className="h-2/3">
-          <VaulHeader title="Настройки" />
-          <div className="overflow-y-auto">
-            <SettingsContentMobile />
-          </div>
-        </VaulContent>
-      </Vaul>
-    )
-  }
-
+  if (isMobile) return <SettingsDrawer/>
   return <SettingsDialog />
 }, "Settings")

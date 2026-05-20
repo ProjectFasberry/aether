@@ -181,7 +181,7 @@ const LOGIN_VARIANTS: { title: string, value: AuthLoginVariant, component: React
   { title: translate["auth.login.variants.qr"](), value: "qr", component: <LoginQR /> }
 ]
 
-export const LoginFormComponent = reatomComponent(({ ctx }) =>
+const LoginFormComponent = reatomComponent(({ ctx }) =>
   LOGIN_VARIANTS.find(d => d.value === ctx.spy(authLoginVariantAtom))?.component, "LoginFormComponent"
 )
 

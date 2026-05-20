@@ -2,7 +2,8 @@ import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import Elysia from "elysia";
 import { createAdminActivityLog } from "../private.model";
-import { banner, createBannerSchema } from "./banner.model";
+import { banner, createBannerPayloadSchema, createBannerSchema } from "./banner.model";
+import { withData } from "#/shared/schemas";
 
 export const bannerCreate = new Elysia()
   .use(validatePermission(Permissions.get("BANNERS.CREATE")))
@@ -13,5 +14,10 @@ export const bannerCreate = new Elysia()
     body: createBannerSchema,
     afterResponse: ({ nickname: initiator, permission }) => {
       createAdminActivityLog({ initiator, event: permission })
+    },
+    response: {
+      200: withData(
+        createBannerPayloadSchema
+      )
     }
   })

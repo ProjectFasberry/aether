@@ -13,7 +13,7 @@ async function getOptions() {
       "title"
     ])
     .execute();
-    
+
   return query
 }
 
@@ -28,7 +28,7 @@ export const optionsList = new Elysia()
         t.Array(
           t.Object({
             name: t.String(),
-            value: t.String(),
+            value: t.Boolean(),
             title: t.String()
           })
         )

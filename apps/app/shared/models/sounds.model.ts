@@ -1,21 +1,21 @@
 import { invariant } from "../lib/invariant";
-import { type AudioPatch, definePatch } from "@web-kits/audio";
+import { type AudioPatch, definePatch, type PlayOptions } from "@web-kits/audio";
 import { action, atom, withAssign } from "@reatom/framework";
-import { withLog } from "../lib/reatom/helpers";
 
 let instance: AudioPatch
 
-export const soundPatch = atom(null, "soundPatch").pipe(
+export const sound = atom(null, "sound").pipe(
   withAssign((_, name) => ({
     get() {
-      invariant(instance, "Patch is not defined")
+      invariant(instance, "Audio patch is not defined")
       return instance;
     },
     init: action(async () => {
       const { minimal } = await import("../../.web-kits/index")
       instance = definePatch(minimal._patch);
-    }, `${name}.init`).pipe(
-      withLog()
-    )
+    }, `${name}.init`),
+    play: action((ctx, playName: string, opts?: PlayOptions | undefined) => {
+      sound.get().play(playName, opts);
+    })
   }))
 )

@@ -7,8 +7,6 @@ import { listenBackOnce } from "@/shared/lib/events"
 import { withUndo } from '@reatom/undo'
 import { appState } from "@/shared/models/app/index.model"
 import { DIALOG_DELAY } from "@/shared/consts/index"
-import { soundPatch } from "@/shared/models/sounds.model"
-import { withLog } from "@/shared/lib/reatom/helpers"
 
 export type SettingsNavigationNode = {
   title: string,
@@ -29,7 +27,7 @@ export const SETTINGS_NAVIGATION: Partial<Record<SettingsParent, SettingsNavigat
     title: "Основные настройки",
     nodes: [
       { title: "Аккаунт", value: "account" },
-      { title: "Безопасность", value: "security" },
+      // { title: "Безопасность", value: "security" },
       { title: "Устройства", value: "devices" },
       { title: "Подключения", value: "connections" },
       { title: "Магазин", value: "store" }
@@ -80,7 +78,7 @@ export const settingsState = atom(null, "settingsState").pipe(
     )
   }))
 )
-settingsState.isOpen.onChange((ctx, state) => 
+settingsState.isOpen.onChange((ctx, state) =>
   spawn(ctx, (spawnCtx) => state ? settings.open(spawnCtx) : settings.close(spawnCtx))
 )
 
@@ -97,12 +95,8 @@ export const settings = atom(null, "settings").pipe(
       }
     }),
     open: action((ctx) => {
-      const patch = soundPatch.get();
-      patch.play("click");
       settingsState.isOpen(ctx, true)
-    }, `${name}.open`).pipe(
-      withLog()
-    ),
+    }, `${name}.open`),
     close: reatomAsync(async (ctx) => {
       settingsState.isOpen(ctx, false)
 
@@ -114,9 +108,7 @@ export const settings = atom(null, "settings").pipe(
         settingsState.target.reset(ctx);
         settingsState.cleanup.reset(ctx);
       }
-    }, `${name}.close`).pipe(
-      withLog()
-    ),
+    }, `${name}.close`),
     back: action((ctx) => {
       settingsState.target.undo(ctx)
 
@@ -125,16 +117,14 @@ export const settings = atom(null, "settings").pipe(
       if (!history) {
         const cleanup = ctx.get(settingsState.cleanup)?.cb;
         cleanup?.();
-        
+
         settingsState.isOpen(ctx, false)
         settingsState.cleanup.reset(ctx);
       } else {
         const cb = listenBackOnce(() => settings.back(ctx));
         settingsState.cleanup(ctx, { cb });
       }
-    }, `${name}.back`).pipe(
-      withLog()
-    )
+    }, `${name}.back`)
   }))
 )
 

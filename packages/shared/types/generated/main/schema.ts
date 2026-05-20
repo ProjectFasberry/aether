@@ -2196,6 +2196,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/account/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteAccount"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: operations["patchAccountPassword"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2310,7 +2342,7 @@ export interface operations {
                     "application/json": {
                         data: {
                             name: string;
-                            value: string;
+                            value: boolean;
                             title: string;
                         }[];
                     };
@@ -2478,7 +2510,26 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            description: (string | null) | null;
+                            imageUrl: string;
+                            isAvailable: boolean;
+                            title: string;
+                            value: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     postPrivatedStoreMethodsEditByMethod: {
         parameters: {
@@ -2492,23 +2543,52 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** @enum {string} */
+                    /**
+                     * @default isAvailable
+                     * @enum {string}
+                     */
                     key: "isAvailable" | "title" | "imageUrl" | "value";
-                    value: (string | boolean) | boolean;
+                    /** @default false */
+                    value: boolean | string;
                 };
                 "application/x-www-form-urlencoded": {
-                    /** @enum {string} */
+                    /**
+                     * @default isAvailable
+                     * @enum {string}
+                     */
                     key: "isAvailable" | "title" | "imageUrl" | "value";
-                    value: (string | boolean) | boolean;
+                    /** @default false */
+                    value: boolean | string;
                 };
                 "multipart/form-data": {
-                    /** @enum {string} */
+                    /**
+                     * @default isAvailable
+                     * @enum {string}
+                     */
                     key: "isAvailable" | "title" | "imageUrl" | "value";
-                    value: (string | boolean) | boolean;
+                    /** @default false */
+                    value: boolean | string;
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            imageUrl: string;
+                            isAvailable: boolean;
+                            title: string;
+                            value: string;
+                        };
+                    };
+                };
+            };
+        };
     };
     getPrivatedUserList: {
         parameters: {
@@ -3005,7 +3085,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: number;
+                        /** @constant */
+                        data: "OK";
                     };
                 };
             };
@@ -3049,7 +3130,22 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                        }[];
+                    };
+                };
+            };
+        };
     };
     getPrivatedNewsList: {
         parameters: {
@@ -3075,7 +3171,27 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            imageUrl: string;
+                            created_at: string;
+                            title: string;
+                            description: string;
+                            content: unknown;
+                            creator: string;
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedNewsById: {
         parameters: {
@@ -3087,7 +3203,20 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+        };
     };
     postPrivatedNewsByIdEdit: {
         parameters: {
@@ -3099,7 +3228,21 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            [key: string]: string | unknown | boolean;
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedBannersCreate: {
         parameters: {
@@ -3108,8 +3251,56 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
-        responses: never;
+        requestBody: {
+            content: {
+                "application/json": {
+                    title: string;
+                    description?: string;
+                    href: {
+                        title: string;
+                        value: string;
+                    };
+                };
+                "application/x-www-form-urlencoded": {
+                    title: string;
+                    description?: string;
+                    href: {
+                        title: string;
+                        value: string;
+                    };
+                };
+                "multipart/form-data": {
+                    title: string;
+                    description?: string;
+                    href: {
+                        title: string;
+                        value: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            title: string;
+                            created_at: string;
+                            description: (string | null) | null;
+                            href: {
+                                title: string;
+                                value: string;
+                            };
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedBannersById: {
         parameters: {
@@ -3121,7 +3312,20 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+        };
     };
     postPrivatedBannersByIdEdit: {
         parameters: {
@@ -3187,17 +3391,56 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    title: string;
+                    name: string;
+                    client: string;
+                    imageUrl: string;
+                    version: string;
+                    mods: string[];
+                    /** @default null */
+                    shaders: (string[] | null) | null;
                 };
                 "application/x-www-form-urlencoded": {
-                    title: string;
+                    name: string;
+                    client: string;
+                    imageUrl: string;
+                    version: string;
+                    mods: string[];
+                    /** @default null */
+                    shaders: (string[] | null) | null;
                 };
                 "multipart/form-data": {
-                    title: string;
+                    name: string;
+                    client: string;
+                    imageUrl: string;
+                    version: string;
+                    mods: string[];
+                    /** @default null */
+                    shaders: (string[] | null) | null;
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            id: number;
+                            name: string;
+                            client: string;
+                            imageUrl: string;
+                            version: string;
+                            created_at: string;
+                            mods: string;
+                            shaders: (string | null) | null;
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedModpacksById: {
         parameters: {
@@ -3209,7 +3452,20 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+        };
     };
     postPrivatedEventsCreate: {
         parameters: {
@@ -3296,7 +3552,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
-                        data: string;
+                        /** @constant */
+                        data: "OK";
                     };
                 };
             };
@@ -3443,7 +3700,24 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            value: string;
+                            created_at: string;
+                            id: number;
+                            key: string;
+                        };
+                    };
+                };
+            };
+        };
     };
     postPrivatedDictionariesByIdEdit: {
         parameters: {
@@ -3482,7 +3756,24 @@ export interface operations {
                 };
             };
         };
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        data: {
+                            key: string;
+                            value: string;
+                            created_at: string;
+                            id: number;
+                        };
+                    };
+                };
+            };
+        };
     };
     deletePrivatedDictionariesByIdRemove: {
         parameters: {
@@ -3494,7 +3785,20 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
-        responses: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+        };
     };
     getAppOptions: {
         parameters: {
@@ -5796,7 +6100,9 @@ export interface operations {
     };
     getServerSocialsListByNickname: {
         parameters: {
-            query?: never;
+            query: {
+                variant: "public" | "private";
+            };
             header?: never;
             path: {
                 nickname: string;
@@ -5813,9 +6119,25 @@ export interface operations {
                 content: {
                     "application/json": {
                         data: {
-                            id: string | number;
-                            username: string;
+                            social: string;
+                            created_at: (string | null) | null;
+                            value: string;
                         }[];
+                    };
+                };
+            };
+            /** @description Response for status 400 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * @default NOT_ACCESSIBLE
+                         * @enum {string}
+                         */
+                        error: "NOT_ACCESSIBLE";
                     };
                 };
             };
@@ -6500,6 +6822,89 @@ export interface operations {
             };
             /** @description Response for status 400 */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
+        };
+    };
+    deleteAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+            /** @description Response for status 500 */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        error: string;
+                    };
+                };
+            };
+        };
+    };
+    patchAccountPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    currentPass: string;
+                    newPass: string;
+                };
+                "application/x-www-form-urlencoded": {
+                    currentPass: string;
+                    newPass: string;
+                };
+                "multipart/form-data": {
+                    currentPass: string;
+                    newPass: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Response for status 200 */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @constant */
+                        data: "OK";
+                    };
+                };
+            };
+            /** @description Response for status 500 */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

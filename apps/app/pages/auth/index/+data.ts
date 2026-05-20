@@ -10,7 +10,7 @@ const previewImage = getStaticImage("arts/wide.jpg");
 function metadata() {
 	return {
 		title,
-		description: "Присоединитесь к лучшему проекту майнкрафта",
+		description: "Присоединитесь к лучшему проекту майнкрафта. Регистрация на проекте Fasberry",
 		image: previewImage,
 	};
 }

@@ -15,15 +15,6 @@ export type PlayerActivityPayload =
   };
 
 export const activityNow = new Elysia()
-  // .model({
-  //   "activity-now": withData(
-  //     t.Object({
-  //       nickname: t.String(),
-  //       type: t.String(),
-  //       issued_date: t.Nullable(t.Date())
-  //     })
-  //   )
-  // })
   .get("/now/:nickname", async ({ params: { nickname } }) => {
     const data: PlayerActivityPayload = await getPlayerStatus(nickname);
     return { data }

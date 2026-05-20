@@ -20,7 +20,7 @@ const dialogPositionerVariant = tv({
 const dialogContentVariant = tv({
   base: `
     relative flex flex-col items-center justify-center overflow-hidden gap-4
-    w-full max-w-[min(var(--spacing-container-lg),calc(100vw-16px))] p-4
+    w-full max-w-[min(var(--spacing-container-lg),calc(100vw-16px))] p-2 sm:p-4
     bg-neutral-900 border-none rounded-xl outline-none
     shadow-md transition-transform z-[60+var(--layer-index,0))]
     translate-x-[calc(var(--scrollbar-width,0px)/2)]

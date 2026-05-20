@@ -25,7 +25,11 @@ export const rolesListAction = reatomAsync(async (ctx) => {
 }, {
   name: "rolesListAction",
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+}).pipe(
+  withDataAtom(),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const permissionsAllListAction = reatomAsync(async (ctx) => {
   return await ctx.schedule(() =>
@@ -34,7 +38,11 @@ export const permissionsAllListAction = reatomAsync(async (ctx) => {
 }, {
   name: "permissionsAllListAction",
   onReject: (_, e) => notifyAboutRestrictRole(e)
-}).pipe(withDataAtom(), withCache({ swr: false }), withStatusesAtom())
+}).pipe(
+  withDataAtom(),
+  withCache({ swr: false }),
+  withStatusesAtom()
+)
 
 export const permissionsByRoleListAction = reatomAsync(async (ctx, roleId: number) => {
   return await ctx.schedule(() =>
@@ -192,7 +200,7 @@ export const saveChangesAction = reatomAsync(async (ctx) => {
   },
   onReject: (_, e) => notifyAboutRestrictRole(e)
 }).pipe(
-  withStatusesAtom(), 
+  withStatusesAtom(),
   withErrorAtom()
 )
 

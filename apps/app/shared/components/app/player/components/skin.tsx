@@ -36,7 +36,7 @@ const SkinRenderSkeleton = () => {
 }
 
 const SkinRender = reatomComponent(({ ctx }) => {
-  useUpdate((ctx) => skins.init(ctx), []);
+  useUpdate(skins.init, []);
 
   if (!ctx.spy(pageState.isClientside) || ctx.spy(skins.fetch.statusesAtom).isPending) {
     return <SkinRenderSkeleton />;
@@ -93,16 +93,16 @@ const skinHeadVariant = tv({
   }
 })
 
+const SKINS_HISTORY_AVATAR_SIZES = [128, 36]
+
 const SkinsHistoryItem = reatomComponent<SkinsHistory & { variant: "mobile" | "desktop" }>(({
   ctx, variant, skin_head_url, skin_url, skin_identifier: identifier, skin_variant
 }) => {
+  if (!skin_head_url) return null;
+
   const selectedSkin = ctx.spy(skinsState.selected);
 
-  const status = selectedSkin?.identifier === identifier
-    ? "active"
-    : "inactive"
-
-  const handle = () => {
+  const handleClick = () => {
     skinsState.selected(ctx, {
       identifier,
       skin_url: skin_url ?? null,
@@ -110,14 +110,16 @@ const SkinsHistoryItem = reatomComponent<SkinsHistory & { variant: "mobile" | "d
     })
   }
 
-  if (!skin_head_url) return null;
+  const status = selectedSkin?.identifier === identifier
+    ? "active"
+    : "inactive"
 
   return (
-    <div className={skinHeadVariant({ status, size: "small" })} onClick={handle}>
+    <div className={skinHeadVariant({ status, size: "small" })} onClick={handleClick}>
       <Avatar
         src={skin_head_url}
-        width={variant === 'mobile' ? 128 : 36}
-        height={variant === 'mobile' ? 128 : 36}
+        width={variant === 'mobile' ? SKINS_HISTORY_AVATAR_SIZES[0] : SKINS_HISTORY_AVATAR_SIZES[1]}
+        height={variant === 'mobile' ? SKINS_HISTORY_AVATAR_SIZES[0] : SKINS_HISTORY_AVATAR_SIZES[1]}
       />
     </div>
   )
@@ -145,7 +147,7 @@ const SkinsHistoryList = reatomComponent<{ variant: "mobile" | "desktop" }>(({ c
   }
 
   const data = ctx.spy(skins.fetch.dataAtom)
-  if (!data) return <p>ничего нет</p>
+  if (!data) return null;
 
   return data.map(item => (
     <SkinsHistoryItem
