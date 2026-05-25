@@ -8,7 +8,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!apps/landing"]
+		"includes": ["**", "!apps/frontend-landing"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -58,7 +58,7 @@
 			}
 		},
 		{
-			"includes": ["apps/app/**"],
+			"includes": ["apps/frontend-app/**"],
 			"javascript": {
 				"jsxRuntime": "reactClassic"
 			},
@@ -118,7 +118,7 @@
 			}
 		},
 		{
-			"includes": ["apps/backend/**"],
+			"includes": ["apps/api-main/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"
 			},

@@ -12,17 +12,17 @@ WORKDIR /
 
 COPY bun.lock* package.json bunfig.toml ./
 
-COPY apps/app ./apps/app
+COPY apps/frontend-app ./apps/frontend-app
 COPY packages/shared ./packages/shared
 COPY packages/ui ./packages/ui
 COPY packages/config-typescript ./packages/config-typescript
 COPY packages/config-biome ./packages/config-biome
 
-COPY apps/app/entrypoint.sh /entrypoint.sh
+COPY apps/frontend-app/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 RUN bun install --no-cache
-WORKDIR /apps/app
+WORKDIR /apps/frontend-app
 
 ARG STAGE
 ARG CACHEBUST=1
@@ -59,8 +59,8 @@ WORKDIR /
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh
-COPY --from=build /apps/app/dist ./dist
-COPY --from=build /apps/app/package.json ./package.json
+COPY --from=build /apps/frontend-app/dist ./dist
+COPY --from=build /apps/frontend-app/package.json ./package.json
 
 ENV NODE_ENV=production
 USER bun

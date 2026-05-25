@@ -11,15 +11,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /
 
 COPY bun.lock* package.json bunfig.toml ./
-COPY apps/panel ./apps/panel
+COPY apps/api-panel ./apps/api-panel
 COPY packages ./packages
 
-COPY apps/panel/entrypoint.sh /entrypoint.sh
+COPY apps/api-panel/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 RUN bun install
 
-WORKDIR /apps/panel
+WORKDIR /apps/api-panel
 RUN bun run build
 
 FROM oven/bun:1-slim AS runtime
@@ -35,16 +35,16 @@ ENV STAGE=$STAGE
 WORKDIR /
 
 COPY --from=build /package.json /bun.lock ./
-COPY --from=build /apps/panel/package.json ./apps/panel/package.json
+COPY --from=build /apps/api-panel/package.json ./apps/api-panel/package.json
 COPY --from=build /packages ./packages
 
 RUN bun install --production
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh
-COPY --from=build /apps/panel/dist ./apps/panel/dist
+COPY --from=build /apps/api-panel/dist ./apps/api-panel/dist
 
-WORKDIR /apps/panel
+WORKDIR /apps/api-panel
 
 ENV NODE_ENV=production
 USER bun

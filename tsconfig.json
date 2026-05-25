@@ -1,11 +1,13 @@
 {
 	"files": [],
 	"references": [
-		{ "path": "./apps/backend" },
-		{ "path": "./apps/app" },
-		{ "path": "./apps/landing" },
-		{ "path": "./apps/panel" },
+		{ "path": "./apps/api-main" },
+		{ "path": "./apps/frontend-app" },
+		{ "path": "./apps/frontend-landing" },
+		{ "path": "./apps/api-panel" },
 		{ "path": "./packages/shared" },
-		{ "path": "./packages/ui" }
+		{ "path": "./packages/ui" },
+		{ "path": "./packages/config-typescript" },
+		{ "path": "./packages/config-biome" }
 	]
 }

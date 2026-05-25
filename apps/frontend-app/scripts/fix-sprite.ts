@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 
 function findFilePath() {
   let currentDir = import.meta.dir;
-  const targetRelativePath = "apps/app/shared/sprite.gen.ts";
+  const targetRelativePath = "apps/frontend-app/shared/sprite.gen.ts";
 
   for (let i = 0; i < 5; i++) {
     const fullPath = join(currentDir, targetRelativePath);

@@ -11,10 +11,10 @@ Fasberry is a full-stack minecraft project with:
 
 | Component | Type | Purpose |
 |-----------|------|---------|
-| `app` | React Frontend | Main frontend app |
-| `landing` | React Frontend | Public landing page deployed on Vercel |
-| `backend` | Elysia API | Core REST API |
-| `panel` | Elysia API | Admin REST API |
+| `frontend-app` | React Frontend | Main frontend app |
+| `frontend-landing` | React Frontend | Public landing page deployed on Vercel |
+| `api-main` | Elysia API | Core REST API |
+| `api-panel` | Elysia API | Admin REST API |
 | `ui` | Library | Shared React components (Radix UI + Tailwind) |
 | `shared` | Library | Shared types, utilities, and constants |
 

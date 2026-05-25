@@ -95,7 +95,7 @@ services:
   #   image: prom/prometheus:latest
   #   container_name: prometheus
   #   volumes:
-  #     - ./apps/backend/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./apps/api-main/prometheus.yml:/etc/prometheus/prometheus.yml
   #   ports:
   #     - "9090:9090"
 
@@ -171,7 +171,7 @@ services:
   #     infisical-redis:
   #       condition: service_started
   #   pull_policy: always
-  #   env_file: 
+  #   env_file:
   #     - ./.env.infisical
   #   ports:
   #     - 9004:8080
@@ -183,7 +183,7 @@ services:
   # infisical-redis:
   #   container_name: infisical-dev-redis
   #   image: redis
-  #   env_file: 
+  #   env_file:
   #     - ./.env.infisical
   #   restart: always
   #   environment:
@@ -199,7 +199,7 @@ services:
   #   container_name: infisical-pg
   #   image: postgres:14-alpine
   #   restart: always
-  #   env_file: 
+  #   env_file:
   #     - ./.env.infisical
   #   volumes:
   #     - ./data/infisical/pg:/var/lib/postgresql/data
