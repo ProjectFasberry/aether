@@ -1,7 +1,6 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/framework"
 import { action, atom, type AtomMut, createCtx, type Ctx } from "@reatom/framework"
 import { reatomMap, sleep, withAssign, withConcurrency, withInit, withReset } from "@reatom/framework"
-import { type Payments } from "@repo/shared/types/db/payments-database-types"
 import { logError } from '@/shared/lib/log';
 import { snapshots } from '@/shared/models/ssr';
 import { type PageContextServer } from 'vike/types';

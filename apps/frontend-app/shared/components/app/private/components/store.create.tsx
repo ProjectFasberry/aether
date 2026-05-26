@@ -1,4 +1,4 @@
-import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor";
+import { EditorMenuBar } from "@/shared/components/config/editor/editor";
 import { getFromDictionary } from "@/shared/models/app/utils";
 import { type AtomState, type Ctx } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
@@ -10,11 +10,12 @@ import { Typography } from "@/shared/ui/typography";
 import { IconCheck, IconSelector, IconX } from "@tabler/icons-react";
 import { Portal } from '@ark-ui/react/portal'
 import { Select, createListCollection } from '@ark-ui/react/select'
-import { 
-  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant, 
-  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant, 
-  selectItemTextVariant, selectItemVariant, selectTriggerVariant 
+import {
+  selectClearTriggerVariant, selectContentBaseStyle, selectContentVariant, selectControlVariant,
+  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant,
+  selectItemTextVariant, selectItemVariant, selectTriggerVariant
 } from "@/shared/ui/select"
+import { editorExtensions } from "@/shared/components/config/editor/editor.model";
 
 const currencyValues = ["CHARISM", "BELKOIN"];
 const getCurrencyTitle = (ctx: Ctx, value: string) => getFromDictionary(ctx, value)

@@ -1,19 +1,17 @@
-import { useConfig } from 'vike-react/useConfig';
+import { useConfig } from 'vike-solid/useConfig';
 import { PageContextServer } from 'vike/types';
-import { wrapTitle } from '@/shared/lib/wrap-title';
-import { getUrl } from '@/shared/lib/helpers';
+import { getUrl, wrapTitle } from '@/shared/lib/helpers';
 
-export const data = async (pageContext: PageContextServer) => {
+export async function data(pageCtx: PageContextServer) {
   const config = useConfig()
-
   const title = wrapTitle(`Главная`);
 
   config({
     title,
     Head: (
       <>
-        <link rel="canonical" href={getUrl(pageContext)} />
-        <meta property="og:url" content={getUrl(pageContext)} />
+        <link rel="canonical" href={getUrl(pageCtx)} />
+        <meta property="og:url" content={getUrl(pageCtx)} />
         <meta property="og:title" content={title} />
         <meta property="og:site_name" content={title} />
         <meta name="twitter:title" content={title} />

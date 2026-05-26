@@ -2,17 +2,15 @@ import { type BuildEnvironmentOptions, defineConfig, loadEnv } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import vike from "vike/plugin";
-import { analyzer } from 'vite-bundle-analyzer'
 import svg from '@neodx/svg/vite';
 import tsconfigPaths from 'vite-tsconfig-paths'
 import path from "node:path"
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
+import { visualizer } from "rollup-plugin-visualizer";
 
 type Stage = "staging" | "prod"
 
-type StagePluginOpts = {
-  analyzerIsEnabled?: boolean
-}
+type StagePluginOpts = {}
 
 type StageOpts = {
   buildOpts: BuildEnvironmentOptions & {
@@ -30,9 +28,7 @@ const STAGES: Record<Stage, StageOpts> = {
       chunkHashing: true,
       chunkGroping: true
     },
-    pluginOpts: {
-      analyzerIsEnabled: true
-    }
+    pluginOpts: {}
   },
   "prod": {
     buildOpts: {
@@ -41,20 +37,18 @@ const STAGES: Record<Stage, StageOpts> = {
       chunkHashing: true,
       chunkGroping: true
     },
-    pluginOpts: {
-      analyzerIsEnabled: false
-    }
+    pluginOpts: {}
   }
 }
 
 const CHUNK_GROUPS = [
   { name: 'lib', matches: ['reatom', 'zod', 'ky', '@scure'] },
   { name: 'editor', matches: ['@monaco-editor', 'tiptap'] },
-  { name: 'ui', matches: ['embla-carousel', 'react-qrcode-logo', '@radix-ui', "floating-ui", 'vaul', '@monaco-editor', 'number-flow'] },
+  { name: 'ui', matches: ['embla-carousel', '@radix-ui', "floating-ui", 'vaul', '@monaco-editor', 'number-flow'] },
   { name: "dev", matches: ["tweakpane"] },
   { name: "setting-base", matches: ["@yudiel/react-qr-scanner"] },
   { name: "captcha", matches: ["@better-captcha"] },
-  { name: "ui-zagjs", matches: ["@zag-js"] }
+  { name: "ui-zagjs", matches: ["@zag-js", "ark-ui"] }
 ];
 
 export default defineConfig(({ mode }) => {
@@ -75,10 +69,6 @@ export default defineConfig(({ mode }) => {
       tailwindcss(),
       tsconfigPaths({
         ignoreConfigErrors: true
-      }),
-      analyzer({
-        analyzerMode: "static",
-        enabled: target?.pluginOpts?.analyzerIsEnabled ?? false
       }),
       svg({
         inputRoot: 'assets/svg',
@@ -102,7 +92,12 @@ export default defineConfig(({ mode }) => {
         project: "./project.inlang",
         outdir: "./paraglide",
         strategy: ["url", "baseLocale"]
-      })
+      }),
+      visualizer({
+        filename: "stats.html",
+        template: "treemap",
+        gzipSize: true
+      }),
     ],
     ssr: {
       noExternal: process.env.NODE_ENV === 'production' || undefined

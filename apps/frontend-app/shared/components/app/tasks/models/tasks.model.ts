@@ -1,5 +1,6 @@
 import { DEFAULT_SOFT_DELAY } from "@/shared/consts/index";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
+import { isEmptyArray } from "@/shared/lib/helpers";
 import { reatomAsync, withDataAtom, withErrorAtom, withStatusesAtom } from "@reatom/framework";
 import { action, atom, sleep, withAssign, withConcurrency } from "@reatom/framework";
 
@@ -13,11 +14,11 @@ const FILTERS = [
 ]
 
 export const tasksFilter = atom(null, "tasksFilter").pipe(
-  withAssign(() => ({
-    sortBy: atom<TasksFilterSortBy>("relevance", ``),
-    searchQuery: atom<string>("", "tasksSearchQuery"),
-    endCursor: atom<Nullable<string>>(null, "tasksCursor"),
-    asc: atom(false, "tasksAscending"),
+  withAssign((_, name) => ({
+    sortBy: atom<TasksFilterSortBy>("relevance", `${name}.sortBy`),
+    searchQuery: atom<string>("", `${name}.searchQuery`),
+    endCursor: atom<Nullable<string>>(null, `${name}.endCursor`),
+    asc: atom(false, `${name}.asc`),
     FILTERS
   }))
 )
@@ -42,7 +43,7 @@ export const tasks = atom(null, "tasks").pipe(
           .exec()
       )
     }, `${name}.fetch`).pipe(
-      withDataAtom(null, (_, data) => data.data.length === 0 ? null : data),
+      withDataAtom(null, (_, data) => isEmptyArray(data.data) ? null : data),
       withStatusesAtom(),
       withErrorAtom()
     ),

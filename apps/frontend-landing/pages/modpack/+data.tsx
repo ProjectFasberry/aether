@@ -1,9 +1,8 @@
-import { getUrl } from "@/shared/lib/helpers"
-import { wrapTitle } from "@/shared/lib/wrap-title"
-import { useConfig } from "vike-react/useConfig"
+import { getUrl, wrapTitle } from "@/shared/lib/helpers"
+import { useConfig } from "vike-solid/useConfig"
 import { PageContext } from "vike/types"
 
-export const data = async (pageContext: PageContext) => {
+export async function data(pageCtx: PageContext) {
   const config = useConfig()
 
   const title = wrapTitle("Модпаки")
@@ -12,8 +11,8 @@ export const data = async (pageContext: PageContext) => {
     title,
     Head: (
       <>
-        <link rel="canonical" href={getUrl(pageContext)} />
-        <meta property="og:url" content={getUrl(pageContext)} />
+        <link rel="canonical" href={getUrl(pageCtx)} />
+        <meta property="og:url" content={getUrl(pageCtx)} />
         <meta property="og:title" content={title} />
         <meta property="og:site_name" content={title} />
         <meta name="twitter:title" content={title}/>

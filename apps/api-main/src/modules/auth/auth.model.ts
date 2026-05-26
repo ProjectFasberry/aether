@@ -8,7 +8,7 @@ import type { UserSessionPayload } from "./login.model";
 export const authLogger = logger.withTag("Auth");
 
 export const auth = {
-	getUserKey: (token: string) => `session:${token}`,
+	getSessionKey: (token: string) => `session:${token}`,
 	async getExistsUser(
 		nickname: string,
 	): Promise<{ result: false; hash: null } | { result: true; hash: string }> {
@@ -26,7 +26,7 @@ export const auth = {
 		const redis = getRedis();
 
 		const data = await redis.get(
-			this.getUserKey(token)
+			this.getSessionKey(token)
 		);
 
 		if (!data) return null;

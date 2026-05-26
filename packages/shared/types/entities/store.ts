@@ -1,6 +1,5 @@
 import type { CreateOrderTopUpSchema } from "../../schemas/payment";
 import type { JsonValue } from "../db/general-database-types";
-import type { PaymentStatus } from "../db/payments-database-types";
 
 export type CartItem = {
 	imageUrl: string;
@@ -41,16 +40,16 @@ export type OrderAsset = "USDT" | "TON" | "BTC" | "ETH" | "LTC" | "BNB" | "TRX" 
 
 export type OrderSingleDefault = {
 	unique_id: string;
-	asset: OrderAsset;
+	asset: "USDT" | "TON" | "BTC" | "ETH" | "LTC" | "BNB" | "TRX" | "USDC";
 	price: string;
 	created_at: Date | string;
-	status: PaymentStatus;
+	status: "canceled" | "pending" | "succeeded" | "waitingForCapture";
 	payload: string;
 	order_id: string;
 	invoice_id: number;
 	pay_url: string;
 	initiator: string;
-	comment: CreateOrderTopUpSchema["comment"];
+	comment?: string | null
 };
 
 export type OrdersDefault = OrderSingleDefault & {

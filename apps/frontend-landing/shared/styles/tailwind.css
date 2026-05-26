@@ -23,7 +23,7 @@
     font-display: swap;
   }
 
-  * { 
+  * {
     font-family: 'Minecraft', sans-serif !important;
     font-style: normal;
     font-weight: 400;
@@ -56,7 +56,7 @@
   .responsive {
     @apply w-[calc(100%-8px)] sm:w-[90%];
   }
-  
+
   .card {
     @apply border-2 rounded-sm border-[#454545];
   }
@@ -266,4 +266,6 @@
   --color-wool-yellow: #E5E533;
   --color-wool-lime: #7FCC19;
   --color-wool-pink: #F27FA5;
+
+  --spacing-container-lg: calc(var(--breakpoint-lg) - 1rem);
 }

@@ -9,344 +9,516 @@ import { getRedis } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
 import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/schemas/auth/login";
-import type { Nullable } from "kysely";
-import type { Context } from "elysia";
+import { type Static, t, type Context } from "elysia";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
-
-type CreateSession = {
-	nickname: string;
-	userAgentStr?: string;
-	ip: string;
-};
-
-type CreateSessionPayload = {
-	expires_at: Date;
-	token: string
-}
-
-export type UserSessionPayload = {
-	nickname: string;
-	browser: string;
-	ip: string;
-	os: string;
-	platform: string;
-	created_at: string | Date;
-};
-
-const DEFAULT_SESSION_EXPIRE = 60 * 60 * 24 * 30; // 30 days
-const DEFAULT_SESSION_EXPIRE_MS = DEFAULT_SESSION_EXPIRE * 1000;
-const MIN_SESSION_EXPIRE = 60 * 60 * 24 * 15; // 15 days
-const MIN_SESSION_EXPIRE_MS = MIN_SESSION_EXPIRE * 1000;
-const USER_SESSIONS_LIMIT = 15; // 15 sessions per user
+import { safeJsonParse } from "#/utils/config/transforms";
 
 export const loginLogger = authLogger.withTag("Login");
 export const qrLogger = loginLogger.withTag("QR");
+
+type CreateSession = {
+  nickname: string;
+  userAgentStr?: string;
+  ip: string;
+};
+
+type CreateSessionPayload = {
+  expires_at: Date; token: string
+}
+
+export const sessionPayloadSchema = t.Object({
+  nickname: t.String(),
+  created_at: t.String(),
+  ip: t.String(),
+  browser: t.String(),
+  platform: t.String(),
+  os: t.String()
+})
+
+export const sessionsPayloadSchema = t.Array(sessionPayloadSchema)
+
+export const sessionParsedPayloadSchema = t.Composite([
+  t.Pick(sessionPayloadSchema, ["nickname", "ip", "created_at"]),
+  t.Object({
+    browser: t.Object({
+      name: t.String(),
+      version: t.String()
+    }),
+    os: t.Object({
+      name: t.Optional(t.String()),
+      versionName: t.Optional(t.String())
+    }),
+    platform: t.Object({
+      type: t.Optional(t.String())
+    })
+  })
+])
+export const sessionsParsedPayloadSchema = t.Array(sessionParsedPayloadSchema)
+
+export type UserSessionPayload = Static<typeof sessionPayloadSchema>
+export type UserSessionParsedPayload = Static<typeof sessionParsedPayloadSchema>;
+
+const SESSION_EXPIRE_S = 60 * 60 * 24 * 30; // 30 days
+const SESSION_EXPIRE_MS = SESSION_EXPIRE_S * 1000;
+const MIN_SESSION_EXPIRE_S = SESSION_EXPIRE_S / 2; // 15 days
+const MIN_SESSION_EXPIRE_MS = MIN_SESSION_EXPIRE_S * 1000;
+const SESSIONS_LENGTH_LIMIT = 15; // 15 sessions per user
 
 const IP_WHITELIST = ["127.0.0.1", "::1", "localhost"] as const;
 
 type IterateKey = "platform" | "os" | "browser" | "ip";
 
 function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, string> {
-	function serializeValue(value: string | object): string {
-		if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
-			return "unknown";
-		}
-		return typeof value === "string" ? value : JSON.stringify(value);
-	}
+  function serializeValue(value: string | object): string {
+    if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
+      return "unknown";
+    }
+    return typeof value === "string" ? value : JSON.stringify(value);
+  }
 
-	const result: Partial<Record<IterateKey, string>> = {};
-	const iterateKeys = ["platform", "os", "browser", "ip"];
+  const result: Partial<Record<IterateKey, string>> = {};
+  const iterateKeys = ["platform", "os", "browser", "ip"];
 
-	for (const [key, value] of Object.entries(raw) as [IterateKey, string | object][]) {
-		if (!iterateKeys.includes(key)) continue;
+  for (const [key, value] of Object.entries(raw) as [IterateKey, string | object][]) {
+    if (!iterateKeys.includes(key)) continue;
 
-		if (key === "ip" && typeof value === "string" && IP_WHITELIST.includes(value as (typeof IP_WHITELIST)[number])) {
-			result[key] = IP_WHITELIST[0];
-			continue;
-		}
+    if (key === "ip" && typeof value === "string" && IP_WHITELIST.includes(value as (typeof IP_WHITELIST)[number])) {
+      result[key] = IP_WHITELIST[0];
+      continue;
+    }
 
-		result[key] = serializeValue(value);
-	}
-	return result as Record<IterateKey, string>;
+    result[key] = serializeValue(value);
+  }
+  return result as Record<IterateKey, string>;
 }
 
 export const session = {
-	getUserSessionsKey: (nickname: string) => `user_sessions:${nickname}`,
-	async refreshSession(token: string) {
-		const redis = getRedis();
-		const sessionKey = auth.getUserKey(token);
-		const remainingTtlMs = await redis.pttl(sessionKey);
+  async refreshSession(token: string) {
+    const redisClient = getRedis();
+    const sessionKey = auth.getSessionKey(token);
 
-		if (remainingTtlMs < 0) return null;
+    const remainingTtlMs = await redisClient.pttl(sessionKey);
+    if (remainingTtlMs < 0) return
 
-		if (remainingTtlMs < MIN_SESSION_EXPIRE_MS) {
-			const nickname = await redis.get(sessionKey);
-			if (!nickname) return null;
+    if (remainingTtlMs < MIN_SESSION_EXPIRE_MS) {
+      const sessionDataStr = await redisClient.get(sessionKey);
+      invariant(sessionDataStr, "User is not defined");
 
-			const userSessionsKey = this.getUserSessionsKey(nickname);
-			const newExpiresAtTimestamp = Date.now() + DEFAULT_SESSION_EXPIRE_MS;
+      const sessionData = JSON.parse(sessionDataStr) as UserSessionPayload;
+      const nickname = sessionData.nickname;
 
-			const pipeline = redis.multi();
+      const userSessionsKey = sessions.getUserSessionsKey(nickname);
+      const newExpiresAtTimestamp = Date.now() + SESSION_EXPIRE_MS;
 
-			pipeline.pexpireat(sessionKey, newExpiresAtTimestamp);
-			pipeline.pexpireat(userSessionsKey, newExpiresAtTimestamp);
+      const refreshSessionResult = await redisClient
+        .multi()
+        .pexpireat(sessionKey, newExpiresAtTimestamp)
+        .pexpireat(userSessionsKey, newExpiresAtTimestamp)
+        .exec()
 
-			await pipeline.exec();
+      invariant(refreshSessionResult, "Transaction failed");
 
-			return {
-				result: true,
-				nickname,
-				expires_at: new Date(newExpiresAtTimestamp),
-			};
-		}
+      refreshSessionResult.forEach(([err, result]) => {
+        if (!isProduction) {
+          loginLogger.log("refreshSessionResult", { err, result })
+        }
+        if (err) throw err
+      })
 
-		return null;
-	},
-	async getIsExistsSession(token: string) {
-		const result = await auth.getUserNickname(token);
-		return Boolean(result);
-	},
-	async updateSession(token: string | undefined, cookie: Context["cookie"]) {
-		if (!token) return;
+      return {
+        nickname,
+        expires_at: new Date(newExpiresAtTimestamp),
+      };
+    }
+  },
+  async getIsExistsSession(token: string): Promise<boolean> {
+    const result = await auth.getUserNickname(token);
+    return Boolean(result);
+  },
+  async updateSession(token: string | null, cookie: Context["cookie"]) {
+    if (!token) return;
 
-		const refreshResult = await this.refreshSession(token);
-		if (!refreshResult) return;
+    const refreshResult = await this.refreshSession(token);
+    if (!refreshResult) return;
 
-		const { expires_at, nickname } = refreshResult;
+    const { expires_at, nickname } = refreshResult;
 
-		setCookie({
-			cookie,	key: SESSION_KEY,	expires: expires_at,	value: token,
-		});
-	},
-	generateSessionToken(): string {
-		const bytes = new Uint8Array(20);
-		crypto.getRandomValues(bytes);
-		return encodeBase32LowerCaseNoPadding(bytes);
-	},
-	async afterLoginEvents({ nickname }: { nickname: string }) {
-    const payload = { created_at: dayjs().toDate(), nickname };
+    setCookie({
+      cookie, key: SESSION_KEY, expires: expires_at, value: token,
+    });
 
+    if (!isProduction) {
+      loginLogger.info(`Session updated for ${nickname} ${expires_at.getDate()}`)
+    }
+  },
+  generateSessionToken(): string {
+    const bytes = new Uint8Array(20);
+    crypto.getRandomValues(bytes);
+    return encodeBase32LowerCaseNoPadding(bytes);
+  },
+  _afterLoginEvents({ nickname }: { nickname: string }) {
     nats
       .get()
-      .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify(payload));
-	},
-	async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
-		const redis = getRedis();
+      .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify({ created_at: dayjs().toDate(), nickname }));
+  },
+  async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
+    const redisClient = getRedis();
 
-		const token = this.generateSessionToken();
-		const ua = Bowser.parse(userAgentStr ?? "");
+    const userSessionsKey = sessions.getUserSessionsKey(nickname);
+    const currSessionsCount = await redisClient.zcard(userSessionsKey);
 
-		const userSessionsKey = this.getUserSessionsKey(nickname);
-		const newSessionKey = auth.getUserKey(token);
+    if (currSessionsCount >= SESSIONS_LENGTH_LIMIT) {
+      const oldestSessions = await redisClient.zrange(userSessionsKey, 0, 0);
 
-		const createUserSessionsPp = redis
-			.multi()
-			.zcard(userSessionsKey)
+      if (oldestSessions.length > 0) {
+        const oldestToken = oldestSessions[0];
+        const userSessionKey = auth.getSessionKey(oldestToken);
 
-		const createUserSessionsResults = await createUserSessionsPp.exec();
-		invariant(createUserSessionsResults, "Transaction failed and returned null");
+        const removalPipeline = redisClient
+          .multi()
+          .zrem(userSessionsKey, oldestToken)
+          .del(userSessionKey)
 
-		const [[err, res]] = createUserSessionsResults;
-		if (err) throw err
+        await removalPipeline.exec();
+      }
+    }
 
-		const currSessionsCount = res as number;
+    const ua = Bowser.parse(userAgentStr ?? "");
+    const { browser, engine, os, platform } = ua;
+    const infoUpdated = { browser, engine, os, platform, ip };
+    const processedUA = buildUA(infoUpdated);
 
-		if (currSessionsCount >= USER_SESSIONS_LIMIT) {
-			const oldestSessions = await redis.zrange(userSessionsKey, 0, 0);
+    const payload: UserSessionPayload = {
+      nickname,
+      created_at: dayjs().toDate().toString(),
+      ...processedUA,
+    };
 
-			if (oldestSessions.length > 0) {
-				const oldestToken = oldestSessions[0];
-				const userSessionKey = auth.getUserKey(oldestToken);
+    const token = this.generateSessionToken();
+    const newSessionKey = auth.getSessionKey(token);
 
-				const removalPipeline = redis
-					.multi()
-					.zrem(userSessionsKey, oldestToken)
-					.del(userSessionKey)
+    const createUserSessionResult = await redisClient
+      .multi()
+      .set(newSessionKey, JSON.stringify(payload), "EX", SESSION_EXPIRE_S)
+      .zadd(userSessionsKey, Date.now(), token)
+      .expire(userSessionsKey, SESSION_EXPIRE_S)
+      .exec()
 
-				await removalPipeline.exec();
-			}
-		}
+    invariant(createUserSessionResult, "Transaction failed");
 
-		const { browser, engine, os, platform } = ua;
+    createUserSessionResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        loginLogger.log(`createUserSessionResult`, { err, result })
+      }
+      if (err) throw err
+    })
 
-		const infoUpdated = { browser, engine, os, platform, ip };
-		const processedUA = buildUA(infoUpdated);
+    const expires_at = new Date(Date.now() + SESSION_EXPIRE_MS);
 
-		const payload: UserSessionPayload = {
-			nickname,
-			created_at: dayjs().toDate(),
-			...processedUA,
-		};
+    if (isProduction) {
+      this._afterLoginEvents({ nickname });
+    }
 
-		const createUserSessionPp = redis
-			.multi()
-			.set(newSessionKey, JSON.stringify(payload), "PX", DEFAULT_SESSION_EXPIRE)
-			.zadd(userSessionsKey, Date.now(), token)
-			.expire(userSessionsKey, DEFAULT_SESSION_EXPIRE)
+    if (!isProduction) {
+      loginLogger.log(`Session created for ${nickname} ${expires_at.getDate()}`)
+    }
 
-		await createUserSessionPp.exec();
+    return { token, expires_at };
+  },
+  async delete(sessionToken: string): Promise<void> {
+    const redisClient = getRedis();
+    const sessionKey = auth.getSessionKey(sessionToken);
 
-		const expires_at = new Date(Date.now() + DEFAULT_SESSION_EXPIRE_MS);
+    const sessionDataStr = await redisClient.get(sessionKey);
+    invariant(sessionDataStr, "User is not defined");
 
-		if (isProduction) {
-			this.afterLoginEvents({ nickname });
-		}
+    const sessionData = JSON.parse(sessionDataStr) as UserSessionPayload;
+    const nickname = sessionData.nickname;
 
-		return { token, expires_at };
-	},
-	async delete(token: string): Promise<void> {
-		const redis = getRedis();
-		const sessionKey = auth.getUserKey(token);
+    const userSessionsKey = sessions.getUserSessionsKey(nickname);
 
-		const nickname = await redis.get(sessionKey);
-		if (!nickname) throw new Error("User is not defined")
+    const deleteSessionResult = await redisClient
+      .multi()
+      .del(sessionKey)
+      .zrem(userSessionsKey, sessionToken)
+      .exec()
 
-		const userSessionsKey = this.getUserSessionsKey(nickname);
+    invariant(deleteSessionResult, "Transaction failed")
 
-		const results = await redis
-			.multi()
-			.del(sessionKey)
-			.zrem(userSessionsKey, token)
-			.exec()
+    deleteSessionResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        loginLogger.log(`deleteSessionResult`, { err, result })
+      }
+      if (err) throw err;
+    })
 
-		if (!results) {
-			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
-		}
+    if (!isProduction) {
+      loginLogger.log(`Session deleted for ${nickname}`)
+    }
+  },
+  async get({ nickname, sessionToken }: { nickname: string, sessionToken: string }): Promise<UserSessionParsedPayload | null> {
+    const redisClient = getRedis();
 
-		for (const [err] of results) {
-			if (err) throw err;
-		}
-	}
+    const sessionsKey = sessions.getUserSessionsKey(nickname);
+
+    const dataKeysStr = await redisClient.zrange(sessionsKey, 0, -1)
+    if (dataKeysStr.length === 0) return null;
+
+    const sessionKey = auth.getSessionKey(sessionToken);
+    const dataRowStr = await redisClient.get(sessionKey);
+    if (!dataRowStr) return null;
+
+    const dataRow = safeJsonParse<UserSessionParsedPayload>(dataRowStr);
+    if (!dataRow.ok) throw dataRow.error;
+
+    return {
+      ...dataRow.value,
+      browser: JSON.parse(dataRow.value.browser),
+      platform: JSON.parse(dataRow.value.platform),
+      os: JSON.parse(dataRow.value.os)
+    }
+  },
+}
+
+async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParsedPayload[]> {
+  if (sessionsKeys.length === 0) return [];
+
+  const redisClient = getRedis();
+
+  const dataRowsStr = await redisClient.mget(sessionsKeys);
+  const dataRowsStrFiltered = dataRowsStr.filter((k): k is string => k !== null);
+  if (dataRowsStrFiltered.length === 0) return [];
+
+  return dataRowsStrFiltered.map((v) => {
+    const dataRow = safeJsonParse<UserSessionParsedPayload>(v);
+    if (!dataRow.ok) throw dataRow.error;
+    return {
+      ...dataRow.value,
+      browser: JSON.parse(dataRow.value.browser),
+      platform: JSON.parse(dataRow.value.platform),
+      os: JSON.parse(dataRow.value.os)
+    }
+  });
+}
+
+export const sessions = {
+  getUserSessionsKey: (nickname: string) => `user_sessions:${nickname}`,
+  async get(nickname: string): Promise<UserSessionParsedPayload[]> {
+    const redisClient = getRedis();
+
+    const sessionsListKey = this.getUserSessionsKey(nickname);
+
+    const sessionsStrArr: string[] = await redisClient.zrange(sessionsListKey, 0, -1)
+    if (sessionsStrArr.length === 0) return [];
+
+    const sessionsKeys = sessionsStrArr.map((value) => auth.getSessionKey(value))
+
+    const dataRows = await getSessionsRows(sessionsKeys)
+    return dataRows
+  },
+  async delete({ nickname, sessionToken }: { nickname: string, sessionToken: string }) {
+    const redisClient = getRedis();
+
+    const sessionsListKey = sessions.getUserSessionsKey(nickname);
+    const currentSessionScore = await redisClient.zscore(sessionsListKey, sessionToken);
+
+    if (currentSessionScore === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
+
+    const sessionCreationTime = Number(currentSessionScore);
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+
+    if (Date.now() - sessionCreationTime < threeDaysInMs) {
+      throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
+    }
+
+    const allSessionTokens = await redisClient.zrange(sessionsListKey, 0, -1);
+    if (allSessionTokens.length <= 1) return;
+
+    const tokensToDelete = allSessionTokens.filter(token => token !== sessionToken);
+    const keysToDelete = tokensToDelete.map(token => auth.getSessionKey(token));
+
+    const deleteResult = await redisClient
+      .multi()
+      .del(...keysToDelete)
+      .zrem(sessionsListKey, ...tokensToDelete)
+      .exec();
+
+    invariant(deleteResult, "Transaction failed");
+
+    deleteResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        authLogger.log("deleteAllSessionsResult", { err, result });
+      }
+    });
+  },
+  async deleteById({ nickname, targetToken, sessionToken }: { nickname: string, targetToken: string, sessionToken: string }) {
+    const redisClient = getRedis();
+
+    const sessionsListKey = sessions.getUserSessionsKey(nickname);
+    const currentSessionScore = await redisClient.zscore(sessionsListKey, sessionToken);
+
+    if (currentSessionScore === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
+
+    const sessionCreationTime = Number(currentSessionScore);
+    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
+
+    if (Date.now() - sessionCreationTime < threeDaysInMs) {
+      throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
+    }
+
+    const targetSessionScore = await redisClient.zscore(sessionsListKey, targetToken);
+    if (targetSessionScore === null) return;
+
+    const targetKeyToDelete = auth.getSessionKey(targetToken);
+
+    const deleteResult = await redisClient
+      .multi()
+      .del(targetKeyToDelete)
+      .zrem(sessionsListKey, targetToken)
+      .exec();
+
+    invariant(deleteResult, "Transaction failed");
+
+    deleteResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        authLogger.log("deleteSessionByIdResult", { err, result });
+      }
+    });
+  }
 }
 
 type LoginQRKeyPayload = {
-	ua: string;
-	vId: string;
-	ip: string;
-	status: "pending" | "verified" | "confirmed"
-	verifiedBy?: string
+  ua: string;
+  vId: string;
+  ip: string;
+  status: "pending" | "verified" | "confirmed"
+  verifiedBy?: string
 };
 
 export const TOKEN_ERROR_CODES = {
-	TOKEN_EXPIRED: 1,
-	USER_NOT_FOUND: 2
+  TOKEN_EXPIRED: 1,
+  USER_NOT_FOUND: 2
 };
 
 export const TOKEN_MSG_RECORDS = {
-	[TOKEN_ERROR_CODES.TOKEN_EXPIRED]: "Token is expired or not found",
+  [TOKEN_ERROR_CODES.TOKEN_EXPIRED]: "Token is expired or not found",
 };
 
-export const loginQR = {
-	QR_VERIFY_TIMEOUT_S: 120,
-	QR_CONFIRM_TIMEOUT_S: 60,
-	getQRTokenKey: (token: string) => `auth:qr:${token}`,
-	createAuthQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
-	getAuthQRSubject: (token: string) => `auth.qr.*.${token}`,
-	_notify(type: QREventsEvent, token: string) {
-    const payload = { data: token }
+type LoginQRGenerateParams = {
+  visitorId: string; userAgentStr: string; ip: string;
+}
+const QR_VERIFY_TIMEOUT_S = 120;
+const QR_CONFIRM_TIMEOUT_S = 60;
 
+export const loginQR = {
+  getQRTokenKey: (token: string) => `auth:qr:${token}`,
+  getQRSubject: (token: string) => `auth.qr.*.${token}`,
+  createQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
+  _afterEvents(type: QREventsEvent, token: string) {
     nats
       .get()
-      .publish(this.createAuthQRSubject(type, token), JSON.stringify(payload));
-	},
-	async generate({
-		visitorId, ip, ua
-	}: {
-		visitorId: string; ua: string; ip: string;
-	}): Promise<QRGeneratePayload> {
-		const token = nanoid(12);
-		const redis = getRedis();
+      .publish(this.createQRSubject(type, token), JSON.stringify({ data: token }));
+  },
+  async generate({ visitorId, ip, userAgentStr }: LoginQRGenerateParams): Promise<QRGeneratePayload> {
+    const token = nanoid(12);
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
 
-		const key = this.getQRTokenKey(token);
-		const payload: LoginQRKeyPayload = {
-			ua, vId: visitorId, ip, status: "pending",
-		};
+    const payload: LoginQRKeyPayload = {
+      ua: userAgentStr, vId: visitorId, ip, status: "pending",
+    };
 
-		const results = await redis
-			.pipeline()
-			.hset(key, payload)
-			.expire(key, this.QR_VERIFY_TIMEOUT_S)
-			.exec();
+    const createQRResult = await redis
+      .pipeline()
+      .hset(key, payload)
+      .expire(key, QR_VERIFY_TIMEOUT_S)
+      .exec();
 
-		if (!results) {
-			throw new Error("Pipeline aborted (WATCH conflict or connection issue)");
-		}
+    invariant(createQRResult, "Pipeline failed")
 
-		for (const [err] of results) {
-			if (err) throw err;
-		}
+    createQRResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        qrLogger.log(`createQRResult`, { err, result })
+      }
+      if (err) throw err;
+    })
 
-		return { token };
-	},
-	async deleteToken(token: string): Promise<void> {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(token);
-		const status = await redis.hget(key, "status") as Nullable<LoginQRKeyPayload["status"]>
+    return { token };
+  },
+  async deleteToken(token: string): Promise<void> {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
+    const status = await redis.hget(key, "status") as LoginQRKeyPayload["status"]
 
-		if (!status || status !== 'verified') {
-			await redis.del(key)
-			return;
-		}
-	},
-	async checkQRTokenExistence(token: string): Promise<number> {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(token);
-		return redis.exists(key);
-	},
-	async confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(token);
-		const currStatus = await redis.hget(key, "status");
+    if (status !== 'verified') {
+      await redis.del(key)
+      return;
+    }
+  },
+  async checkQRTokenExistence(token: string): Promise<number> {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
+    return await redis.exists(key);
+  },
+  async confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
 
-		if (currStatus !== "pending") {
-			throw new Error("Invalid or expired token state");
-		}
+    const currStatus = await redis.hget(key, "status");
+    if (currStatus !== "pending") throw new Error("Invalid or expired token state");
 
-		const updatePd: Partial<LoginQRKeyPayload> = {
-			status: "verified",
-			verifiedBy: nickname
-		}
+    const updatePd: Pick<LoginQRKeyPayload, "status" | "verifiedBy"> = {
+      status: "verified",
+      verifiedBy: nickname
+    }
 
-		await redis.hset(key, updatePd);
+    await redis.hset(key, updatePd);
 
-		this._notify("verified", token);
-	},
-	async getData(token: string) {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(token);
+    this._afterEvents("verified", token);
+  },
+  async getData(token: string) {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
 
-		const data = await redis.hgetall(key);
-		if (!data || Object.keys(data).length === 0) {
-			throw new Error("Token is expired or not found");
-		}
+    const data = await redis.hgetall(key);
+    if (!data || Object.keys(data).length === 0) throw new Error("Token is expired or not found");
 
-		return {
-			...(data as unknown as LoginQRKeyPayload),
-			timestampz: new Date().toISOString()
-		};
-	},
-	async decline({ token }: { token: string }) {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(token);
-		await redis.del(key);
+    return {
+      ...(data as unknown as LoginQRKeyPayload),
+      timestampz: new Date().toISOString()
+    };
+  },
+  async decline({ token }: { token: string }) {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(token);
+    await redis.del(key);
 
-		this._notify("declined", token);
-	},
-	async afterCreateSession({ qrToken }: { qrToken: string }) {
-		const redis = getRedis();
-		const key = this.getQRTokenKey(qrToken);
+    this._afterEvents("declined", token);
+  },
+  async afterCreateSession({ qrToken }: { qrToken: string }) {
+    const redis = getRedis();
+    const key = this.getQRTokenKey(qrToken);
 
-		const status = await redis.hget(key, "status");
-		if (status !== "verified") return;
+    const status = await redis.hget(key, "status");
+    if (status !== "verified") return;
 
-		const updatePd: Partial<LoginQRKeyPayload> = {
-			status: "confirmed"
-		}
+    const updatePd: Partial<LoginQRKeyPayload> = {
+      status: "confirmed"
+    }
 
-		await redis
-			.pipeline()
-			.hset(key, updatePd)
-			.expire(key, this.QR_CONFIRM_TIMEOUT_S)
-			.exec()
-	}
+    const createSessionQRResult = await redis
+      .pipeline()
+      .hset(key, updatePd)
+      .expire(key, QR_CONFIRM_TIMEOUT_S)
+      .exec()
+
+    invariant(createSessionQRResult, "Pipeline failed")
+
+    createSessionQRResult.forEach(([err, result]) => {
+      if (!isProduction) {
+        qrLogger.log("createSessionQRResult", { err, result })
+      }
+      if (err) throw err;
+    })
+  }
 } as const;

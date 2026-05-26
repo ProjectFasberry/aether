@@ -1,148 +1,179 @@
-import { getStaticObject } from "@/shared/lib/volume";
 import { localeAtom } from "@/shared/models/global.model";
-import { action, atom, AtomState } from "@reatom/core";
-import { sleep, withAssign, withConcurrency, withReset } from "@reatom/framework";
-import { reatomComponent } from "@reatom/npm-react";
-import { Dialog, DialogContent, DialogTitle } from "@repo/ui/dialog";
-import { Typography } from "@repo/ui/typography";
-import { navigate } from "vike/client/router";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@repo/ui/select"
-import { localeDefault } from "@/shared/locales";
+import type { AtomState } from "@reatom/framework";
+import { Dialog } from "@ark-ui/solid/dialog";
+import { Typography } from "@/shared/ui/typography";
+import { createListCollection, Select } from "@ark-ui/solid/select"
+import { useAtom, useCtx } from "@reatom/npm-solid-js";
+import { Index, Portal } from 'solid-js/web'
+import { Icon } from "@/shared/ui/icon";
+import {
+  dialogBackdropVariant, DialogClose, dialogContentVariant, dialogPositionerVariant,
+  dialogTitleVariant
+} from "@/shared/ui/dialog";
+import {
+  selectClearTriggerVariant, selectContentVariant, selectControlVariant,
+  selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant,
+  selectItemIndicatorVariant, selectItemTextVariant, selectItemVariant, selectTriggerVariant
+} from "@/shared/ui/select";
+import { getStaticObject } from "@/shared/lib/helpers";
+import {
+  LANGUAGES, WEATHERS,
+  layoutSettingsIsOpenAtom, layoutSettingsIsTriggeredAtom, selectedLangAtom,
+  selectedWeatherAtom,
+  weatherAtom,
+} from "./settings.model";
 
 const spyglassImage = getStaticObject("minecraft", "icons/fishing_bobber.webp")
 
-const layoutSettingsIsTriggeredAtom = atom(false).pipe(withReset())
+const LayoutSettingsTrigger = () => {
+  const ctx = useCtx();
 
-const layoutSettingsIsOpenAtom = atom(false, "layoutSettingsIsOpen").pipe(
-  withAssign((atom, name) => ({
-    open: action(async (ctx) => {
-      layoutSettingsIsTriggeredAtom(ctx, true);
-
-      await ctx.schedule(() => sleep(200));
-      atom(ctx, true);
-      layoutSettingsIsTriggeredAtom.reset(ctx);
-    }).pipe(withConcurrency()),
-    middleware: action((ctx, cb: () => void) => {
-      atom(ctx, false)
-      cb()
-    })
-  }))
-)
-
-const LayoutSettingsTrigger = reatomComponent(({ ctx }) => {
-  const isTriggered = ctx.spy(layoutSettingsIsTriggeredAtom);
-  const isOpen = ctx.spy(layoutSettingsIsOpenAtom);
+  const [isTriggeredAtom] = useAtom(layoutSettingsIsTriggeredAtom)
+  const [isOpenAtom] = useAtom(layoutSettingsIsOpenAtom)
 
   return (
     <button
       aria-label="Открыть настройки сайта"
       name="open-settings"
       onClick={() => layoutSettingsIsOpenAtom.open(ctx)}
-      className={`top-2/3 group -translate-y-1/4 focus:scale-[1.1] cursor-pointer absolute right-4 w-12 h-12 z-[100] duration-500 ease-in-out
-        ${isTriggered ? "-translate-y-[9999px]" : "translate-y-0"} 
-        ${isOpen ? "hidden" : "block"}
+      class={`top-2/3 group -translate-y-1/4 focus:scale-[1.1] cursor-pointer absolute right-4 w-12 h-12 z-[100] duration-500 ease-in-out
+        ${isTriggeredAtom() ? "-translate-y-[9999px]" : "translate-y-0"}
+        ${isOpenAtom() ? "hidden" : "block"}
       `}
     >
       <img src={spyglassImage} alt="" draggable={false} width={46} height={46} />
     </button>
   )
-}, "LayoutSettingsTrigger")
+}
 
-const WEATHERS = [
-  { title: "Ясная", value: "clean" },
-  { title: "Дождливая", value: "rain" },
-  { title: "Снежная", value: "snow" }
-]
+const weathers = createListCollection({ items: WEATHERS })
+const languages = createListCollection({ items: LANGUAGES })
 
-const LANGUAGES = [
-  { title: "Русский", value: "ru" },
-  { title: "Английский", value: "en" },
-]
+const Language = () => {
+  const ctx = useCtx();
+  const [selectedLang] = useAtom(selectedLangAtom);
 
-export const weatherAtom = atom<"clean" | "rain" | "snow">("clean");
-
-const selectedWeatherAtom = atom((ctx) => WEATHERS.find(d => d.value === ctx.spy(weatherAtom)) ?? WEATHERS[0])
-const selectedLangAtom = atom((ctx) => LANGUAGES.find(d => d.value === ctx.spy(localeAtom)) ?? LANGUAGES[0])
-
-localeAtom.onChange((ctx, state) => {
-  let link = `/${state}`
-
-  if (state === localeDefault) {
-    link = `/`
-  }
-
-  ctx.schedule(() => navigate(link))
-})
-
-const Language = reatomComponent(({ ctx }) => {
   return (
-    <div className="flex items-center justify-between w-full gap-1">
+    <div class="flex items-center justify-between w-full gap-1">
       <Typography>
         Язык
       </Typography>
-      <Select onValueChange={v => layoutSettingsIsOpenAtom.middleware(ctx, () => localeAtom(ctx, v as AtomState<typeof localeAtom>))}>
-        <SelectTrigger>
-          {ctx.spy(selectedLangAtom).title}
-        </SelectTrigger>
-        <SelectContent>
-          <div className="flex flex-col gap-1 w-full h-full">
-            {LANGUAGES.map((item) => (
-              <SelectItem
-                key={item.value}
-                value={item.value}
-                className="flex items-center justify-between gap-1 w-full"
-              >
-                <Typography>
-                  {item.title}
-                </Typography>
-              </SelectItem>
-            ))}
+      <Select.Root
+        collection={languages}
+        onValueChange={(details) => layoutSettingsIsOpenAtom.middleware(ctx, () => localeAtom(ctx, details.value[0] as AtomState<typeof localeAtom>))}
+      >
+        <Select.Control class={selectControlVariant()}>
+          <Select.Trigger class={selectTriggerVariant()}>
+            <Select.ValueText>
+              {selectedLang().title}
+            </Select.ValueText>
+          </Select.Trigger>
+          <div class={selectIndicatorsVariant()}>
+            <Select.ClearTrigger class={selectClearTriggerVariant()}>
+              <Icon name="sprite:x" />
+            </Select.ClearTrigger>
+            <Select.Indicator class={selectIndicatorVariant()}>
+              {/*<ChevronsUpDownIcon />*/}
+            </Select.Indicator>
           </div>
-        </SelectContent>
-      </Select>
+        </Select.Control>
+        <Portal>
+          <Select.Positioner>
+            <Select.Content class={selectContentVariant()}>
+              <Select.ItemGroup class={selectItemGroupVariant()}>
+                <div class="flex flex-col gap-1 w-full h-full">
+                  <Index each={LANGUAGES}>
+                    {(item) => (
+                      <Select.Item item={item()} class={selectItemVariant()}>
+                        <Select.ItemText class={selectItemTextVariant()}>{item().title}</Select.ItemText>
+                        <Select.ItemIndicator class={selectItemIndicatorVariant()}>✓</Select.ItemIndicator>
+                      </Select.Item>
+                    )}
+                  </Index>
+                </div>
+              </Select.ItemGroup>
+            </Select.Content>
+          </Select.Positioner>
+        </Portal>
+        <Select.HiddenSelect />
+      </Select.Root>
     </div>
   )
-}, "Language")
+}
 
-const Weather = reatomComponent(({ ctx }) => {
+const Weather = () => {
+  const ctx = useCtx();
+  const [selectedWeather] = useAtom(selectedWeatherAtom);
+
   return (
-    <div className="flex items-center justify-between w-full gap-1">
+    <div class="flex items-center justify-between w-full gap-1">
       <Typography>
         Погода
       </Typography>
-      <Select onValueChange={v => layoutSettingsIsOpenAtom.middleware(ctx, () => weatherAtom(ctx, v as AtomState<typeof weatherAtom>))}>
-        <SelectTrigger>
-          {ctx.spy(selectedWeatherAtom).title}
-        </SelectTrigger>
-        <SelectContent>
-          <div className="flex flex-col gap-1 w-full h-full">
-            {WEATHERS.map((item) => (
-              <SelectItem key={item.value} value={item.value} className="flex items-center justify-between gap-1 w-full">
-                <Typography>
-                  {item.title}
-                </Typography>
-              </SelectItem>
-            ))}
+      <Select.Root
+        collection={weathers}
+        onValueChange={(details) => layoutSettingsIsOpenAtom.middleware(ctx, () => weatherAtom(ctx, details.value[0] as AtomState<typeof weatherAtom>))}
+      >
+        <Select.Control class={selectControlVariant()}>
+          <Select.Trigger class={selectTriggerVariant()}>
+            <Select.ValueText>
+              {selectedWeather().title}
+            </Select.ValueText>
+          </Select.Trigger>
+          <div class={selectIndicatorsVariant()}>
+            <Select.ClearTrigger class={selectClearTriggerVariant()}>
+              <Icon name="sprite:x" />
+            </Select.ClearTrigger>
+            <Select.Indicator class={selectIndicatorVariant()}>
+              {/*<ChevronsUpDownIcon />*/}
+            </Select.Indicator>
           </div>
-        </SelectContent>
-      </Select>
+        </Select.Control>
+        <Portal>
+          <Select.Positioner>
+            <Select.Content class={selectContentVariant()}>
+              <Select.ItemGroup class={selectItemGroupVariant()}>
+                <div class="flex flex-col gap-1 w-full h-full">
+                  <Index each={WEATHERS}>
+                    {(item) => (
+                      <Select.Item item={item()} class={selectItemVariant()}>
+                        <Select.ItemText class={selectItemTextVariant()}>{item().title}</Select.ItemText>
+                        <Select.ItemIndicator class={selectItemIndicatorVariant()}>✓</Select.ItemIndicator>
+                      </Select.Item>
+                    )}
+                  </Index>
+                </div>
+              </Select.ItemGroup>
+            </Select.Content>
+          </Select.Positioner>
+        </Portal>
+        <Select.HiddenSelect />
+      </Select.Root>
     </div>
   )
-}, "Weather")
+}
 
-const LayoutSettingsContent = reatomComponent(({ ctx }) => {
+const LayoutSettingsContent = () => {
+  const [isOpenAtom, setIsOpenAtom] = useAtom(layoutSettingsIsOpenAtom);
+
   return (
-    <Dialog open={ctx.spy(layoutSettingsIsOpenAtom)} onOpenChange={v => layoutSettingsIsOpenAtom(ctx, v)}>
-      <DialogContent>
-        <DialogTitle className='text-center text-xl'>Настройки</DialogTitle>
-        <div className="flex flex-col gap-2 w-full">
-          <Weather />
-          <Language />
-        </div>
-      </DialogContent>
-    </Dialog>
+    <Dialog.Root open={isOpenAtom()} onOpenChange={(details) => setIsOpenAtom(details.open)}>
+      <Portal>
+        <Dialog.Backdrop class={dialogBackdropVariant()} />
+        <Dialog.Positioner class={dialogPositionerVariant()}>
+          <Dialog.Content class={dialogContentVariant()}>
+            <Dialog.Title class={dialogTitleVariant()}>Настройки</Dialog.Title>
+            <div class="flex flex-col gap-2 w-full">
+              <Weather />
+              <Language />
+            </div>
+            <DialogClose />
+          </Dialog.Content>
+        </Dialog.Positioner>
+      </Portal>
+    </Dialog.Root>
   )
-}, "LayoutSettingsContent")
+}
 
 export const LayoutSettings = () => {
   return (

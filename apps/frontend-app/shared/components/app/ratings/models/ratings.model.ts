@@ -11,7 +11,7 @@ import {
 	type RatingPlaytime,
 	type RatingReputation,
 	type RatingsPayload,
-} from "@repo/shared/types/entities/rating";
+} from "@/shared/schemas/rating";
 import { client, withQueryParams } from "@/shared/lib/client-wrapper";
 import { createViewerModel } from "@/shared/models/shared.model";
 

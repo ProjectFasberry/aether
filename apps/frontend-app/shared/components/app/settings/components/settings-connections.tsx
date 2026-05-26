@@ -14,7 +14,7 @@ import { Dialog } from "@ark-ui/react/dialog";
 import { Portal } from "@ark-ui/react/portal";
 import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
 import type { PlayerSocialsItem } from "../../player/models/socials.model";
-import dayjs from "dayjs";
+import dayjs from "@/shared/lib/create-dayjs";
 
 const {
   getConnectionStatusAtom,

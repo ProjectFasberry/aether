@@ -1,6 +1,6 @@
 import type { Rec } from "@reatom/framework"
 import type { PersistRecord } from "@reatom/persist"
-import type { operations } from "@repo/shared/types/generated/main/schema"
+import type { operations } from "@/shared/types/gen/main/schema"
 
 declare global {
   declare module "*.jpg"

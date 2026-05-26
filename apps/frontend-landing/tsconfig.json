@@ -18,13 +18,12 @@
     ],
     "types": [
       "vite/client",
-      "vike-react"
+      "vike-solid/client"
     ],
-    "jsx": "react-jsx",
-    "jsxImportSource": "react",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
     "paths": {
       "@/*": ["./*"],
-      "@repo/ui/*": ["../../packages/ui/components/*"]
     }
   },
   "exclude": ["dist", "node_modules"],

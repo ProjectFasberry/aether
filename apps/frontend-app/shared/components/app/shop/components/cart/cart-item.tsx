@@ -4,10 +4,10 @@ import { IconGift, IconTrash } from "@tabler/icons-react"
 import { Typography } from "@/shared/ui/typography"
 import { createLink } from "@/shared/components/config/link"
 import { storeItem } from "../../models/store-item.model"
-import { CURRENCIES } from "./cart-price"
 import { cart, cartDataItemIsSelectAtom, type CartItem as CartItemProps } from "../../models/store-cart.model"
 import { changeLocalRecipient } from "../../../settings/models/settings-store.model"
 import { Checkbox } from "@/shared/ui/checkbox"
+import { CURRENCIES } from "@/shared/consts/store"
 
 const CartItemRemoveFromCart = reatomComponent<{ id: number }>(({ ctx, id }) => {
   return (
@@ -44,7 +44,7 @@ export const CartItem = reatomComponent<CartItemProps>(({
   return (
     <div
       id={id.toString()}
-      className="flex items-center w-full relative gap-2 sm:gap-4 max-h-32 overflow-hidden rounded-lg p-2 sm:p-6 
+      className="flex items-center w-full relative gap-2 sm:gap-4 max-h-32 overflow-hidden rounded-lg p-2 sm:p-6
         border border-neutral-800"
     >
       <CartItemUpdateSelectStatus id={id} />

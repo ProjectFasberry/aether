@@ -1,17 +1,7 @@
 import { reatomComponent } from "@reatom/npm-react"
 import { Typography } from "@/shared/ui/typography"
 import { cartState } from "../../models/store-cart.model"
-import { belkoinImage, charismImage } from "@/shared/consts/images";
-
-export const TARGET_TITLE = {
-  "CHARISM": "Харизма",
-  "BELKOIN": "Белкоин"
-} as const;
-
-export const CURRENCIES: Record<string, { img: string, symbol: string }> = {
-  "CHARISM": { img: charismImage, symbol: "C" },
-  "BELKOIN": { img: belkoinImage, symbol: "B" },
-}
+import { CURRENCIES } from "@/shared/consts/store";
 
 export const CartPrice = reatomComponent(({ ctx }) => {
   const prices = ctx.spy(cartState.price)

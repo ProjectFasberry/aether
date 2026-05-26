@@ -1,4 +1,4 @@
-import { useConfig } from 'vike-react/useConfig';
+import { useConfig } from 'vike-solid/useConfig';
 import { PageContextServer } from 'vike/types';
 import { getUrl } from '@/shared/lib/helpers';
 

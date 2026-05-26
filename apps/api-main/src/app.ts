@@ -61,7 +61,7 @@ export function startApp() {
 		.use(root)
 		.use(defineOptionalSession())
 		.onBeforeHandle(async ({ cookie, session: sessionToken }) =>
-			await session.updateSession(sessionToken, cookie)
+			await session.updateSession(sessionToken ?? null, cookie)
 		)
 		.use(main);
 

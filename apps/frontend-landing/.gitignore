@@ -148,3 +148,6 @@ cdk.out
 styled-system
 styled-system-studio
 .vercel
+
+/shared/sprite.gen.ts
+/stats.html

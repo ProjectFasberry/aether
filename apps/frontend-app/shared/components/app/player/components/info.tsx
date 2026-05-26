@@ -1,7 +1,7 @@
 import { reatomComponent } from "@reatom/npm-react";
 import { Rate } from "./rate";
 import { playerState } from "../models/player.model";
-import { DONATE_COLORS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
+import { DONATE_COLORS, DONATE_TITLE } from "@/shared/consts";
 
 type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
 

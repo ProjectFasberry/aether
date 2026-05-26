@@ -1,15 +1,15 @@
 import * as z from "zod";
 import { action, atom, type AtomMut } from "@reatom/framework";
 import { reatomAsync, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
-import { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
+import { createNewsSchema, newsUpdateSchema } from "@/shared/schemas/news";
 import { toast } from "sonner";
 import { client, withJsonBody, withQueryParams } from "@/shared/lib/client-wrapper";
 import { generateHTML, type JSONContent } from "@tiptap/react"
 import { actionsTargetAtom, collectChanges, compareChanges, notifyAboutRestrictRole } from "./actions.model";
-import { editorExtensions } from "@/shared/components/config/editor";
 import { withUndo } from "@reatom/undo";
-import { alertDialog } from "@/shared/components/config/alert-dialog.model";
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model";
 import { navigate } from "vike/client/router";
+import { editorExtensions } from "@/shared/components/config/editor/editor.model";
 
 type NewsPayload = ExtractApiData<"getSharedNewsList">["data"]
 type News = NewsPayload["data"][number];

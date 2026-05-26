@@ -4,7 +4,14 @@ import { createLink, Link } from "@/shared/components/config/link";
 import { Avatar } from "@/shared/ui/avatar";
 import { tv, type VariantProps } from "tailwind-variants";
 import { currentUserState } from "@/shared/models/current-user/index.model";
-import { type RatingBelkoin, type RatingCharism, type RatingLands, type RatingParkour, type RatingPlaytime, type RatingReputation } from "@repo/shared/types/entities/rating";
+import {
+  type RatingBelkoin,
+  type RatingCharism,
+  type RatingLands,
+  type RatingParkour,
+  type RatingPlaytime,
+  type RatingReputation
+} from "@/shared/schemas/rating";
 import "dayjs/locale/ru";
 import { Typography } from "@/shared/ui/typography"
 import { atom } from "@reatom/framework";

@@ -1,48 +1,53 @@
-import { AnchorHTMLAttributes } from "react";
+import { splitProps, JSX } from "solid-js";
 import { tv } from "tailwind-variants";
-import { usePageContext } from "vike-react/usePageContext";
+import { usePageContext } from "vike-solid/usePageContext";
 
-type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
-  href: string,
-  locale?: string
-}
+type LinkProps = JSX.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  href: string;
+  locale?: string;
+  className?: string
+};
 
-const LINKS = (target: string | number) => ({
-  "land": `/land/${target}`,
-  "player": `/player/${target}`,
-  "news": `/news/${target}`,
-  "store": `/store/i/${target}`
-})
+export const Link = (props: LinkProps) => {
+  const pageContext = usePageContext();
+  const [local, rest] = splitProps(props, ["href", "locale", "class", "className"]);
 
-export const createLink = (type: keyof ReturnType<typeof LINKS>, target: string | number) => LINKS(target)[type]
+  const initWithLocale = !!local.locale;
+  const currentLocale = () => local.locale ?? pageContext.locale;
 
-export function Link({ href, locale, className, ...props }: LinkProps) {
-  const pageContext = usePageContext()
-  const pathname = pageContext.urlPathname;
+  const computedHref = () => {
+    let path = local.href;
+    const loc = currentLocale();
+    if (loc && loc !== "ru") {
+      path = '/' + loc + path;
+    }
+    return path;
+  };
 
-  const initWithLocale = !!locale
+  const pathname = () => pageContext.urlPathname;
 
-  locale = locale ?? pageContext.locale;
+  const isActive = () => {
+    const hrefVal = computedHref();
+    return hrefVal ? (hrefVal === "/" ? pathname() === hrefVal : pathname().startsWith(hrefVal)) : false;
+  };
 
-  if (locale !== "ru") {
-    href = '/' + locale + href
-  }
-
-  const isActive = href ? href === "/" ? pathname === href : pathname.startsWith(href) : false;
-  const isIdentity = href === pathname
+  const isIdentity = () => computedHref() === pathname();
+  const linkStyle = (): JSX.CSSProperties => isIdentity() && !initWithLocale ? { "pointer-events": 'none' } : {};
 
   return (
     <a
-      href={href}
-      data-state={isActive ? "active" : "inactive"}
-      style={isIdentity && !initWithLocale ? { pointerEvents: 'none' } : {}}
+      href={computedHref()}
+      data-state={isActive() ? "active" : "inactive"}
+      style={linkStyle()}
       onClick={(e) => {
-        if (isIdentity && !initWithLocale) {
+        if (isIdentity() && !initWithLocale) {
           e.preventDefault();
         }
       }}
-      className={tv({ base: `data-[state=active]:is-active` })({ className })}
-      {...props}
+      class={tv({ base: `data-[state=active]:is-active` })({
+        className: local.class || local.className
+      })}
+      {...rest}
     />
   );
 }

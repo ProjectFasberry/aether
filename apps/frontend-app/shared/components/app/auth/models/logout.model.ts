@@ -1,4 +1,4 @@
-import { alertDialog } from "@/shared/components/config/alert-dialog.model";
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model";
 import { client } from "@/shared/lib/client-wrapper";
 import { logError } from "@/shared/lib/log";
 import { reatomAsync, withErrorAtom, withStatusesAtom } from "@reatom/framework";

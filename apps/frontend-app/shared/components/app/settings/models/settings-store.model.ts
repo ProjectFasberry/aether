@@ -6,7 +6,7 @@ import { logError } from "@/shared/lib/log";
 import { toast } from "sonner";
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { currentUserState } from "@/shared/models/current-user/index.model";
-import { nicknameSchema } from "@repo/shared/schemas/auth";
+import { nicknameSchema } from "@/shared/schemas/auth";
 import { DIALOG_DELAY } from "@/shared/consts/index";
 import { getExistNickname } from "@/shared/models/shared.model";
 
@@ -182,9 +182,9 @@ const getNicknameValidator = (ctx: CtxSpy, oldAtom: Atom<string | null>, newAtom
   return schema.safeParse({ oldRecipient: ctx.spy(oldAtom), newRecipient }).success
 }
 
-export const changeRecipientIsValidAtom = atom<boolean>((ctx) => 
+export const changeRecipientIsValidAtom = atom<boolean>((ctx) =>
   getNicknameValidator(ctx, changeLocalRecipientState.oldRecipient, changeLocalRecipientState.newRecipient)
 )
-export const changeGlobalRecipientIsValidAtom = atom<boolean>((ctx) => 
+export const changeGlobalRecipientIsValidAtom = atom<boolean>((ctx) =>
   getNicknameValidator(ctx, changeGlobalRecipientState.oldRecipient, changeGlobalRecipientState.newRecipient)
 )

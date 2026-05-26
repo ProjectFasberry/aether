@@ -111,3 +111,11 @@ export const defineUserRole = () => new Elysia({ name: "defineUserRole" })
     return { role, nickname }
   })
   .as("scoped")
+
+export const defineRequiredSession = () => new Elysia({ name: "defineRequiredSession" })
+  .use(defineRequiredUser())
+  .derive(async ({ session, status }) => {
+    if (!session) throw status(401);
+    return { session };
+  })
+  .as("scoped")

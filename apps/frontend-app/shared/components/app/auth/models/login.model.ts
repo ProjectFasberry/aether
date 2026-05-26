@@ -5,14 +5,23 @@ import { type AsyncCtx, reatomAsync, spawn, withAssign, withDataAtom, withErrorA
 import { onEvent } from "@reatom/web";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { type AuthErrorType, authState, defineError, isPofActiveAtom } from "./auth.model";
-import type { QREventsPayload, QREventsEvent } from "@repo/shared/schemas/auth/login"
 import { createWsUrl } from "@/shared/lib/utils";
 import { env } from "@/shared/env";
 import { pof } from "../../../../models/shared.model";
 import { logError } from "@/shared/lib/log";
 import * as z from "zod";
-import { authSchema as loginSchema } from "@repo/shared/schemas/auth";
+import { authSchema as loginSchema } from "@/shared/schemas/auth";
 import { spyOptionAtom } from "@/shared/models/app/utils";
+
+export type QREventsEvent =
+	| "expired"
+	| "verified"
+	| "connected" // ws only event
+	| "declined";
+
+export type QREventsPayload = {
+	event: QREventsEvent;
+};
 
 type QRGeneratePayload = ExtractApiData<"postAuthLoginQrGenerate">["data"]
 type GameGeneratePayload = ExtractApiData<"postAuthLoginGameGenerate">["data"]

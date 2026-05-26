@@ -1,6 +1,6 @@
 import { DeleteButton, EditButton, ToLink } from "@/shared/components/app/private/components/ui"
 import { itemToEditAtom, editStoreItem, deleteStoreItem, storeState, storeItems, createStoreItem } from "@/shared/components/app/private/models/store.model"
-import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
+import { EditorMenuBar } from "@/shared/components/config/editor/editor"
 import { createLink } from "@/shared/components/config/link"
 import { atom, type AtomState } from "@reatom/framework"
 import { reatomComponent, useUpdate } from "@reatom/npm-react"
@@ -15,6 +15,7 @@ import { belkoinImage, charismImage } from "@/shared/consts/images"
 import { getFromDictionary } from "@/shared/models/app/utils"
 import { CreateItem } from "./store.create"
 import { type StoreItem as StoreItemProps } from "../../shop/models/store-item.model"
+import { editorExtensions } from "@/shared/components/config/editor/editor.model"
 
 const titles: Record<AtomState<typeof storeState.searchParamTarget>, string> = {
   "create": "Создание товара",
@@ -101,7 +102,7 @@ const Wrapper = reatomComponent<PropsWithChildren>(({ ctx, children }) => {
   return (
     <div
       data-state={isLoading ? "loading" : "idle"}
-      className="flex flex-col gap-4 w-full h-full 
+      className="flex flex-col gap-4 w-full h-full
         data-[state=loading]:pointer-events-none data-[state=loading]:opacity-60 data-[state=idle]:pointer-events-auto"
     >
       {children}

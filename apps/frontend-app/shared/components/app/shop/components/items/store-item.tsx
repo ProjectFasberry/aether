@@ -5,10 +5,10 @@ import { getItemStatus, type StoreItem as StoreItemProps, storeItem } from "../.
 import { Skeleton } from "@/shared/ui/skeleton"
 import { pageState } from "@/shared/models/page-context.model"
 import { reatomComponent } from "@reatom/npm-react"
-import { CURRENCIES } from "../cart/cart-price"
 import { tv } from "tailwind-variants"
 import { Button } from "@/shared/ui/button"
 import { translate } from "@/shared/locales/helpers"
+import { CURRENCIES } from "@/shared/consts/store"
 
 const buyButtonVariants = tv({
   base: `group gap-2 duration-150 h-10 *:duration-150 px-6 w-full rounded-xl`,

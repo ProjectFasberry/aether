@@ -2,12 +2,10 @@ import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 
-type Payload = {
-  [key: string]: {
-    title: string,
-    nodes: { title: string, value: string }[]
-  }
-}
+type GroupPayload = Record<string, {
+  title: string;
+  nodes: { title: string; value: string }[];
+}>;
 
 const wikiCategories = new Elysia()
   .get("/categories", async () => {
@@ -23,26 +21,36 @@ const wikiCategories = new Elysia()
       .orderBy("created_at", "asc")
       .execute()
 
-    const payload: Payload = categories.reduce((acc, part) => {
+    const payload: GroupPayload = categories.reduce((acc, part) => {
       const { group_name, group_title, ...rest } = part;
 
       acc[group_name] = {
         title: group_title,
         nodes: [...acc[group_name]?.nodes ?? [], rest]
-      }
+      };
 
-      return acc
-    }, {} as Payload)
+      return acc;
+    }, {} as GroupPayload);
 
-    let data: Payload = payload
+    const main: GroupPayload = Object.fromEntries(
+      Object.entries(payload).filter(([k]) => k !== 'general' && k !== 'main')
+    )
 
-    data = {
-      general: data.general,
-      main: data.main,
-      ...Object.fromEntries(
-        Object.entries(data).filter(([k]) => k !== 'general' && k !== 'main')
-      ),
+    const mainNode = {
+      title: "Все аспекты",
+      nodes: Object.entries(main).map(([key, group]) => ({
+        title: group.title,
+        value: key
+      }))
     };
+
+    const data = {
+      general: payload.general,
+      main: mainNode,
+      ...main
+    };
+
+    console.log({categories, payload, main});
 
     return { data }
   }, {

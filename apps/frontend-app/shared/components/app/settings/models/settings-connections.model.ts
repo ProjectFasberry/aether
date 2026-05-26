@@ -8,7 +8,7 @@ import { isEmptyArray } from "@/shared/lib/helpers";
 import { client } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { env } from "@/shared/env";
-import { alertDialog } from "@/shared/components/config/alert-dialog.model";
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model";
 
 const connectionsStatusAtom = reatomMap<string, boolean>()
 

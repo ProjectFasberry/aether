@@ -1,38 +1,52 @@
-import { useConfig } from 'vike-react/useConfig';
-import { PageContextServer } from 'vike/types';
-import { wrapTitle } from '@/shared/lib/wrap-title';
+import { useConfig } from 'vike-solid/useConfig';
+import type { PageContextServer } from 'vike/types';
 import { Wiki } from '@/pages/wiki/(components)/wiki.model';
 import { client } from '@/shared/api/client';
-import { getUrl } from '@/shared/lib/helpers';
+import { getUrl, wrapTitle } from '@/shared/lib/helpers';
 import { renderToMarkdown } from '@tiptap/static-renderer/pm/markdown'
-import { editorExtensions } from '@/shared/components/config/editor';
+import { editorExtensions as extensions } from '@/shared/components/config/editor';
+import { wrapClient } from '@/shared/lib/api';
 
 export type Data = Awaited<ReturnType<typeof data>>
 
-async function getData(param: string, init: RequestInit) {
-  const res = await client(`shared/wiki/category/${param}`, { ...init })
-  const data = await res.json<{ data: Wiki } | { error: string }>()
+export async function data(pageCtx: PageContextServer) {
+  const config = useConfig();
 
-  if ("error" in data) throw new Error(data.error)
-  return data.data
-}
+  const categoryResult = await wrapClient<Wiki | null>(
+    () => client(`shared/wiki/category/${pageCtx.routeParams.category}`, { headers: pageCtx.headers ?? undefined })
+  )
 
-export const data = async (pageContext: PageContextServer) => {
-  const config = useConfig()
-  const headers = pageContext.headers ?? undefined;
-  const param = pageContext.routeParams.category;
+  if (!categoryResult) {
+    const title = "Статья не найдена";
 
-  const categoryResult = await getData(param, { headers })
+    config({
+      title,
+      Head: (
+        <>
+          <link rel="canonical" href={getUrl(pageCtx)} />
+          <meta property="og:url" content={getUrl(pageCtx)} />
+          <meta property="og:title" content={title} />
+          <meta property="og:type" content="website" />
+          <meta property="og:site_name" content={title} />
+          <meta name="twitter:title" content={title} />
+        </>
+      )
+    })
+    return {
+      data: null
+    };
+  }
 
-  const title = wrapTitle(`${categoryResult.title}`)
-  const description = renderToMarkdown({ extensions: editorExtensions, content: categoryResult.content }).slice(0, 128) + '...'
+  const title = wrapTitle(`${categoryResult.title}`);
+  const markdown = renderToMarkdown({ extensions, content: categoryResult.content })
+  const description = markdown.slice(0, 128) + '...'
 
   config({
     title,
     Head: (
       <>
-        <link rel="canonical" href={getUrl(pageContext)} />
-        <meta property="og:url" content={getUrl(pageContext)} />
+        <link rel="canonical" href={getUrl(pageCtx)} />
+        <meta property="og:url" content={getUrl(pageCtx)} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />

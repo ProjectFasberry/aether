@@ -1,17 +1,21 @@
 import { WikiNavigation } from "@/pages/wiki/(components)/wiki-navigation-bar";
-import { wikiCategoriesAction } from "@/pages/wiki/(components)/wiki.model";
-import { useUpdate } from "@reatom/npm-react";
-import { MainWrapperPage } from "@repo/ui/main-wrapper";
-import { ReactNode } from "react";
+import { wikiCategories } from "@/pages/wiki/(components)/wiki.model";
+import { MainWrapperPage } from "@/shared/ui/main-wrapper";
+import { useCtx } from "@reatom/npm-solid-js";
+import { JSXElement, onMount } from "solid-js";
 
-export default function Layout({ children }: { children: ReactNode }) {
-  useUpdate(wikiCategoriesAction, [])
+export default function Layout(props: { children: JSXElement }) {
+  const ctx = useCtx();
+
+  onMount(() => {
+    wikiCategories.fetch(ctx)
+  })
 
   return (
     <MainWrapperPage>
-      <div className="flex flex-col lg:flex-row items-start justify-between bg-transparent w-full gap-x-4">
+      <div class="flex flex-col lg:flex-row items-start justify-between bg-transparent w-full gap-x-4">
         <WikiNavigation />
-        {children}
+        {props.children}
       </div>
     </MainWrapperPage>
   )

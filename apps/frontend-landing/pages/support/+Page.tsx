@@ -1,50 +1,50 @@
 import { Link } from "@/shared/components/config/link";
-import { getStaticObject } from "@/shared/lib/volume";
-import { Button } from "@repo/ui/button";
-import { MainWrapperPage } from "@repo/ui/main-wrapper";
-import { Overlay } from "@repo/ui/overlay";
-import { Typography } from "@repo/ui/typography";
-import { WrapperTitle } from "@repo/ui/wrapper-title";
+import { Button } from "@/shared/ui/button";
+import { MainWrapperPage } from "@/shared/ui/main-wrapper";
+import { Overlay } from "@/shared/ui/overlay";
+import { Typography } from "@/shared/ui/typography";
+import { WrapperTitle } from "@/shared/ui/wrapper-title";
 import { LANDING_ENDPOINT } from '@/shared/env';
-import { PropsWithChildren } from "react";
 import { sectionVariant, sectionVariantChild } from "@/shared/styles/variants";
+import { JSXElement } from "solid-js";
+import { getStaticObject } from "@/shared/lib/helpers";
 
 const bgImage = getStaticObject("backgrounds", "support_background.png");
 
 const alexImage = getStaticObject("support", "alex.webp")
 const steveImage = getStaticObject("support", "steve.webp");
 
-const Card = ({ children }: PropsWithChildren) => {
+const Card = (props: { children: JSXElement }) => {
   return (
     <div
-      className="card-wrapper flex flex-col xl:flex-row overflow-hidden md:items-center justify-center md:justify-start items-center w-full"
+      class="card-wrapper flex flex-col xl:flex-row overflow-hidden md:items-center justify-center md:justify-start items-center w-full"
     >
-      {children}
+      {props.children}
     </div>
-  )
-}
+  );
+};
 
 export default function Page() {
   return (
     <MainWrapperPage variant="with_section">
       <div
-        className={sectionVariant()}
-        style={{ backgroundImage: `url(${bgImage})` }}
+        class={sectionVariant()}
+        style={{ "background-image": `url(${bgImage})` }}
       >
         <Overlay variant="default" />
         <WrapperTitle>
-          <div className="flex flex-col gap-6 w-full lg:max-w-3xl items-start justify-start">
-            <div className="flex flex-col gap-2 w-full lg:max-w-3xl">
-              <h1 className={sectionVariantChild().title({ className: "text-gold" })}>
+          <div class="flex flex-col gap-6 w-full lg:max-w-3xl items-start justify-start">
+            <div class="flex flex-col gap-2 w-full lg:max-w-3xl">
+              <h1 class={sectionVariantChild().title({ className: "text-gold" })}>
                 Поддержка проекта
               </h1>
-              <Typography className={sectionVariantChild().subtitle()}>
+              <Typography class={sectionVariantChild().subtitle()}>
                 Здесь можно узнать о способах поддержки развития проекта
               </Typography>
             </div>
-            <Link href="#support-list" className={sectionVariantChild().action()}>
-              <Button variant="minecraft" className="w-full px-6 py-0.5 gap-2">
-                <Typography className="text-lg">
+            <Link href="#support-list" class={sectionVariantChild().action()}>
+              <Button variant="minecraft" class="w-full px-6 py-0.5 gap-2">
+                <Typography class="text-lg">
                   Как поддержать?
                 </Typography>
               </Button>
@@ -54,39 +54,39 @@ export default function Page() {
       </div>
       <div
         id="support-list"
-        className="full-screen-section flex flex-col justify-center items-center relative py-24 lg:py-36"
+        class="full-screen-section flex flex-col justify-center items-center relative py-24 lg:py-36"
       >
-        <div className="flex flex-col justify-center gap-y-6 w-[90%] mx-auto">
-          <div className="flex flex-col justify-center items-center mb-6">
-            <Typography className="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
+        <div class="flex flex-col justify-center gap-y-6 w-[90%] mx-auto">
+          <div class="flex flex-col justify-center items-center mb-6">
+            <Typography class="text-2xl md:text-3xl lg:text-4xl xl:text-5xl 2xl:text-6xl">
               Поддержка проекта
             </Typography>
-            <Typography className="text-xl text-center text-gold">
+            <Typography class="text-xl text-center text-gold">
               ниже представлены пока что основные способы помочь проекту. Спасибо!
             </Typography>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 w-full h-full">
+          <div class="flex flex-col sm:flex-row gap-4 w-full h-full">
             <Card>
               <img
                 width={244}
                 height={244}
                 loading="lazy"
                 alt="Monitoring"
-                className="max-h-[244px] w-auto"
+                class="max-h-[244px] w-auto"
                 src={steveImage}
               />
-              <div className="flex flex-col items-center xl:items-start gap-1 md:gap-2 w-full">
-                <h2 className="text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl">
+              <div class="flex flex-col items-center xl:items-start gap-1 md:gap-2 w-full">
+                <h2 class="text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl">
                   Мониторинг
                 </h2>
-                <div className="flex flex-col mt-2 w-full">
+                <div class="flex flex-col mt-2 w-full">
                   <a
                     target="_blank"
                     href="https://hotmc.ru/vote-259308"
                     rel="noreferrer"
-                    className="flex justify-center w-full xl:w-fit items-center button px-4 py-1"
+                    class="flex justify-center w-full xl:w-fit items-center button px-4 py-1"
                   >
-                    <Typography className="text-nowrap text-base lg:text-xl">
+                    <Typography class="text-nowrap text-base lg:text-xl">
                       Проголосовать #1
                     </Typography>
                   </a>
@@ -94,9 +94,9 @@ export default function Page() {
                     target="_blank"
                     href="https://mcrating.org/minecraft-server-2159"
                     rel="noreferrer"
-                    className="flex justify-center w-full xl:w-fit items-center button px-4 py-1"
+                    class="flex justify-center w-full xl:w-fit items-center button px-4 py-1"
                   >
-                    <Typography className="text-nowrap text-base lg:text-xl">
+                    <Typography class="text-nowrap text-base lg:text-xl">
                       Проголосовать #2
                     </Typography>
                   </a>
@@ -107,17 +107,17 @@ export default function Page() {
               <img
                 width={244}
                 height={244}
-                className="max-h-[244px] w-auto"
+                class="max-h-[244px] w-auto"
                 src={alexImage}
                 loading="lazy"
                 alt="Share"
               />
-              <div className="flex flex-col items-center xl:items-start gap-2 w-full">
-                <h2 className='text-shadow-md text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl'>
+              <div class="flex flex-col items-center xl:items-start gap-2 w-full">
+                <h2 class='text-shadow-md text-xl lg:text-2xl xl:text-3xl 2xl:text-4xl'>
                   Поделиться
                 </h2>
                 <div
-                  className="flex flex-col justify-center md:justify-start w-full gap-2 mt-2
+                  class="flex flex-col justify-center md:justify-start w-full gap-2 mt-2
                     *:flex *:justify-center *:w-full *:xl:w-fit *:items-center *:px-4 *:py-1
                   "
                 >
@@ -125,9 +125,9 @@ export default function Page() {
                     href={`https://telegram.me/share/url?url=https%3A%2F%2F${LANDING_ENDPOINT}&text=`}
                     rel="noreferrer"
                     target="_blank"
-                    className="button"
+                    class="button"
                   >
-                    <Typography color="white" className="text-nowrap text-base lg:text-xl">
+                    <Typography color="white" class="text-nowrap text-base lg:text-xl">
                       Поделиться в телеграмме
                     </Typography>
                   </a>
@@ -135,9 +135,9 @@ export default function Page() {
                     href={`https://vk.com/share.php?url=https%3A%2F%2F${LANDING_ENDPOINT}&title=`}
                     rel="noreferrer"
                     target="_blank"
-                    className="button"
+                    class="button"
                   >
-                    <Typography color="white" className="text-base lg:text-xl">
+                    <Typography color="white" class="text-base lg:text-xl">
                       Поделиться в вк
                     </Typography>
                   </a>

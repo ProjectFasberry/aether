@@ -1,4 +1,4 @@
-import { storeItemCreateSchema } from '@repo/shared/schemas/store/index';
+import { storeItemCreateSchema } from '@/shared/schemas/store';
 import { logError } from "@/shared/lib/log";
 import { action, atom, type AtomState, batch } from "@reatom/framework";
 import { reatomAsync, reatomRecord, withAssign, withCache, withDataAtom, withReset, withStatusesAtom } from "@reatom/framework";
@@ -6,11 +6,11 @@ import { getStoreItems, type StoreItemsParams } from "../../shop/models/store.mo
 import { client, withJsonBody } from "@/shared/lib/client-wrapper";
 import { toast } from "sonner";
 import { notifyAboutRestrictRole } from "./actions.model";
-import { alertDialog } from "@/shared/components/config/alert-dialog.model";
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model";
 import * as z from "zod";
 import type { JSONContent } from "@tiptap/react";
 import { navigate } from "vike/client/router";
-import { newsUpdateSchema } from "@repo/shared/schemas/news";
+import { newsUpdateSchema } from "@/shared/schemas/news";
 import { type StoreItem } from '../../shop/models/store-item.model';
 
 type CreateItemStoreSchema = z.infer<typeof storeItemCreateSchema>
@@ -158,7 +158,7 @@ export const storeItems = atom(null).pipe(
       name: "_",
       onReject: (_, e) => logError(e, { type: "combined" })
     }).pipe(
-      withDataAtom(null), 
+      withDataAtom(null),
       withStatusesAtom(),
       withCache({ swr: false })
     )

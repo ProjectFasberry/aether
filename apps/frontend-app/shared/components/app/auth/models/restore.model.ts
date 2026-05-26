@@ -5,7 +5,7 @@ import { withAssign } from "@reatom/framework";
 import { authState } from "./auth.model";
 import { createPhraseModel } from "./seed-phrase.model";
 import { createNavigationModel } from "./navigation.model";
-import { nicknameSchema, passwordSchema } from "@repo/shared/schemas/auth";
+import { nicknameSchema, passwordSchema } from "@/shared/schemas/auth";
 import { navigate } from "vike/client/router";
 import { authSecurity } from "./auth-security.model";
 

@@ -3,7 +3,7 @@ import {
   type AtomMut
 } from "@reatom/framework";
 import { invariant } from "@/shared/lib/invariant";
-import { registerSchema } from "@repo/shared/schemas/auth";
+import { registerSchema } from "@/shared/schemas/auth";
 import { client } from "@/shared/lib/client-wrapper";
 import { auth, type AuthFindoutType, authState, defineError } from "./auth.model";
 import { pof } from "../../../../models/shared.model";

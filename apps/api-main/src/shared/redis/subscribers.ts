@@ -12,7 +12,7 @@ const SUBSCRIBERS: { key: string, cb: (msg: string) => void }[] = [
       const [, , qrToken] = msg.split(':');
       if (!qrToken) return;
 
-      const subject = loginQR.createAuthQRSubject("expired", qrToken)
+      const subject = loginQR.createQRSubject("expired", qrToken)
       nsClient.publish(subject, JSON.stringify({ data: qrToken }));
     },
   }

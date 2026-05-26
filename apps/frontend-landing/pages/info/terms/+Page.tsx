@@ -1,16 +1,16 @@
 import { MAIN_DOMAIN } from "@/shared/env";
-import { MainWrapperPage } from "@repo/ui/main-wrapper";
-import { Typography } from "@repo/ui/typography";
+import { MainWrapperPage } from "@/shared/ui/main-wrapper";
+import { Typography } from "@/shared/ui/typography";
 
 export default function InfoTermsPage() {
   return (
     <MainWrapperPage variant="with_section">
-      <div className="flex flex-col min-h-screen responsive mx-auto py-36 gap-y-6">
-        <Typography className="text-black dark:text-white text-3xl">
+      <div class="flex flex-col min-h-screen responsive mx-auto py-36 gap-y-6">
+        <Typography class="text-black dark:text-white text-3xl">
           Пользовательское соглашение
         </Typography>
-        <div className="flex flex-col gap-y-8">
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+        <div class="flex flex-col gap-y-8">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
             <Typography color="white">
               Настоящее Пользовательское Соглашение (далее соглашение) регулирует отношения между владельцем {MAIN_DOMAIN}
               (далее Fasberry) с одной стороны и пользователем сайта с другой.
@@ -22,22 +22,22 @@ export default function InfoTermsPage() {
               Используя сайт, Вы соглашаетесь с условиями данного соглашения. Если Вы не согласны с условиями данного соглашения, не используйте сайт Fasberry!
             </Typography>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Предмет соглашения
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 ">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 ">
               <Typography color="white">
                 Администрация предоставляет пользователю право на размещение на сайте следующей информации:
                 <p>&gt; текстовой информации</p>
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Права и обязанности сторон
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 Пользователь имеет право:
                 <p>&gt; осуществлять поиск информации на сайте</p>
@@ -50,7 +50,7 @@ export default function InfoTermsPage() {
                 <p>&gt; использовать информацию сайта в личных некоммерческих целях</p>
               </Typography>
             </div>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 Администрация имеет право:
                 <p>&gt; по своему усмотрению и необходимости создавать, изменять, отменять правила</p>
@@ -59,11 +59,11 @@ export default function InfoTermsPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Пользователь обязуется:
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 <p>
                   &gt; обеспечить достоверность предоставляемой информации
@@ -88,11 +88,11 @@ export default function InfoTermsPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Администрация обязуется:
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 <p>
                   &gt; поддерживать работоспособность сайта за исключением случаев,
@@ -101,11 +101,11 @@ export default function InfoTermsPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Ответственность сторон
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 <p>
                   &gt; пользователь лично несет полную ответственность за распространяемую им информацию
@@ -126,11 +126,11 @@ export default function InfoTermsPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col text-white text-md lg:text-lg gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               Условия действия Соглашения
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 Данное Соглашение вступает в силу при любом использовании данного сайта.
               </Typography>

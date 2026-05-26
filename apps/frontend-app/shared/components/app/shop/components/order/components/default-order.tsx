@@ -3,7 +3,6 @@ import { atom } from "@reatom/framework";
 import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@/shared/ui/typography";
 import { IconCheck, IconCopy, IconEye } from "@tabler/icons-react";
-import { QRCode } from "react-qrcode-logo";
 import { useEffect } from "react";
 import { type Payment } from "../../../models/store.model";
 import { AutoWidthInput } from "@/shared/ui/autowidth-input";
@@ -13,6 +12,8 @@ import { orderState } from "../../../models/store-order.model";
 import { Dialog } from "@ark-ui/react/dialog";
 import { Portal } from "@ark-ui/react/portal";
 import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant } from "@/shared/ui/dialog";
+import { QrCode } from "@ark-ui/react/qr-code";
+import { qrCodeFrameVariant, qrCodeOverlayVariant, qrCodePatternVariant, qrCodeRootVariant } from "@/shared/ui/qr-code";
 
 const STATUSES: Record<Payment["status"], { title: string, color: string }> = {
   "canceled": {
@@ -63,7 +64,7 @@ const OrderLoader = reatomComponent(({ ctx }) => {
 
   return (
     <div
-      className={`flex z-[1000] items-center flex-col gap-4 fixed justify-center h-full w-full 
+      className={`flex z-[1000] items-center flex-col gap-4 fixed justify-center h-full w-full
         ${animateOut ? "fade-out-background" : "fade-in-background"}`}
     >
       <IconCheck
@@ -100,7 +101,7 @@ const OrderQR = ({ url }: { url: string }) => {
   return (
     <Dialog.Root>
       <Dialog.Trigger
-        className="flex items-center justify-center order-first sm:order-last 
+        className="flex items-center justify-center order-first sm:order-last
         max-w-44 max-h-44 relative cursor-pointer p-0.5 group overflow-hidden rounded-md"
       >
         <div
@@ -108,13 +109,35 @@ const OrderQR = ({ url }: { url: string }) => {
         >
           <IconEye size={24} />
         </div>
-        <QRCode value={url} style={{ width: "100%", height: "100%" }} />
+        <QrCode.Root
+          defaultValue={url}
+          encoding={{ ecc: 'M' }}
+          className={qrCodeRootVariant({ className: "[--qr-code-size:196px]" })}
+        >
+          <QrCode.Frame className={qrCodeFrameVariant()}>
+            <QrCode.Pattern className={qrCodePatternVariant()} />
+          </QrCode.Frame>
+          <QrCode.Overlay className={qrCodeOverlayVariant()}>
+            <img src="/favicon.ico" alt="" draggable={false} />
+          </QrCode.Overlay>
+        </QrCode.Root>
       </Dialog.Trigger>
       <Portal>
         <Dialog.Backdrop className={dialogBackdropVariant()} />
         <Dialog.Positioner className={dialogPositionerVariant()}>
           <Dialog.Content className={dialogContentVariant({ className: "flex p-0 items-center justify-center" })}>
-            <QRCode value={url} style={{ width: "100%", height: "100%" }} />
+            <QrCode.Root
+              defaultValue={url}
+              encoding={{ ecc: 'M' }}
+              className={qrCodeRootVariant({ className: "[--qr-code-size:196px]" })}
+            >
+              <QrCode.Frame className={qrCodeFrameVariant()}>
+                <QrCode.Pattern className={qrCodePatternVariant()} />
+              </QrCode.Frame>
+              <QrCode.Overlay className={qrCodeOverlayVariant()}>
+                <img src="/favicon.ico" alt="" draggable={false} />
+              </QrCode.Overlay>
+            </QrCode.Root>
           </Dialog.Content>
         </Dialog.Positioner>
       </Portal>

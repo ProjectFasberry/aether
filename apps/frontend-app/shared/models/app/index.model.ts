@@ -1,6 +1,5 @@
 import { action, atom, withAssign, connectLogger, type Unsubscribe, withInit, type Ctx } from "@reatom/framework";
 import type { PageContext } from "vike/types";
-import { withLog } from "../../lib/reatom/helpers";
 import { withSsr } from "../ssr";
 import { detectHardwareAcceleration, detectMobile, parseBoolean } from "../../lib/utils";
 import { ENVIRONMENT } from "../../consts";
@@ -126,6 +125,8 @@ export const app = atom(null, "app").pipe(
         lazyInitDevModules(ctx, devModulesInfo.by)
       }
 
+      defineTags(ctx);
+
       sound.init(ctx)
         .then(() => {
           defineListeners(ctx);
@@ -143,6 +144,33 @@ export const app = atom(null, "app").pipe(
     }, `${name}.sync`),
   }))
 )
+
+const defineTags = action((ctx) => {
+  function addMaximumScaleToMetaViewport() {
+    const el = document.querySelector('meta[name=viewport]');
+
+    if (el !== null) {
+      let content = el.getAttribute('content');
+      if (!content) return;
+
+      let re = /maximum-scale=[0-9.]+/g;
+
+      if (re.test(content)) {
+        content = content.replace(re, 'maximum-scale=1.0');
+      } else {
+        content = [content, 'maximum-scale=1.0'].join(', ')
+      }
+
+      el.setAttribute('content', content);
+    }
+  };
+
+  const checkIsIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (checkIsIOS()) {
+    addMaximumScaleToMetaViewport();
+  }
+}, "defineTags");
 
 const defineListeners = action((ctx) => {
   function addSoundInterceptor() {

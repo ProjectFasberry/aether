@@ -4,7 +4,7 @@ import { action, atom } from "@reatom/framework"
 import { withAssign, withReset } from "@reatom/framework"
 import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
-import { alertDialog } from "@/shared/components/config/alert-dialog.model"
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model"
 
 export const banners = atom(null, "banners").pipe(
   withAssign((_, name) => ({

@@ -16,7 +16,7 @@ const LINKS = (target: string | number) => ({
 
 export const createLink = (type: keyof ReturnType<typeof LINKS>, target: string | number) => LINKS(target)[type]
 
-export function Link({ href, locale, className, ...props }: LinkProps) {
+export const Link = ({ href, locale, className, ...props }: LinkProps) => {
   const pageContext = usePageContext()
   const pathname = pageContext.urlPathname;
 
@@ -34,7 +34,7 @@ export function Link({ href, locale, className, ...props }: LinkProps) {
 
   const isActive = normalizedPathname === normalizedHref;
   const isIdentity = pathname === finalHref;
-  
+
   return (
     <a
       href={finalHref}

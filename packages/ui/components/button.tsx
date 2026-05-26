@@ -4,12 +4,12 @@ import { tv, type VariantProps } from "tailwind-variants"
 
 const buttonVariants = tv({
   base: `inline-flex px-4 py-2 rounded-xl duration-300 ease-in-out cursor-pointer items-center justify-center
-    disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70 
+    disabled:select-none disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-70
   `,
   variants: {
     variant: {
       default: "border-none border-transparent",
-      danger: "border border-red-600 text-red-600",
+      danger: "border border-red text-red",
       minecraft: "rounded-none button"
     },
     background: {

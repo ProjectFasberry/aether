@@ -3,7 +3,27 @@ import { useConfig } from 'vike-react/useConfig'
 import { logRouting } from "@/shared/lib/log";
 import { getOrder } from "@/shared/components/app/shop/models/store-order.model";
 import { render } from "vike/abort";
-import { type OrderSingle, type OrderSinglePayload } from "@repo/shared/types/entities/store";
+import type { OrderSingleDefault } from "./+Page";
+
+export type OrderSingleGamePayload = {
+	unique_id: string;
+	initiator: string;
+	created_at: Date;
+	finished_at: Date | null;
+	items: {
+		id: number;
+		store_item_id: number;
+		name: string;
+		recipient: string;
+	}[];
+};
+
+export type OrderSingle = OrderSingleDefault | OrderSingleGamePayload;
+
+export type OrderSinglePayload = OrderSingle & {
+	type: "game" | "default";
+};
+
 
 export type Data = Awaited<ReturnType<typeof data>>;
 
@@ -15,7 +35,7 @@ function metadata(order: OrderSingle) {
 
 export const data = async (pageCtx: PageContextServer) => {
   logRouting(pageCtx.urlPathname, data.name)
-  
+
   const config = useConfig()
   const headers = pageCtx.headers ?? undefined
   const type = pageCtx.urlParsed.search["type"];

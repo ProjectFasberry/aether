@@ -1,16 +1,17 @@
 import { reatomAsync, withStatusesAtom } from "@reatom/framework";
 import { action, type Action, atom } from "@reatom/framework";
-import { type CreateOrderRoutePayload, type OrderEventPayload } from "@repo/shared/types/entities/payment";
 import { toast } from "sonner";
 import { withAssign, withReset } from "@reatom/framework";
 import { env } from "@/shared/env";
 import { logError } from "@/shared/lib/log";
 import { client } from "@/shared/lib/client-wrapper";
-import { type OrderSingleDefault, type OrderSinglePayload } from "@repo/shared/types/entities/store";
 import { TopUpButton } from "../components/wallet/top-up-button";
 import { navigate } from "vike/client/router";
 import { type ReactNode } from "react";
 import { type Action as ToasterAction } from "sonner"
+import type { OrderSingleDefault } from "@/pages/store/order/@id/+Page";
+import type { OrderSinglePayload } from "@/pages/store/order/@id/+data";
+import type { CreateOrderRoutePayload, OrderEventPayload } from "@/shared/schemas/payment";
 
 export const orderState = atom(null, "orderState").pipe(
   withAssign((_, name) => ({
@@ -59,8 +60,8 @@ export const order = atom(null, "order").pipe(
           const msg = ERRORS_MAP[e.message] ?? Object.entries(ERRORS_MAP)?.[0]?.[1]
           const event = ERRORS_EVENTS[e.message];
 
-          toast.error(msg, { 
-            action: event ? event.cb() : {} as ToasterAction 
+          toast.error(msg, {
+            action: event ? event.cb() : {} as ToasterAction
           })
         }
       }

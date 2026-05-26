@@ -4,7 +4,6 @@ import { Typography } from "@/shared/ui/typography"
 import { topup, topupErrorAtom, type TopupMethodListPayload, topupNavigationModel, topupState, type TopupType } from "../../models/store-top-up.model";
 import { Button } from "@/shared/ui/button";
 import { Skeleton } from "@/shared/ui/skeleton";
-import { TARGET_TITLE } from "../cart/cart-price";
 import { IconCheck, IconExchange, IconSelector, IconX } from "@tabler/icons-react";
 import { belkoinImage, charismImage } from "@/shared/consts/images";
 import { isEmptyArray } from "@/shared/lib/helpers";
@@ -19,6 +18,7 @@ import {
   selectIndicatorsVariant, selectIndicatorVariant, selectItemGroupVariant, selectItemIndicatorVariant,
   selectItemTextVariant, selectItemVariant, selectTriggerVariant
 } from "@/shared/ui/select"
+import { TARGET_TITLE } from "@/shared/consts/store";
 
 type TopupTargetProps = {
   variant?: "compact", title?: never, img: string

@@ -1,17 +1,14 @@
-import { useConfig } from 'vike-react/useConfig';
+import { useConfig } from 'vike-solid/useConfig';
 import { PageContextServer } from 'vike/types';
-import { wrapTitle } from '@/shared/lib/wrap-title';
-import { getStaticObject } from '@/shared/lib/volume';
-import { getUrl } from '@/shared/lib/helpers';
+import { getStaticObject, getUrl, wrapTitle } from '@/shared/lib/helpers';
 
 const bgImage = getStaticObject("community", "dragon_dead.webp")
 
-const description = `Помогите развитию проекта Fasberry, поддержав нас! Ваш вклад пойдет на развитие серверов, 
+const description = `Помогите развитию проекта Fasberry, поддержав нас! Ваш вклад пойдет на развитие серверов,
 улучшение игрового опыта и создание уникального контента для игроков.`
 
-export const data = async (pageContext: PageContextServer) => {
+export async function data(pageCtx: PageContextServer) {
   const config = useConfig()
-
   const title = wrapTitle(`Поддержка`);
 
   config({
@@ -19,8 +16,8 @@ export const data = async (pageContext: PageContextServer) => {
     description,
     Head: (
       <>
-        <link rel="canonical" href={getUrl(pageContext)} />
-        <meta property="og:url" content={getUrl(pageContext)} />
+        <link rel="canonical" href={getUrl(pageCtx)} />
+        <meta property="og:url" content={getUrl(pageCtx)} />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:type" content="website" />

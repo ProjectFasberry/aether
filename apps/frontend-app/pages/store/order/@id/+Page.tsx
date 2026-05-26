@@ -4,9 +4,22 @@ import { order, orderState } from "@/shared/components/app/shop/models/store-ord
 import { pageState } from "@/shared/models/page-context.model";
 import { useData } from "vike-react/useData";
 import { GameOrder } from "@/shared/components/app/shop/components/order/components/game-order";
-import { type OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { DefaultOrder } from "@/shared/components/app/shop/components/order/components/default-order";
 import { createPageModel } from "@/shared/lib/events";
+
+export type OrderSingleDefault = {
+	unique_id: string;
+	asset: "USDT" | "TON" | "BTC" | "ETH" | "LTC" | "BNB" | "TRX" | "USDC";
+	price: string;
+	created_at: Date | string;
+	status: "canceled" | "pending" | "succeeded" | "waitingForCapture";
+	payload: string;
+	order_id: string;
+	invoice_id: number;
+	pay_url: string;
+	initiator: string;
+	comment?: string | null
+};
 
 const page = createPageModel({
   name: "order",
@@ -15,7 +28,7 @@ const page = createPageModel({
 
     const { data } = pageData as { data: OrderSingleDefault }
     const type = data.type
-    
+
     if (type === 'default') {
       const routeParams = ctx.get(pageState.routeParams)
       const uniqueId = routeParams.id;

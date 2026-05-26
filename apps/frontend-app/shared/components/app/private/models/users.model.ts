@@ -11,7 +11,7 @@ import { toast } from "sonner"
 import { notifyAboutRestrictRole } from "./actions.model"
 import { DEFAULT_SOFT_DELAY } from "@/shared/consts"
 import { invariant } from "@/shared/lib/invariant"
-import { alertDialog } from "@/shared/components/config/alert-dialog.model"
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model"
 import { createViewerModel } from "@/shared/models/shared.model"
 
 export type PrivatedUser = PrivatedUsersPayload["data"][number]

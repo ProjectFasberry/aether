@@ -1,4 +1,4 @@
-import { EditorTest } from "@/shared/components/config/editor"
+import { EditorTest } from "@/shared/components/config/editor/editor"
 import { Link } from "@/shared/components/config/link"
 import { locales } from "@/shared/locales"
 import { translate } from "@/shared/locales/helpers"

@@ -1,5 +1,0 @@
-apis:
-  main@v1:
-    root: http://127.0.0.1:4104/openapi/json
-    x-openapi-ts:
-      output: ./types/generated/main/schema.ts

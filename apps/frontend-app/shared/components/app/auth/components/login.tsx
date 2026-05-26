@@ -7,9 +7,10 @@ import { Button } from "@/shared/ui/button"
 import { spawn } from "@reatom/framework"
 import { Separator } from "@/shared/ui/separator"
 import { NicknameInput, PasswordInput } from "./auth"
-import { QRCode } from 'react-qrcode-logo';
 import { IconLoader } from "@/shared/ui/icon-loader"
 import { translate } from "@/shared/locales/helpers"
+import { QrCode } from "@ark-ui/react/qr-code"
+import { qrCodeFrameVariant, qrCodeOverlayVariant, qrCodePatternVariant, qrCodeRootVariant } from "@/shared/ui/qr-code"
 
 const LoginVariants = reatomComponent(({ ctx }) => (
   <div className="grid grid-cols-2 auto-rows-auto gap-2 w-full [&>*:only-child]:col-span-2">
@@ -100,23 +101,18 @@ const LoginQRConnected = reatomComponent(({ ctx }) => {
   if (isPending || !url) return <IconLoader />
 
   return (
-    <QRCode
-      value={url}
-      bgColor="#FFF"
-      logoImage="/favicon.ico"
-      logoWidth={36}
-      ecLevel="M"
-      logoHeight={36}
-      qrStyle="squares"
-      style={{
-        borderRadius: "12px",
-        width: 196,
-        height: 196
-      }}
-      removeQrCodeBehindLogo={true}
-      eyeRadius={22}
-      logoPaddingStyle="circle"
-    />
+    <QrCode.Root
+      defaultValue={url}
+      encoding={{ ecc: 'M' }}
+      className={qrCodeRootVariant({ className: "[--qr-code-size:196px]" })}
+    >
+      <QrCode.Frame className={qrCodeFrameVariant()}>
+        <QrCode.Pattern className={qrCodePatternVariant()} />
+      </QrCode.Frame>
+      <QrCode.Overlay className={qrCodeOverlayVariant()}>
+        <img src="/favicon.ico" alt="" draggable={false} />
+      </QrCode.Overlay>
+    </QrCode.Root>
   )
 }, "LoginQRConnected")
 

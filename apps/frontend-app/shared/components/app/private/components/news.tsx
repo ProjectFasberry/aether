@@ -29,11 +29,12 @@ import { Input } from "@/shared/ui/input"
 import { type Atom, type AtomMut, type Ctx } from "@reatom/framework"
 import { ActionButton } from "./ui"
 import { IconCheck } from "@tabler/icons-react"
-import { editorExtensions, EditorMenuBar } from "@/shared/components/config/editor"
+import { EditorMenuBar } from "@/shared/components/config/editor/editor"
 import { Editor, EditorContent, generateJSON, type JSONContent, useEditor, useEditorState } from "@tiptap/react"
 import { CharacterCount, Placeholder } from "@tiptap/extensions"
 import { useEffect } from "react"
 import { ButtonXSubmit } from "./global"
+import { editorExtensions } from "@/shared/components/config/editor/editor.model";
 
 type News = ExtractApiData<"getSharedNewsList">["data"]["data"][number]
 
@@ -129,7 +130,7 @@ const NewsContent = reatomComponent<{
   )
 }, "CreateNewsContent")
 
-// 
+//
 const EditNewsSubmit = reatomComponent(({ ctx }) => {
   const isDisabled = !ctx.spy(editNews.isValid)
     || ctx.spy(editNews.submit.statusesAtom).isPending
@@ -183,7 +184,7 @@ const EditNewsForm = reatomComponent(({ ctx }) => {
   )
 }, "EditNewsForm")
 
-// 
+//
 const CreateNewsTitle = reatomComponent(({ ctx }) => {
   return (
     <Input
@@ -241,7 +242,7 @@ const CreateNewsForm = () => {
 const NewsListItem = reatomComponent<News>(({ ctx, id, title, imageUrl, creator }) => {
   return (
     <div
-      className="flex h-22 border border-neutral-800 p-2 
+      className="flex h-22 border border-neutral-800 p-2
         rounded-lg overflow-hidden items-center gap-2 justify-between w-full"
     >
       <div className="flex items-center gap-2">
@@ -306,7 +307,7 @@ const NewsList = reatomComponent(({ ctx }) => {
   )
 }, "NewsList")
 
-// 
+//
 const VARIANTS: Record<ActionType, ReactNode> = {
   "create": <CreateNewsForm />,
   "edit": <EditNewsForm />,

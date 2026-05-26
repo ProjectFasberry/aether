@@ -5,7 +5,7 @@ import {
   type RatingParkour,
   type RatingPlaytime,
   type RatingReputation
-} from "@repo/shared/types/entities/rating"
+} from "@/shared/schemas/rating"
 import { reatomComponent } from "@reatom/npm-react";
 import { Skeleton } from "@/shared/ui/skeleton";
 import { type ReactNode } from "react";

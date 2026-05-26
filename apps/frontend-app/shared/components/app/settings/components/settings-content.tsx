@@ -4,7 +4,7 @@ import { lazy, type JSX } from "react"
 import { SettingsAccount } from "./settings-account"
 import { SettingsNavigationMobile } from "./settings-navigation"
 
-const SettingsDevices = lazy(() => import("./settings-devices").then(m => ({ default: m.SettingsMainDevices })))
+const SettingsDevices = lazy(() => import("./settings-devices").then(m => ({ default: m.SettingsDevices })))
 const SettingsStore = lazy(() => import("./settings-store").then(m => ({ default: m.SettingsStore })))
 const SettingsSecurity = lazy(() => import("./settings-security").then(m => ({ default: m.SettingsMainSecurity })))
 const SettingsConnections = lazy(() => import("./settings-connections").then(m => ({ default: m.SettingsMainConnections })))

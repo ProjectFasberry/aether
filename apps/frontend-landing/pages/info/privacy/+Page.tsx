@@ -1,20 +1,20 @@
-import { MainWrapperPage } from "@repo/ui/main-wrapper";
-import { Typography } from "@repo/ui/typography";
+import { MainWrapperPage } from "@/shared/ui/main-wrapper";
+import { Typography } from "@/shared/ui/typography";
 import { LANDING_ENDPOINT as MINECRAFT_SITE_DOMAIN, SUPPORT_EMAIL } from "@/shared/env";
 
 export default function InfoPrivacyPage() {
   return (
     <MainWrapperPage variant="with_section">
-      <div className="flex flex-col min-h-screen responsive mx-auto py-36 gap-y-6">
-        <Typography className="text-black dark:text-white text-3xl">
+      <div class="flex flex-col min-h-screen responsive mx-auto py-36 gap-y-6">
+        <Typography class="text-black dark:text-white text-3xl">
           Политика обработки персональных данных
         </Typography>
-        <div className="flex flex-col gap-y-8 ">
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+        <div class="flex flex-col gap-y-8 ">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               1. Общие положения
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 Настоящая политика обработки персональных данных составлена в соответствии с требованиями Федерального закона от 27.07.2006.
                 №152-ФЗ «О персональных данных» и определяет порядок обработки персональных данных и меры по обеспечению безопасности персональных данных,
@@ -31,11 +31,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               2. Основные понятия, используемые в Политике
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 2.1. Автоматизированная обработка персональных данных – обработка персональных данных с помощью средств вычислительной техники;
               </Typography>
@@ -95,11 +95,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               3. Оператор может обрабатывать следующие персональные данные Пользователя
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 3.1. IP адрес;
               </Typography>
@@ -112,11 +112,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               4. Цели обработки персональных данных
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 4.1. Цель обработки персональных данных Пользователя — заключение, исполнение и прекращение
                 гражданско-правовых договоров; предоставление доступа Пользователю к сервисам,
@@ -134,11 +134,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               5. Правовые основания обработки персональных данных
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
               <Typography color="white">
                 5.1. Оператор обрабатывает персональные данные Пользователя только в случае их заполнения и/или отправки
                 Пользователем самостоятельно через специальные формы,
@@ -151,11 +151,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               6. Порядок сбора, хранения, передачи и других видов обработки персональных данных
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 Безопасность персональных данных, которые обрабатываются Оператором, обеспечивается путем реализации правовых,
                 организационных и технических мер, необходимых для выполнения в полном объеме требований действующего
@@ -179,11 +179,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               7. Трансграничная передача персональных данных
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 7.1. Оператор до начала осуществления трансграничной передачи персональных данных обязан убедиться в том,
                 что иностранным государством, на территорию которого предполагается осуществлять передачу персональных данных,
@@ -196,11 +196,11 @@ export default function InfoPrivacyPage() {
               </Typography>
             </div>
           </div>
-          <div className="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
-            <Typography color="white" className="text-xl">
+          <div class="flex flex-col gap-y-4 border-2 border-[#454545] hover:duration-300 duration-300 rounded-[8px] p-4">
+            <Typography color="white" class="text-xl">
               8. Заключительные положения
             </Typography>
-            <div className="flex flex-col text-white text-md lg:text-lg gap-y-4">
+            <div class="flex flex-col text-white text-md lg:text-lg gap-y-4">
             <Typography color="white">
                 8.1. Пользователь может получить любые разъяснения по интересующим вопросам, касающимся обработки его персональных данных,
                 обратившись к Оператору с помощью электронной почты {SUPPORT_EMAIL}.

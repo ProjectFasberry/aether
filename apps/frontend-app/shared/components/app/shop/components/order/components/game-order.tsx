@@ -3,8 +3,7 @@ import { reatomComponent } from "@reatom/npm-react";
 import { Typography } from "@/shared/ui/typography"
 import dayjs from "@/shared/lib/create-dayjs";
 import { useData } from "vike-react/useData";
-import { type Data } from "@/pages/store/order/@id/+data";
-import { type OrderSingleGamePayload } from "@repo/shared/types/entities/store";
+import { type Data, type OrderSingleGamePayload } from "@/pages/store/order/@id/+data";
 
 export const GameOrder = reatomComponent(({ ctx }) => {
   const data = useData<Data>().data as OrderSingleGamePayload

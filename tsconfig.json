@@ -6,8 +6,6 @@
 		{ "path": "./apps/frontend-landing" },
 		{ "path": "./apps/api-panel" },
 		{ "path": "./packages/shared" },
-		{ "path": "./packages/ui" },
-		{ "path": "./packages/config-typescript" },
-		{ "path": "./packages/config-biome" }
+		{ "path": "./packages/ui" }
 	]
 }

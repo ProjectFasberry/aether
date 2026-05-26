@@ -1,6 +1,6 @@
-import { getStaticObject } from "@/shared/lib/volume"
-import { ClientOnly } from "vike-react/ClientOnly"
-import { Toaster as ToasterInit } from 'sonner'
+import { ClientOnly } from "vike-solid/ClientOnly"
+import { Toaster as ToasterInit } from 'solid-sonner'
+import { getStaticObject } from "@/shared/lib/helpers"
 
 const img = getStaticObject("minecraft/icons", "book_big.webp")
 

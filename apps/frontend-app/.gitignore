@@ -85,6 +85,8 @@ web_modules/
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 
-# Sentry Vite Plugin
-.env.sentry-build-plugin
+# Neodx/svg generated
 /shared/sprite.gen.ts
+
+# Visualizer file
+/stats.html

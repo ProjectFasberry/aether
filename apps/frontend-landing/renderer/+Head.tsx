@@ -1,5 +1,5 @@
 import { API_PREFIX, MAIN_DOMAIN, VOLUME_ENDPOINT } from "@/shared/env";
-import { getStaticObject } from "@/shared/lib/volume";
+import { getStaticObject } from "@/shared/lib/helpers";
 
 const bgImage = getStaticObject("backgrounds", "donate_background.png")
 

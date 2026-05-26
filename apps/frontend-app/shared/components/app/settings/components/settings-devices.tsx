@@ -1,321 +1,22 @@
-import { reatomComponent, useUpdate } from "@reatom/npm-react";
-import { login, authLoginQRIsErrorAtom, loginState } from "../../auth/models/login.model";
-import { IconArrowLeft, IconCheck, IconDeviceDesktop, IconQrcode, IconX } from "@tabler/icons-react";
-import { type ReactNode } from "react";
-import { Button } from "@/shared/ui/button";
-import { spawn } from "@reatom/framework";
-import { IconLoader } from "@/shared/ui/icon-loader";
-import { accountActiveSessionsAction, accountCurrentSessionAction, fetchSessions, scan, scanState, type SessionPayload } from "../models/settings-security.model";
-import { type IDetectedBarcode, Scanner, type TrackFunction } from "@yudiel/react-qr-scanner";
+import { reatomComponent } from "@reatom/npm-react";
+import { lazy } from "react";
 import { appState } from "@/shared/models/app/index.model";
-import { Skeleton } from "@/shared/ui/skeleton";
 import { SettingsContentWrapper, SettingsSection } from "./ui";
-import { type SettingsSectionItem } from "../models/settings.model";
-import { Dialog } from "@ark-ui/react/dialog";
-import { Portal } from "@ark-ui/react/portal";
-import { dialogBackdropVariant, dialogContentVariant, dialogPositionerVariant, dialogTitleVariant } from "@/shared/ui/dialog";
-import { Noop } from "@/shared/ui/noop";
-import { isEmptyArray } from "@/shared/lib/helpers";
+import { type SettingsSectionItem } from "@/shared/components/app/settings/models/settings.model";
+import { SessionsList } from "./settings-sessions";
+import { ClientOnly } from "vike-react/ClientOnly";
 
-const VerifyExpiredOrNotfound = () => {
-  return (
-    <p className="text-base text-center text-neutral-400 font-semibold">Токен устарел или не существует</p>
-  )
-}
+const ConnectNewSession = lazy(() => import("./settings-new-session").then(m => ({ default: m.ConnectNewSession })))
 
-const VerifyConfirmed = () => {
-  return (
-    <div className="flex flex-col gap-4 w-full items-center justify-center">
-      <IconCheck size={32} className="text-green-600" />
-      <div className="flex flex-col text-sm items-center justify-center w-full">
-        <p className="text-neutral-50 font-semibold">Запрос принят</p>
-        <span className="text-neutral-400">Теперь вы можете закрыть это окно</span>
-      </div>
-    </div>
-  )
-}
-
-const VerifyDeclined = () => {
-  return (
-    <div className="flex flex-col gap-4 w-full items-center justify-center">
-      <IconX size={32} className="text-red-600" />
-      <div className="flex flex-col text-sm items-center justify-center w-full">
-        <p className="text-neutral-50 font-semibold">Запрос отклонён</p>
-        <span className="text-neutral-400">Теперь вы можете закрыть это окно</span>
-      </div>
-    </div>
-  )
-}
-
-const VerifyIdle = reatomComponent(({ ctx }) => {
-  const data = ctx.spy(login.qr.verify.validateToken.dataAtom)?.result
-  if (!data || typeof data === 'boolean') return null;
-
-  const isPending = ctx.spy(login.qr.verify.decline.statusesAtom).isPending
-    || ctx.spy(login.qr.verify.confirm.statusesAtom).isPending
-
-  const { browser, geo } = data
-
-  return (
-    <>
-      <div className="flex text-base text-neutral-400 w-full text-center leading-5">
-        <p>
-          Новый запрос на вход с устройства&nbsp;
-          <span className="font-semibold">{browser}</span> из <span className="font-semibold">{geo.city} {geo.country}</span>.
-          Подтвердите, что это вы.
-        </p>
-      </div>
-      <div className="flex flex-col sm:flex-row mt-4 items-center gap-2 w-full justify-center">
-        <Button
-          background="white"
-          className="w-full"
-          onClick={() => spawn(ctx, (spawnCtx) => login.qr.verify.confirm(spawnCtx))}
-          disabled={isPending}
-        >
-          Это я
-        </Button>
-        <Button
-          variant="danger"
-          className="w-full"
-          onClick={() => spawn(ctx, (spawnCtx) => login.qr.verify.decline(spawnCtx))}
-          disabled={isPending}
-        >
-          Это не я
-        </Button>
-      </div>
-    </>
-  )
-}, "VerifyIdle")
-
-const VERIFY_COMPONENTS: Record<"idle" | "confirmed" | "declined", ReactNode> = {
-  "idle": <VerifyIdle />,
-  "confirmed": <VerifyConfirmed />,
-  "declined": <VerifyDeclined />
-}
-
-const VerifyContent = reatomComponent(({ ctx }) =>
-  VERIFY_COMPONENTS[ctx.spy(loginState.qr.verify.status)],
-  "VerifyContent"
-)
-
-const VerifyError = () => {
-  return (
-    <div className="flex flex-col gap-4 w-full items-center justify-center">
-      <IconX className="text-red" size={22} />
-      <VerifyExpiredOrNotfound />
-    </div>
-  )
-}
-
-const VerifyLogin = reatomComponent(({ ctx }) => {
-  if (ctx.spy(login.qr.verify.validateToken.statusesAtom).isPending) return <IconLoader />
-
-  const data = ctx.spy(login.qr.verify.validateToken.dataAtom)
-  if (!data) return <VerifyExpiredOrNotfound />
-
-  const isError = ctx.spy(authLoginQRIsErrorAtom)
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-4 w-full">
-      {isError ? <VerifyError /> : <VerifyContent />}
-    </div>
-  )
-}, "Verify")
-
-const ScanReader = reatomComponent(({ ctx }) => {
-  const isStarted = ctx.spy(scanState.isStarted)
-  if (!isStarted) return null;
-
-  const handleScan = (detectedCodes: IDetectedBarcode[]) => {
-    for (const code of detectedCodes) {
-      if (code.rawValue.startsWith("http://") || code.rawValue.startsWith("https://")) {
-        scan.verify(ctx, code.rawValue)
-      }
-    }
-  };
-
-  const highlightCodeOnCanvas: TrackFunction = (detectedCodes, canvasCtx) => {
-    for (const detectedCode of detectedCodes) {
-      const { x, y, width, height } = detectedCode.boundingBox;
-      const cornerLength = Math.min(width, height) * 0.2;
-
-      canvasCtx.strokeStyle = '#00FF00';
-      canvasCtx.lineWidth = 6;
-      canvasCtx.lineJoin = 'round';
-
-      canvasCtx.shadowBlur = 15;
-      canvasCtx.shadowColor = '#00FF00';
-
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(x, y + cornerLength);
-      canvasCtx.lineTo(x, y);
-      canvasCtx.lineTo(x + cornerLength, y);
-      canvasCtx.stroke();
-
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(x + width - cornerLength, y);
-      canvasCtx.lineTo(x + width, y);
-      canvasCtx.lineTo(x + width, y + cornerLength);
-      canvasCtx.stroke();
-
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(x + width, y + height - cornerLength);
-      canvasCtx.lineTo(x + width, y + height);
-      canvasCtx.lineTo(x + width - cornerLength, y + height);
-      canvasCtx.stroke();
-
-      canvasCtx.beginPath();
-      canvasCtx.moveTo(x + cornerLength, y + height);
-      canvasCtx.lineTo(x, y + height);
-      canvasCtx.lineTo(x, y + height - cornerLength);
-      canvasCtx.stroke();
-
-      canvasCtx.shadowBlur = 0;
-      canvasCtx.fillStyle = 'rgba(0, 255, 0, 0.05)';
-      canvasCtx.fillRect(x, y, width, height);
-    }
-  };
-
-  return (
-    <div className="fixed top-0 bottom-0 right-0 left-0 z-1000 w-full h-dvh bg-neutral-900">
-      <div className="absolute right-0 left-0 z-100 w-full flex items-center px-4 justify-between top-4">
-        <div className="flex items-center justify-start">
-          <IconArrowLeft size={26} onClick={() => scan.stop(ctx)} />
-        </div>
-        <div className="flex items-center justify-center">
-          <p className="text-neutral-50 font-medium text-base">
-            Сканирование QR кода
-          </p>
-        </div>
-        <div />
-      </div>
-      <Scanner
-        onScan={handleScan}
-        onError={(error) => console.error(error)}
-        constraints={{
-          facingMode: 'environment',
-          aspectRatio: 1,
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-        }}
-        components={{
-          tracker: highlightCodeOnCanvas,
-          torch: true,
-          onOff: true,
-        }}
-      />
-    </div>
-  )
-}, "ScanReader")
-
-const AccountSessionsConnectNewConfirmDialog = reatomComponent(({ ctx }) => {
-  return (
-    <Dialog.Root
-      open={ctx.spy(scanState.confirmDialogIsOpen)}
-      onOpenChange={v => scanState.confirmDialogIsOpen(ctx, v.open)}
-    >
-      <Portal>
-        <Dialog.Backdrop className={dialogBackdropVariant()} />
-        <Dialog.Positioner className={dialogPositionerVariant()}>
-          <Dialog.Content className={dialogContentVariant()}>
-            <Dialog.Title className={dialogTitleVariant()}>Подтверждение нового входа</Dialog.Title>
-            <div className="flex items-center justify-center w-full h-full">
-              <VerifyLogin />
-            </div>
-            <Dialog.CloseTrigger />
-          </Dialog.Content>
-        </Dialog.Positioner>
-      </Portal>
-    </Dialog.Root>
-  )
-}, "AccountSessionsConnectNewConfirmDialog")
-
-const AccountSessionsConnectNew = reatomComponent(({ ctx }) => {
-  return (
-    <div className="flex flex-col gap-2 w-full">
-      <p className="text-base font-medium leading-5">
-        Привяжи устройство к аккаунту, отсканировав QR-код
-      </p>
-      <Button
-        background="white"
-        className="gap-2 font-semibold"
-        onClick={() => scan.start(ctx)}
-      >
-        <IconQrcode size={16} />
-        Привязать устройство
-      </Button>
-      <ScanReader />
-      <AccountSessionsConnectNewConfirmDialog />
-    </div>
-  )
-}, "AccountSessionsConnectNew")
-
-const SessionItem = ({ id, browser, geo }: SessionPayload) => {
-  return (
-    <div className="flex items-center overflow-hidden h-12 gap-2 w-full">
-      <div className="flex bg-neutral-700 rounded-full items-center justify-center w-12 h-12">
-        <IconDeviceDesktop size={24} />
-      </div>
-      <div className="flex flex-col justify-center h-full">
-        <p className="text-base font-medium leading-5">
-          {browser}
-        </p>
-        <p className="text-neutral-400 text-sm leading-4">
-          {geo.city}, {geo.country}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-const AccountSessionsListActive = reatomComponent(({ ctx }) => {
-  if (ctx.spy(accountActiveSessionsAction.statusesAtom).isPending) {
-    return Array.from({ length: 2 }).map((_, idx) => <Skeleton key={idx} className="h-12 w-full" />)
-  }
-
-  const data = ctx.spy(accountActiveSessionsAction.dataAtom);
-  if (!data || isEmptyArray(data)) return <Noop title="пусто" />
-
-  return data?.map((session) => <SessionItem key={session.id} {...session} />)
-}, "AccountSessionsListActive")
-
-const AccountSessionsListCurrent = reatomComponent(({ ctx }) => {
-  if (ctx.spy(accountCurrentSessionAction.statusesAtom).isPending) {
-    return <Skeleton className="h-12 w-full" />
-  }
-
-  const current = ctx.spy(accountCurrentSessionAction.dataAtom)
-  if (!current) return <Noop title="пусто" />
-
-  return <SessionItem {...current} />
-}, "AccountSessionsListCurrent")
-
-const AccountSessionsList = () => {
-  useUpdate(fetchSessions, []);
-
-  return (
-    <div className="flex flex-col gap-6 w-full">
-      <div className="flex flex-col gap-2 w-full">
-        <p className="text-sm font-medium leading-4">Текущая сессия</p>
-        <AccountSessionsListCurrent />
-      </div>
-      <div className="flex flex-col gap-2 w-full">
-        <p className="text-sm font-medium leading-4">Активные сессии</p>
-        <AccountSessionsListActive />
-      </div>
-    </div>
-  )
-}
-
-const SettingsMainAccountSessions = reatomComponent(({ ctx }) => {
+const SettingsSessions = reatomComponent(({ ctx }) => {
   const isMobile = ctx.spy(appState.inited.isMobile)
 
   return (
     <div className="flex flex-col gap-4 w-full">
-      {isMobile && (
-        <AccountSessionsConnectNew />
-      )}
-      <AccountSessionsList />
+      <ClientOnly>
+        {isMobile && <ConnectNewSession />}
+      </ClientOnly>
+      <SessionsList />
     </div>
   )
 }, "AccountSessions")
@@ -324,13 +25,13 @@ const DEVICES_SECTIONS: SettingsSectionItem[] = [
   {
     title: "Сессии",
     description: "Активные сессии вашего аккаунта",
-    children: <SettingsMainAccountSessions />
+    children: <SettingsSessions />
   },
 ]
 
-export const SettingsMainDevices = () => {
+export const SettingsDevices = () => {
   return (
-    <SettingsContentWrapper title="Девайсы">
+    <SettingsContentWrapper title="Устройства">
       <div className="flex flex-col gap-8 w-full h-full">
         {DEVICES_SECTIONS.map((section, idx) => <SettingsSection key={idx} {...section} />)}
       </div>

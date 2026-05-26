@@ -59,8 +59,6 @@ const SettingsDrawer = () => {
   )
 }
 
-export const Settings = reatomComponent(({ ctx }) => {
-  const isMobile = ctx.spy(appState.current.isMobile);
-  if (isMobile) return <SettingsDrawer/>
-  return <SettingsDialog />
-}, "Settings")
+export const Settings = reatomComponent(({ ctx }) =>
+  ctx.spy(appState.current.isMobile) ? <SettingsDrawer /> : <SettingsDialog />, "Settings"
+)

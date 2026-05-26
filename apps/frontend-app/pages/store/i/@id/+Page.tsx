@@ -1,11 +1,11 @@
 import { reatomComponent, } from "@reatom/npm-react";
 import { Typography } from "@/shared/ui/typography"
 import { renderToHTMLString } from "@tiptap/static-renderer";
-import { editorExtensions } from "@/shared/components/config/editor";
 import type { JSONContent } from "@tiptap/react";
 import { tv } from "tailwind-variants";
 import { storeItemState } from "@/shared/components/app/shop/models/store-item.model";
 import { ItemPrice, ItemSelectToCart } from "@/shared/components/app/shop/components/items/store-item";
+import { editorExtensions } from "@/shared/components/config/editor/editor.model";
 
 const sectionVariant = tv({
   base: `border border-neutral-800 p-2! sm:p-4! rounded-lg w-full`

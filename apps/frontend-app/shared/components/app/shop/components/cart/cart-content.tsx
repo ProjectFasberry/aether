@@ -93,8 +93,10 @@ export const CartActions = () => {
           <div className="flex-1 flex w-full">
             <Link
               href="/store/cart/topup"
-              className="flex-1 
-              flex rounded-xl items-center justify-center bg-neutral-50 text-neutral-950 font-semibold text-nowrap truncate gap-1 min-w-0 h-10
+              className="
+                flex-1 flex rounded-xl items-center justify-center
+                bg-neutral-50 text-neutral-950 font-semibold
+                text-nowrap truncate gap-1 min-w-0 h-10
               "
             >
               <IconCreditCardPay size={22} />

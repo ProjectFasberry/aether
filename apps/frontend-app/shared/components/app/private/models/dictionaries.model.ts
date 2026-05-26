@@ -4,7 +4,7 @@ import { action, atom } from "@reatom/framework";
 import { compareChanges, notifyAboutRestrictRole } from "./actions.model";
 import { withAssign, withReset } from "@reatom/framework";
 import { withUndo } from '@reatom/undo'
-import { alertDialog } from "@/shared/components/config/alert-dialog.model";
+import { alertDialog } from "@/shared/components/config/alert-dialog/alert-dialog.model";
 
 export type DictionariesItem = {
   value: string;

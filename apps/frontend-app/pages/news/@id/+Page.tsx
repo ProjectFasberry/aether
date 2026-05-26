@@ -5,13 +5,13 @@ import { IconEye, IconPencil } from "@tabler/icons-react";
 import { newsState } from "@/shared/components/app/news/models/news.model";
 import { renderToHTMLString } from '@tiptap/static-renderer'
 import type { JSONContent } from "@tiptap/react";
-import { editorExtensions } from "@/shared/components/config/editor";
 import { Avatar } from "@/shared/ui/avatar";
 import { createLink, Link } from "@/shared/components/config/link";
 import { createActionsLinkValueAction } from "@/shared/components/app/private/models/actions.model";
 import { getDataFromSnapshot } from "@/shared/models/app/utils";
 import { usePageContext } from "vike-react/usePageContext";
 import { atom } from "@reatom/framework";
+import { editorExtensions } from "@/shared/components/config/editor/editor.model";
 
 const editLinkAtom = atom("");
 
@@ -61,7 +61,7 @@ const News = reatomComponent(({ ctx }) => {
       <Typography className="text-3xl font-semibold">
         {data.title}
       </Typography>
-      <div className="flex flex-wrap items-center text-nowrap text-sm gap-2 w-fit justify-start 
+      <div className="flex flex-wrap items-center text-nowrap text-sm gap-2 w-fit justify-start
         *:border *:border-neutral-800 *:rounded-lg *:px-2 *:sm:px-4 *:py-1"
       >
         <div className="flex items-center gap-3 w-fit">

@@ -2,7 +2,6 @@ import { type PageContextServer } from "vike/types";
 import { redirect } from "vike/abort";
 import { useConfig } from "vike-react/useConfig";
 import { wrapTitle } from "@/shared/lib/utils";
-import { DONATE_GROUPS, DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { logRouting } from "@/shared/lib/log";
 import { createCtx } from "@reatom/framework";
 import { getLands, playerLandsState } from "@/shared/components/app/player/models/player-lands.model";
@@ -10,6 +9,7 @@ import { getPlayer, playerSsrModel, playerState } from "@/shared/components/app/
 import { snapshots } from "@/shared/models/ssr";
 import dayjs from "@/shared/lib/create-dayjs"
 import { isEmptyArray } from "@/shared/lib/helpers";
+import { DONATE_GROUPS, DONATE_TITLE } from "@/shared/consts";
 
 export type PlayerLandsPayload = ExtractApiData<"getServerLandsListByNickname">["data"]
 export type Player = ExtractApiData<"getServerPlayerByNickname">["data"]
@@ -63,7 +63,7 @@ export async function data(pageCtx: PageContextServer) {
   const config = useConfig();
   const headers = pageCtx.headers
   if (!headers) return;
-  
+
   logRouting(pageCtx.urlPathname, "data");
 
   const nickname = pageCtx.routeParams.nickname;
@@ -94,7 +94,7 @@ export async function data(pageCtx: PageContextServer) {
   const ctx = createCtx()
 
   const { rate, ...base } = player;
-  
+
   playerState.data(ctx, base);
   playerState.tags(ctx, definePlayerTags(base.group))
   playerState.nickname(ctx, base.nickname)
