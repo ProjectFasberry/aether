@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://app.fasberry.fun/sitemap.xml
