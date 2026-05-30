@@ -1,4 +1,4 @@
 {
 	"files": [],
-	"references": [{ "path": "./apps/api-main" }, { "path": "./apps/api-panel" }, { "path": "./packages/shared" }]
+	"references": [{ "path": "./apps/api-main" }, { "path": "./apps/api-panel" }, { "path": "./pkgs/shared" }]
 }

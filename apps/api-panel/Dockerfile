@@ -12,7 +12,7 @@ WORKDIR /
 
 COPY bun.lock* package.json bunfig.toml ./
 COPY apps/api-panel ./apps/api-panel
-COPY packages ./packages
+COPY pkgs ./pkgs
 
 COPY apps/api-panel/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
@@ -36,7 +36,7 @@ WORKDIR /
 
 COPY --from=build /package.json /bun.lock ./
 COPY --from=build /apps/api-panel/package.json ./apps/api-panel/package.json
-COPY --from=build /packages ./packages
+COPY --from=build /pkgs ./pkgs
 
 RUN bun install --production
 

@@ -1,27 +1,40 @@
-import { invariant } from "#/helpers/invariant";
-import { DATABASES } from "#/shared/constants/databases";
 import { logger } from "#/utils/config/logger";
 import { defineConfig } from "drizzle-kit";
+import * as z from "zod"
+import redact from 'slow-redact';
 
-const target = process.env.target as keyof typeof DATABASES;
-const db = DATABASES[target] ?? undefined;
-invariant(db, `Database "${target}" not found`)
+const sanitize = redact({
+  censor: '[REDACTED]',
+  serialize: (value) => {
+    if (typeof value === 'string') {
+      return value.replace(/(:\/\/[^:]+:)([^@]+)(@)/g, '$1[REDACTED]$3');
+    }
+    return JSON.stringify(value);
+  }
+});
 
-const sanitizedUrl = ((u: string) => { 
-  const p = new URL(u); 
-  return `${p.protocol}//${p.hostname}:${p.port}${p.pathname}` 
-})(db.url);
+const databaseSchema = z.object({
+  SELECTED_DATABASE: z.string(),
+  SELECTED_URL: z.string(),
+  SELECTED_DIALECT: z.enum(["postgresql", "mysql"]),
+})
+
+const { SELECTED_DATABASE, SELECTED_URL, SELECTED_DIALECT } = databaseSchema.parse(process.env)
 
 logger.box(`
-  Selected database "${target}"
-  (dialect=${db.dialect}, url=${sanitizedUrl})
+  Selected database "${SELECTED_DATABASE}" (${SELECTED_DIALECT})\n(url=${sanitize(SELECTED_URL)})
 `)
 
+const schemaFilter = SELECTED_DIALECT === "mysql"
+  ? [SELECTED_DIALECT]
+  : ["public"];
+
 export default defineConfig({
-  schema: "./src/drizzle/schema.ts",
-  out: "./src/drizzle",
-  dialect: db.dialect,
+  schema: `./src/drizzle/${SELECTED_DATABASE}/schema.ts`,
+  out: `./src/drizzle`,
+  dialect: SELECTED_DIALECT,
   dbCredentials: {
-    url: db.url,
-  }
+    url: SELECTED_URL
+  },
+  schemaFilter
 });

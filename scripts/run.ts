@@ -7,7 +7,7 @@ const [, , command] = process.argv;
 const mapPrefix = (prefix: string) => (folders: string[]) => folders.map((folder) => `${prefix}/${folder}`);
 
 const folders = (
-	await Promise.all([readdir("apps").then(mapPrefix("apps")), readdir("packages").then(mapPrefix("packages"))])
+	await Promise.all([readdir("apps").then(mapPrefix("apps")), readdir("pkgs").then(mapPrefix("pkgs"))])
 ).flat();
 
 const paths = await Promise.all(

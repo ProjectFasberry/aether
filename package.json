@@ -22,10 +22,11 @@
 		"@clack/prompts": "1.2.0",
 		"@types/bun": "1.2.22",
 		"concurrently": "9.1.2",
-		"lefthook": "2.1.4"
+		"lefthook": "2.1.4",
+		"@infisical/sdk": "5.0.2"
 	},
 	"workspaces": [
 		"apps/*",
-		"packages/*"
+		"pkgs/*"
 	]
 }

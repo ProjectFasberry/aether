@@ -22,7 +22,10 @@ const { secretValue: dbUrl } = await client.secrets().getSecret({
 });
 
 const s = Bun.spawn({
-	cmd: ["bun", "run", "kysely-codegen", `--dialect=${target.dialect}`, `--url=${dbUrl}`, `--out-file=${target.out}`],
+  cmd: [
+    "bun", "run",
+    "kysely-codegen", `--dialect=${target.dialect}`, `--url=${dbUrl}`, `--out-file=${target.out}`
+  ],
 	stdout: "inherit",
 	stderr: "inherit",
 });

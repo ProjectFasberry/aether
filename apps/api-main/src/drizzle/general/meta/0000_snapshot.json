@@ -112,20 +112,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "AUTH_NICKNAME_not_null": {
-          "name": "AUTH_NICKNAME_not_null",
-          "value": "NOT NULL \"NICKNAME\""
-        },
-        "AUTH_LOWERCASENICKNAME_not_null": {
-          "name": "AUTH_LOWERCASENICKNAME_not_null",
-          "value": "NOT NULL \"LOWERCASENICKNAME\""
-        },
-        "AUTH_HASH_not_null": {
-          "name": "AUTH_HASH_not_null",
-          "value": "NOT NULL \"HASH\""
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -187,32 +174,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "currencies_id_not_null": {
-          "name": "currencies_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "currencies_imageUrl_not_null": {
-          "name": "currencies_imageUrl_not_null",
-          "value": "NOT NULL \"imageUrl\""
-        },
-        "currencies_isPublic_not_null": {
-          "name": "currencies_isPublic_not_null",
-          "value": "NOT NULL \"isPublic\""
-        },
-        "currencies_isAvailable_not_null": {
-          "name": "currencies_isAvailable_not_null",
-          "value": "NOT NULL \"isAvailable\""
-        },
-        "currencies_title_not_null": {
-          "name": "currencies_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "currencies_value_not_null": {
-          "name": "currencies_value_not_null",
-          "value": "NOT NULL value"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -273,24 +235,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "events_id_not_null": {
-          "name": "events_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "events_title_not_null": {
-          "name": "events_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "events_description_not_null": {
-          "name": "events_description_not_null",
-          "value": "NOT NULL description"
-        },
-        "events_origin_not_null": {
-          "name": "events_origin_not_null",
-          "value": "NOT NULL origin"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -326,16 +271,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "events_original_id_not_null": {
-          "name": "events_original_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "events_original_type_not_null": {
-          "name": "events_original_type_not_null",
-          "value": "NOT NULL type"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -371,16 +307,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "facts_id_not_null": {
-          "name": "facts_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "facts_fact_not_null": {
-          "name": "facts_fact_not_null",
-          "value": "NOT NULL fact"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -422,20 +349,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "findout_id_not_null": {
-          "name": "findout_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "findout_nickname_not_null": {
-          "name": "findout_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "findout_value_not_null": {
-          "name": "findout_value_not_null",
-          "value": "NOT NULL value"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -490,12 +404,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "SOCIAL_LOWERCASENICKNAME_not_null": {
-          "name": "SOCIAL_LOWERCASENICKNAME_not_null",
-          "value": "NOT NULL \"LOWERCASENICKNAME\""
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -537,20 +446,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "ip_list_id_not_null": {
-          "name": "ip_list_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "ip_list_ip_not_null": {
-          "name": "ip_list_ip_not_null",
-          "value": "NOT NULL ip"
-        },
-        "ip_list_name_not_null": {
-          "name": "ip_list_name_not_null",
-          "value": "NOT NULL name"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -598,20 +494,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "items_id_not_null": {
-          "name": "items_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "items_title_not_null": {
-          "name": "items_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "items_image_not_null": {
-          "name": "items_image_not_null",
-          "value": "NOT NULL image"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -660,24 +543,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "likes_id_not_null": {
-          "name": "likes_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "likes_created_at_not_null": {
-          "name": "likes_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "likes_initiator_not_null": {
-          "name": "likes_initiator_not_null",
-          "value": "NOT NULL initiator"
-        },
-        "likes_recipient_not_null": {
-          "name": "likes_recipient_not_null",
-          "value": "NOT NULL recipient"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -750,36 +616,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "modpacks_id_not_null": {
-          "name": "modpacks_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "modpacks_imageUrl_not_null": {
-          "name": "modpacks_imageUrl_not_null",
-          "value": "NOT NULL \"imageUrl\""
-        },
-        "modpacks_created_at_not_null": {
-          "name": "modpacks_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "modpacks_client_not_null": {
-          "name": "modpacks_client_not_null",
-          "value": "NOT NULL client"
-        },
-        "modpacks_mods_not_null": {
-          "name": "modpacks_mods_not_null",
-          "value": "NOT NULL mods"
-        },
-        "modpacks_name_not_null": {
-          "name": "modpacks_name_not_null",
-          "value": "NOT NULL name"
-        },
-        "modpacks_version_not_null": {
-          "name": "modpacks_version_not_null",
-          "value": "NOT NULL version"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -846,36 +683,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "news_id_not_null": {
-          "name": "news_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "news_created_at_not_null": {
-          "name": "news_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "news_title_not_null": {
-          "name": "news_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "news_description_not_null": {
-          "name": "news_description_not_null",
-          "value": "NOT NULL description"
-        },
-        "news_imageUrl_not_null": {
-          "name": "news_imageUrl_not_null",
-          "value": "NOT NULL \"imageUrl\""
-        },
-        "news_creator_not_null": {
-          "name": "news_creator_not_null",
-          "value": "NOT NULL creator"
-        },
-        "news_content_not_null": {
-          "name": "news_content_not_null",
-          "value": "NOT NULL content"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -927,18 +735,6 @@
         }
       },
       "checkConstraints": {
-        "news_views_id_not_null": {
-          "name": "news_views_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "news_views_initiator_not_null": {
-          "name": "news_views_initiator_not_null",
-          "value": "NOT NULL initiator"
-        },
-        "news_views_news_id_not_null": {
-          "name": "news_views_news_id_not_null",
-          "value": "NOT NULL news_id"
-        },
         "news_views_initiator_length": {
           "name": "news_views_initiator_length",
           "value": "char_length(initiator) >= 2"
@@ -1028,28 +824,7 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "referrals_id_not_null": {
-          "name": "referrals_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "referrals_created_at_not_null": {
-          "name": "referrals_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "referrals_completed_not_null": {
-          "name": "referrals_completed_not_null",
-          "value": "NOT NULL completed"
-        },
-        "referrals_initiator_not_null": {
-          "name": "referrals_initiator_not_null",
-          "value": "NOT NULL referrer"
-        },
-        "referrals_recipient_not_null": {
-          "name": "referrals_recipient_not_null",
-          "value": "NOT NULL referral"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1132,40 +907,7 @@
           "name": "product_id_initiator"
         }
       },
-      "checkConstraints": {
-        "store_cart_items_id_not_null": {
-          "name": "store_cart_items_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "store_cart_items_initiator_not_null": {
-          "name": "store_cart_items_initiator_not_null",
-          "value": "NOT NULL initiator"
-        },
-        "store_cart_items_product_id_not_null": {
-          "name": "store_cart_items_product_id_not_null",
-          "value": "NOT NULL product_id"
-        },
-        "store_cart_items_price_snapshot_not_null": {
-          "name": "store_cart_items_price_snapshot_not_null",
-          "value": "NOT NULL price_snapshot"
-        },
-        "store_cart_items_created_at_not_null": {
-          "name": "store_cart_items_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "store_cart_items_quantity_not_null": {
-          "name": "store_cart_items_quantity_not_null",
-          "value": "NOT NULL quantity"
-        },
-        "store_cart_items_selected_not_null": {
-          "name": "store_cart_items_selected_not_null",
-          "value": "NOT NULL selected"
-        },
-        "store_cart_items_recipient_not_null": {
-          "name": "store_cart_items_recipient_not_null",
-          "value": "NOT NULL recipient"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1225,32 +967,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "store_economy_id_not_null": {
-          "name": "store_economy_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "store_economy_type_not_null": {
-          "name": "store_economy_type_not_null",
-          "value": "NOT NULL type"
-        },
-        "store_economy_value_not_null": {
-          "name": "store_economy_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "store_economy_title_not_null": {
-          "name": "store_economy_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "store_economy_description_not_null": {
-          "name": "store_economy_description_not_null",
-          "value": "NOT NULL description"
-        },
-        "store_economy_imageUrl_not_null": {
-          "name": "store_economy_imageUrl_not_null",
-          "value": "NOT NULL \"imageUrl\""
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1287,24 +1004,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "store_promotion_styles_type_not_null": {
-          "name": "store_promotion_styles_type_not_null",
-          "value": "NOT NULL type"
-        },
-        "store_promotion_styles_color_not_null": {
-          "name": "store_promotion_styles_color_not_null",
-          "value": "NOT NULL color"
-        },
-        "store_promotion_styles_icon_not_null": {
-          "name": "store_promotion_styles_icon_not_null",
-          "value": "NOT NULL icon"
-        },
-        "store_promotion_styles_label_not_null": {
-          "name": "store_promotion_styles_label_not_null",
-          "value": "NOT NULL label"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1367,36 +1067,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "store_promotions_id_not_null": {
-          "name": "store_promotions_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "store_promotions_item_id_not_null": {
-          "name": "store_promotions_item_id_not_null",
-          "value": "NOT NULL item_id"
-        },
-        "store_promotions_type_not_null": {
-          "name": "store_promotions_type_not_null",
-          "value": "NOT NULL type"
-        },
-        "store_promotions_value_not_null": {
-          "name": "store_promotions_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "store_promotions_starts_at_not_null": {
-          "name": "store_promotions_starts_at_not_null",
-          "value": "NOT NULL starts_at"
-        },
-        "store_promotions_title_not_null": {
-          "name": "store_promotions_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "store_promotions_priority_not_null": {
-          "name": "store_promotions_priority_not_null",
-          "value": "NOT NULL priority"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1439,20 +1110,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "voted_users_id_not_null": {
-          "name": "voted_users_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "voted_users_nickname_not_null": {
-          "name": "voted_users_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "voted_users_created_at_not_null": {
-          "name": "voted_users_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1554,36 +1212,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "store_items_id_not_null": {
-          "name": "store_items_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "store_items_title_not_null": {
-          "name": "store_items_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "store_items_price_not_null": {
-          "name": "store_items_price_not_null",
-          "value": "NOT NULL price"
-        },
-        "store_items_type_not_null": {
-          "name": "store_items_type_not_null",
-          "value": "NOT NULL type"
-        },
-        "store_items_value_not_null": {
-          "name": "store_items_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "store_items_currency_not_null": {
-          "name": "store_items_currency_not_null",
-          "value": "NOT NULL currency"
-        },
-        "store_items_content_not_null": {
-          "name": "store_items_content_not_null",
-          "value": "NOT NULL content"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1631,24 +1260,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "options_id_not_null": {
-          "name": "options_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "options_name_not_null": {
-          "name": "options_name_not_null",
-          "value": "NOT NULL name"
-        },
-        "options_value_not_null": {
-          "name": "options_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "options_title_not_null": {
-          "name": "options_title_not_null",
-          "value": "NOT NULL title"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1686,24 +1298,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "activity_users_id_not_null": {
-          "name": "activity_users_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "activity_users_nickname_not_null": {
-          "name": "activity_users_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "activity_users_type_not_null": {
-          "name": "activity_users_type_not_null",
-          "value": "NOT NULL type"
-        },
-        "activity_users_event_not_null": {
-          "name": "activity_users_event_not_null",
-          "value": "NOT NULL event"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1752,24 +1347,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "fv_items_id_not_null": {
-          "name": "fv_items_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "fv_items_nickname_not_null": {
-          "name": "fv_items_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "fv_items_item_id_not_null": {
-          "name": "fv_items_item_id_not_null",
-          "value": "NOT NULL item_id"
-        },
-        "fv_items_created_at_not_null": {
-          "name": "fv_items_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1794,16 +1372,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "roles_name_not_null": {
-          "name": "roles_name_not_null",
-          "value": "NOT NULL name"
-        },
-        "roles_id_not_null": {
-          "name": "roles_id_not_null",
-          "value": "NOT NULL id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1847,16 +1416,7 @@
           "name": "permissions_name_key"
         }
       },
-      "checkConstraints": {
-        "permissions_id_not_null": {
-          "name": "permissions_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "permissions_name_not_null": {
-          "name": "permissions_name_not_null",
-          "value": "NOT NULL name"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -1917,28 +1477,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "payment_methods_id_not_null": {
-          "name": "payment_methods_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "payment_methods_title_not_null": {
-          "name": "payment_methods_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "payment_methods_value_not_null": {
-          "name": "payment_methods_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "payment_methods_imageUrl_not_null": {
-          "name": "payment_methods_imageUrl_not_null",
-          "value": "NOT NULL \"imageUrl\""
-        },
-        "payment_methods_isAvailable_not_null": {
-          "name": "payment_methods_isAvailable_not_null",
-          "value": "NOT NULL \"isAvailable\""
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2017,16 +1556,7 @@
           "name": "banners_views_id_key"
         }
       },
-      "checkConstraints": {
-        "banners_views_nickname_not_null": {
-          "name": "banners_views_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "banners_views_id_not_null": {
-          "name": "banners_views_id_not_null",
-          "value": "NOT NULL id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2087,28 +1617,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "banners_id_not_null": {
-          "name": "banners_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "banners_title_not_null": {
-          "name": "banners_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "banners_href_title_not_null": {
-          "name": "banners_href_title_not_null",
-          "value": "NOT NULL href_title"
-        },
-        "banners_href_value_not_null": {
-          "name": "banners_href_value_not_null",
-          "value": "NOT NULL href_value"
-        },
-        "banners_created_at_not_null": {
-          "name": "banners_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2268,32 +1777,7 @@
           "name": "players_lower_case_nickname_key"
         }
       },
-      "checkConstraints": {
-        "users_id_not_null": {
-          "name": "users_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "users_nickname_not_null": {
-          "name": "users_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "users_role_id_not_null": {
-          "name": "users_role_id_not_null",
-          "value": "NOT NULL role_id"
-        },
-        "players_created_at_not_null": {
-          "name": "players_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "players_uuid_not_null": {
-          "name": "players_uuid_not_null",
-          "value": "NOT NULL uuid"
-        },
-        "players_lowercasenickname_not_null": {
-          "name": "players_lowercasenickname_not_null",
-          "value": "NOT NULL lower_case_nickname"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2372,36 +1856,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "tasks_id_not_null": {
-          "name": "tasks_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "tasks_title_not_null": {
-          "name": "tasks_title_not_null",
-          "value": "NOT NULL title"
-        },
-        "tasks_description_not_null": {
-          "name": "tasks_description_not_null",
-          "value": "NOT NULL description"
-        },
-        "tasks_reward_value_not_null": {
-          "name": "tasks_reward_value_not_null",
-          "value": "NOT NULL reward_value"
-        },
-        "tasks_reward_currency_not_null": {
-          "name": "tasks_reward_currency_not_null",
-          "value": "NOT NULL reward_currency"
-        },
-        "tasks_created_at_not_null": {
-          "name": "tasks_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "tasks_action_type_not_null": {
-          "name": "tasks_action_type_not_null",
-          "value": "NOT NULL action_type"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2450,24 +1905,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "admin_activity_log_id_not_null": {
-          "name": "admin_activity_log_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "admin_activity_log_initiator_not_null": {
-          "name": "admin_activity_log_initiator_not_null",
-          "value": "NOT NULL initiator"
-        },
-        "admin_activity_log_created_at_not_null": {
-          "name": "admin_activity_log_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "admin_activity_log_event_not_null": {
-          "name": "admin_activity_log_event_not_null",
-          "value": "NOT NULL event"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2529,28 +1967,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "privated_chat_id_not_null": {
-          "name": "privated_chat_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "privated_chat_created_at_not_null": {
-          "name": "privated_chat_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "privated_chat_nickname_not_null": {
-          "name": "privated_chat_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "privated_chat_message_not_null": {
-          "name": "privated_chat_message_not_null",
-          "value": "NOT NULL message"
-        },
-        "privated_chat_edited_not_null": {
-          "name": "privated_chat_edited_not_null",
-          "value": "NOT NULL edited"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2599,24 +2016,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "dictionaries_id_not_null": {
-          "name": "dictionaries_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "dictionaries_key_not_null": {
-          "name": "dictionaries_key_not_null",
-          "value": "NOT NULL key"
-        },
-        "dictionaries_value_not_null": {
-          "name": "dictionaries_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "dictionaries_created_at_not_null": {
-          "name": "dictionaries_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2674,24 +2074,7 @@
           "name": "chat_views_constraint_1"
         }
       },
-      "checkConstraints": {
-        "chat_views_id_not_null": {
-          "name": "chat_views_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "chat_views_message_id_not_null": {
-          "name": "chat_views_message_id_not_null",
-          "value": "NOT NULL message_id"
-        },
-        "chat_views_nickname_not_null": {
-          "name": "chat_views_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "chat_views_created_at_not_null": {
-          "name": "chat_views_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2754,24 +2137,7 @@
           "name": "rules_category_key"
         }
       },
-      "checkConstraints": {
-        "rules_id_not_null": {
-          "name": "rules_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "rules_content_not_null": {
-          "name": "rules_content_not_null",
-          "value": "NOT NULL content"
-        },
-        "rules_category_not_null": {
-          "name": "rules_category_not_null",
-          "value": "NOT NULL category"
-        },
-        "rules_created_at_not_null": {
-          "name": "rules_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2813,20 +2179,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "wiki_groups_id_not_null": {
-          "name": "wiki_groups_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "wiki_groups_name_not_null": {
-          "name": "wiki_groups_name_not_null",
-          "value": "NOT NULL name"
-        },
-        "wiki_groups_title_not_null": {
-          "name": "wiki_groups_title_not_null",
-          "value": "NOT NULL title"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2902,28 +2255,7 @@
           "name": "wiki_category_key"
         }
       },
-      "checkConstraints": {
-        "wiki_id_not_null": {
-          "name": "wiki_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "wiki_category_not_null": {
-          "name": "wiki_category_not_null",
-          "value": "NOT NULL category"
-        },
-        "wiki_content_not_null": {
-          "name": "wiki_content_not_null",
-          "value": "NOT NULL content"
-        },
-        "wiki_category_title_not_null": {
-          "name": "wiki_category_title_not_null",
-          "value": "NOT NULL category_title"
-        },
-        "wiki_group_id_not_null": {
-          "name": "wiki_group_id_not_null",
-          "value": "NOT NULL group_id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -2978,28 +2310,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "players_socials_id_not_null": {
-          "name": "players_socials_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "players_socials_nickname_not_null": {
-          "name": "players_socials_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "players_socials_social_not_null": {
-          "name": "players_socials_social_not_null",
-          "value": "NOT NULL social"
-        },
-        "players_socials_value_not_null": {
-          "name": "players_socials_value_not_null",
-          "value": "NOT NULL value"
-        },
-        "players_socials_created_at_not_null": {
-          "name": "players_socials_created_at_not_null",
-          "value": "NOT NULL created_at"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3048,24 +2359,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "api_keys_id_not_null": {
-          "name": "api_keys_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "api_keys_key_not_null": {
-          "name": "api_keys_key_not_null",
-          "value": "NOT NULL key"
-        },
-        "api_keys_created_at_not_null": {
-          "name": "api_keys_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "api_keys_nickname_not_null": {
-          "name": "api_keys_nickname_not_null",
-          "value": "NOT NULL nickname"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3120,28 +2414,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "payments_game_childs_id_not_null": {
-          "name": "payments_game_childs_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "payments_game_childs_store_item_id_not_null": {
-          "name": "payments_game_childs_store_item_id_not_null",
-          "value": "NOT NULL store_item_id"
-        },
-        "payments_game_childs_created_at_not_null": {
-          "name": "payments_game_childs_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "payments_game_childs_recipient_not_null": {
-          "name": "payments_game_childs_recipient_not_null",
-          "value": "NOT NULL recipient"
-        },
-        "payments_game_childs_order_id_not_null": {
-          "name": "payments_game_childs_order_id_not_null",
-          "value": "NOT NULL order_id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3177,16 +2450,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "tg_logs_chats_id_not_null": {
-          "name": "tg_logs_chats_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "tg_logs_chats_chat_id_not_null": {
-          "name": "tg_logs_chats_chat_id_not_null",
-          "value": "NOT NULL chat_id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3229,16 +2493,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "players_socials_available_id_not_null": {
-          "name": "players_socials_available_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "players_socials_available_value_not_null": {
-          "name": "players_socials_available_value_not_null",
-          "value": "NOT NULL value"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3325,52 +2580,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "payments_id_not_null": {
-          "name": "payments_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "payments_order_id_not_null": {
-          "name": "payments_order_id_not_null",
-          "value": "NOT NULL order_id"
-        },
-        "payments_created_at_not_null": {
-          "name": "payments_created_at_not_null",
-          "value": "NOT NULL created_at"
-        },
-        "payments_status_not_null": {
-          "name": "payments_status_not_null",
-          "value": "NOT NULL status"
-        },
-        "payments_payload_not_null": {
-          "name": "payments_payload_not_null",
-          "value": "NOT NULL payload"
-        },
-        "payments_price_not_null": {
-          "name": "payments_price_not_null",
-          "value": "NOT NULL price"
-        },
-        "payments_invoice_id_not_null": {
-          "name": "payments_invoice_id_not_null",
-          "value": "NOT NULL invoice_id"
-        },
-        "payments_unique_id_not_null": {
-          "name": "payments_unique_id_not_null",
-          "value": "NOT NULL unique_id"
-        },
-        "payments_pay_url_not_null": {
-          "name": "payments_pay_url_not_null",
-          "value": "NOT NULL pay_url"
-        },
-        "payments_asset_not_null": {
-          "name": "payments_asset_not_null",
-          "value": "NOT NULL asset"
-        },
-        "payments_initiator_not_null": {
-          "name": "payments_initiator_not_null",
-          "value": "NOT NULL initiator"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3425,24 +2635,56 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "te_id_not_null": {
-          "name": "te_id_not_null",
-          "value": "NOT NULL id"
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.library_backgrounds": {
+      "name": "library_backgrounds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "library_backgrounds_id_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
         },
-        "te_unique_id_not_null": {
-          "name": "te_unique_id_not_null",
-          "value": "NOT NULL unique_id"
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
-        "te_created_at_not_null": {
-          "name": "te_created_at_not_null",
-          "value": "NOT NULL created_at"
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
         },
-        "payments_game_initiator_not_null": {
-          "name": "payments_game_initiator_not_null",
-          "value": "NOT NULL initiator"
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3510,32 +2752,7 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "servers_id_not_null": {
-          "name": "servers_id_not_null",
-          "value": "NOT NULL id"
-        },
-        "servers_fullname_not_null": {
-          "name": "servers_fullname_not_null",
-          "value": "NOT NULL fullname"
-        },
-        "servers_available_not_null": {
-          "name": "servers_available_not_null",
-          "value": "NOT NULL available"
-        },
-        "servers_excluded_not_null": {
-          "name": "servers_excluded_not_null",
-          "value": "NOT NULL excluded"
-        },
-        "servers_thumbnail_not_null": {
-          "name": "servers_thumbnail_not_null",
-          "value": "NOT NULL thumbnail"
-        },
-        "servers_origin_not_null": {
-          "name": "servers_origin_not_null",
-          "value": "NOT NULL origin"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3597,16 +2814,7 @@
         }
       },
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "role_permissions_role_id_not_null": {
-          "name": "role_permissions_role_id_not_null",
-          "value": "NOT NULL role_id"
-        },
-        "role_permissions_permission_id_not_null": {
-          "name": "role_permissions_permission_id_not_null",
-          "value": "NOT NULL permission_id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3668,16 +2876,7 @@
         }
       },
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "players_permissions_nickname_not_null": {
-          "name": "players_permissions_nickname_not_null",
-          "value": "NOT NULL nickname"
-        },
-        "players_permissions_permission_id_not_null": {
-          "name": "players_permissions_permission_id_not_null",
-          "value": "NOT NULL permission_id"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     },
@@ -3716,20 +2915,7 @@
         }
       },
       "uniqueConstraints": {},
-      "checkConstraints": {
-        "activity_heatmap_date_not_null": {
-          "name": "activity_heatmap_date_not_null",
-          "value": "NOT NULL date"
-        },
-        "activity_heatmap_hour_not_null": {
-          "name": "activity_heatmap_hour_not_null",
-          "value": "NOT NULL hour"
-        },
-        "activity_heatmap_active_players_not_null": {
-          "name": "activity_heatmap_active_players_not_null",
-          "value": "NOT NULL active_players"
-        }
-      },
+      "checkConstraints": {},
       "policies": {},
       "isRLSEnabled": false
     }
