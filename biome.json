@@ -40,6 +40,15 @@
 	},
 	"overrides": [
 		{
+			"includes": ["pkgs/config-drizzle/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["pkgs/shared/**"],
 			"formatter": {
 				"enabled": false
