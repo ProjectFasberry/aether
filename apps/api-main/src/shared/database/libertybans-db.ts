@@ -1,4 +1,4 @@
-import type { DB as libertyBansDBType } from "@repo/shared/types/db/libertybans-database-types";
+import type { DB as libertyBansDBType } from "@repo/shared/types/db/libertybans";
 import { Kysely, PostgresDialect } from "kysely";
 import pg, { type PoolConfig } from "pg";
 import { poolOptsHooks } from "./lobby-db";
@@ -12,7 +12,7 @@ const config: PoolConfig = {
 }
 
 export const libertybansPool = new Pool(config)
-const opts = poolOptsHooks("Libertybans") 
+const opts = poolOptsHooks("Libertybans")
 
 export const libertybans = new Kysely<libertyBansDBType>({
   dialect: new PostgresDialect({

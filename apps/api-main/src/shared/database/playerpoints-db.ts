@@ -1,4 +1,4 @@
-import type { DB as playerPointsDBType } from "@repo/shared/types/db/player-points-database-types";
+import type { DB as playerPointsDBType } from "@repo/shared/types/db/playerpoints";
 import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";

@@ -1,7 +1,7 @@
 import Elysia, { type ElysiaConfig, type ValidationError } from "elysia";
 import { appLogger } from "./shared/logger";
-import { corsPlugin, loggerPlugin } from "./plugins";
-import { defineSession } from "./plugins/define";
+import { corsPlugin, loggerPlugin } from "./lib/plugins";
+import { defineSession } from "./lib/define";
 import { safeJsonParse, showRoutes } from "@repo/shared/lib/utils";
 import { env } from "./shared/env";
 import { service } from "./modules/service";

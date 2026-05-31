@@ -1,12 +1,12 @@
 import type * as z from "zod";
-import type { currencyCryptoSchema } from "../../schemas/entities/currencies-schema";
+import type { currencyCryptoSchema } from "../../schemas/store/currencies-schema";
 import type {
 	orderEventPayloadSchema,
 	paymentCurrencySchema,
 	paymentStatusSchema,
 	paymentTypeSchema,
 	paymentValueSchema,
-} from "../../schemas/payment";
+} from "../../schemas/store/payment";
 
 export type PaymentCryptoCurrency = z.infer<typeof currencyCryptoSchema>;
 export type PaymentDonateType = string;

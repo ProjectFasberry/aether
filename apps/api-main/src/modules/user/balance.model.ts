@@ -1,7 +1,6 @@
 import { bisquite } from "#/shared/database/bisquite-db"
 import { playerpoints } from "#/shared/database/playerpoints-db"
-import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite-database-types"
-import { DB as playerpointsDB } from "@repo/shared/types/db/player-points-database-types"
+import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite"
 import type { Kysely } from "kysely"
 import * as z from "zod"
 

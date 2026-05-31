@@ -1,0 +1,337 @@
+{
+	"id": "00000000-0000-0000-0000-000000000000",
+	"prevId": "",
+	"version": "7",
+	"dialect": "postgresql",
+	"tables": {
+		"public.luckperms_user_permissions": {
+			"name": "luckperms_user_permissions",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"permission": {
+					"name": "permission",
+					"type": "varchar(200)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"value": {
+					"name": "value",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"server": {
+					"name": "server",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"world": {
+					"name": "world",
+					"type": "varchar(64)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"expiry": {
+					"name": "expiry",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"contexts": {
+					"name": "contexts",
+					"type": "varchar(200)",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"luckperms_user_permissions_uuid": {
+					"name": "luckperms_user_permissions_uuid",
+					"columns": [
+						{
+							"expression": "uuid",
+							"asc": true,
+							"nulls": "last",
+							"opclass": "text_ops",
+							"isExpression": false
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {
+				"unique_uuid_permission": {
+					"columns": ["uuid", "permission"],
+					"nullsNotDistinct": false,
+					"name": "unique_uuid_permission"
+				}
+			},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		},
+		"public.luckperms_group_permissions": {
+			"name": "luckperms_group_permissions",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"name": {
+					"name": "name",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"permission": {
+					"name": "permission",
+					"type": "varchar(200)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"value": {
+					"name": "value",
+					"type": "boolean",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"server": {
+					"name": "server",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"world": {
+					"name": "world",
+					"type": "varchar(64)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"expiry": {
+					"name": "expiry",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"contexts": {
+					"name": "contexts",
+					"type": "varchar(200)",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"luckperms_group_permissions_name": {
+					"name": "luckperms_group_permissions_name",
+					"columns": [
+						{
+							"expression": "name",
+							"asc": true,
+							"nulls": "last",
+							"opclass": "text_ops",
+							"isExpression": false
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		},
+		"public.luckperms_groups": {
+			"name": "luckperms_groups",
+			"schema": "",
+			"columns": {
+				"name": {
+					"name": "name",
+					"type": "varchar(36)",
+					"primaryKey": true,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		},
+		"public.luckperms_actions": {
+			"name": "luckperms_actions",
+			"schema": "",
+			"columns": {
+				"id": {
+					"name": "id",
+					"type": "serial",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"time": {
+					"name": "time",
+					"type": "bigint",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"actor_uuid": {
+					"name": "actor_uuid",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"actor_name": {
+					"name": "actor_name",
+					"type": "varchar(100)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"type": {
+					"name": "type",
+					"type": "char(1)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"acted_uuid": {
+					"name": "acted_uuid",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"acted_name": {
+					"name": "acted_name",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"action": {
+					"name": "action",
+					"type": "varchar(300)",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		},
+		"public.luckperms_tracks": {
+			"name": "luckperms_tracks",
+			"schema": "",
+			"columns": {
+				"name": {
+					"name": "name",
+					"type": "varchar(36)",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"groups": {
+					"name": "groups",
+					"type": "text",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		},
+		"public.luckperms_players": {
+			"name": "luckperms_players",
+			"schema": "",
+			"columns": {
+				"uuid": {
+					"name": "uuid",
+					"type": "varchar(36)",
+					"primaryKey": true,
+					"notNull": true
+				},
+				"username": {
+					"name": "username",
+					"type": "varchar(16)",
+					"primaryKey": false,
+					"notNull": true
+				},
+				"primary_group": {
+					"name": "primary_group",
+					"type": "varchar(36)",
+					"primaryKey": false,
+					"notNull": true
+				}
+			},
+			"indexes": {
+				"luckperms_players_username": {
+					"name": "luckperms_players_username",
+					"columns": [
+						{
+							"expression": "username",
+							"asc": true,
+							"nulls": "last",
+							"opclass": "text_ops",
+							"isExpression": false
+						}
+					],
+					"isUnique": false,
+					"concurrently": false,
+					"method": "btree",
+					"with": {}
+				}
+			},
+			"foreignKeys": {},
+			"compositePrimaryKeys": {},
+			"uniqueConstraints": {},
+			"checkConstraints": {},
+			"policies": {},
+			"isRLSEnabled": false
+		}
+	},
+	"enums": {},
+	"schemas": {},
+	"sequences": {},
+	"roles": {},
+	"policies": {},
+	"views": {},
+	"_meta": {
+		"schemas": {},
+		"tables": {},
+		"columns": {}
+	},
+	"internal": {
+		"tables": {}
+	}
+}

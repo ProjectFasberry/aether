@@ -8,11 +8,11 @@ import { urls } from "./shared/constants/urls";
 import { permissions } from "./shared/constants/permissions";
 import { minio } from "./shared/minio/client";
 import { redis } from "./shared/redis/client";
-import { startJobs } from "./shared/cron/init";
 import { rcon } from "./shared/rcon/client";
 import { psubscribe } from "./shared/redis/subscribers";
 import { nats } from "./shared/nats/client";
 import { appLogger } from "./utils/config/logger";
+import { startJobs } from "./shared/cron/init";
 
 type BootstrapStep = {
 	name: string;

@@ -1,4 +1,4 @@
-import type { DB as bisquiteDBType } from "@repo/shared/types/db/bisquite-database-types";
+import type { DB as bisquiteDBType } from "@repo/shared/types/db/bisquite";
 import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";

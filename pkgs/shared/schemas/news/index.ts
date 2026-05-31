@@ -1,5 +1,5 @@
 import * as z from "zod";
-import { editorFieldSchema } from "../payment";
+import { editorFieldSchema } from "../store/payment";
 
 const DEFAULT_IMAGE = `news/art-bzzvanet.webp`;
 

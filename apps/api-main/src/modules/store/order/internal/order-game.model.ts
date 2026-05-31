@@ -2,7 +2,7 @@ import { general } from "#/shared/database/general-db";
 import { executeSaga, type TransactionalTask } from "#/utils/config/saga";
 import { processDonatePayment } from "#/utils/payment/process-donate-payment";
 import { callServerCommand } from "#/utils/server/call-command";
-import { GAME_CURRENCIES } from "@repo/shared/schemas/payment";
+import { GAME_CURRENCIES } from "@repo/shared/schemas/store/payment";
 
 type TaskItem = {
   type: string;

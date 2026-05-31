@@ -1,23 +1,14 @@
 import type { Pool as MySQLPool } from "mysql2";
-import type { Pool as PGPool, PoolClient as PGClient } from "pg";
+import type { PoolClient as PGClient } from "pg";
 import { generalPool } from "./database";
 import { appLogger } from "./logger";
-
-type SupportedPools = MySQLPool | PGPool;
+import { isMySQLPool, isPGPool, type SupportedPools } from "@repo/shared/utils/index";
 
 interface HealthCheckResult {
 	name: string;
 	type: "mysql" | "postgre" | "unknown";
 	healthy: boolean;
 	error?: unknown;
-}
-
-function isMySQLPool(pool: SupportedPools): pool is MySQLPool {
-	return typeof (pool as MySQLPool).getConnection === "function";
-}
-
-function isPGPool(pool: SupportedPools): pool is PGPool {
-	return typeof (pool as PGPool).connect === "function";
 }
 
 const DATABASES_FOR_CHECK: Record<string, SupportedPools> = {

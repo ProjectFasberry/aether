@@ -3,7 +3,7 @@ import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { definePrice, processImageUrl } from "#/utils/store/store-helpers";
-import { GAME_CURRENCIES } from "@repo/shared/schemas/payment";
+import { GAME_CURRENCIES } from "@repo/shared/schemas/store/payment";
 import { type Static, t } from "elysia";
 import { sql } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";

@@ -1,5 +1,5 @@
-import type { CreateOrderTopUpSchema } from "../../schemas/payment";
-import type { JsonValue } from "../db/general-database-types";
+import type { CreateOrderTopUpSchema } from "../../schemas/store/payment";
+import type { JsonValue } from "../db/general";
 
 export type CartItem = {
 	imageUrl: string;

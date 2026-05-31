@@ -119,3 +119,19 @@ export const defineRequiredSession = () => new Elysia({ name: "defineRequiredSes
     return { session };
   })
   .as("scoped")
+
+export const defineBearer = () => new Elysia({ name: "defineBearer" })
+  .use(bearer())
+  .derive(async ({ bearer, status }) => {
+    if (!bearer) throw status(401);
+
+    if (LOGGING.validators) {
+      validateLogger.log("defineBearer");
+    }
+
+    const b = await handleByBearer(bearer)
+    if (!b) throw status(401);
+
+    return { bearer };
+  })
+  .as("scoped")

@@ -13,7 +13,7 @@ import Bowser from "bowser";
 import { nats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
 import type { Subscription } from "@nats-io/nats-core";
-import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/schemas/auth/login"
+import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth"
 import { isProduction } from "#/shared/env";
 import { nanoid } from "nanoid";
 

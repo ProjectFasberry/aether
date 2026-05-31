@@ -1,0 +1,29 @@
+{
+	"name": "@repo/config-drizzle",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"scripts": {
+		"db:generate": "bun run ./scripts/generate.ts",
+		"db:migrate": "bun run ./scripts/migrate.ts",
+		"db:studio": "bun run ./scripts/studio.ts",
+		"db:pull": "bun run ./scripts/pull.ts",
+		"db:push": "bun run ./scripts/push.ts"
+	},
+	"dependencies": {
+		"drizzle-orm": "0.45.2",
+		"mysql2": "3.14.1",
+		"pg": "8.13.1",
+		"zod": "4.2.1",
+		"slow-redact": "0.3.2"
+	},
+	"devDependencies": {
+		"@repo/config-typescript": "workspace:*",
+		"@repo/config-biome": "workspace:*",
+		"@types/pg": "8.11.10",
+		"bun-types": "1.2.17",
+		"drizzle-kit": "0.31.10",
+		"typescript": "~5.8.3"
+	}
+}

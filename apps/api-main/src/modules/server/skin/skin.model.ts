@@ -19,7 +19,7 @@ import {
 import { setTimeout as delay } from "node:timers/promises";
 import { URL } from "node:url";
 import type { Transaction } from "kysely";
-import type { DB } from "@repo/shared/types/db/skins-database-types";
+import type { DB } from "@repo/shared/types/db/skins";
 import { client as inheritClient } from "#/shared/api/client";
 import { wrapError } from "#/helpers/wrap-error";
 import type { KyInstance } from "ky";
@@ -113,7 +113,7 @@ export async function getPlayerAvatar(nickname: string): Promise<string> {
   return result[0].skin_head_url ?? DEFAULT_HEAD
 }
 
-export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:skins:${nickname}`) 
+export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:skins:${nickname}`)
 
 export type SkinsHistoryPayload = Static<typeof skinsHistorySchema>
 
@@ -164,8 +164,8 @@ export async function getHeadFromSkin(url: string, size = 128) {
 
   ctx.imageSmoothingEnabled = false;
 
-  ctx.drawImage(skin, 8, 8, 8, 8, 0, 0, size, size);  
-  ctx.drawImage(skin, 40, 8, 8, 8, 0, 0, size, size); 
+  ctx.drawImage(skin, 8, 8, 8, 8, 0, 0, size, size);
+  ctx.drawImage(skin, 40, 8, 8, 8, 0, 0, size, size);
 
   return canvas.toBuffer('image/png');
 }

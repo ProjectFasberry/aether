@@ -61,7 +61,7 @@ export async function revalidateChatsCmdCb(ctx: CommandCtx) {
 		ctx.send(
 			format`
             ❌ <b>Error in chats updating</b>
-            
+
             <code>${errorMessage}</code>
         `,
 			{ parse_mode: "HTML" },
@@ -76,7 +76,7 @@ export async function revalidateChatsCmdCb(ctx: CommandCtx) {
 
 	const message = format`
         ✅ <b>Chats list updated</b>
-        
+
         📊 Result:
         • Было в памяти: <code>${prev}</code>
         • Загружено сейчас: <code>${upd}</code>
@@ -96,7 +96,7 @@ export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
 		ctx.send(
 			format`
       ❌ <b>Error urls revalidating</b>
-      
+
       <code>${errorMessage}</code>
     `,
 			{ parse_mode: "HTML" },
@@ -111,7 +111,7 @@ export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
 
 	const message = format`
     ✅ <b>Urls updated</b>
-    
+
     📊 Result:
     • Было: <code>${prev}</code>
     • Стало: <code>${upd}</code>
@@ -229,9 +229,9 @@ export async function serverAlertCmdCb(ctx: CommandCtx) {
 		ctx.send(
 			format`
             ⚠️ <b>Отсутствует текст объявления</b>
-            
+
             Using: <code>/${cmdName} [msg]</code>
-            
+
             <i>Example: /${cmdName} Сервер будет перезагружен через 5 минут</i>
         `,
 			{ parse_mode: "HTML" },
@@ -247,7 +247,7 @@ export async function serverAlertCmdCb(ctx: CommandCtx) {
 
 		const report = format`
             📢 <b>Объявление отправлено на сервер</b>
-            
+
             📝 Текст: <code>${alertMessage}</code>
             🖥 Ответ сервера: <code>${result || "ok"}</code>
         `;

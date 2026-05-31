@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { bannerSchema } from "../../shared/banner/banner.model";
+import { bannerSchema } from "../../banner/banner.model";
 import { Permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";

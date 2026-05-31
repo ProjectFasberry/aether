@@ -10,6 +10,7 @@
         "@infisical/sdk": "5.0.2",
         "@types/bun": "1.2.22",
         "concurrently": "9.1.2",
+        "consola": "3.4.2",
         "lefthook": "2.1.4",
       },
     },
@@ -33,10 +34,8 @@
         "@tqman/nice-logger": "1.1.1",
         "bcryptjs": "3.0.2",
         "bowser": "2.13.1",
-        "consola": "3.4.2",
         "croner": "9.1.0",
         "dayjs": "1.11.11",
-        "drizzle-orm": "0.45.2",
         "elysia": "1.4.28",
         "elysia-ip": "1.1.0",
         "ioredis": "5.6.1",
@@ -49,14 +48,11 @@
         "nanoid": "5.1.5",
         "p-limit": "7.1.1",
         "pg": "8.13.1",
-        "slow-redact": "^0.3.2",
         "zod": "4.2.1",
       },
       "devDependencies": {
-        "@repo/config-biome": "workspace:*",
         "@types/pg": "8.11.10",
         "bun-types": "1.2.17",
-        "drizzle-kit": "0.31.10",
         "typescript": "~5.8.3",
       },
     },
@@ -70,8 +66,8 @@
         "@nats-io/nats-core": "3.2.0",
         "@nats-io/transport-node": "3.2.0",
         "@repo/shared": "workspace:*",
+        "@sinclair/typebox": "0.34.49",
         "@tqman/nice-logger": "1.1.1",
-        "consola": "3.4.2",
         "croner": "9.1.0",
         "elysia": "1.4.28",
         "elysia-ip": "1.1.0",
@@ -82,8 +78,8 @@
         "modern-rcon": "1.0.3",
         "mysql2": "3.14.1",
         "pg": "8.13.1",
+        "typebox": "1.1.39",
         "yaml": "2.8.3",
-        "zod": "4.2.1",
       },
       "devDependencies": {
         "@types/pg": "8.11.10",
@@ -96,6 +92,25 @@
       "version": "0.1.0",
       "devDependencies": {
         "@biomejs/biome": "2.2.4",
+      },
+    },
+    "pkgs/config-drizzle": {
+      "name": "@repo/config-drizzle",
+      "version": "0.1.0",
+      "dependencies": {
+        "drizzle-orm": "0.45.2",
+        "mysql2": "3.14.1",
+        "pg": "8.13.1",
+        "slow-redact": "0.3.2",
+        "zod": "4.2.1",
+      },
+      "devDependencies": {
+        "@repo/config-biome": "workspace:*",
+        "@repo/config-typescript": "workspace:*",
+        "@types/pg": "8.11.10",
+        "bun-types": "1.2.17",
+        "drizzle-kit": "0.31.10",
+        "typescript": "~5.8.3",
       },
     },
     "pkgs/config-typescript": {
@@ -114,8 +129,11 @@
       },
       "devDependencies": {
         "@repo/config-typescript": "workspace:*",
+        "@types/pg": "8.11.10",
         "bun-types": "1.2.17",
         "kysely-codegen": "0.19.0",
+        "mysql2": "3.14.1",
+        "pg": "8.13.1",
         "typescript": "~5.8.3",
       },
     },
@@ -344,6 +362,8 @@
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
     "@repo/config-biome": ["@repo/config-biome@workspace:pkgs/config-biome"],
+
+    "@repo/config-drizzle": ["@repo/config-drizzle@workspace:pkgs/config-drizzle"],
 
     "@repo/config-typescript": ["@repo/config-typescript@workspace:pkgs/config-typescript"],
 
@@ -859,9 +879,11 @@
 
     "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
 
-    "tsx": ["tsx@4.22.3", "", { "dependencies": { "esbuild": "~0.28.0" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "bin": { "tsx": "dist/cli.mjs" } }, "sha512-mdoNxBC/cSQObGGVQ5Bpn5i+yv7j68gk3Nfm3wFjcJg3Z0Mix9jzAFfP12prmm5eVGmDKtp0yyArrs0Q+8gZHg=="],
+    "tsx": ["tsx@4.22.4", "", { "dependencies": { "esbuild": "~0.28.0" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "bin": { "tsx": "dist/cli.mjs" } }, "sha512-X8EX+XV4QR5xCsrgxaED954zTDfY8KqlDtskKEL0cHhyS/P8b4IFOvGDQpsC9Q1XnLq915wEfwwY/zzskCtmhg=="],
 
     "tweetnacl": ["tweetnacl@1.0.3", "", {}, "sha512-6rt+RN7aOi1nGMyC4Xa5DdYiukl2UWCbcJft7YhxReBGQD7OAM8Pbxw6YMo4r2diNEA8FEmu32YOn9rhaiE5yw=="],
+
+    "typebox": ["typebox@1.1.39", "", {}, "sha512-vj0afVtOfLQvv0GR0VxVagYxsXN64btL7Z9XoaG0ZggH3mruMMkOO6hXdgMsjCY3shZgEvooAWVeznQVs5c43w=="],
 
     "typescript": ["typescript@5.8.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-p1diW6TqL9L07nNxvRMM7hMMw4c5XOo/1ibL4aAIGmSAt9slTE1Xgw5KWuof2uTOvCg9BY7ZRi+GaF+7sfgPeQ=="],
 

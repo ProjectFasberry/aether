@@ -1,6 +1,6 @@
 import { currencyCryptoSchema } from "@repo/shared/constants/currencies";
 import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLink, getOrderRateKey } from "./create-crypto-order";
-import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/payment";
+import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/store/payment";
 import { getRedis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";

@@ -115,9 +115,7 @@ type PlayerGameInfo = {
 
 export async function getSkills(nickname: string): Promise<SkillsData | null> {
   const query = await bisquite
-    // @ts-expect-error
     .selectFrom("ADAPT_DATA")
-    // @ts-expect-error
     .innerJoin("Players", "Players.UUID", "ADAPT_DATA.UUID")
     .select([
       "ADAPT_DATA.DATA"

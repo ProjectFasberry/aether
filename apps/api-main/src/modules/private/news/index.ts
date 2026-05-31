@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import { newsCreateRoute } from "./news-create.route";
 import { newsDeleteRoute } from "./news-delete.route";
 import { newsUpdateRoute } from "./news-update.route";
-import { getNewsList, newsSchema } from "#/modules/shared/news/news.model";
+import { getNewsList, newsSchema } from "#/modules/news/news.model";
 
 const newsList = new Elysia()
   .get("/list", async ({ query }) => {

@@ -8,7 +8,7 @@ import { env } from "#/shared/env";
 import { getRedis } from "#/shared/redis/client";
 import { logger } from "#/utils/config/logger";
 import { safeJsonParse } from "#/utils/config/transforms";
-import type { DB } from "@repo/shared/types/db/general-database-types";
+import type { DB } from "@repo/shared/types/db/general";
 import { t } from "elysia";
 import type { Selectable } from "kysely";
 

@@ -7,7 +7,7 @@ import { createAdminActivityLog } from "../private.model";
 import type { Selectable } from "kysely";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { buildUpdates } from "#/utils/config/transforms";
-import type { DB } from "@repo/shared/types/db/general-database-types";
+import type { DB } from "@repo/shared/types/db/general";
 import { withData } from "#/shared/schemas";
 
 async function updateNews(id: number, values: z.infer<typeof newsUpdateSchema>) {

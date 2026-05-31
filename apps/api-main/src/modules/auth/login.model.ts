@@ -8,7 +8,7 @@ import Bowser from "bowser";
 import { getRedis } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
-import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/schemas/auth/login";
+import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/types/entities/auth";
 import { type Static, t, type Context } from "elysia";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { safeJsonParse } from "#/utils/config/transforms";
@@ -90,6 +90,12 @@ function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, s
     result[key] = serializeValue(value);
   }
   return result as Record<IterateKey, string>;
+}
+
+type StringifiedUserSessionParsedPayload = Pick<UserSessionParsedPayload, "nickname" | "ip" | "created_at"> & {
+  browser: string,
+  platform: string,
+  os: string,
 }
 
 export const session = {
@@ -268,7 +274,7 @@ export const session = {
     const dataRowStr = await redisClient.get(sessionKey);
     if (!dataRowStr) return null;
 
-    const dataRow = safeJsonParse<UserSessionParsedPayload>(dataRowStr);
+    const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(dataRowStr);
     if (!dataRow.ok) throw dataRow.error;
 
     return {
@@ -290,7 +296,7 @@ async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParse
   if (dataRowsStrFiltered.length === 0) return [];
 
   return dataRowsStrFiltered.map((v) => {
-    const dataRow = safeJsonParse<UserSessionParsedPayload>(v);
+    const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(v);
     if (!dataRow.ok) throw dataRow.error;
     return {
       ...dataRow.value,

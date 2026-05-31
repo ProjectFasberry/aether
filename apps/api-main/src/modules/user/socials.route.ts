@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
-import type { JsonValue } from "@repo/shared/types/db/general-database-types";
+import type { JsonValue } from "@repo/shared/types/db/general";
 import { defineOptionalUser, defineRequiredUser } from "#/lib/define";
 import { getRedis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";

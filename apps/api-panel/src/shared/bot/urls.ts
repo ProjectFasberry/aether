@@ -19,7 +19,7 @@ export function getWhitelistIpList(): string[] {
 }
 
 async function getUrlsQuery() {
-	return general.selectFrom("ip_list").select(["ip", "name"]).execute();
+	return await general.selectFrom("ip_list").select(["ip", "name"]).execute();
 }
 
 export const urls = {

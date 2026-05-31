@@ -19,11 +19,18 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,
+		"outDir": "dist",
 		"skipLibCheck": true,
 		"noEmit": true
 	},
-	"include": ["src/**/*", "scripts/**/*"],
-	"exclude": ["node_modules", "dist"],
+	"include": [
+		"src/**/*",
+		"scripts/**/*"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	],
 	"references": [
 		{
 			"path": "../../pkgs/shared"

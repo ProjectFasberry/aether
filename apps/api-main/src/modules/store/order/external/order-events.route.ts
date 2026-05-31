@@ -1,7 +1,7 @@
 import Elysia, { sse, t } from "elysia";
 import { nats } from "#/shared/nats/client";
 import { logger } from "#/utils/config/logger";
-import { orderEventPayloadSchema } from "@repo/shared/schemas/payment";
+import { orderEventPayloadSchema } from "@repo/shared/schemas/store/payment";
 import { externalOrders } from "./external-order.model";
 
 const getPaymentEventsSubject = (uniqueId: string) => `payment.events.${uniqueId}`
@@ -55,7 +55,7 @@ export const orderEvents = new Elysia()
         }
 
         yield sse({ event: "config", data: "ping" });
-        
+
         await new Promise((r) => setTimeout(r, 1000));
       }
     } finally {

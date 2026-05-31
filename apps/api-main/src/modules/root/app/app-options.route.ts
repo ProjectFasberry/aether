@@ -1,7 +1,7 @@
 import Elysia, { type Static, t } from "elysia";
 import { defineOptionalUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
-import { bannerExists } from "../../shared/banner/banner.model";
+import { bannerExists } from "../../banner/banner.model";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { getWhitelistIpList } from "#/shared/constants/urls";
 import { ipPlugin } from "#/lib/plugins/index";

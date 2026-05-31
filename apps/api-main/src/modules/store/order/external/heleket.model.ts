@@ -1,7 +1,7 @@
 import { invariant } from "#/helpers/invariant";
 import { client } from "#/shared/api/client";
 import { env } from "#/shared/env";
-import type { OrderInputPayload, OutputPayload } from "@repo/shared/schemas/payment";
+import type { OrderInputPayload, OutputPayload } from "@repo/shared/schemas/store/payment";
 
 const heleketClient = client.extend((opts) => ({
   ...opts,

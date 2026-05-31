@@ -8,8 +8,8 @@ export const account = new Elysia()
   .use(defineRequiredUser())
   .use(ipPlugin())
   .group("/account", app => app
-    .delete("/", async ({ nickname, ip, status }) => {
-      const result = await deleteAccount({ nickname, ip })
+    .delete("/", async ({ nickname, ip }) => {
+      await deleteAccount({ nickname, ip })
       return { data: "OK" }
     }, {
       response: {
@@ -19,8 +19,8 @@ export const account = new Elysia()
         500: withError()
       }
     })
-    .patch("/password", async ({ nickname, ip, body: { currentPass, newPass }, status }) => {
-      const result = await changePassword({ nickname, ip, newPass, currentPass });
+    .patch("/password", async ({ nickname, ip, body: { currentPass, newPass } }) => {
+      await changePassword({ nickname, ip, newPass, currentPass });
       return { data: "OK" }
     }, {
       body: changePasswordSchema,

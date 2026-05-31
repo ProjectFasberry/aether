@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { cryptobot, type CreateOrderPayload, createOrderPayloadSchema } from "./cryptobot.model";
-import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from "@repo/shared/schemas/payment";
+import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from "@repo/shared/schemas/store/payment";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";

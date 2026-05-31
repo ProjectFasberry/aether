@@ -2,7 +2,7 @@ import Elysia, { type Static, t } from "elysia"
 import { getStaticUrl } from "#/helpers/volume"
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas"
-import { currencyCryptoSchema } from "@repo/shared/schemas/entities/currencies-schema"
+import { currencyCryptoSchema } from "@repo/shared/schemas/store/currencies-schema"
 import * as z from "zod"
 
 const methodPayload = t.Object({

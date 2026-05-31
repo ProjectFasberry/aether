@@ -27,8 +27,17 @@
 			"@repo/shared/*": ["../../pkgs/shared/*"]
 		}
 	},
-	"include": ["src/**/*", "scripts/**/*", "imports.ts", "drizzle.config.ts", "declare.d.ts"],
-	"exclude": ["node_modules", "dist", "./src/drizzle"],
+	"include": [
+		"src/**/*",
+		"scripts/**/*",
+		"imports.ts",
+		"drizzle.config.ts",
+		"declare.d.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"dist"
+	],
 	"references": [
 		{
 			"path": "../../pkgs/shared"

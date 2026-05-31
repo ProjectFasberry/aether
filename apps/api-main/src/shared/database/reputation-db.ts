@@ -1,4 +1,4 @@
-import type { DB as reputationDBType } from "@repo/shared/types/db/reputation-database-types";
+import type { DB as reputationDBType } from "@repo/shared/types/db/reputation";
 import { Kysely } from "kysely";
 import { MysqlDialect } from "kysely";
 import { createPool, type Pool, type PoolOptions } from "mysql2";

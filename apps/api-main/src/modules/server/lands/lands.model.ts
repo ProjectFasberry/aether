@@ -9,7 +9,7 @@ import { getDirection } from "#/utils/config/paginate";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
 import type { SelectExpression } from "kysely";
-import type { DB } from "@repo/shared/types/db/bisquite-database-types";
+import type { DB } from "@repo/shared/types/db/bisquite";
 
 export const landSchema = t.Object({
   area: t.Nullable(
@@ -373,8 +373,8 @@ export const landsListPayload = t.Object({
   meta: withMeta
 })
 
-export async function getLands({ 
-  cursor 
+export async function getLands({
+  cursor
 }: Static<typeof landsSchema>): Promise<Static<typeof landsListPayload>> {
   const query = bisquite
     .selectFrom("lands_lands")

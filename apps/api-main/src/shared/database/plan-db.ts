@@ -1,7 +1,7 @@
 import { createPool, type Pool, type PoolOptions } from "mysql2";
 import { env } from "../env";
 import { Kysely, MysqlDialect } from "kysely";
-import type { DB as planDBType } from "@repo/shared/types/db/plan-database-types";
+import type { DB as planDBType } from "@repo/shared/types/db/plan";
 import { poolOptsHooks } from "./lobby-db";
 
 export const config: PoolOptions = {

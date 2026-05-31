@@ -5,7 +5,7 @@ import { wrapError } from "#/helpers/wrap-error";
 import { cartItem } from "../../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
-import type { GameCurrency } from "@repo/shared/schemas/payment";
+import type { GameCurrency } from "@repo/shared/schemas/store/payment";
 import { withError } from "#/shared/schemas";
 import { getBalance } from "#/modules/user/balance.model";
 import { nanoid } from "nanoid";
@@ -58,7 +58,7 @@ export const createOrder = new Elysia()
       }));
 
       await createGamePaymentRecord(uniqueId, initiator, products)
-      
+
       const result = await processStoreGamePurchase(initiator, finishPrice, products);
 
       if (result.error) {
@@ -73,11 +73,11 @@ export const createOrder = new Elysia()
       }
 
       const data: CreateOrderRoutePayload = {
-        purchase: { 
-          uniqueId 
+        purchase: {
+          uniqueId
         },
-        payload: { 
-          price 
+        payload: {
+          price
         }
       };
 
