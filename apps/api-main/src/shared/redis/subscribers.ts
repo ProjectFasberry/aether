@@ -1,5 +1,4 @@
 import { loginQR } from "#/modules/auth/login.model";
-import { redisLogger } from "#/utils/config/logger";
 import { isProduction } from "../env";
 import { nats } from "../nats/client";
 import { redis } from "./client";
@@ -8,7 +7,7 @@ const SUBSCRIBERS: { key: string, cb: (msg: string) => void }[] = [
   {
     key: "auth:qr:",
     cb: (msg: string) => {
-      const nsClient = nats.get();
+      const nsClient = nats.getInstance();
       const [, , qrToken] = msg.split(':');
       if (!qrToken) return;
 
@@ -19,18 +18,20 @@ const SUBSCRIBERS: { key: string, cb: (msg: string) => void }[] = [
 ]
 
 export async function psubscribe() {
-  const rsClient = redis.getBridge()
+  const rsClient = redis.getBridgeInstance()
   await rsClient.psubscribe('__keyevent@0__:expired');
 
+  const psubcribeLogger = redis.logger.withTag("psubscribe");
+
   SUBSCRIBERS.forEach((subscriber) => {
-    redisLogger.withTag("psubscribe").success(`${subscriber.key} inited`)
+    psubcribeLogger.success(`${subscriber.key} inited`)
   })
 
   rsClient.on('pmessage', (pattern, channel, msg) => {
     if (!msg) return;
 
     if (!isProduction) {
-      redisLogger.withTag("psubscribe").log(pattern, channel, msg)
+     psubcribeLogger.log(pattern, channel, msg)
     }
 
     for (const subscriber of SUBSCRIBERS) {
@@ -38,7 +39,7 @@ export async function psubscribe() {
         try {
           subscriber.cb(msg);
         } catch (err) {
-          redisLogger.withTag("psubscribe").error(`Error in subscriber for key ${subscriber.key}:`, err);
+          psubcribeLogger.error(`Error in subscriber for key ${subscriber.key}:`, err);
         }
       }
     }

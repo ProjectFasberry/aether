@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { redis } from "../../shared/redis/client";
 import { flatten, unflatten } from "../../helpers/flat";
 import { parse, stringify } from "yaml";
@@ -8,10 +8,10 @@ const ROOT_KEY = "traefik";
 
 const traefikConfig = new Elysia()
   .get("/", async () => {
-    const redisClient = redis.get();
+    const redisClient = redis.getInstance();
 
     const keys = await redisClient.keys(`${ROOT_KEY}*`);
-    if (keys.length === 0) return { data: { yaml: "" } };
+    if (keys.length === 0) return { data: null };
 
     const flatConfig: Record<string, string> = {};
 
@@ -29,22 +29,33 @@ const traefikConfig = new Elysia()
 
     const tree = unflatten(flatConfig, ROOT_KEY);
 
-    const yamlString = stringify(tree, {
+    const yamlStr = stringify(tree, {
       indent: 2,
       aliasDuplicateObjects: false,
     });
 
     return {
       data: {
-        yaml: yamlString,
+        yaml: yamlStr,
         rawKeysCount: keys.length,
       },
     };
+  }, {
+    response: {
+      200: t.Object({
+        data: t.Nullable(
+          t.Object({
+            yaml: t.String({ description: "YAML string representation of the config" }),
+            rawKeysCount: t.Number({ description: "Number of raw keys in the config" }),
+          }),
+        )
+      }),
+    },
   });
 
 const traefikConfigUpdate = new Elysia()
   .post("/", async ({ body, status }) => {
-    const redisClient = redis.get();
+    const redisClient = redis.getInstance();
 
     try {
       const { yaml } = body as { yaml: string };
@@ -69,12 +80,19 @@ const traefikConfigUpdate = new Elysia()
       await pipeline.exec();
 
       return {
-        data: {
-          message: `Config updated. Keys: ${Object.keys(flatConfig).length}`,
-        },
+        data: Object.keys(flatConfig).length
       };
     } catch (e) {
       return status(400, wrapError(e));
+    }
+  }, {
+    response: {
+      200: t.Object({
+        data: t.Number({ description: "Number of updated keys" })
+      }),
+      400: t.Object({
+        error: t.String(),
+      }),
     }
   });
 

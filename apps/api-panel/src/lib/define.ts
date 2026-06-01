@@ -5,7 +5,7 @@ import { logger } from "../shared/logger";
 import { safeJsonParse } from "@repo/shared/lib/utils";
 import { bearer } from "@elysia/bearer";
 
-const logDefine = (name: string) => Bun.env.PROD &&  logger.log(name)
+const logDefine = (name: string) => Bun.env.PROD && logger.log(name)
 
 type UserSessionPayload = {
   nickname: string;
@@ -44,7 +44,7 @@ async function getPermissions(nickname: string, role_id: number): Promise<string
 }
 
 export async function getUserNickname(token: string): Promise<string | null> {
-  const client = redis.get();
+  const client = redis.getInstance();
 
   const data = await client.get(getUserKey(token));
   if (!data) return null;

@@ -4,9 +4,9 @@ import { SUBJECTS } from "#/shared/nats/subjects"
 import * as z from "zod"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from '#/shared/database/general-db';
-import { safeJsonParse } from '#/utils/config/transforms';
 import type { Msg, NatsConnection } from '@nats-io/nats-core';
-import { logger, natsLogger } from '#/utils/config/logger';
+import { logger } from '#/shared/constants/logger';
+import { safeJsonParse } from '#/utils';
 
 const userJoinSchema = z.object({
   date: z.string(),
@@ -17,7 +17,7 @@ const userJoinSchema = z.object({
 function pushToReferral(
   { nickname }: { nickname: string }
 ) {
-  const nc = nats.get()
+  const nc = nats.getInstance()
 
   const payload = new TextEncoder().encode(nickname)
   nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload)
@@ -75,7 +75,7 @@ async function handlePlayerJoin(msg: Msg) {
   if (!success) return;
 
   try {
-    natsLogger.log(`${data.nickname} ${data.event}`, dayjs().format("HH:mm:ss YYYY-MM-DD"))
+    nats.logger.log(`${data.nickname} ${data.event}`, dayjs().format("HH:mm:ss YYYY-MM-DD"))
 
     switch (data.event) {
       case "join":

@@ -4,7 +4,7 @@ import { defineOptionalUser } from "#/lib/define";
 import { validateBannedStatus } from "#/lib/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
-import { getPlayerAvatar } from "../server/skin/skin.model";
+import { skinsModel } from "../server/skin/index.model";
 
 export type MePayload = {
   nickname: string;
@@ -46,7 +46,7 @@ export const me = new Elysia()
       permissions
     }
 
-    const avatar = await getPlayerAvatar(base.nickname);
+    const avatar = await skinsModel.player.getAvatar(base.nickname);
 
     const data: MePayload = {
       ...base,

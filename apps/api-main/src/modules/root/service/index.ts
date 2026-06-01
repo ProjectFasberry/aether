@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { checkDatabasesHealth, healthCheckResultSchema } from "#/shared/database/init";
 import { defineBearer } from "#/lib/define";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import { cronTasks } from "#/shared/cron/init";
 
 const healthPayloadSchema = t.Object({

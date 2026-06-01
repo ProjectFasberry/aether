@@ -6,7 +6,9 @@
 		"moduleDetection": "force",
 		"module": "preserve",
 		"moduleResolution": "bundler",
-		"types": ["bun-types"],
+		"types": [
+			"bun-types"
+		],
 		"allowJs": true,
 		"verbatimModuleSyntax": false,
 		"resolveJsonModule": true,
@@ -21,7 +23,12 @@
 		"strict": true,
 		"outDir": "dist",
 		"skipLibCheck": true,
-		"noEmit": true
+		"noEmit": true,
+		"paths": {
+			"#/*": ["./src/*"],
+			"@repo/shared/*": ["../../pkgs/src/*"],
+			"@repo/core/*": ["../../pkgs/core/src/*"]
+		}
 	},
 	"include": [
 		"src/**/*",
@@ -34,6 +41,9 @@
 	"references": [
 		{
 			"path": "../../pkgs/shared"
+		},
+		{
+		  "path": "../../pkgs/core"
 		}
 	]
 }

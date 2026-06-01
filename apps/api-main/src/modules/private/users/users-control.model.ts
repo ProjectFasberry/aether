@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db"
 import { rcon } from "#/shared/rcon/client";
-import { invariant } from "#/helpers/invariant";
+import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 
 const userControlTypeSchemaT = t.UnionEnum(["unlogin"])
@@ -107,7 +107,7 @@ const CONTROL_EVENTS: Record<UserControlSchema["type"], (t: Nicknames) => Promis
 async function execCmd({
   type, nicknames, args: rawArgs
 }: ExecCmdArgs & { nicknames: UserControlSchema["nicknames"] }): Promise<string[]> {
-  const client = rcon.get()
+  const client = rcon.getInstance()
 
   function stripMinecraftColors(text: string): string {
     return text.replace(/§./g, '');
@@ -135,7 +135,7 @@ async function execCmd({
 type Nicknames = Static<typeof nicknamesSchema>
 
 async function alert(msg: string) {
-  await rcon.get().send(`alert ${msg}`)
+  await rcon.getInstance().send(`alert ${msg}`)
 }
 
 export async function changeRoleUsers(

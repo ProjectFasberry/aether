@@ -1,14 +1,16 @@
 import { normalizeIp } from "#/helpers/normalize-ip";
 import { getStaticUrl } from "#/helpers/volume";
-import { DEFAULT_HEAD, getPlayerAvatar } from "#/modules/server/skin/skin.model";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema, createStringBoolSchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
+import { DEFAULT_HEAD } from "@repo/core/modules/skins";
 import type { DB } from "@repo/shared/types/db/general";
 import { type Static, t } from "elysia";
 import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
+import { skinsModel } from "../server/skin/index.model";
+import { env } from "#/shared/env";
 
 export const newsSingleSchema = t.Object({
   id: t.Number(),
@@ -118,7 +120,7 @@ export async function getNewsList({
     created_at: news.created_at.toString(),
     creator: {
       nickname: news.creator,
-      avatar: DEFAULT_HEAD
+      avatar: DEFAULT_HEAD(env.VOLUME_URL)
     },
     imageUrl: getStaticUrl(news.imageUrl)
   }))
@@ -164,7 +166,7 @@ export async function getNewsSingle(
 
   const creator = {
     nickname: newsCreator,
-    avatar: await getPlayerAvatar(newsCreator)
+    avatar: await skinsModel.player.getAvatar(newsCreator)
   }
 
   return {

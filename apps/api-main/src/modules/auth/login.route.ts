@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import bcrypt from "bcryptjs";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import { auth } from "./auth.model";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
@@ -11,7 +11,7 @@ import { ipPlugin } from "#/lib/plugins/index";
 import { defineRequiredUser } from "#/lib/define";
 import Bowser from "bowser";
 import { nats } from "#/shared/nats/client";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth"
 import { isProduction } from "#/shared/env";
@@ -105,7 +105,7 @@ export const withQR = new Elysia()
 			const intervalId = setInterval(() => ws.ping(), 30000);
 			timers.set(wsId, intervalId);
 
-			const nc = nats.get()
+			const nc = nats.getInstance()
 			const subject = loginQR.getQRSubject(token)
 
 			const sub = nc.subscribe(subject, {

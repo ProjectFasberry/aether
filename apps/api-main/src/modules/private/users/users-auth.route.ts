@@ -10,7 +10,7 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
-  const nc = nats.get()
+  const nc = nats.getInstance()
   nc.publish(SUBJECTS.EVENTS.AUTHORIZATION[event], JSON.stringify({ nickname, created_at }))
 }
 const getWrappedData = <T>(value?: any): T | null => value ? value?.data ?? null : null;
@@ -21,8 +21,8 @@ const playersAuthReg = new Elysia()
     const query = await register.create({ nickname, ip, password, hash });
     return { data: query }
   }, {
-    body: registerSchema.pick({ 
-      nickname: true, password: true, hash: true 
+    body: registerSchema.pick({
+      nickname: true, password: true, hash: true
     }),
     afterResponse: ({ responseValue }) => {
       const res = getWrappedData<{ nickname: string, created_at: Date }>(responseValue)

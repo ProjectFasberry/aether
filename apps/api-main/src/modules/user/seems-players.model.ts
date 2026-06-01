@@ -1,13 +1,13 @@
 import { getRedisKey } from "#/helpers/redis";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
-import { getRedis } from "#/shared/redis/client";
-import { safeJsonParse } from "#/utils/config/transforms";
+import { redis } from "#/shared/redis/client";
 import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
 import * as z from "zod";
-import { getPlayersAvatar } from "../server/skin/skin.model";
+import { skinsModel } from "../server/skin/index.model";
+import { safeJsonParse } from "#/utils";
 
 export type SeemsLikePlayer = {
 	nickname: string;
@@ -32,7 +32,7 @@ const TTL_MS = SIX_HOURS_MS;
 const LIMIT = 32;
 
 export async function updateSeemsLikeList() {
-	const redis = getRedis();
+  const redisClient = redis.getInstance()
 	const BATCH_SIZE = 100;
 	const CONCURRENCY = 16;
 	const limit = pLimit(CONCURRENCY);
@@ -46,7 +46,7 @@ export async function updateSeemsLikeList() {
 	const start = Date.now();
 	const candidates: { nickname: string; uuid: string }[] = [];
 
-	const pipeline = redis.multi();
+	const pipeline = redisClient.multi();
 
 	for (const p of players) {
 		pipeline.get(SEEMS_LIKE_LAST_UPDATE_KEY(p.nickname));
@@ -86,7 +86,7 @@ export async function updateSeemsLikeList() {
 				limit(async () => {
 					try {
 						const data = batchResult[player.nickname];
-						const multi = redis.multi();
+						const multi = redisClient.multi();
 
 						multi.set(SEEMS_LIKE_LIST_KEY(player.nickname), JSON.stringify(data), "PX", TTL_MS);
 						multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname), Date.now().toString(), "PX", TTL_MS);
@@ -186,7 +186,7 @@ export async function processSeemsLikePlayersBatch(
 			fullPlayersMap[p.nickname] = p;
 		});
 	}
-	
+
 	const result: Record<string, RawSeemsLikePlayer[]> = {};
 
 	for (const player of batch) {
@@ -237,9 +237,9 @@ export async function getSeemsLikePlayersByPlayer(
 	nickname: string,
 	{ limit }: z.infer<typeof seemsPlayersSchema>,
 ): Promise<SeemsLikePlayersPayload> {
-	const redis = getRedis();
+  const redisClient = redis.getInstance()
 
-	const dataStr = await redis.get(SEEMS_LIKE_LIST_KEY(nickname));
+	const dataStr = await redisClient.get(SEEMS_LIKE_LIST_KEY(nickname));
 
 	if (!dataStr)
 		return {
@@ -264,7 +264,7 @@ export async function getSeemsLikePlayersByPlayer(
 		data = data.slice(0, limit);
 	}
 
-	const avatarsMap = await getPlayersAvatar(data.map(r => r.nickname));
+	const avatarsMap = await skinsModel.players.getAvatar(data.map(r => r.nickname));
 
 	data = data.map((row) => ({
 		...row,

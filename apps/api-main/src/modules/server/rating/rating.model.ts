@@ -9,10 +9,10 @@ import type { DB as bisquiteDB } from "@repo/shared/types/db/bisquite";
 import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation";
-import { getPlayerAvatar, getPlayersAvatar } from "../skin/skin.model";
 import { type Static, t, type TSchema } from "elysia";
-import { invariant } from "#/helpers/invariant";
 import { general } from "#/shared/database/general-db";
+import { skinsModel } from "../skin/index.model";
+import { invariant } from "#/utils";
 
 export const ratingSchema = t.Composite([
 	t.Pick(metaSchema, ["asc", "limit", "endCursor"]),
@@ -161,7 +161,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 		parseCursor: (cursor) => ({ points: Number(cursor.points) }),
 	});
 
-	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname));
+	const avatarsMap = await skinsModel.players.getAvatar(result.rows.map(r => r.nickname));
 
 	const data = result.rows.map((row) => ({
 		nickname: row.nickname,
@@ -194,7 +194,7 @@ async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingS
 		parseCursor: (cursor) => ({ score: Number(cursor.score) }),
 	});
 
-	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
+	const avatarsMap = await skinsModel.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
 		player: row.player ?? "unknown",
@@ -253,7 +253,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof r
 
 				membersMap.set(uuid, {
 					nickname,
-					avatar: await getPlayerAvatar(nickname),
+					avatar: await skinsModel.player.getAvatar(nickname),
 					chunks
 				})
 			}
@@ -297,7 +297,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 		parseCursor: (cursor) => ({ balance: Number(cursor.balance) }),
 	});
 
-	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
+	const avatarsMap = await skinsModel.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
 		nickname: row.nickname ?? "unknown",
@@ -346,7 +346,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 			return {
 				reputation: row.reputation ?? 0,
 				uuid: row.uuid ?? query.uuid,
-				avatar: await getPlayerAvatar(nickname),
+				avatar: await skinsModel.player.getAvatar(nickname),
 				nickname,
 			};
 		}),
@@ -377,7 +377,7 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 		parseCursor: (cursor) => ({ total: Number(cursor.total) }),
 	});
 
-	const avatarsMap = await getPlayersAvatar(result.rows.map(r => r.nickname!));
+	const avatarsMap = await skinsModel.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
 		nickname: row.nickname ?? "unknown",

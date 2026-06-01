@@ -28,6 +28,7 @@
         "@nats-io/transport-node": "3.2.0",
         "@oslojs/crypto": "1.0.1",
         "@oslojs/encoding": "1.1.0",
+        "@repo/core": "workspace:*",
         "@repo/shared": "workspace:*",
         "@scure/bip39": "2.0.1",
         "@sinclair/typebox": "0.34.49",
@@ -62,9 +63,11 @@
       "dependencies": {
         "@elysia/bearer": "1.4.4",
         "@elysia/cors": "1.4.2",
+        "@elysia/openapi": "1.4.15",
         "@nats-io/jetstream": "3.2.0",
         "@nats-io/nats-core": "3.2.0",
         "@nats-io/transport-node": "3.2.0",
+        "@repo/core": "workspace:*",
         "@repo/shared": "workspace:*",
         "@sinclair/typebox": "0.34.49",
         "@tqman/nice-logger": "1.1.1",
@@ -75,6 +78,7 @@
         "ioredis": "5.6.1",
         "ky": "2.0.2",
         "kysely": "0.28.2",
+        "minio": "8.0.5",
         "modern-rcon": "1.0.3",
         "mysql2": "3.14.1",
         "pg": "8.13.1",
@@ -117,12 +121,40 @@
       "name": "@repo/config-typescript",
       "version": "0.1.0",
     },
+    "pkgs/core": {
+      "name": "@repo/core",
+      "version": "0.1.0",
+      "dependencies": {
+        "@napi-rs/canvas": "0.1.97",
+        "@nats-io/jetstream": "3.2.0",
+        "@nats-io/nats-core": "3.2.0",
+        "@nats-io/transport-node": "3.2.0",
+        "elysia": "1.4.28",
+        "ioredis": "5.6.1",
+        "ky": "2.0.2",
+        "kysely": "0.28.2",
+        "minio": "8.0.5",
+        "modern-rcon": "^1.0.3",
+        "nanoid": "5.1.5",
+        "p-limit": "7.1.1",
+        "zod": "4.2.1",
+      },
+      "devDependencies": {
+        "@repo/config-typescript": "workspace:*",
+        "@repo/shared": "workspace:*",
+        "@types/pg": "8.11.10",
+        "bun-types": "1.2.17",
+        "kysely-codegen": "0.19.0",
+        "mysql2": "3.14.1",
+        "pg": "8.13.1",
+        "typescript": "~5.8.3",
+      },
+    },
     "pkgs/shared": {
       "name": "@repo/shared",
       "version": "0.1.0",
       "dependencies": {
         "clsx": "2.1.1",
-        "consola": "3.4.2",
         "kysely": "0.28.2",
         "tailwind-merge": "3.5.0",
         "zod": "4.2.1",
@@ -366,6 +398,8 @@
     "@repo/config-drizzle": ["@repo/config-drizzle@workspace:pkgs/config-drizzle"],
 
     "@repo/config-typescript": ["@repo/config-typescript@workspace:pkgs/config-typescript"],
+
+    "@repo/core": ["@repo/core@workspace:pkgs/core"],
 
     "@repo/shared": ["@repo/shared@workspace:pkgs/shared"],
 

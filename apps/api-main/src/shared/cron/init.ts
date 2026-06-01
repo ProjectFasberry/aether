@@ -1,6 +1,6 @@
 import { Cron, type CronOptions } from "croner";
 import { CRON_JOBS } from "./jobs";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 
 type CronTask = Pick<(typeof CRON_JOBS)[number], "immediately" | "schedule" | "allowIsDev"> & {
 	scheduledTo: Date;

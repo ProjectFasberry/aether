@@ -1,5 +1,8 @@
-import { logger } from "./logger";
+import { logger } from "../../shared/constants/logger";
+import { isError } from "@repo/shared/lib/helpers"
 
-export function logErrorMsg(e: Error | unknown) {
-  if (e instanceof Error) logger.error(e.message)
+export function logErrorMsg(e: unknown) {
+  if (isError(e)) {
+    logger.error(e.message)
+  }
 }

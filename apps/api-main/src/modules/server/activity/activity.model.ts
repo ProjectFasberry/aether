@@ -3,9 +3,10 @@ import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { sql } from "kysely";
-import { getPlayerStatusGlobal } from "../status/status.model";
-import { invariant } from "#/helpers/invariant";
 import type { PlayerActivityPayload } from "./activity-now.route";
+import { env } from "#/shared/env";
+import { serverStatus } from "../status/index.model";
+import { invariant } from "#/utils";
 
 type PlayerStatus = {
   nickname: string;
@@ -42,10 +43,14 @@ async function getUserLastVisitTime(nickname: string) {
 }
 
 export async function getPlayerStatus(nickname: string): Promise<PlayerActivityPayload> {
-  const nc = nats.get()
+  const nc = nats.getInstance()
 
   try {
-    const playerStatus = await getPlayerStatusGlobal(nickname)
+    const playerStatus = await serverStatus.getPlayerStatusGlobal({
+      nickname,
+      panelPassword: env.PANEL_PASSWORD,
+      panelUser: env.PANEL_USER,
+    })
 
     if (playerStatus) {
       const { currentServer } = playerStatus

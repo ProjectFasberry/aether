@@ -10,7 +10,7 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
 
 function publish(event: string, data: { initiator: string, payload: string }) {
-  const nc = nats.get()
+  const nc = nats.getInstance()
   nc.publish(SUBJECTS.EVENTS.USERS.CONTROL.WILDCARD, JSON.stringify({ event, data }))
 }
 

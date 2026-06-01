@@ -1,6 +1,6 @@
-import { invariant } from "#/helpers/invariant";
 import { general } from "#/shared/database/general-db"
 import { metaSchema } from "#/shared/schemas";
+import { invariant } from "#/utils";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { type Static, t } from "elysia";

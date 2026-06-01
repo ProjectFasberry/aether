@@ -14,7 +14,7 @@ export async function createAdminActivityLog(
     .returningAll()
     .executeTakeFirstOrThrow()
 
-  const nc = nats.get()
+  const nc = nats.getInstance()
 
   nc.publish(ACTIVITY_LOG_SUBJECT, JSON.stringify(query))
 

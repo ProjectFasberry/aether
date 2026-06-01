@@ -1,15 +1,16 @@
 import { bisquite } from "#/shared/database/bisquite-db";
-import { safeJsonParse, wrapMeta } from "#/utils/config/transforms";
+import { wrapMeta } from "#/utils/config/transforms";
 import { landHelpers } from "#/utils/lands/lands-helpers";
 import { getPlayerUUID } from "#/utils/player/uuid";
 import { type Static, t } from "elysia";
-import { getPlayersAvatar } from "../skin/skin.model";
 import { withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
 import type { SelectExpression } from "kysely";
 import type { DB } from "@repo/shared/types/db/bisquite";
+import { skinsModel } from "../skin/index.model";
+import { safeJsonParse } from "#/utils";
 
 export const landSchema = t.Object({
   area: t.Nullable(
@@ -172,7 +173,7 @@ export async function getLandsByNickname(
 
   const nameMap = new Map(membersList.map(m => [m.uuid, m.name]))
 
-  const avatarsMap = await getPlayersAvatar(
+  const avatarsMap = await skinsModel.players.getAvatar(
     Array.from(nameMap).map(([_, nickname]) => nickname)
   );
 
@@ -254,7 +255,7 @@ export async function getLand(
   }
 
   async function getMembers() {
-    const avatarsMap = await getPlayersAvatar(membersRaw.map(r => r.nickname));
+    const avatarsMap = await skinsModel.players.getAvatar(membersRaw.map(r => r.nickname));
 
     const data = membersRaw.map((member, idx) => ({
       uuid: member.uuid,
@@ -426,7 +427,7 @@ export async function getLands({
     .execute();
 
   const nameMap = new Map(playersList.map(p => [p.uuid, p.nickname]));
-  const avatarsMap = await getPlayersAvatar(Array.from(nameMap).map(([_, nickname]) => nickname));
+  const avatarsMap = await skinsModel.players.getAvatar(Array.from(nameMap).map(([_, nickname]) => nickname));
 
   const data = parsedLands.map((land) => {
     const members = Object

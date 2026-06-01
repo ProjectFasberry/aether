@@ -3,15 +3,14 @@ import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { authLogger, auth } from "./auth.model";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant, safeJsonParse } from "@repo/shared/lib/utils";
 import Bowser from "bowser";
-import { getRedis } from "#/shared/redis/client";
+import { redis } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
 import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/types/entities/auth";
 import { type Static, t, type Context } from "elysia";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
-import { safeJsonParse } from "#/utils/config/transforms";
 
 export const loginLogger = authLogger.withTag("Login");
 export const qrLogger = loginLogger.withTag("QR");
@@ -100,7 +99,7 @@ type StringifiedUserSessionParsedPayload = Pick<UserSessionParsedPayload, "nickn
 
 export const session = {
   async refreshSession(token: string) {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance();
     const sessionKey = auth.getSessionKey(token);
 
     const remainingTtlMs = await redisClient.pttl(sessionKey);
@@ -164,11 +163,11 @@ export const session = {
   },
   _afterLoginEvents({ nickname }: { nickname: string }) {
     nats
-      .get()
+      .getInstance()
       .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify({ created_at: dayjs().toDate(), nickname }));
   },
   async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance()
 
     const userSessionsKey = sessions.getUserSessionsKey(nickname);
     const currSessionsCount = await redisClient.zcard(userSessionsKey);
@@ -232,7 +231,7 @@ export const session = {
     return { token, expires_at };
   },
   async delete(sessionToken: string): Promise<void> {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance()
     const sessionKey = auth.getSessionKey(sessionToken);
 
     const sessionDataStr = await redisClient.get(sessionKey);
@@ -263,7 +262,7 @@ export const session = {
     }
   },
   async get({ nickname, sessionToken }: { nickname: string, sessionToken: string }): Promise<UserSessionParsedPayload | null> {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance()
 
     const sessionsKey = sessions.getUserSessionsKey(nickname);
 
@@ -289,7 +288,7 @@ export const session = {
 async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParsedPayload[]> {
   if (sessionsKeys.length === 0) return [];
 
-  const redisClient = getRedis();
+  const redisClient = redis.getInstance()
 
   const dataRowsStr = await redisClient.mget(sessionsKeys);
   const dataRowsStrFiltered = dataRowsStr.filter((k): k is string => k !== null);
@@ -310,7 +309,7 @@ async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParse
 export const sessions = {
   getUserSessionsKey: (nickname: string) => `user_sessions:${nickname}`,
   async get(nickname: string): Promise<UserSessionParsedPayload[]> {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance()
 
     const sessionsListKey = this.getUserSessionsKey(nickname);
 
@@ -323,7 +322,7 @@ export const sessions = {
     return dataRows
   },
   async delete({ nickname, sessionToken }: { nickname: string, sessionToken: string }) {
-    const redisClient = getRedis();
+    const redisClient = redis.getInstance()
 
     const sessionsListKey = sessions.getUserSessionsKey(nickname);
     const currentSessionScore = await redisClient.zscore(sessionsListKey, sessionToken);
@@ -358,7 +357,7 @@ export const sessions = {
     });
   },
   async deleteById({ nickname, targetToken, sessionToken }: { nickname: string, targetToken: string, sessionToken: string }) {
-    const redisClient = getRedis();
+    const redisClient =redis.getInstance()
 
     const sessionsListKey = sessions.getUserSessionsKey(nickname);
     const currentSessionScore = await redisClient.zscore(sessionsListKey, sessionToken);
@@ -422,19 +421,19 @@ export const loginQR = {
   createQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
   _afterEvents(type: QREventsEvent, token: string) {
     nats
-      .get()
+      .getInstance()
       .publish(this.createQRSubject(type, token), JSON.stringify({ data: token }));
   },
   async generate({ visitorId, ip, userAgentStr }: LoginQRGenerateParams): Promise<QRGeneratePayload> {
     const token = nanoid(12);
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
 
     const payload: LoginQRKeyPayload = {
       ua: userAgentStr, vId: visitorId, ip, status: "pending",
     };
 
-    const createQRResult = await redis
+    const createQRResult = await redisClient
       .pipeline()
       .hset(key, payload)
       .expire(key, QR_VERIFY_TIMEOUT_S)
@@ -452,25 +451,25 @@ export const loginQR = {
     return { token };
   },
   async deleteToken(token: string): Promise<void> {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
-    const status = await redis.hget(key, "status") as LoginQRKeyPayload["status"]
+    const status = await redisClient.hget(key, "status") as LoginQRKeyPayload["status"]
 
     if (status !== 'verified') {
-      await redis.del(key)
+      await redisClient.del(key)
       return;
     }
   },
   async checkQRTokenExistence(token: string): Promise<number> {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
-    return await redis.exists(key);
+    return await redisClient.exists(key);
   },
   async confirm({ token, nickname }: { token: string, nickname: string }): Promise<void> {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
 
-    const currStatus = await redis.hget(key, "status");
+    const currStatus = await redisClient.hget(key, "status");
     if (currStatus !== "pending") throw new Error("Invalid or expired token state");
 
     const updatePd: Pick<LoginQRKeyPayload, "status" | "verifiedBy"> = {
@@ -478,15 +477,15 @@ export const loginQR = {
       verifiedBy: nickname
     }
 
-    await redis.hset(key, updatePd);
+    await redisClient.hset(key, updatePd);
 
     this._afterEvents("verified", token);
   },
   async getData(token: string) {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
 
-    const data = await redis.hgetall(key);
+    const data = await redisClient.hgetall(key);
     if (!data || Object.keys(data).length === 0) throw new Error("Token is expired or not found");
 
     return {
@@ -495,24 +494,24 @@ export const loginQR = {
     };
   },
   async decline({ token }: { token: string }) {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(token);
-    await redis.del(key);
+    await redisClient.del(key);
 
     this._afterEvents("declined", token);
   },
   async afterCreateSession({ qrToken }: { qrToken: string }) {
-    const redis = getRedis();
+    const redisClient = redis.getInstance();
     const key = this.getQRTokenKey(qrToken);
 
-    const status = await redis.hget(key, "status");
+    const status = await redisClient.hget(key, "status");
     if (status !== "verified") return;
 
     const updatePd: Partial<LoginQRKeyPayload> = {
       status: "confirmed"
     }
 
-    const createSessionQRResult = await redis
+    const createSessionQRResult = await redisClient
       .pipeline()
       .hset(key, updatePd)
       .expire(key, QR_CONFIRM_TIMEOUT_S)

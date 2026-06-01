@@ -8,8 +8,8 @@ const watchtower = new Elysia()
   .post("/watchtower", async ({ body }) => {
     const { message, title } = body;
 
-    for (const chat_id of chats.get()) {
-      await bot.get().api.sendMessage({
+    for (const chat_id of chats.getData()) {
+      await bot.getInstance().api.sendMessage({
         chat_id,
         text: `🛠 *${title}*\n\n\`\`\`\n${message}\n\`\`\``,
         parse_mode: "MarkdownV2",

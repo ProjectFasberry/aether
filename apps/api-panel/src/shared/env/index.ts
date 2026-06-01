@@ -1,4 +1,4 @@
-import { appLogger } from "../logger";
+import { logger } from "../logger";
 import Schema, { ParseError } from "typebox/schema"
 import Type, { type Static } from "typebox"
 
@@ -12,6 +12,7 @@ const envSchema = Type.Object({
   REDIS_USER: Type.String(),
   REDIS_PASSWORD: Type.String(),
   GENERAL_POSTGRES_URI: Type.String(),
+  SKINS_MYSQL_URI: Type.String(),
   PORT: CoerceNumber,
   BOT_GUARD_TOKEN: Type.String(),
   RCON_PASSWORD: Type.String(),
@@ -21,6 +22,11 @@ const envSchema = Type.Object({
   NATS_USER: Type.String(),
   NATS_PASSWORD: Type.String(),
   NATS_HOST: Type.String(),
+  VOLUME_URL: Type.String(),
+  MINIO_HOST: Type.String(),
+  MINIO_PORT: CoerceNumber,
+  MINIO_ACCESS_KEY: Type.String(),
+  MINIO_SECRET_KEY: Type.String(),
 })
 
 export type Env = Static<typeof envSchema> & { PROD: boolean };
@@ -35,11 +41,13 @@ export function initEnv() {
       ...result,
       PROD: Bun.env.NODE_ENV === "production",
     };
+
+     logger.success("Env is fine");
   } catch (e) {
     if (e instanceof ParseError) {
-      appLogger.error("Env error:\n", e.errors);
+      logger.error("Env error:\n", e.errors);
     } else {
-      appLogger.error("Env error:\n", String(e));
+      logger.error("Env error:\n", String(e));
     }
 
     process.exit(1);

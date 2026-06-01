@@ -1,322 +1,350 @@
 import { format } from "gramio";
-// import { bot as botService } from ".";
+import { bot } from ".";
 import { type CommandCtx, GUARD_COMMANDS } from "./cmds";
 import { Keyboard } from "gramio";
 import { chats } from "./chats";
-import { botLogger } from "../logger";
 import { urls } from "./urls";
 import { rcon } from "../rcon/client";
 import { env } from "../env";
 import { wrapError } from "@repo/shared/lib/utils";
+import { createSkins } from "@repo/core/modules/skins/index";
+import { general as generalDb, skins as skinsDb } from "../database";
+import { nats } from "../nats/client";
+import { redis } from "../redis/client";
+import { minio } from "../minio/client";
+import { createServerStatus } from "@repo/core/modules/status/index"
+
+const skinsModel = createSkins({
+  databases: {
+    general: generalDb,
+    skins: skinsDb
+  },
+  config: {
+    VOLUME_URL: env.VOLUME_URL
+  },
+  redis: redis.getInstance,
+  nats: nats.getInstance
+})
+
+const serverStatus = createServerStatus({
+  generalDb,
+  config: {
+    VOLUME_URL: env.VOLUME_URL
+  },
+})
 
 export async function botInfoCmdCb(ctx: CommandCtx) {
-	const commandsList = GUARD_COMMANDS.map((cmd) => {
-		return `${cmd.publicHandler ? "🌍" : "🔐"} <code>/${cmd.name}</code>`;
-	}).join("\n");
+  const cmdsList = GUARD_COMMANDS.map((cmd) => `${cmd.handlers?.public ? "🌍" : "🔐"} <code>/${cmd.name}</code>`).join("\n");
 
-	const message = format`
-<b>🤖 Info about the commands</b>
+  const message = format`
+    <b>🤖 Info about the commands</b>
 
-Handlers uploaded: <code>${GUARD_COMMANDS.length}</code>
+    Handlers uploaded: <code>${GUARD_COMMANDS.length}</code>
 
-${commandsList}
+    ${cmdsList}
 
-<i>🔐 — only privated chats
-🌍 — public available</i>
+    <i>🔐 — only privated chats
+    🌍 — public available</i>
   `;
 
-	await ctx.send(message, { parse_mode: "HTML" });
-	await ctx.delete().catch(() => {});
+  await ctx.send(message, { parse_mode: "HTML" });
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function backendInfoCmdCb(ctx: CommandCtx) {
-	const urlsEntries = Array.from(urls.get().entries());
-	const chatsList = chats.get();
+  const urlsEntries = Array.from(urls.getData().entries());
+  const chatsList = chats.getData();
 
-	const urlsText =
-		urlsEntries.length > 0 ? urlsEntries.map(([key, val]) => `• <code>${key}</code>: ${val}`).join("\n") : "пусто";
+  const urlsText = urlsEntries.length > 0
+    ? urlsEntries.map(([key, val]) => `• <code>${key}</code>: ${val}`).join("\n")
+    : "empty";
 
-	const chatsText = chatsList.length > 0 ? chatsList.map((id) => `• <code>${id}</code>`).join("\n") : "пусто";
+  const chatsText = chatsList.length > 0
+    ? chatsList.map((id) => `• <code>${id}</code>`).join("\n")
+    : "empty";
 
-	const message = format`
-🖥 Backend Information
+  const message = format`
+    🖥 Backend Information
 
-🔗 Endpoints:
-${urlsText}
+    🔗 Endpoints: ${urlsText}
 
-💬 Whitelisted Chats:
-${chatsText}
-    `;
+    💬 Whitelisted Chats: ${chatsText}
+  `;
 
-	await ctx.send(message, { parse_mode: "HTML" });
-	await ctx.delete().catch(() => {});
+  await ctx.send(message, { parse_mode: "HTML" });
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function revalidateChatsCmdCb(ctx: CommandCtx) {
-	const result = await chats.revalidate();
+  const result = await chats.revalidate();
 
-	if (!result.ok) {
-		const errorMessage = wrapError(result.error).error;
+  if (!result.ok) {
+    const errorMsg = wrapError(result.error).error;
 
-		ctx.send(
-			format`
-            ❌ <b>Error in chats updating</b>
-
-            <code>${errorMessage}</code>
+    ctx.send(
+      format`
+        <b>Error in chats updating</b>
+        <code>${errorMsg}</code>
         `,
-			{ parse_mode: "HTML" },
-		);
+      { parse_mode: "HTML" },
+    );
 
-		return;
-	}
+    return;
+  }
 
-	const { prev, upd } = result.data;
-	const diff = upd - prev;
-	const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
+  const { prev, upd } = result.data;
+  const diff = upd - prev;
+  const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
 
-	const message = format`
-        ✅ <b>Chats list updated</b>
+  const message = format`
+    ✅ <b>Chats list updated</b>
 
-        📊 Result:
-        • Было в памяти: <code>${prev}</code>
-        • Загружено сейчас: <code>${upd}</code>
-        • Изменение: <code>${diffText}</code>
-    `;
+    📊 Result:
+    before: <code>${prev}</code>
+    after: <code>${upd}</code>
+    changed: <code>${diffText}</code>
+  `;
 
-	await ctx.send(message, { parse_mode: "HTML" });
-	await ctx.delete().catch(() => {});
+  await ctx.send(message, { parse_mode: "HTML" });
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
-	const result = await urls.revalidate();
+  const result = await urls.revalidate();
 
-	if (!result.ok) {
-		const errorMessage = wrapError(result.error).error;
+  if (!result.ok) {
+    const errorMsg = wrapError(result.error).error;
 
-		ctx.send(
-			format`
-      ❌ <b>Error urls revalidating</b>
+    await ctx.send(
+      format`
+        <b>Error urls revalidating</b>
+        <code>${errorMsg}</code>
+      `,
+      { parse_mode: "HTML" },
+    );
 
-      <code>${errorMessage}</code>
-    `,
-			{ parse_mode: "HTML" },
-		);
+    return;
+  }
 
-		return;
-	}
+  const { prev, upd } = result.data;
+  const diff = upd - prev;
+  const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
 
-	const { prev, upd } = result.data;
-	const diff = upd - prev;
-	const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
-
-	const message = format`
+  const message = format`
     ✅ <b>Urls updated</b>
 
     📊 Result:
-    • Было: <code>${prev}</code>
-    • Стало: <code>${upd}</code>
-    • Изменение: <code>${diffText}</code>
+    before: <code>${prev}</code>
+    after: <code>${upd}</code>
+    changed: <code>${diffText}</code>
   `;
 
-	await ctx.send(message, { parse_mode: "HTML" });
-	await ctx.delete().catch(() => {});
+  await ctx.send(message, { parse_mode: "HTML" });
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
-// type TaskResult = boolean | Map<string, boolean>;
+export async function updateSkinCmdCb(ctx: CommandCtx) {
+  const [nickname] = ctx.args?.split(/\s+/) ?? [];
+  const chatId = ctx.chat.id.toString();
 
-// export async function updateSkinCmdCb(ctx: CommandCtx) {
-// 	const [targetPlayer] = ctx.args?.split(/\s+/) ?? [];
-// 	const chatId = ctx.chat.id.toString();
+  const opts = {
+    batchSize: 1000,
+    concurrency: 100
+  };
 
-// 	const BATCH_OPTS = { batchSize: 1000, conc: 100 };
+  const updateVariant = (nickname && nickname.trim().length > 0) ? "single" : "all";
 
-// 	const isSinglePlayer = Boolean(targetPlayer);
+  const taskFn = updateVariant === "single"
+    ? () => skinsModel.skin.initSkin({
+      nickname,
+      minio: minio.getInstance,
+      onStart() {
+        bot.logger.log(`Start updating skin for ${nickname}`)
+      },
+      async onFinish() {
+        const botClient = bot.getInstance();
 
-// 	const taskFn = isSinglePlayer
-// 		? () => initPlayerSkin(targetPlayer!)
-// 		: () => updatePlayersSkins(BATCH_OPTS.conc, BATCH_OPTS.batchSize);
+        await botClient.api.sendMessage({
+          chat_id: chatId,
+          text: `📊 Success for ${nickname}`,
+          parse_mode: "HTML",
+        });
+      },
+      onError(e) {
+        bot.logger.error(`Skin ${nickname} updating error`, e)
+      },
+    })
+    : () => skinsModel.skin.updateSkins({
+      ...opts,
+      minio: minio.getInstance,
+      onStart() {
+        bot.logger.log("Start updating skins all users")
+      },
+      async onSuccess(processedCount) {
+        const botClient = bot.getInstance();
 
-// 	const startNotice = isSinglePlayer
-// 		? `🚀 Обновление скина игрока: <code>${targetPlayer}</code>`
-// 		: `🚀 Массовое обновление скинов (batch: ${BATCH_OPTS.batchSize}, conc: ${BATCH_OPTS.conc})`;
+        await botClient.api.sendMessage({
+          chat_id: chatId,
+          text: `📊 Success updating ${processedCount} users`,
+          parse_mode: "HTML",
+        });
+      },
+      onSuccessPlayer(nickname) {
+        bot.logger.log(`Skin ${nickname} updated`)
+      },
+      onError(e) {
+        bot.logger.error(`Skins updating error`, e)
+      },
+      onErrorPlayer(nickname, e) {
+        bot.logger.error(`Skin ${nickname} updating error`, e)
+      },
+    });
 
-// 	executeBackgroundTask(ctx, chatId, taskFn, startNotice);
+  const startNotice = updateVariant === 'single'
+    ? `Updating the player skin: <code>${nickname}</code>`
+    : `Mass update of skins\nParameters: ${JSON.stringify(opts, null, 1)}`;
 
-// 	await ctx.delete().catch(() => { });
-// }
+  try {
+    await ctx.send(startNotice, { parse_mode: "HTML" });
+    await taskFn();
+    await ctx.delete({ message_id: ctx.id }).catch(() => { });
+  } catch (e) {
+    const payload = {
+      chat_id: chatId,
+      text: `❌ <b>Error</b>\n<code>${String(e)}</code>`,
+      parse_mode: "HTML",
+    } as const;
 
-// async function executeBackgroundTask<T>(
-// 	ctx: CommandCtx,
-// 	chatId: string,
-// 	fn: () => Promise<TaskResult>,
-// 	startMsg: string,
-// ) {
-// 	try {
-// 		await ctx.send(startMsg, { parse_mode: "HTML" });
+    await bot.getInstance().api.sendMessage(payload).catch(() => { });
+  }
+}
 
-// 		const result = await fn();
+export async function statusCmdCb(ctx: CommandCtx) {
+  const status = await serverStatus.getData({ redis: redis.getInstance });
 
-// 		let resultText: string;
+  const proxyInfo = status?.proxy ? `${status.proxy.online}/${status.proxy.max}` : "n/a";
 
-// 		if (result instanceof Map) {
-// 			const values = Array.from(result.values());
-// 			const successCount = values.filter((v) => v === true).length;
-// 			resultText = `✅ Завершено. Успешно: ${successCount}/${values.length}`;
-// 		} else {
-// 			resultText = result ? "✅ Успешно завершено" : "❌ Ошибка при выполнении";
-// 		}
+  const serversEntries = Object.entries(status?.servers ?? {});
+  const serversText = serversEntries.length > 0
+    ? serversEntries.map(([name, data]) => `• ${name}: ${data.online}/${data.max}`).join("\n")
+    : "n/a";
 
-// 		const bot = botService.get();
+  const message = format`
+    📊 Server status
+    🌐 Global online: <code>${proxyInfo}</code>
+    🖥 Details:
+    ${serversText}
+  `;
 
-// 		await bot.api.sendMessage({
-// 			chat_id: chatId,
-// 			text: `📊 <b>Результат задачи:</b>\n${resultText}`,
-// 			parse_mode: "HTML",
-// 		});
-// 	} catch (e) {
-// 		botLogger.error(e);
-
-// 		const bot = botService.get();
-
-// 		await bot.api
-// 			.sendMessage({
-// 				chat_id: chatId,
-// 				text: `❌ <b>Критическая ошибка задачи</b>\n<code>${String(e)}</code>`,
-// 				parse_mode: "HTML",
-// 			})
-// 			.catch(() => { });
-// 	}
-// }
-
-// export async function statusCmdCb(ctx: CommandCtx) {
-// 	const status = await getServerStatus({});
-
-// 	const proxyInfo = status?.proxy ? `${status.proxy.online}/${status.proxy.max}` : "n/a";
-
-// 	const serversEntries = Object.entries(status?.servers ?? {});
-// 	const serversText =
-// 		serversEntries.length > 0
-// 			? serversEntries.map(([name, data]) => `• ${name}: ${data.online}/${data.max}`).join("\n")
-// 			: "n/a";
-
-// 	const message = format`
-// 📊 Статус серверов
-
-// 🌐 Общий онлайн: <code>${proxyInfo}</code>
-
-// 🖥 Детализация:
-// ${serversText}
-//     `;
-
-// 	await ctx.send(message, { parse_mode: "HTML" });
-// 	await ctx.delete().catch(() => { });
-// }
+  await ctx.send(message, { parse_mode: "HTML" });
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
+}
 
 export function getCommandName(ctx: CommandCtx, fallback: string = "command"): string {
-	// @ts-expect-error
-	if (ctx.info?.name) return ctx.info.name;
-	if ((ctx as any).command) return (ctx as any).command;
-	if (ctx.text) return ctx.text.split(/\s+/)[0].slice(1).split("@")[0];
-	return fallback;
+  // @ts-expect-error
+  if (ctx.info?.name) return ctx.info.name;
+  if ((ctx as any).command) return (ctx as any).command;
+  if (ctx.text) return ctx.text.split(/\s+/)[0].slice(1).split("@")[0];
+  return fallback;
 }
 
 export async function serverAlertCmdCb(ctx: CommandCtx) {
-	const alertMessage = ctx.args?.trim();
+  const alertMsg = ctx.args?.trim();
 
-	if (!alertMessage) {
-		const cmdName = getCommandName(ctx, "alert");
+  if (!alertMsg) {
+    const cmdName = getCommandName(ctx, "alert");
 
-		ctx.send(
-			format`
-            ⚠️ <b>Отсутствует текст объявления</b>
-
-            Using: <code>/${cmdName} [msg]</code>
-
-            <i>Example: /${cmdName} Сервер будет перезагружен через 5 минут</i>
+    ctx.send(
+      format`
+        ⚠️ <b>Text is missing</b>
+        Using: <code>/${cmdName} [msg]</code>
+        <i>Example: /${cmdName} Сервер будет перезагружен через 5 минут</i>
         `,
-			{ parse_mode: "HTML" },
-		);
+      { parse_mode: "HTML" },
+    );
 
-		return;
-	}
+    return;
+  }
 
-	const client = rcon.get();
+  try {
+    const rconClient = rcon.getInstance()
+    const result = await rconClient.send(`alert ${alertMsg}`);
 
-	try {
-		const result = await client.send(`alert ${alertMessage}`);
+    const report = format`
+      📢 <b>Broadcast will be sent on the server</b>
+      📝 Text: <code>${alertMsg}</code>
+      🖥 Response: <code>${result || "ok"}</code>
+    `;
 
-		const report = format`
-            📢 <b>Объявление отправлено на сервер</b>
+    await ctx.send(report, { parse_mode: "HTML" });
+  } catch (e) {
+    console.error(e)
+    await ctx.send(`<b>Error RCON:</b> <code>${String(e)}</code>`, { parse_mode: "HTML" });
+  }
 
-            📝 Текст: <code>${alertMessage}</code>
-            🖥 Ответ сервера: <code>${result || "ok"}</code>
-        `;
-
-		await ctx.send(report, { parse_mode: "HTML" });
-	} catch (e) {
-		botLogger.error(e);
-		await ctx.send(`❌ <b>Error RCON:</b> <code>${String(e)}</code>`, { parse_mode: "HTML" });
-	}
-
-	await ctx.delete().catch(() => {});
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function startCmdCb(ctx: CommandCtx) {
-	const commandsForMenu = GUARD_COMMANDS.filter((cmd) => cmd.description).map((cmd) => ({
-		command: cmd.name,
-		description: cmd.description,
-	}));
+  const commandsForMenu = GUARD_COMMANDS.filter((cmd) => cmd.description).map((cmd) => ({
+    command: cmd.name,
+    description: cmd.description,
+  }));
 
-	const kb = new Keyboard()
-		.columns(2)
-		.add(...commandsForMenu.map((cmd) => Keyboard.text(`/${cmd.command}`)))
-		.resized();
+  const commandsList = commandsForMenu.map((x) => `<b>/${x.command}</b> — <i>${x.description}</i>`).join("\n");
 
-	const commandsList = commandsForMenu.map((x) => `• <b>/${x.command}</b> — <i>${x.description}</i>`).join("\n");
+  const welcomeText = format`
+    👋 <b>Welcome</b>
 
-	const welcomeText = format`
-👋 <b>Welcome to the admin-panel</b>
+    Commands available:
+    ${commandsList}
 
-Commands available:
-${commandsList}
+    <i>Select a command on the keyboard or input it manually.</i>
+  `;
 
-<i>Select a command on the keyboard or input it manually.</i>
-    `;
+  const kb = new Keyboard()
+    .columns(2)
+    .add(...commandsForMenu.map((cmd) => Keyboard.text(`/${cmd.command}`)))
+    .resized();
 
-	await ctx.send(welcomeText, {
-		reply_markup: kb,
-		parse_mode: "HTML",
-	});
+  await ctx.send(welcomeText, {
+    reply_markup: kb,
+    parse_mode: "HTML",
+  });
 
-	await ctx.delete().catch(() => {});
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function publicStartCmdCb(ctx: CommandCtx) {
-	await ctx.send("Hi! Fasberry project is available: https://fasberry.fun");
-	await ctx.delete().catch(() => {});
+  await ctx.send("Hi! Fasberry project is available: https://fasberry.fun");
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
 export async function forceUpdateWatchtower(ctx: CommandCtx) {
-	try {
-		const url = `http://${env.WATCHTOWER_HOST}:${env.WATCHTOWER_PORT}/v1/update`;
+  try {
+    const url = `http://${env.WATCHTOWER_HOST}:${env.WATCHTOWER_PORT}/v1/update`;
 
-		const res = await fetch(url, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${env.WATCHTOWER_API_TOKEN}`,
-			},
-			tls: {
-				rejectUnauthorized: false,
-			},
-		});
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.WATCHTOWER_API_TOKEN}`,
+      },
+      tls: {
+        rejectUnauthorized: false,
+      },
+    });
 
-		if (res.ok) {
-			const text = await res.text();
-			await ctx.send(`Signal sent: ${text}`);
-		} else {
-			await ctx.send(`Watchtower error ${res.status}`);
-		}
-	} catch (e) {
-		await ctx.send(`Network error ${JSON.stringify(e)}`);
-	}
+    if (res.ok) {
+      const text = await res.text();
+      await ctx.send(`Signal sent: ${text}`);
+    } else {
+      await ctx.send(`Watchtower error ${res.status}`);
+    }
+
+  } catch (e) {
+    bot.logger.error("Network error", e);
+    await ctx.send(`Network error`);
+  }
+
+  await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }

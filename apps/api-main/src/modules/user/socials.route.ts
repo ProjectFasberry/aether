@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import type { JsonValue } from "@repo/shared/types/db/general";
 import { defineOptionalUser, defineRequiredUser } from "#/lib/define";
-import { getRedis } from "#/shared/redis/client";
+import { redis } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
@@ -74,7 +74,7 @@ const getSocialsAddCacheKey = (nickname: string, social: string) =>
 const playerSocialsAddList = new Elysia()
   .use(defineRequiredUser())
   .get("/add/list", async ({ nickname }) => {
-    const redis = getRedis();
+    const redisClient = redis.getInstance()
 
     const data: { social: string; code: string }[] = [];
 
@@ -105,10 +105,10 @@ const playerSocialsAdd = new Elysia()
       throw status(400, wrapError("SAVED_SOCIAL_EXISTS"));
     }
 
-    const redis = getRedis();
+    const redisClient = redis.getInstance()
     const socialRedisKey = getSocialsAddCacheKey(nickname, social);
 
-    const existsRequestStr = await redis.get(socialRedisKey);
+    const existsRequestStr = await redisClient.get(socialRedisKey);
     if (existsRequestStr) {
       throw status(400, wrapError("SOCIAL_REQUEST_EXISTS"));
     }
@@ -120,7 +120,7 @@ const playerSocialsAdd = new Elysia()
       code,
     };
 
-    await redis.set(
+    await redisClient.set(
       socialRedisKey,
       JSON.stringify(reqPayload), "EX", 5 * 60
     );

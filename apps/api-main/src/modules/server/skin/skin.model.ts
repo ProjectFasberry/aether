@@ -1,451 +1,21 @@
 import { skins } from "#/shared/database/skins-db";
-import { getAvatarName, getStaticUrl } from "#/helpers/volume";
+import { getAvatarName } from "#/helpers/volume";
 import { getPlayerUUID } from "#/utils/player/uuid";
-import { getRedis } from "#/shared/redis/client";
-import { safeJsonParse } from "#/utils/config/transforms";
-import pLimit from "p-limit";
-import { general } from "#/shared/database/general-db";
-import { sql } from "kysely";
-import { BUCKETS, minio } from "#/shared/minio/client";
+import { minio, BUCKETS } from "#/shared/minio/client";
 import { isProduction, env } from "#/shared/env";
-import { logger } from "#/utils/config/logger";
 import * as z from "zod";
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-} from "node:crypto";
+import { createCipheriv, createHash, randomBytes } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { URL } from "node:url";
 import type { Transaction } from "kysely";
 import type { DB } from "@repo/shared/types/db/skins";
 import { client as inheritClient } from "#/shared/api/client";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import type { KyInstance } from "ky";
-import { type Static, t, type Context } from "elysia";
+import type { Context } from "elysia";
 import { nanoid } from "nanoid";
-import { getRedisKey } from "#/helpers/redis";
-import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { nats } from "#/shared/nats/client";
-import { SUBJECTS } from "#/shared/nats/subjects";
+import { skinsModel } from "./index.model";
 
-export type Skin = {
-  textures: {
-    SKIN: {
-      url: string,
-      metadata: {
-        model: string
-      }
-    }
-  },
-  profileName: string,
-  profileId: string
-}
-
-const DEFAULT_SKIN_VARIANT = "CLASSIC"
-export const DEFAULT_HEAD_PATH = "fallback/steve_head.png"
-const DEFAULT_SKIN = "fallback/steve_skin.png"
-
-export const DEFAULT_HEAD = getStaticUrl(DEFAULT_HEAD_PATH)
-
-async function getCachedSkinPayload(nickname: string): Promise<SkinsHistoryPayload | null> {
-  const redis = getRedis()
-
-  const resultStr = await redis.get(getSkinsHistoryCacheRedisKey(nickname))
-  if (!resultStr) return null;
-
-  const result = safeJsonParse<SkinsHistoryPayload>(resultStr)
-  if (!result.ok) return null;
-
-  return result.value
-}
-
-export async function getSkin(nickname: string): Promise<string> {
-  const result = await getCachedSkinPayload(nickname)
-  if (!result) return DEFAULT_HEAD
-  return result[0].skin_url ?? DEFAULT_HEAD
-}
-
-export async function getCachedSkinPayloads(nicknames: string[]): Promise<Record<string, SkinsHistoryPayload | null>> {
-  const redis = getRedis();
-  const keys = nicknames.map(getSkinsHistoryCacheRedisKey);
-  const resultsStr = await redis.mget(...keys);
-  const map: Record<string, SkinsHistoryPayload | null> = Object.create(null)
-
-  for (let i = 0; i < resultsStr.length; i++) {
-    const val = resultsStr[i];
-    const nickname = nicknames[i];
-
-    if (!val) {
-      map[nickname] = null;
-      continue;
-    }
-
-    const parsed = safeJsonParse<SkinsHistoryPayload>(val);
-    map[nickname] = parsed.ok ? parsed.value : null;
-  }
-
-  return map;
-}
-
-export async function getPlayersAvatar(nicknames: string[]): Promise<Record<string, string>> {
-  const result = await getCachedSkinPayloads(nicknames)
-  const map: Record<string, string> = Object.create(null)
-
-  for (let i = 0; i < nicknames.length; i++) {
-    const name = nicknames[i];
-    const skinData = result[name];
-
-    if (skinData && skinData.length > 0) {
-      map[name] = skinData[0].skin_head_url ?? DEFAULT_HEAD;
-    } else {
-      map[name] = DEFAULT_HEAD;
-    }
-  }
-
-  return map
-}
-
-export async function getPlayerAvatar(nickname: string): Promise<string> {
-  const result = await getCachedSkinPayload(nickname)
-  if (!result) return DEFAULT_HEAD
-  return result[0].skin_head_url ?? DEFAULT_HEAD
-}
-
-export const getSkinsHistoryCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:skins:${nickname}`)
-
-export type SkinsHistoryPayload = Static<typeof skinsHistorySchema>
-
-export const skinHistorySingleSchema = t.Object({
-  skin_identifier: t.String(),
-  skin_variant: t.Nullable(t.String()),
-  timestamp: t.Number(),
-  skin_url: t.Nullable(t.String()),
-  skin_head_url: t.Nullable(t.String())
-})
-
-export const skinsHistorySchema = t.Array(
-  skinHistorySingleSchema
-)
-type SkinsHistory = Static<typeof skinHistorySingleSchema>
-export async function getSkinsHistory({ nickname }: { nickname: string }) {
-  const result = await getCachedSkinPayload(nickname)
-  return result
-}
-
-const getDefaultSkinHead = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
-const getCustomHead = (nickname: string, identifier: string) => `${env.VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
-
-function isCustomSkin(identifier: string) {
-  return identifier.startsWith("sr")
-}
-
-type PlayerSkinPayload = Pick<SkinsHistory, "skin_identifier" | "skin_variant" | "timestamp"> & { value: string }
-
-async function getDefaultSkin() {
-  return await skins
-    .selectFrom("sr_custom_skins")
-    .innerJoin("sr_url_skins", "sr_url_skins.value", "sr_custom_skins.value")
-    .select([
-      "sr_custom_skins.value",
-      "sr_url_skins.url as skin_identifier",
-      "sr_url_skins.skin_variant",
-    ])
-    .where("sr_custom_skins.name", "=", "default")
-    .executeTakeFirstOrThrow()
-}
-
-export async function getHeadFromSkin(url: string, size = 128) {
-  const skin = await loadImage(url);
-
-  const canvas = createCanvas(size, size);
-  const ctx = canvas.getContext('2d');
-
-  ctx.imageSmoothingEnabled = false;
-
-  ctx.drawImage(skin, 8, 8, 8, 8, 0, 0, size, size);
-  ctx.drawImage(skin, 40, 8, 8, 8, 0, 0, size, size);
-
-  return canvas.toBuffer('image/png');
-}
-
-async function performHead(data: SkinsHistory[], nickname: string) {
-  const state: SkinsHistory[] = data
-    .map(d => isCustomSkin(d.skin_identifier) ? d : null)
-    .filter(d => d !== null)
-
-  if (!state.length) return;
-
-  const client = minio.get()
-
-  const performResult = await Promise.all(
-    state.map(async (c) => {
-      const target = c.skin_url
-        ? await getHeadFromSkin(c.skin_url)
-        : DEFAULT_HEAD
-
-      return client.putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
-    })
-  )
-
-  console.log(performResult);
-  return performResult;
-}
-
-async function getDefaultSkins(ids: string[]) {
-  if (!ids.length) return []
-
-  return await skins
-    .selectFrom("sr_player_skins")
-    .select([
-      "value",
-      "timestamp",
-      "uuid as skin_identifier",
-      sql<string>`'CLASSIC'`.as('skin_variant')
-    ])
-    .where("uuid", "in", ids)
-    .execute()
-}
-
-async function getCustomSkins(ids: string[]) {
-  if (!ids.length) return []
-
-  return await skins
-    .selectFrom("sr_custom_skins")
-    .innerJoin("sr_url_skins", "sr_url_skins.signature", "sr_custom_skins.signature")
-    .select([
-      "sr_custom_skins.value",
-      "sr_custom_skins.name as skin_identifier",
-      "sr_url_skins.skin_variant",
-      sql<number>`${10000000}`.as('timestamp')
-    ])
-    .where("sr_custom_skins.name", "in", ids)
-    .execute()
-}
-
-async function getPlayerSkinsHistory(uuid: string): Promise<Omit<PlayerSkinPayload, "value">[]> {
-  return await skins
-    .selectFrom("sr_player_history")
-    .select([
-      "sr_player_history.skin_identifier",
-      "sr_player_history.skin_variant",
-      "sr_player_history.timestamp"
-    ])
-    .where("sr_player_history.uuid", "=", uuid)
-    .orderBy("timestamp", "desc")
-    .execute()
-}
-
-async function loadSkinsHistoryFromDB(nickname: string): Promise<SkinsHistoryPayload> {
-  const uuid = await getPlayerUUID(nickname);
-
-  async function resolveCurrentSkin(uuid: string): Promise<PlayerSkinPayload> {
-    const row = await skins
-      .selectFrom("sr_players")
-      .select("skin_identifier")
-      .where("sr_players.uuid", "=", uuid)
-      .executeTakeFirst()
-
-    const id = row?.skin_identifier
-
-    if (!id) {
-      const d = await getDefaultSkin()
-      return { ...d, timestamp: 10000000 }
-    }
-
-    if (isCustomSkin(id)) {
-      const skin = await skins
-        .selectFrom("sr_custom_skins")
-        .select(["value"])
-        .where("name", "=", id)
-        .executeTakeFirst()
-
-      if (skin) {
-        return {
-          value: skin.value,
-          skin_identifier: id,
-          skin_variant: DEFAULT_SKIN_VARIANT,
-          timestamp: 10000000
-        }
-      }
-    }
-
-    const resolved = await skins
-      .selectFrom("sr_players")
-      .innerJoin("sr_player_skins", "sr_player_skins.uuid", "sr_players.skin_identifier")
-      .select([
-        "sr_player_skins.uuid as skin_identifier",
-        "sr_player_skins.value",
-        "sr_players.skin_variant",
-        "sr_player_skins.timestamp"
-      ])
-      .where("sr_players.uuid", "=", uuid)
-      .executeTakeFirst()
-
-    if (resolved) return resolved
-
-    const d = await getDefaultSkin()
-    return { ...d, timestamp: 10000000 }
-  }
-
-  const [current, history] = await Promise.all([
-    resolveCurrentSkin(uuid), getPlayerSkinsHistory(uuid)
-  ])
-
-  const prevIds = history
-    .map(h => h.skin_identifier)
-    .filter(id => id !== current.skin_identifier)
-
-  const customIds: string[] = []
-  const defaultIds: string[] = []
-
-  for (const id of prevIds) {
-    if (isCustomSkin(id)) {
-      customIds.push(id)
-    } else {
-      defaultIds.push(id)
-    }
-  }
-
-  const previousSkins =
-    prevIds.length === 0
-      ? []
-      : [
-        ...(await getCustomSkins(customIds)),
-        ...(await getDefaultSkins(defaultIds))
-      ]
-
-  const unique = new Map<string, PlayerSkinPayload & { skin: Skin }>()
-
-  for (const entry of [current, ...previousSkins]) {
-    const parsed = safeJsonParse<Skin>(atob(entry.value))
-
-    if (!parsed.ok) {
-      console.warn(`For ${uuid} skin don't updated. Error for parsing`, parsed.error.message)
-      continue;
-    }
-
-    unique.set(entry.skin_identifier, {
-      ...entry,
-      skin: parsed.value
-    })
-  }
-
-  const result: SkinsHistoryPayload = Array.from(unique.values()).map(v => ({
-    skin_identifier: v.skin_identifier,
-    timestamp: v.timestamp,
-    skin_variant: v.skin_variant ?? DEFAULT_SKIN_VARIANT,
-    skin_url: v.skin.textures.SKIN.url,
-    skin_head_url: isCustomSkin(v.skin_identifier)
-      ? getCustomHead(nickname, v.skin_identifier)
-      : getDefaultSkinHead(v.skin_identifier)
-  }))
-
-  performHead(result, nickname)
-
-  return result
-}
-
-const initLogger = logger.withTag("Init")
-
-export async function initPlayerSkin(nickname: string): Promise<boolean> {
-  const initSkinLogger = initLogger.withTag("Skin")
-  initSkinLogger.log(`Start initing skin for ${nickname}`);
-
-  try {
-    const redis = getRedis()
-    const payload = await loadSkinsHistoryFromDB(nickname)
-
-    await redis.set(
-      getSkinsHistoryCacheRedisKey(nickname), JSON.stringify(payload)
-    )
-
-    initSkinLogger.success(`Finish initing skin for ${nickname}`);
-    return true
-  } catch (e) {
-    initSkinLogger.error(`Error initing skin for ${nickname}`, e);
-    return false
-  }
-}
-
-export async function setSkin(nickname: string, identifier: string) {
-  const uuid = await getPlayerUUID(nickname);
-
-  const result = await skins.transaction().execute(async (trx) => {
-    const query = await skins
-      .selectFrom("sr_custom_skins")
-      .select("name as skin_identifier")
-      .where("name", "=", identifier)
-      .executeTakeFirst()
-
-    if (!query) {
-      throw new Error("Selected skin not found")
-    }
-
-    const a = await skins
-      .updateTable("sr_players")
-      .set({
-        skin_identifier: query.skin_identifier,
-        skin_type: "CUSTOM",
-      })
-      .where("uuid", "=", uuid)
-      .executeTakeFirst()
-
-    return a
-  })
-
-  if (!result.numUpdatedRows) {
-    return false;
-  }
-
-  const up = await initPlayerSkin(nickname)
-  return up
-}
-
-export async function updatePlayersSkins(concurrency = 50, batchSize = 1000) {
-  const limit = pLimit(concurrency);
-  const results = new Map<string, boolean>();
-  let lastNickname = "";
-
-  const start = performance.now();
-
-  while (true) {
-    const batch = await general
-      .selectFrom("AUTH")
-      .select("NICKNAME as nickname")
-      .where("NICKNAME", ">", lastNickname)
-      .orderBy("NICKNAME")
-      .limit(batchSize)
-      .execute();
-
-    if (batch.length === 0) break;
-
-    await Promise.all(
-      batch.map(user =>
-        limit(async () => {
-          const ok = await initPlayerSkin(user.nickname);
-          results.set(user.nickname, ok);
-        })
-      )
-    );
-
-    lastNickname = batch[batch.length - 1].nickname;
-
-    console.log(`Processed ${results.size} users so far`);
-  }
-
-  const end = performance.now();
-
-  const nc = nats.get()
-  nc.publish(SUBJECTS.EVENTS.SKINS.UPDATE, JSON.stringify({
-    data: `Finished for ${(end - start).toFixed(2)}ms. Updated ${results.size} users.`
-  }))
-
-  return results;
-}
-
-//#region
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
 const MINESKIN_URL_PREFIX = "https://minesk.in/";
@@ -468,10 +38,8 @@ export class ConfigurationError extends Error {
     this.name = "ConfigurationError";
   }
 }
-
 export class UpstreamError extends Error {
   status: number;
-
   constructor(status: number, message: string) {
     super(message);
     this.name = "UpstreamError";
@@ -480,29 +48,20 @@ export class UpstreamError extends Error {
 }
 
 function sanitizeStatus(status: number): number {
-  if (Number.isInteger(status) && status >= 100 && status <= 599) {
-    return status;
-  }
+  if (Number.isInteger(status) && status >= 100 && status <= 599) return status;
   return 502;
+}
+function isFileLike(value: unknown): value is Blob {
+  if (!value || typeof value === "string") return false;
+  return typeof (value as Blob).arrayBuffer === "function";
 }
 
 export function normalizeStatus(
-  status: number,
-  allowed: number[],
-  fallback: number,
+  status: number, allowed: number[], fallback: number,
 ): number {
   const sanitized = sanitizeStatus(status);
   const safeFallback = sanitizeStatus(fallback);
-  return allowed.map(sanitizeStatus).includes(sanitized)
-    ? sanitized
-    : safeFallback;
-}
-
-function isFileLike(value: unknown): value is Blob {
-  if (!value || typeof value === "string") {
-    return false;
-  }
-  return typeof (value as Blob).arrayBuffer === "function";
+  return allowed.map(sanitizeStatus).includes(sanitized) ? sanitized : safeFallback;
 }
 
 type MineSkinJobResponse =
@@ -512,9 +71,7 @@ type MineSkinJobResponse =
     skin?: MineSkinJobSuccessResponse["skin"];
   });
 
-async function fetchMineSkinJob(
-  jobId: string,
-): Promise<MineSkinJobSuccessResponse> {
+async function fetchMineSkinJob(jobId: string): Promise<MineSkinJobSuccessResponse> {
   const mineskin = getMineSkinClient();
   const response = await mineskin(`queue/${jobId}`)
 
@@ -526,9 +83,7 @@ async function fetchMineSkinJob(
   }
 
   try {
-    if (!isProduction) {
-      console.log(JSON.stringify(data, null, 2));
-    }
+    !isProduction && console.log(JSON.stringify(data, null, 2));
 
     const parsed = mineSkinJobSuccessSchema.parse(data);
     return parsed;
@@ -552,9 +107,7 @@ async function fetchMineSkinJob(
   }
 }
 
-function sanitizeMineSkinJobResponse(
-  data: MineSkinJobSuccessResponse,
-): MineSkinSanitizedResponse {
+function sanitizeMineSkinJobResponse(data: MineSkinJobSuccessResponse): MineSkinSanitizedResponse {
   let skin: MineSkinSanitizedResponse["skin"] = null;
 
   const skinData = data.skin;
@@ -577,8 +130,7 @@ function sanitizeMineSkinJobResponse(
 }
 
 async function pollMineSkinJob(
-  jobId: string,
-  waitMs: number,
+  jobId: string, waitMs: number,
 ): Promise<{ sanitized: MineSkinSanitizedResponse, raw: MineSkinJobSuccessResponse }> {
   const maxAttempts = Math.max(1, Math.ceil(MAX_POLL_DURATION_MS / waitMs));
 
@@ -830,7 +382,6 @@ type MineSkinJobDetails = z.infer<typeof mineSkinJobDetailsSchema>;
 type MineSkinJobSuccessResponse = z.infer<typeof mineSkinJobSuccessSchema>;
 type MineSkinSanitizedResponse = z.infer<typeof mineSkinSanitizedResponseSchema>;
 type MineSkinCape = z.infer<typeof mineSkinCapeSchema>;
-
 type MineSkinRateLimitInfo = z.infer<typeof mineSkinRateLimitInfoSchema>;
 type MineSkinUsageInfo = z.infer<typeof mineSkinUsageInfoSchema>;
 
@@ -862,14 +413,12 @@ function getMineSkinClient(): KyInstance {
   const keyT = env.MINESKIN_API_KEY.trim()
   if (!keyT) throw new ConfigurationError("MineSkin API key is empty")
 
-  const Authorization = keyT.startsWith("Bearer ") ? keyT : `Bearer ${keyT}`
-
   const client = inheritClient.extend((opts) => ({
     ...opts,
     prefixUrl: MINESKIN_BASE_URL,
     headers: {
       "User-Agent": MINESKIN_USER_AGENT,
-      Authorization,
+      Authorization: keyT.startsWith("Bearer ") ? keyT : `Bearer ${keyT}`,
     }
   }))
 
@@ -882,9 +431,7 @@ type MineSkinEnqueueResponse = MineSkinGenericResponse & {
 };
 
 function logMineSkinParsingError(
-  context: string,
-  response: unknown,
-  error: unknown,
+  context: string, response: unknown, error: unknown,
 ): void {
   const payload: Record<string, unknown> = { response };
 
@@ -901,13 +448,11 @@ function logMineSkinParsingError(
   console.error(`[MineSkin] Failed to parse ${context}`, payload);
 }
 
-async function enqueueMineSkinJob(
-  formData: FormData,
-): Promise<MineSkinJobDetails> {
+async function enqueueMineSkinJob(fd: FormData): Promise<MineSkinJobDetails> {
   const mineskin = getMineSkinClient();
 
   const res = await mineskin.post(`queue`, {
-    body: formData
+    body: fd
   });
 
   const data = (await res.json()) as MineSkinEnqueueResponse;
@@ -930,9 +475,7 @@ type MineSkinCapeResponse = MineSkinGenericResponse & {
 };
 
 function ensureHttpsTextureUrl(url?: string | null): string | undefined {
-  if (!url) {
-    return undefined;
-  }
+  if (!url) return undefined;
 
   try {
     const parsed = new URL(url);
@@ -940,8 +483,8 @@ function ensureHttpsTextureUrl(url?: string | null): string | undefined {
       parsed.protocol = "https:";
     }
     return parsed.toString();
-  } catch (error) {
-    console.warn("Failed to normalise cape URL", error);
+  } catch (e) {
+    console.warn("Failed to normalise cape URL", e);
     return url;
   }
 }
@@ -976,7 +519,6 @@ function encryptUrl(url: string): string {
   if (!url.startsWith(MINESKIN_URL_PREFIX)) {
     throw new Error("MineSkin encryption only supports https://minesk.in URLs");
   }
-
   const uuid = url.slice(MINESKIN_URL_PREFIX.length);
   return encryptMineSkinUuid(uuid);
 }
@@ -990,9 +532,7 @@ function encryptMineSkinUrls(obj: unknown): unknown {
     return obj;
   }
 
-  if (Array.isArray(obj)) {
-    return obj.map(encryptMineSkinUrls);
-  }
+  if (Array.isArray(obj)) return obj.map(encryptMineSkinUrls);
 
   if (obj && typeof obj === "object") {
     const result: Record<string, unknown> = {};
@@ -1138,7 +678,7 @@ export async function deleteOldSkins({
         .execute()
     ])
 
-    const client = minio.get();
+    const client = minio.getInstance();
 
     for (const identifier of ids) {
       await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
@@ -1282,7 +822,10 @@ export async function upload(
     return { url: urlPayload.url }
   })
 
-  initPlayerSkin(nickname)
+  skinsModel.skin.initSkin({
+    nickname,
+    minio: minio.getInstance,
+  })
 
   const payload = {
     result: updateResult,
@@ -1294,5 +837,3 @@ export async function upload(
 
   return payload
 }
-
-//#endregion

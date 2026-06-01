@@ -1,7 +1,3 @@
-import { safeJsonParse as safeJsonParseImported } from "@repo/shared/lib/utils";
-
-export const safeJsonParse = safeJsonParseImported;
-
 export function wrapMeta(res: Partial<PaginatedMeta>): PaginatedMeta {
 	return {
 		hasNextPage: !!res.hasNextPage,

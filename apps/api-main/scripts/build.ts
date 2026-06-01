@@ -1,4 +1,4 @@
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import { colors } from "consola/utils"
 import { convertChunksResult, getBuildFilesInfo } from "@repo/shared/utils/build"
 import { SERVICE_NAME } from "#/shared/constants/internal";

@@ -1,0 +1,27 @@
+{
+	"extends": "@repo/config-typescript/base.json",
+	"compilerOptions": {
+		"jsx": "react-jsx",
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"skipLibCheck": true,
+		"strict": true,
+		"composite": true,
+		"emitDeclarationOnly": true,
+		"noUncheckedIndexedAccess": false,
+		"noPropertyAccessFromIndexSignature": true,
+		"declaration": true,
+		"types": ["bun-types"],
+		"declarationMap": true,
+		"incremental": true,
+		"outDir": "dist"
+	},
+	"exclude": [
+		"dist",
+		"node_modules"
+	],
+	"include": [
+		"./**/*.ts",
+		"./**/*.tsx"
+	]
+}

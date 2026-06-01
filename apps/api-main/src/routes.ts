@@ -20,7 +20,7 @@ import { banner } from "./modules/banner";
 import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { minio } from "./shared/minio/client";
-import { wrapError } from "./helpers/wrap-error";
+import { wrapError } from "./utils";
 
 const MISC_FILES: Partial<Record<string, string>> = {
   terms: "info_terms_page.pdf",
@@ -34,7 +34,7 @@ const misc = new Elysia()
       const target = MISC_FILES[id]
       if (!target) return status(404, wrapError("NOT_FOUND"))
 
-      const data = await minio.get().getObject("static", `misc/${target}`)
+      const data = await minio.getInstance().getObject("static", `misc/${target}`)
       return data;
     })
   )

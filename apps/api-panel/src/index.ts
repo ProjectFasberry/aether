@@ -8,30 +8,35 @@ import { rcon } from "./shared/rcon/client";
 import { urls } from "./shared/bot/urls";
 import { handleProcessOnEvent } from "./shared/utils/handle-log";
 import { nats } from "./shared/nats/client";
+import { env } from "./shared/env";
+import { minio } from "./shared/minio/client";
 
 async function start() {
-	await checkDatabasesHealth();
+  await checkDatabasesHealth();
 
-	await chats.init();
-	await urls.init();
-	await redis.init();
-	await rcon.connect();
-	await nats.start();
+  await chats.init();
+  await urls.init();
+  await redis.init();
+  await rcon.connect();
+  await nats.start();
+  await minio.start({ showBuckets: false });
 
-	await bot.start();
+  if (env.PROD) {
+    await bot.start();
+  }
 
-	const { startApp } = await import("./app");
-	startApp();
+  const { startApp } = await import("./app");
+  startApp();
 }
 
 start();
 
 process
-	.on("uncaughtException", (error) => handleProcessOnEvent("uncaughtException", { error }))
-	.on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { error }))
-	.on("rejectionHandled", () =>
-		handleProcessOnEvent("rejectionHandled", { kill: false, error: new Error("A promise rejection was handled late") }),
-	)
-	.on("warning", (error) => handleProcessOnEvent("warning", { error }));
+  .on("uncaughtException", (error) => handleProcessOnEvent("uncaughtException", { error }))
+  .on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { error }))
+  .on("rejectionHandled", () =>
+    handleProcessOnEvent("rejectionHandled", { kill: false, error: new Error("A promise rejection was handled late") }),
+  )
+  .on("warning", (error) => handleProcessOnEvent("warning", { error }));
 // .on("SIGTERM", () => shutdown("SIGTERM"))
 // .on("SIGINT", () => shutdown("SIGINT"))

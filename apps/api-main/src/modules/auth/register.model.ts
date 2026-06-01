@@ -8,13 +8,14 @@ import type { Kysely, Transaction } from "kysely";
 import { normalizeIp } from "#/helpers/normalize-ip";
 import type { DB } from "@repo/shared/types/db/general";
 import { authLogger } from "./auth.model";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import type * as z from "zod";
 import { isProduction } from "#/shared/env";
-import { invariant } from "#/helpers/invariant";
 import type { registerSchema } from "@repo/shared/schemas/auth";
-import { initPlayerSkin } from "../server/skin/skin.model";
 import { HTTPError } from "ky";
+import { skinsModel } from "../server/skin/index.model";
+import { minio } from "#/shared/minio/client";
+import { invariant } from "#/utils";
 
 type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
   trx?: Transaction<DB>;
@@ -75,12 +76,14 @@ const MOJANG_API_URL = "https://api.ashcon.app";
 export const register = {
   async registrationEvents({ nickname }: { nickname: string }) {
     const REGISTRATION_EVENTS = {
-      skin: initPlayerSkin,
+      skin: () => skinsModel.skin.initSkin({
+        nickname, minio: minio.getInstance
+      }),
     };
 
     const eventsExec = await Promise.all(
       Object.entries(REGISTRATION_EVENTS).map(async ([key, cb]) => {
-        const val = await cb(nickname);
+        const val = await cb();
         invariant(val, `${key} for ${nickname} error inited`);
         return { val, key };
       }),
@@ -207,7 +210,7 @@ export const register = {
       title: "Регистрация",
     });
 
-    const nc = nats.get()
+    const nc = nats.getInstance()
 
     nc.publish(
       SUBJECTS.EVENTS.AUTHORIZATION.REGISTER,

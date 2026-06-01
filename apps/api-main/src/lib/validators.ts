@@ -8,11 +8,11 @@ import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
 import { env } from "#/shared/env";
 import { logErrorMsg } from "#/utils/config/log-utils";
-import { safeJsonParse } from "#/utils/config/transforms";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { getWhitelistIpList } from "#/shared/constants/urls";
-import { validateLogger } from "#/utils/config/logger";
+import { urls } from "#/shared/constants/urls";
+import { validateLogger } from "#/shared/constants/logger";
 import { LOGGING } from "#/shared/constants";
+import { safeJsonParse } from "#/utils";
 
 export const validatePermission = (permission: string) => new Elysia({ name: "validatePermission" })
   .use(defineUserRole())
@@ -118,7 +118,7 @@ export const botValidator = () => new Elysia({ name: "botValidator" })
       validateLogger.log("botValidator");
     }
 
-    const whitelist = getWhitelistIpList()
+    const whitelist = urls.getWhitelistIpList()
     if (whitelist.includes(ip)) return;
 
     const query = await general

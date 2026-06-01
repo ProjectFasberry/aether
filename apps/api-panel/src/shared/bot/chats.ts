@@ -28,7 +28,7 @@ export const chats = {
 			throw e;
 		}
 	},
-	get() {
+	getData() {
 		invariant(CHATS, "Chats are not defined. Call initChats() first.");
 		if (CHATS.length === 0) appLogger.warn("Chats list is empty");
 		return CHATS;

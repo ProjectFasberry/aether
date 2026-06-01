@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { defineRequiredUser } from "#/lib/define";
 import { nats } from "#/shared/nats/client";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import {
   chatCreateMessageSchema,
@@ -53,7 +53,7 @@ export const chatWs = new Elysia()
       const { nickname } = ws.data;
       if (!nickname) return ws.close(1008, "Unauthorized");
 
-      const nc = nats.get()
+      const nc = nats.getInstance()
 
       try {
         const sub = nc.subscribe(`privated.chat.*`, {
@@ -90,7 +90,7 @@ export const chatWs = new Elysia()
       const { nickname } = ws.data;
       const { event, data } = raw as ChatEvent<unknown>
 
-      const nc = nats.get()
+      const nc = nats.getInstance()
       const publish = (t: ChatEventVariant, v: unknown) => {
         nc.publish(`privated.chat.${t}`, JSON.stringify(v))
       };

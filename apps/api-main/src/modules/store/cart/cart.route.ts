@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
 
@@ -94,7 +94,7 @@ const cartList = new Elysia()
   .use(defineRequiredUser())
   .get("/list", async ({ nickname: initiator }) => {
     const data = await cartItem.getData(initiator)
-    
+
     return {
       data: {
         data,

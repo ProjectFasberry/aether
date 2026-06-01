@@ -1,8 +1,9 @@
-import { DEFAULT_HEAD, getCachedSkinPayloads, skinsHistorySchema } from "#/modules/server/skin/skin.model";
+import { skinsModel } from "#/modules/server/skin/index.model";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
+import { DEFAULT_HEAD, skinsHistorySchema } from "@repo/core/modules/skins";
 import dayjs from "dayjs";
 import { type Static, t } from "elysia";
 import { sql } from "kysely";
@@ -66,7 +67,7 @@ type RawPlayer = {
 }
 
 async function process(nicknames: string[]) {
-  const skins = await getCachedSkinPayloads(nicknames);
+  const skins = await skinsModel.players.getCachedSkinPayloads(nicknames);
 
   const mapper = (user: RawPlayer): Static<typeof privatedUserSchema> => {
     const {

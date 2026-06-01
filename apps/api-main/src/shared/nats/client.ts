@@ -1,12 +1,12 @@
-import { appLogger, natsLogger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
-import { env } from "#/shared/env"
-import { invariant } from "#/helpers/invariant";
-import { subs } from "./subscribers";
-import { NATS_CONSUMERS, NATS_JS_STREAMS } from "./cons";
-import { startOrderConsumer } from "#/utils/server/call-command";
+import { SUBSCRIBERS } from "./subscribers";
+import { NATS_CONSUMERS, NATS_CONSUMERS_CB, NATS_JS_STREAMS } from "./cons";
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
+import { invariant } from "#/utils";
+import { env } from "#/shared/env"
+import { isError } from "@repo/shared/lib/helpers";
 
 const config: ConnectionOptions = {
   servers: [
@@ -22,17 +22,19 @@ const config: ConnectionOptions = {
 let client: NatsConnection | null = null;
 
 export const nats = {
+  logger: logger.withTag('nats'),
   async _init(): Promise<void> {
     try {
+      this.logger.success(`Connecting to ${config.servers}`);
       client = await connect(config);
-      natsLogger.success(`Connected to ${config.servers}`)
+      this.logger.success(`Connected`);
     } catch (e) {
-      natsLogger.error(e)
+      this.logger.error("Connection error", isError(e) ? e.message : e);
       process.exit(1)
     }
   },
-  get(): NatsConnection {
-    invariant(client, 'NATS client is not initialized')
+  getInstance(): NatsConnection {
+    invariant(client, "Nats client is not initialized");
     return client;
   },
   async close(): Promise<void> {
@@ -40,26 +42,24 @@ export const nats = {
 
     try {
       await client.drain();
-      natsLogger.log('NATS connection closed.')
+      this.logger.log("Connection closed");
     } catch (e) {
-      natsLogger.error('Error closing NATS connection:', e)
+      this.logger.error('Error closing connection', e);
       process.exit(1)
     }
   },
   async start() {
-    appLogger.log(`Starting NATS...`);
-
     await this._init();
 
-    const nc = this.get();
+    const nc = this.getInstance();
 
     try {
-      for (const sub of subs) {
+      for (const sub of SUBSCRIBERS) {
         sub.cb(nc);
-        natsLogger.success(`${sub.name} subscribed`);
+        this.logger.success(`Subscribed to "${sub.name}"`)
       }
     } catch (e) {
-      natsLogger.log(e);
+      this.logger.error(`Error subscribing`, e);
     }
 
     const js = jetstream(nc);
@@ -68,22 +68,29 @@ export const nats = {
     for (const { name, subjects } of NATS_JS_STREAMS) {
       try {
         await jsm.streams.add({ name, subjects });
-        natsLogger.log(`Stream ${name} with ${subjects.map((d) => d).join(",")} added`);
+        this.logger.log(`Stream "${name}" with ${subjects.map((d) => d).join(",")} added`);
       } catch (e) {
-        natsLogger.log(`Stream ${name} with ${subjects.map((d) => d).join(",")} exists`);
+        this.logger.log(`Stream "${name}" with ${subjects.map((d) => d).join(",")} exists`);
       }
     }
 
     for (const { name, stream_name } of Object.entries(NATS_CONSUMERS).flatMap(([_, arr]) => arr)) {
       try {
-        const ec = await js.consumers.get(stream_name, name);
-        natsLogger.log(`Consumer ${name} exists `);
+        const consumer = await js.consumers.get(stream_name, name);
+        this.logger.success(`Consumer "${name}"`, JSON.stringify(await consumer.info(), null, 2));
       } catch (e) {
-        const c = await jsm.consumers.add(stream_name, { name });
-        natsLogger.log(`Consumer ${name} added`);
+        const consumerInfo = await jsm.consumers.add(stream_name, { name });
+        this.logger.success(`Consumer "${name}" added`, consumerInfo);
       }
     }
 
-    startOrderConsumer();
+    for (const { name, cb } of NATS_CONSUMERS_CB) {
+      try {
+        cb();
+        this.logger.success(`Consumer "${name}" started`);
+      } catch (e) {
+        this.logger.error(`Error starting consumer "${name}"`, e);
+      }
+    }
   }
 }

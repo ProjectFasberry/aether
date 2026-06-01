@@ -1,55 +1,18 @@
 // @ts-expect-error
 import Rcon from "modern-rcon";
-import { rconLogger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import { env } from "#/shared/env";
-import { invariant } from "#/helpers/invariant";
 import { urls } from "../constants/urls";
+import { invariant } from "#/utils";
+import { createRcon } from "@repo/core/lib/rcon/index"
 
-type RCON = {
-	send: (message: string) => Promise<string>;
-	connect: () => Promise<void>;
-	disconnect: () => Promise<void>;
-};
-
-let instance: RCON | null = null;
-
-export const rcon = {
-	get(): RCON {
-		invariant(instance, "Rcon client is not defined");
-		return instance;
-	},
-	async connect() {
-		if (instance) return;
-
-		const list = urls.get();
-
-		try {
-			const ip = list.get("server_proxy");
-			invariant(ip, "Server proxy ip is not defined");
-
-			instance = new Rcon(ip, env.RCON_PASSWORD);
-			invariant(instance, "RCON instance is not defined");
-
-			await instance.connect();
-
-			rconLogger.success(`Connected to ${ip}`);
-		} catch (e) {
-			rconLogger.error(e);
-		}
-	},
-	async disconnect() {
-		if (!instance) {
-			rconLogger.warn("RCON disconnect called but instance is null");
-			return;
-		}
-
-		try {
-			await instance.disconnect();
-			rconLogger.log("RCON connection closed");
-		} catch (e) {
-			rconLogger.error("Error during RCON disconnect:", e);
-		} finally {
-			instance = null;
-		}
-	}
-}
+export const rcon = createRcon({
+  config: {
+    RCON_PASSWORD: env.RCON_PASSWORD,
+    RCON_IP: (): string => {
+      const ip = urls.getData().get("server_proxy");
+      invariant(ip, "Server proxy ip is not defined");
+      return ip;
+    }
+  }
+})

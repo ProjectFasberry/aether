@@ -3,7 +3,7 @@ import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
 import { bearer } from "@elysia/bearer";
-import { validateLogger } from "#/utils/config/logger";
+import { validateLogger } from "#/shared/constants/logger";
 import { LOGGING } from "#/shared/constants";
 
 async function handleByBearer(bearer: string): Promise<{ nickname: string } | null> {

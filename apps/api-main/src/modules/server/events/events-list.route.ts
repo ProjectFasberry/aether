@@ -1,4 +1,4 @@
-import { getRedis } from "#/shared/redis/client";
+import { redis } from "#/shared/redis/client";
 import Elysia, { type Static, t } from "elysia";
 import { eventPayload, EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
@@ -14,12 +14,12 @@ const eventsListSchema = t.Composite([
 async function getEvents(
   { type, limit }: Static<typeof eventsListSchema>
 ): Promise<EventPayload[]> {
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
 
   async function getObjects(keys: string[]): Promise<EventPayload[]> {
     if (keys.length === 0) return [];
 
-    const values = await redis.mget(keys);
+    const values = await redisClient.mget(keys);
 
     return values
       .filter((v): v is string => v !== null)
@@ -29,10 +29,10 @@ async function getEvents(
   let keys: string[] = []
 
   if (type) {
-    const ids = await redis.zrevrange(EVENTS_TYPE_KEY(type), 0, 31);
+    const ids = await redisClient.zrevrange(EVENTS_TYPE_KEY(type), 0, 31);
     keys = ids.map(id => EVENTS_TARGET_KEY(id));
   } else {
-    const ids = await redis.lrange(EVENTS_ALL_KEY, -limit, -1);
+    const ids = await redisClient.lrange(EVENTS_ALL_KEY, -limit, -1);
     keys = ids.map(id => EVENTS_TARGET_KEY(id));
   }
 

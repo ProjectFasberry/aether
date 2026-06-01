@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import { withData } from "#/shared/schemas";
 import { validateBannedStatus } from "#/lib/validators";
 import { getPlayerLikes, ratePlayer } from "./like.model";

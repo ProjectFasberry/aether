@@ -1,6 +1,6 @@
 import { bisquite } from "#/shared/database/bisquite-db"
 import { reputation } from "#/shared/database/reputation-db"
-import { safeJsonParse } from "#/utils/config/transforms";
+import { safeJsonParse } from "#/utils";
 
 type Skill = {
   line: string;

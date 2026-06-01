@@ -1,62 +1,68 @@
-import { createConsola } from "consola";
+import consola, { createConsola } from "consola";
 
 const logger = createConsola();
-const appLogger = logger.withTag("App");
 
-export function showRoutes<T extends { routes: any }>({ routes }: T) {
-	for (const { path, method } of routes) {
-		appLogger.log(`${path} - ${method}`);
-	}
+export function showRoutes<T extends { routes: { path: string; method: string }[] }>({ routes, logger }: T & { logger?: typeof consola }) {
+  const routesList = routes
+    .map(({ path, method }) => `${path} - ${method}`)
+    .join('\n');
 
-	appLogger.log(`Total ${routes.length} a routes`);
+  if (logger) {
+    logger.box({
+      title: ` Routes (${routes.length}) `,
+      message: routesList,
+    })
+  } else {
+    console.log(`\n${routesList}\n`, routes.length)
+  }
 }
 
 export function invariant(predicate: unknown, errorMessage: Error | string = "Assertion Failed"): asserts predicate {
-	if (!predicate) {
-		throw typeof errorMessage === "string" ? new Error(errorMessage) : errorMessage;
-	}
+  if (!predicate) {
+    throw typeof errorMessage === "string" ? new Error(errorMessage) : errorMessage;
+  }
 }
 
 export function safeJsonParse<T>(str: string): { ok: true; value: T } | { ok: false; error: Error } {
-	try {
-		return { ok: true, value: JSON.parse(str) as T };
-	} catch (err) {
-		return { ok: false, error: err as Error };
-	}
+  try {
+    return { ok: true, value: JSON.parse(str) as T };
+  } catch (err) {
+    return { ok: false, error: err as Error };
+  }
 }
 
 export function wrapError(e: unknown): { error: string } {
-	const error = "Internal Server Error";
+  const error = "Internal Server Error";
 
-	if (typeof e === "object" && e !== null && "message" in e && typeof (e as any).message === "string") {
-		try {
-			const parsed = JSON.parse((e as any).message);
+  if (typeof e === "object" && e !== null && "message" in e && typeof (e as any).message === "string") {
+    try {
+      const parsed = JSON.parse((e as any).message);
 
-			if (typeof parsed === "object" && parsed !== null) {
-				return { error: parsed };
-			}
+      if (typeof parsed === "object" && parsed !== null) {
+        return { error: parsed };
+      }
 
-			return { error: (e as any).message };
-		} catch {
-			return { error: (e as any).message };
-		}
-	}
+      return { error: (e as any).message };
+    } catch {
+      return { error: (e as any).message };
+    }
+  }
 
-	if (typeof e === "string") {
-		try {
-			const parsed = JSON.parse(e);
+  if (typeof e === "string") {
+    try {
+      const parsed = JSON.parse(e);
 
-			if (typeof parsed === "object" && parsed !== null) {
-				return { error: parsed };
-			}
+      if (typeof parsed === "object" && parsed !== null) {
+        return { error: parsed };
+      }
 
-			return { error: e };
-		} catch {
-			return { error: e };
-		}
-	}
+      return { error: e };
+    } catch {
+      return { error: e };
+    }
+  }
 
-	logger.error(error);
+  logger.error(error);
 
-	return { error };
+  return { error };
 }

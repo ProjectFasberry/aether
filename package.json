@@ -8,7 +8,7 @@
 		"lint": "bun scripts/run lint",
 		"type-check": "bun scripts/run type-check",
 		"circular-check": "bun run scripts/run circlular-check",
-		"_postinstall": "[ \"$NODE_ENV\" != \"production\" ] && lefthook install || true",
+		"postinstall": "lefthook install",
 		"--------------------------": "",
 		"docker-infra:up": "docker compose -f './infra/docker-compose.yml' up -d",
 		"docker-infra:down": "docker compose -f './infra/docker-compose.yml' down",

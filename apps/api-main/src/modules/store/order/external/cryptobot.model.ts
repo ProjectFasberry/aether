@@ -1,20 +1,20 @@
 import { currencyCryptoSchema } from "@repo/shared/constants/currencies";
 import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLink, getOrderRateKey } from "./create-crypto-order";
 import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/store/payment";
-import { getRedis } from "#/shared/redis/client";
+import { redis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";
 import type * as z from "zod"
 import { getRedisKey } from "#/helpers/redis";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
-import { invariant } from "#/helpers/invariant";
+import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 
 export const exchangeRates = {
   async getList() {
-    const redis = getRedis()
-    return redis.get(EXCHANGE_RATES_KEY)
+    const redisClient = redis.getInstance();
+    return redisClient.get(EXCHANGE_RATES_KEY)
   }
 }
 
@@ -69,13 +69,13 @@ async function validateOrderLimit(initiator: string): Promise<boolean> {
   const ORDER_LIMIT = 64;
   const WINDOW_SECONDS = 10 * 60;
 
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
   const key = getOrderRateKey(initiator)
 
-  const count = await redis.incr(key);
+  const count = await redisClient.incr(key);
 
   if (count === 1) {
-    await redis.expire(key, WINDOW_SECONDS);
+    await redisClient.expire(key, WINDOW_SECONDS);
   }
 
   return count <= ORDER_LIMIT;
@@ -86,7 +86,7 @@ async function rollbackOrder({
 }: {
   invoiceId: number, uniqueId: string, initiator: string
 }): Promise<void> {
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
 
   const deleteInvoice = await CRYPTO_PAY_API
     .post(`deleteInvoice`, { json: { invoice_id: invoiceId } })
@@ -96,7 +96,7 @@ async function rollbackOrder({
     throw new Error("Transaction is failed")
   }
 
-  const results = await redis.multi()
+  const results = await redisClient.multi()
     .del(getOrderKey(uniqueId))
     .del(getOrderInitiatorIndexKey(initiator))
     .exec()
@@ -117,7 +117,7 @@ async function createCryptoOrder({
   const allowed = await validateOrderLimit(initiator);
   if (!allowed) throw new Error("ORDERS_LIMIT");
 
-  const redis = getRedis()
+  const redisClient = redis.getInstance()
 
   const uniqueId = nanoid(10)
   const callbackUrl = getOrderLink(uniqueId)
@@ -156,7 +156,7 @@ async function createCryptoOrder({
     comment
   }
 
-  const success = await redis.set(
+  const success = await redisClient.set(
     orderKey,
     JSON.stringify(orderData),
     "EX",
@@ -165,8 +165,8 @@ async function createCryptoOrder({
 
   const indexRecipientKey = getOrderInitiatorIndexKey(initiator)
 
-  await redis.sadd(indexRecipientKey, orderKey);
-  await redis.expire(indexRecipientKey, DEFAULT_EXPIRATION_DATE);
+  await redisClient.sadd(indexRecipientKey, orderKey);
+  await redisClient.expire(indexRecipientKey, DEFAULT_EXPIRATION_DATE);
 
   if (!success) {
     await rollbackOrder({
@@ -231,7 +231,7 @@ export const EXCHANGE_RATES_KEY = getRedisKey("external", "exchange-rates:data")
 const EXCHANGE_RATES_PREVIOUS_KEY = getRedisKey("external", "exchange-rates:data:previous");
 
 export async function updateExchangeRates() {
-  const redis = getRedis();
+  const redisClient = redis.getInstance()
 
   try {
     const data = await CRYPTO_PAY_API
@@ -241,21 +241,21 @@ export async function updateExchangeRates() {
     if (!data.ok) throw new Error()
 
     const value = JSON.stringify(data.result);
-    const current = await redis.get(EXCHANGE_RATES_KEY);
+    const current = await redisClient.get(EXCHANGE_RATES_KEY);
 
     if (current) {
-      await redis.set(EXCHANGE_RATES_PREVIOUS_KEY, current);
+      await redisClient.set(EXCHANGE_RATES_PREVIOUS_KEY, current);
     }
 
-    await redis.set(EXCHANGE_RATES_KEY, value);
+    await redisClient.set(EXCHANGE_RATES_KEY, value);
   } catch (e) {
-    const exists = await redis.exists(EXCHANGE_RATES_KEY);
+    const exists = await redisClient.exists(EXCHANGE_RATES_KEY);
 
     if (!exists) {
-      const fallback = await redis.get(EXCHANGE_RATES_PREVIOUS_KEY);
+      const fallback = await redisClient.get(EXCHANGE_RATES_PREVIOUS_KEY);
 
       if (fallback) {
-        await redis.set(EXCHANGE_RATES_KEY, fallback);
+        await redisClient.set(EXCHANGE_RATES_KEY, fallback);
       }
     }
   }

@@ -1,13 +1,15 @@
 import Elysia, { t } from "elysia";
-import { getSkin, getSkinsHistory, setSkin, skinsHistorySchema } from "./skin.model";
 import { defineRequiredUser } from '#/lib/define';
 import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";
+import { skinsHistorySchema } from "@repo/core/modules/skins/index"
+import { skinsModel } from "./index.model";
+import { minio } from "#/shared/minio/client";
 
 const history = new Elysia()
   .get("/history/:nickname", async ({ params: { nickname } }) => {
-    const data = await getSkinsHistory({ nickname })
+    const data = await skinsModel.skin.getCachedSkinsPayload(nickname)
     return { data }
   }, {
     response: {
@@ -18,7 +20,7 @@ const history = new Elysia()
 const set = new Elysia()
   .use(defineRequiredUser())
   .get("/set", async ({ query, nickname, status }) => {
-    const result = await setSkin(nickname, query.id)
+    const result = await skinsModel.skin.setSkin(nickname, query.id, minio.getInstance)
     if (!result) throw status(500, wrapError("THIRDPARTY_ERROR"))
 
     return { data: "OK" }
@@ -40,7 +42,7 @@ const set = new Elysia()
 
 const download = new Elysia()
   .get('/download/:nickname', async ({ set, params: { nickname } }) => {
-    const skin = await getSkin(nickname)
+    const skin = await skinsModel.skin.getSkin(nickname)
 
     set.headers["content-type"] = 'image/png'
     set.headers['content-disposition'] = `attachment; filename=${nickname}-skin.png`

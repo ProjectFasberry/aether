@@ -1,14 +1,14 @@
 import { env } from "./shared/env";
-import { showRoutes, safeJsonParse } from "@repo/shared/lib/utils";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { defineOptionalSession } from "./lib/define";
 import { session } from "./modules/auth/login.model";
-import { appLogger } from "./utils/config/logger";
+import { appLogger } from "./shared/constants/logger";
 import { main, root } from "./routes";
 import { corsPlugin, ipPlugin, loggerPlugin } from "./lib/plugins";
 import { LOGGING } from "./shared/constants";
+import { safeJsonParse, showRoutes } from "./utils";
 
 const appConfig: ElysiaConfig<string> = {
 	serve: {
@@ -18,8 +18,6 @@ const appConfig: ElysiaConfig<string> = {
 };
 
 export function startApp() {
-	appLogger.log(`Starting app...`);
-
 	const app = new Elysia(appConfig)
 		.use(openApiPlugin())
 		.use(serverTimingPlugin())
@@ -65,10 +63,10 @@ export function startApp() {
 		)
 		.use(main);
 
-	showRoutes(app);
+	showRoutes({ routes: app.routes, logger: appLogger });
 	app.listen(env.PORT);
 
-	appLogger.success(`Starting app finished. Server is running at ${app.server?.hostname}: ${app.server?.port}`);
+	appLogger.success(`Server is running at ${app.server?.hostname}: ${app.server?.port}`);
 
 	return app;
 }

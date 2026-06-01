@@ -1,42 +1,72 @@
 import { Bot } from "gramio";
 import { env } from "../env";
 import { invariant } from "@repo/shared/lib/utils";
-import { initCommands } from "./cmds";
-import { botLogger } from "../logger";
+import { GUARD_COMMANDS } from "./cmds";
+import { logger } from "../logger";
+import { chats } from "./chats";
 
 let instance: Bot | null = null;
 
 export const bot = {
-	get(): Bot {
-		invariant(instance, "Guard bot is not defined. Call startGuardBot() first.");
-		return instance;
-	},
-	async start(): Promise<void> {
-		const conn = new Bot(env.BOT_GUARD_TOKEN)
-			.onStart(async (ctx) => {
-				botLogger.success("Started");
-				botLogger.log(ctx.updatesFrom, ctx.plugins, ctx.info);
-			})
-			.onError((ctx) => {
-				botLogger.error("Update Error:", ctx.error);
-			});
+  logger: logger.withTag('bot'),
+  getInstance(): Bot {
+    invariant(instance, "Bot is not defined");
+    return instance;
+  },
+  async start(): Promise<void> {
+    const conn = new Bot(env.BOT_GUARD_TOKEN)
+      .onStart(async (ctx) => {
+        this.logger.success("Started");
+        this.logger.log(ctx.updatesFrom, ctx.plugins, ctx.info);
+      })
+      .onError((ctx) => {
+        this.logger.error("Update Error:", ctx.error);
+      });
 
-		await conn.start();
-		instance = conn;
+    await conn.start();
+    instance = conn;
 
-		await this.init(instance);
-	},
-	async init(instance: Bot) {
-		try {
-			instance.api
-				.setMyCommands({
-					commands: [{ command: "start", description: "Начать" }],
-				})
-				.catch((e) => botLogger.error(e));
+    await this._init(instance);
+  },
+  async _init(instance: Bot) {
+    try {
+      instance.api
+        .setMyCommands({
+          commands: [{ command: "start", description: "Начать" }],
+        })
+        .catch((e) => this.logger.error(e));
 
-			initCommands(instance);
-		} catch (e) {
-			botLogger.error("Bot initialization failed:", e);
-		}
-	},
+      const initCommands = () => {
+        const validateChatId = (chatId: string | number) => chats.getData().includes(chatId.toString())
+
+        try {
+          for (const { name, handlers } of GUARD_COMMANDS) {
+            instance.command(name, async (ctx) => {
+              const isValid = validateChatId(ctx.chat.id);
+
+              if (!isValid) {
+                if (handlers?.public) {
+                  return handlers.public(ctx);
+                }
+                return;
+              }
+
+              if (handlers?.private) {
+                return handlers.private(ctx);
+              }
+              return;
+            });
+
+            this.logger.success(`Command "${name}" inited`);
+          }
+        } catch (e) {
+          this.logger.error(`Init commands error`, e);
+        }
+      }
+
+      initCommands();
+    } catch (e) {
+      this.logger.error("Bot initialization failed:", e);
+    }
+  },
 };

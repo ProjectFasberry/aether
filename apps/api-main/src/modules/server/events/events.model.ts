@@ -1,6 +1,6 @@
 import { getRedisKey } from "#/helpers/redis"
 import type { EventPayload } from "#/modules/private/events/events.model"
-import { getRedis } from "#/shared/redis/client"
+import { redis } from "#/shared/redis/client"
 import { type Static, t } from "elysia"
 import { nanoid } from "nanoid"
 
@@ -38,7 +38,7 @@ export const createEventSchema = t.Object({
 export async function createEvent(
   { title, type, initiator, description }: Static<typeof createEventSchema>
 ) {
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
 
   const event: EventPayload = {
     id: nanoid(8),
@@ -53,7 +53,7 @@ export async function createEvent(
 
   const ttl = 60 * 60 * 24 * 30
 
-  const results = await redis
+  const results = await redisClient
     .multi()
     .set(EVENTS_TARGET_KEY(event.id), JSON.stringify(event), 'EX', ttl)
     .rpush(EVENTS_ALL_KEY, event.id)
@@ -74,21 +74,21 @@ export async function createEvent(
 }
 
 export async function cleanOldEvents(bs = 100) {
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
   const types = eventTypeSchema.enum
 
   for (const type of types) {
     let start = 0;
 
     while (true) {
-      const ids = await redis.zrange(EVENTS_TYPE_KEY(type), start, start + bs - 1);
+      const ids = await redisClient.zrange(EVENTS_TYPE_KEY(type), start, start + bs - 1);
       if (!ids.length) break;
 
       for (const id of ids) {
-        const exists = await redis.exists(EVENTS_TARGET_KEY(id));
+        const exists = await redisClient.exists(EVENTS_TARGET_KEY(id));
 
         if (!exists) {
-          await redis.zrem(EVENTS_TYPE_KEY(type), id);
+          await redisClient.zrem(EVENTS_TYPE_KEY(type), id);
         }
       }
 
@@ -100,14 +100,14 @@ export async function cleanOldEvents(bs = 100) {
   let start = 0;
 
   while (true) {
-    const allIds = await redis.lrange(EVENTS_ALL_KEY, start, start + bs - 1);
+    const allIds = await redisClient.lrange(EVENTS_ALL_KEY, start, start + bs - 1);
     if (!allIds.length) break;
 
     for (const id of allIds) {
-      const exists = await redis.exists(EVENTS_TARGET_KEY(id));
+      const exists = await redisClient.exists(EVENTS_TARGET_KEY(id));
 
       if (!exists) {
-        await redis.lrem(EVENTS_ALL_KEY, 0, id);
+        await redisClient.lrem(EVENTS_ALL_KEY, 0, id);
       }
     }
 
@@ -117,9 +117,9 @@ export async function cleanOldEvents(bs = 100) {
 }
 
 export async function getEvent(id: string): Promise<EventPayload | null> {
-  const redis = getRedis();
+  const redisClient = redis.getInstance();
 
-  const eventStr = await redis.get(EVENTS_TARGET_KEY(id));
+  const eventStr = await redisClient.get(EVENTS_TARGET_KEY(id));
   if (!eventStr) return null;
 
   const event = JSON.parse(eventStr);

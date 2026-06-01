@@ -1,5 +1,5 @@
 import { SERVICE_NAME } from "../const/internal";
-import { appLogger } from "../logger";
+import { logger } from "../logger";
 import { nats } from "../nats/client";
 import { SUBJECTS } from "../nats/subjects";
 
@@ -13,10 +13,10 @@ export async function handleProcessOnEvent(
 		kill?: boolean;
 	},
 ) {
-	appLogger.error(handleProcessOnEvent.name, sub, error);
+	logger.error(handleProcessOnEvent.name, sub, error);
 
 	//#region todo: impl logging/alerting using fluentbit + grafana
-	const nc = nats.get();
+	const nc = nats.getInstance();
 	const msg = error instanceof Error ? error.message : `UNKNOWN: ${error}`;
 
 	try {

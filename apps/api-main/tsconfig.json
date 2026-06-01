@@ -24,14 +24,14 @@
 		"outDir": "dist",
 		"paths": {
 			"#/*": ["./src/*"],
-			"@repo/shared/*": ["../../pkgs/shared/*"]
+			"@repo/shared/*": ["../../pkgs/shared/*"],
+			"@repo/core/*": ["../../pkgs/core/src/*"]
 		}
 	},
 	"include": [
 		"src/**/*",
 		"scripts/**/*",
 		"imports.ts",
-		"drizzle.config.ts",
 		"declare.d.ts"
 	],
 	"exclude": [
@@ -41,6 +41,9 @@
 	"references": [
 		{
 			"path": "../../pkgs/shared"
+		},
+		{
+		  "path": "../../pkgs/core"
 		}
 	]
 }

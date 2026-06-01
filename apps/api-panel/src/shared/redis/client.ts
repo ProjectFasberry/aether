@@ -1,42 +1,44 @@
 import Redis, { type RedisOptions } from "ioredis";
 import { env } from "../env";
-import { redisLogger } from "../logger";
 import { invariant } from "@repo/shared/lib/utils";
+import { logger } from "../logger";
 
-let redisInstance: Redis | null = null;
+let instance: Redis | null = null;
 
 const config: RedisOptions = {
-	host: env.REDIS_HOST,
-	port: Number(env.REDIS_PORT),
+  host: env.REDIS_HOST,
+	// @ts-expect-error
+	port: env.REDIS_PORT,
 	password: env.REDIS_PASSWORD,
 	username: env.REDIS_USER,
 	maxRetriesPerRequest: 3,
 };
 
 export const redis = {
-	get(): Redis {
-		invariant(redisInstance, "Redis client is not initialized. Call initRedis() first.");
-		return redisInstance;
+  logger: logger.withTag("redis"),
+	getInstance(): Redis {
+		invariant(instance, "Redis client is not initialized");
+		return instance;
 	},
 	async init() {
-		if (redisInstance) return redisInstance;
+		if (instance) return instance;
 
-		redisLogger.log(`Connecting to ${config.host}:${config.port}...`);
+		this.logger.log(`Connecting to ${config.host}:${config.port}...`);
 
 		return new Promise<Redis>((resolve, _) => {
 			try {
 				const client = new Redis(config);
 
-				client.on("error", (e) => redisLogger.error("Redis Runtime Error:", e));
-				client.on("connect", () => redisLogger.info("Redis connection established"));
+				client.on("error", (e) => this.logger.error("Runtime Error:", e));
+				client.on("connect", () => this.logger.info("Connection established"));
 				client.on("ready", () => {
-					redisLogger.success("Redis is ready to receive commands");
-					redisInstance = client;
+					this.logger.success("Is ready");
+					instance = client;
 					resolve(client);
 				});
-				client.on("end", () => redisLogger.warn("Redis connection closed"));
+				client.on("end", () => this.logger.warn("Connection closed"));
 			} catch (e) {
-				redisLogger.error("Failed to create Redis instance:", e);
+				this.logger.error("Failed to create instance", e);
 				process.exit(1);
 			}
 		});

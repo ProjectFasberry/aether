@@ -1,9 +1,9 @@
 import { general } from "#/shared/database/general-db";
-import { getRedis } from "#/shared/redis/client";
-import { logger } from "#/utils/config/logger";
-import { safeJsonParse } from "#/utils/config/transforms";
+import { redis } from "#/shared/redis/client";
+import { logger } from "#/shared/constants/logger";
 import { textSets } from "#/utils/minio/load-internal-files";
 import type { UserSessionPayload } from "./login.model";
+import { safeJsonParse } from "#/utils";
 
 export const authLogger = logger.withTag("Auth");
 
@@ -23,9 +23,7 @@ export const auth = {
 		return { hash: query.HASH, result: true };
 	},
 	async getUserNickname(token: string): Promise<string | null> {
-		const redis = getRedis();
-
-		const data = await redis.get(
+		const data = await redis.getInstance().get(
 			this.getSessionKey(token)
 		);
 

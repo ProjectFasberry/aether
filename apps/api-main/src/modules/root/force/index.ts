@@ -1,18 +1,22 @@
 import Elysia from "elysia";
-import { initPlayerSkin, updatePlayersSkins } from "../../server/skin/skin.model";
 import * as z from "zod";
 import { defineBearer } from "#/lib/define";
+import { skinsModel } from "#/modules/server/skin/index.model";
+import { minio } from "#/shared/minio/client";
 
 export const forceSkinInit = new Elysia()
   .get("/skin/:nickname", async ({ params: { nickname }, query }) => {
     if (query.type === "single") {
-      const ok = await initPlayerSkin(nickname);
+      const ok = await skinsModel.skin.initSkin({
+        nickname,
+        minio: minio.getInstance,
+      });
       if (!ok) return { data: "error" };
       return { data: "updated" };
     }
 
     if (query.type === "all") {
-      updatePlayersSkins();
+      skinsModel.skin.updateSkins({ minio: minio.getInstance });
     }
 
     return { data: "started" };

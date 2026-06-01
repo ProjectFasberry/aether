@@ -58,6 +58,15 @@
 			}
 		},
 		{
+			"includes": ["pkgs/core/**"],
+			"formatter": {
+				"enabled": false
+			},
+			"linter": {
+				"enabled": false
+			}
+		},
+		{
 			"includes": ["apps/api-main/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"

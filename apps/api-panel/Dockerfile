@@ -17,7 +17,7 @@ COPY pkgs ./pkgs
 COPY apps/api-panel/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-RUN bun install
+RUN bun install --ignore-scripts
 
 WORKDIR /apps/api-panel
 RUN bun run build
@@ -38,7 +38,7 @@ COPY --from=build /package.json /bun.lock ./
 COPY --from=build /apps/api-panel/package.json ./apps/api-panel/package.json
 COPY --from=build /pkgs ./pkgs
 
-RUN bun install --production
+RUN bun install --production --ignore-scripts
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh

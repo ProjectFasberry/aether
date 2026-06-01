@@ -12,7 +12,7 @@ type Sub = {
 	cb: (nc: NatsConnection) => Subscription;
 };
 
-export const subs: Sub[] = [
+export const SUBSCRIBERS: Sub[] = [
 	{
 		name: 'Referral check',
 		cb: (nc) => subscribeRefferalCheck(nc, SUBJECTS.USERS.REWARD_CHECK),

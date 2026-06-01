@@ -2,9 +2,8 @@ import { defineRequiredSession } from "#/lib/define";
 import Elysia, { type SelectiveStatus, t } from "elysia";
 import { sessionParsedPayloadSchema, session as sessionService, sessions, sessionsParsedPayloadSchema } from "./login.model";
 import { withData, withError } from "#/shared/schemas";
-import { wrapError } from "#/helpers/wrap-error";
-
-const isError = (e: Error | unknown): e is Error => e instanceof Error
+import { wrapError } from "#/utils";
+import { isError } from "@repo/shared/lib/helpers"
 
 const SESSION_ERRORS_MAP = {
   "INSUFFICIENT_PERMISSION_BY_TIME": 400,

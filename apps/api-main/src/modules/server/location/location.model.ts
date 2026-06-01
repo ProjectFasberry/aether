@@ -12,7 +12,7 @@ export type UserLocation = {
 };
 
 export async function getLocation(nickname: string) {
-	const nc = nats.get()
+	const nc = nats.getInstance()
 
 	const payload = { event: SUBJECTS.SERVER.EVENTS.USER.GET_LOCATION, nickname };
 

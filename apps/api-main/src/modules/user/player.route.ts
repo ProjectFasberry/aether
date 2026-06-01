@@ -1,9 +1,9 @@
 import Elysia, { t } from "elysia";
-import { getPlayerAvatar } from "../server/skin/skin.model";
 import { defineOptionalUser } from "#/lib/define";
 import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";
+import { skinsModel } from "../server/skin/index.model";
 
 const playerPayload = t.Object({
   nickname: t.String(),
@@ -29,7 +29,7 @@ export const player = new Elysia()
     const [main, group, avatar, rate] = await Promise.all([
       getMain({ recipient }),
       getDonate({ recipient }),
-      getPlayerAvatar(recipient),
+      skinsModel.player.getAvatar(recipient),
       getRate({ recipient, initiator }),
     ]);
 

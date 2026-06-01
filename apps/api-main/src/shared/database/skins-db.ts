@@ -1,30 +1,14 @@
-import type { DB as skinsDBType } from "@repo/shared/types/db/skins";
-import { Kysely } from "kysely";
-import { MysqlDialect } from "kysely";
-import { createPool, type Pool, type PoolOptions } from "mysql2";
-import { poolOptsHooks } from "./lobby-db";
+import type { DB } from "@repo/shared/types/db/skins";
+import type { PoolOptions } from "mysql2";
 import { env } from "../env";
+import { createDatabase } from "@repo/core/utils/database";
 
 const config: PoolOptions = {
   uri: env.SKINS_MYSQL_URI,
   connectionLimit: 10
 }
-
-export const skinsPool: Pool = createPool(config)
-const opts = poolOptsHooks("Skins")
-
-export const skins = new Kysely<skinsDBType>({
-  dialect: new MysqlDialect({
-    pool: skinsPool,
-    ...opts.hooks
-  }),
-  log(event) {
-    if (event.level === "error") {
-      opts.dbLogger.error("Query failed : ", {
-        durationMs: event.queryDurationMillis,
-        error: event.error,
-        sql: event.query.sql
-      });
-    }
-  }
-});
+const database = createDatabase<DB>()({
+  name: "Skins", dialect: "mysql", config,
+})
+export const skinsPool = database.pool
+export const skins = database.connection

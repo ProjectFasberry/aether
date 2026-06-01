@@ -1,13 +1,13 @@
 import { getRedisKey } from "#/helpers/redis"
 import { general } from "#/shared/database/general-db"
-import { getRedis } from "#/shared/redis/client"
+import { redis } from "#/shared/redis/client"
 
 export const getPlayerUUIDCacheRedisKey = (nickname: string) => getRedisKey("internal", `players:uuids:${nickname}`)
 
 export async function getPlayerUUID(nickname: string) {
-  const redis = getRedis()
+  const redisClient = redis.getInstance()
 
-  let playerUUID = await redis.get(getPlayerUUIDCacheRedisKey(nickname))
+  let playerUUID = await redisClient.get(getPlayerUUIDCacheRedisKey(nickname))
 
   if (!playerUUID) {
     const { UUID: uuid } = await general
@@ -20,7 +20,7 @@ export async function getPlayerUUID(nickname: string) {
       throw new Error()
     }
 
-    await redis.set(getPlayerUUIDCacheRedisKey(nickname), uuid)
+    await redisClient.set(getPlayerUUIDCacheRedisKey(nickname), uuid)
 
     playerUUID = uuid;
   }

@@ -1,5 +1,5 @@
+import { nats } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
-import { natsLogger } from "#/utils/config/logger";
 import type { NatsConnection } from "@nats-io/nats-core";
 
 // async function sendLogs(subject: string, message: string) {
@@ -25,7 +25,7 @@ export const subscribePostHook = (nc: NatsConnection, subject: string) => {
   return nc.subscribe(subject, {
     callback: (err, msg) => {
       if (err) {
-        natsLogger.error(err)
+        nats.logger.error(err)
         return;
       }
 

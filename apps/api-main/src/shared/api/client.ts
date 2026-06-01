@@ -1,4 +1,4 @@
-import { logger } from "#/utils/config/logger"
+import { logger } from "#/shared/constants/logger"
 import ky from "ky"
 
 const timings = new Map()

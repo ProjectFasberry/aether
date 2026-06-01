@@ -1,4 +1,4 @@
-import { appLogger } from "#/utils/config/logger";
+import { appLogger } from "#/shared/constants/logger";
 import * as z from "zod";
 
 export const isProduction = Bun.env.NODE_ENV === "production";
@@ -8,7 +8,6 @@ const envSchema = z.object({
   NATS_HOST: z.string().min(1),
   NATS_USER: z.string().min(1),
   NATS_PASSWORD: z.string().min(1),
-  SQLITE_DATABASE_URL: z.string().min(1),
   SKINS_MYSQL_URI: z.url(),
   REPUTATION_MYSQL_URI: z.url(),
   PLAYERPOINTS_MYSQL_URI: z.url(),

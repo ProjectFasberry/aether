@@ -1,4 +1,4 @@
-import { appLogger } from "#/utils/config/logger";
+import { appLogger } from "#/shared/constants/logger";
 import { general } from "../database/general-db";
 
 export let PERMISSIONS: Record<string, any> = {}
@@ -33,7 +33,7 @@ function buildPermissions(data: { name: string, id: number }[]): Record<string, 
         if (!current[key]) {
           current[key] = {};
         }
-        
+
         current = current[key];
       }
     });
@@ -43,7 +43,7 @@ function buildPermissions(data: { name: string, id: number }[]): Record<string, 
 }
 
 type PermissionStats = {
-  total: number;  
+  total: number;
   levels: Record<number, number>;
 }
 
@@ -65,7 +65,7 @@ function analyzePermissions(obj: Record<string, any>): PermissionStats {
   }
 
   recurse(obj, 1);
-  
+
   return stats;
 }
 
@@ -83,6 +83,6 @@ export const permissions = {
 
     appLogger.success(
       `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
-    );  
+    );
   }
 }

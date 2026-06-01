@@ -1,32 +1,14 @@
-import { Kysely } from 'kysely';
-import type { DB as lpDBType } from "@repo/shared/types/db/luckperms";
-import { PostgresDialect } from "kysely";
-import pg, { type PoolConfig } from "pg";
-import { poolOptsHooks } from './lobby-db';
+import type { DB } from "@repo/shared/types/db/luckperms";
+import type { PoolConfig } from "pg";
 import { env } from '../env';
-
-const { Pool } = pg;
+import { createDatabase } from '@repo/core/utils/database';
 
 const config: PoolConfig = {
   connectionString: env.LUCKPERMS_POSTGRES_URI,
   max: 10
 }
-
-export const luckpermsPool = new Pool(config)
-const opts = poolOptsHooks("Luckperms")
-
-export const luckperms = new Kysely<lpDBType>({
-  dialect: new PostgresDialect({
-    pool: luckpermsPool,
-    ...opts.hooks
-  }),
-  log(event) {
-    if (event.level === "error") {
-      opts.dbLogger.error("Query failed : ", {
-        durationMs: event.queryDurationMillis,
-        error: event.error,
-        sql: event.query.sql
-      });
-    }
-  }
-});
+const database = createDatabase<DB>()({
+  name: "Luckperms", dialect: "postgresql", config
+})
+export const luckpermsPool = database.pool
+export const luckperms = database.connection

@@ -11,7 +11,7 @@ type PublishUpdateGroup = {
 export function publishUpdateGroup({
   nickname, permission
 }: PublishUpdateGroup) {
-  const nc = nats.get()
+  const nc = nats.getInstance()
   const id = nanoid(6)
 
   const payload: {

@@ -1,22 +1,26 @@
-import { Kysely, PostgresDialect } from "kysely";
-import pg, { type PoolConfig } from "pg";
-import type { DB as authDBType } from "@repo/shared/types/db/general";
+import type { PoolConfig  as PostgresPoolConfig } from "pg";
+import type { PoolOptions as MySQLPoolConfig } from "mysql2";
+import type { DB as generalDb } from "@repo/shared/types/db/general";
+import type { DB as skinsDb } from "@repo/shared/types/db/skins";
 import { env } from "./env";
-import { dbPoolHooks } from "./utils";
+import { createDatabase } from "@repo/core/utils/database"
 
-const { Pool } = pg;
-
-const config: PoolConfig = {
+const generalDatabaseConfig: PostgresPoolConfig = {
 	connectionString: env.GENERAL_POSTGRES_URI,
 	max: 10,
 };
+const generalDatabase = createDatabase<generalDb>()({
+  name: "General", dialect: "postgresql", config: generalDatabaseConfig,
+})
+export const generalPool = generalDatabase.pool
+export const general = generalDatabase.connection
 
-export const generalPool = new Pool(config);
-const opts = Bun.env.PROD ? {} : dbPoolHooks("General");
-
-export const general = new Kysely<authDBType>({
-	dialect: new PostgresDialect({
-		pool: generalPool,
-		...opts,
-	}),
-});
+const skinsDatabaseConfig: MySQLPoolConfig = {
+  uri: env.SKINS_MYSQL_URI,
+  connectionLimit: 10,
+};
+const skinsDatabase = createDatabase<skinsDb>()({
+  name: "Skins", dialect: "mysql", config: skinsDatabaseConfig,
+})
+export const skins = skinsDatabase.connection
+export const skinsPool = skinsDatabase.pool

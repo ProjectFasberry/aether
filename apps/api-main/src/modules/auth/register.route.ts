@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { auth } from "./auth.model";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import { general } from "#/shared/database/general-db";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";

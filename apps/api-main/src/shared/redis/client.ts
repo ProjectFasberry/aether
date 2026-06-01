@@ -1,7 +1,7 @@
 import Redis, { type RedisOptions } from "ioredis";
-import { redisLogger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import { env } from "../env";
-import { invariant } from "#/helpers/invariant";
+import { invariant } from "#/utils";
 
 const instances: { main: Redis | null; bridge: Redis | null } = {
 	main: null,
@@ -17,11 +17,12 @@ export const config: RedisOptions = {
 };
 
 export const redis = {
-	get(): Redis {
+  logger: logger.withTag("redis"),
+	getInstance(): Redis {
 		invariant(instances.main, "Redis main client is not initialized.");
 		return instances.main;
 	},
-	getBridge(): Redis {
+	getBridgeInstance(): Redis {
 		invariant(instances.bridge, "Redis bridge client is not initialized.");
 		return instances.bridge;
 	},
@@ -40,30 +41,30 @@ export const redis = {
 		return instances.bridge;
 	},
 	async _createClient(label: keyof typeof instances) {
-		redisLogger.log(`Connecting to ${config.host}:${config.port}...`);
+		this.logger.log(`Connecting to ${config.host}:${config.port}...`);
 
 		return new Promise<Redis>((resolve, reject) => {
 			try {
 				const client = new Redis(config);
 
 				client.on("error", (e) => {
-					redisLogger.withTag(label).error(`Redis Runtime Error:`, e);
+					this.logger.withTag(label).error(`Runtime Error:`, e);
 				});
 
-				client.on("connect", () => redisLogger.withTag(label).info(`Connection established`));
+				client.on("connect", () => this.logger.withTag(label).info(`Connection established`));
 
 				client.once("ready", () => {
-					redisLogger.withTag(label).success(`Redis is ready`);
+					this.logger.withTag(label).success(`Is ready`);
 					resolve(client);
 				});
-				
-				client.on("end", () => redisLogger.warn("Redis connection closed"));
+
+				client.on("end", () => this.logger.warn("Connection closed"));
 
 				client.once("error", (e) => {
 					reject(e);
 				});
 			} catch (e) {
-				redisLogger.error("Failed to create Redis instance:", e);
+				this.logger.error("Failed to create instance", e);
 				process.exit(1);
 			}
 		});
@@ -71,11 +72,9 @@ export const redis = {
 	async close() {
 		for (const [label, instance] of Object.entries(instances)) {
 			if (instance) {
-				redisLogger.withTag(label).log("Disconnected")
+				this.logger.withTag(label).log("Disconnected")
 				instance.disconnect()
 			}
 		}
 	}
 }
-
-export const getRedis = () => redis.get();

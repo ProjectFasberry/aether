@@ -15,8 +15,7 @@ export const serversWithMap = new Elysia()
 
 export const serverip = new Elysia()
   .get("/server-ip", async ({ set }) => {
-    const list = urls.get();
-    const ip = list.get("server_proxy") ?? null
+    const ip = urls.getData().get("server_proxy") ?? null
 
     set.headers["Cache-Control"] = "public, max-age=600, s-maxage=600"
     set.headers["vary"] = "Origin";

@@ -3,12 +3,12 @@ import { defineOptionalUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { bannerExists } from "../../banner/banner.model";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { getWhitelistIpList } from "#/shared/constants/urls";
+import { urls } from "#/shared/constants/urls";
 import { ipPlugin } from "#/lib/plugins/index";
 import { general } from "#/shared/database/general-db";
 
 function getWhitelist(ip: string) {
-  const whitelist = getWhitelistIpList()
+  const whitelist = urls.getWhitelistIpList()
   return whitelist.includes(ip);
 }
 

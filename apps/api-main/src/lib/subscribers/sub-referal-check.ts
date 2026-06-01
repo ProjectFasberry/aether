@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
 import { callServerCommand } from "#/utils/server/call-command";
 import { validateReferal } from "#/utils/server/validate-referal";
 import type { Msg, NatsConnection } from "@nats-io/nats-core";

@@ -6,9 +6,9 @@ import { reputationPool } from "./reputation-db";
 import { skinsPool } from "./skins-db";
 import { playerPointsPool } from "./playerpoints-db";
 import type { Pool as MySQLPool } from "mysql2";
-import type { Pool as PGPool, PoolClient as PGClient } from "pg";
+import type { PoolClient as PGClient } from "pg";
 import { libertybansPool } from "./libertybans-db";
-import { appLogger } from "#/utils/config/logger";
+import { appLogger } from "#/shared/constants/logger";
 import { planPool } from "./plan-db";
 import { type Static, t } from "elysia";
 import { isMySQLPool, isPGPool, type SupportedPools } from "@repo/shared/utils/index"
@@ -21,18 +21,6 @@ export const healthCheckResultSchema = t.Object({
 })
 
 type HealthCheckResult = Static<typeof healthCheckResultSchema>
-
-const DATABASES_FOR_CHECK: Record<string, SupportedPools> = {
-  bisquite: bisquitePool,
-  lobby: lobbyPool,
-  luckperms: luckpermsPool,
-  general: generalPool,
-  reputation: reputationPool,
-  skins: skinsPool,
-  playerpoints: playerPointsPool,
-  libertybans: libertybansPool,
-  plan: planPool,
-};
 
 async function checkMySQLHealth(pool: MySQLPool): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -49,6 +37,18 @@ async function checkMySQLHealth(pool: MySQLPool): Promise<void> {
 
 export async function checkDatabasesHealth(): Promise<HealthCheckResult[]> {
   const results: HealthCheckResult[] = [];
+
+  const DATABASES_FOR_CHECK: Record<string, SupportedPools> = {
+    bisquite: bisquitePool,
+    lobby: lobbyPool,
+    luckperms: luckpermsPool,
+    general: generalPool,
+    reputation: reputationPool,
+    skins: skinsPool,
+    playerpoints: playerPointsPool,
+    libertybans: libertybansPool,
+    plan: planPool,
+  };
 
   for (const [name, pool] of Object.entries(DATABASES_FOR_CHECK)) {
     const result: HealthCheckResult = { name, type: "unknown", healthy: false };

@@ -1,14 +1,13 @@
 import Elysia from "elysia";
-import { wrapError } from "#/helpers/wrap-error";
+import { wrapError } from "#/utils";
 import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
-import { getRedis } from "#/shared/redis/client";
+import { redis } from "#/shared/redis/client";
 import { getOrderKey } from "./create-crypto-order";
 import { env } from "#/shared/env";
-import { safeJsonParse } from "#/utils/config/transforms";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { general } from "#/shared/database/general-db";
-import { invariant } from "#/helpers/invariant";
+import { safeJsonParse, invariant } from "#/utils";
 
 type CheckOrderBody = {
   update_id: number,
@@ -32,7 +31,7 @@ export const checkOrderRoute = new Elysia()
     const isValid = validateSignatureCryptoPay(text, signature);
     if (!isValid) throw status(400, wrapError("INVALID_SIGNATURE"))
 
-    const redis = getRedis()
+    const redisClient = redis.getInstance();
 
     const bodyResult = safeJsonParse<CheckOrderBody>(text)
     if (!bodyResult.ok) throw status(500, wrapError("INCORRECT_BODY"))
@@ -49,11 +48,11 @@ export const checkOrderRoute = new Elysia()
     if (!uniqueId) throw status(500, wrapError("PAYMENT_NOT_FOUND"))
 
     if (payload.status === 'expired') {
-      await redis.del(getOrderKey(uniqueId))
+      await redisClient.del(getOrderKey(uniqueId))
     }
 
     if (update_type === 'invoice_paid') {
-      const cached = await redis.get(getOrderKey(uniqueId))
+      const cached = await redisClient.get(getOrderKey(uniqueId))
       if (!cached) throw status(404, wrapError("PAYMENT_NOT_FOUND"))
 
       const cachedOrderResult = safeJsonParse<OrderSingleDefault>(cached);
@@ -73,7 +72,7 @@ export const checkOrderRoute = new Elysia()
 
         if (!query.numInsertedOrUpdatedRows) throw status(500, wrapError("PAYMENT_NOT_SAVED"))
 
-        await redis.del(getOrderKey(uniqueId));
+        await redisClient.del(getOrderKey(uniqueId));
       })
     }
 

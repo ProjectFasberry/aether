@@ -1,8 +1,10 @@
 import { cleanOldEvents } from "#/modules/server/events/events.model";
-import { updateServerStatus } from "#/modules/server/status/status.model";
 import { updateExchangeRates } from "#/modules/store/order/external/cryptobot.model";
 import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
-import { logger } from "#/utils/config/logger";
+import { logger } from "#/shared/constants/logger";
+import { env } from "../env";
+import { redis } from "../redis/client";
+import { serverStatus } from "#/modules/server/status/index.model";
 
 type Job = {
   name: string;
@@ -13,7 +15,7 @@ type Job = {
   allowIsDev?: boolean
 }
 
-const cronLogger = logger.withTag("Cron")
+const cronLogger = logger.withTag("cron")
 
 async function wrapJobCb(name: string, fn: () => Promise<void>) {
   try {
@@ -69,7 +71,11 @@ export const CRON_JOBS: Job[] = [
     name: "update-server-status",
     cron: "* * * * *",
     callback: async function () {
-      await wrapJobCb(this.name, updateServerStatus)
+      await wrapJobCb(this.name, () => serverStatus.updateServerStatus({
+        panelPassword: env.PANEL_PASSWORD,
+        panelUser: env.PANEL_USER,
+        redis: redis.getInstance
+      }))
     },
     immediately: true,
     schedule: false,

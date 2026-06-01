@@ -1,31 +1,14 @@
-import { Kysely, PostgresDialect } from "kysely";
-import pg, { type PoolConfig } from "pg";
-import type { DB as authDBType } from "@repo/shared/types/db/general";
-import { poolOptsHooks } from "./lobby-db";
+import type pg from "pg";
+import type { DB } from "@repo/shared/types/db/general";
 import { env } from "../env";
+import { createDatabase } from "@repo/core/utils/database";
 
-const { Pool } = pg;
-
-const config: PoolConfig = {
-	connectionString: env.GENERAL_POSTGRES_URI,
-	max: 10,
+const config: pg.PoolConfig = {
+  connectionString: env.GENERAL_POSTGRES_URI,
+  max: 10,
 };
-
-export const generalPool = new Pool(config);
-
-const opts = poolOptsHooks("General");
-
-export const general = new Kysely<authDBType>({
-	dialect: new PostgresDialect({
-		pool: generalPool, ...opts.hooks,
-	}),
-	log(event) {
-		if (event.level === "error") {
-			opts.dbLogger.error("Query failed : ", {
-				durationMs: event.queryDurationMillis,
-				error: event.error,
-				sql: event.query.sql
-			});
-		}
-	}
-});
+const database = createDatabase<DB>()({
+  name: "General", dialect: "postgresql", config,
+})
+export const general = database.connection
+export const generalPool = database.pool
