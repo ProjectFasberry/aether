@@ -11,64 +11,64 @@ import { LOGGING } from "./shared/constants";
 import { safeJsonParse, showRoutes } from "./utils";
 
 const appConfig: ElysiaConfig<string> = {
-	serve: {
-		hostname: "0.0.0.0",
-	},
-	aot: true,
+  serve: {
+    hostname: "0.0.0.0",
+  },
+  aot: true,
 };
 
 export function startApp() {
-	const app = new Elysia(appConfig)
-		.use(openApiPlugin())
-		.use(serverTimingPlugin())
-		.use(ipPlugin())
-		.use(corsPlugin())
-		.use(loggerPlugin())
-		.onError((payload) => {
-			const { error, code } = payload;
-			if (LOGGING.globalError) appLogger.error(error, code)
+  const app = new Elysia(appConfig)
+    .use(openApiPlugin())
+    .use(serverTimingPlugin())
+    .use(ipPlugin())
+    .use(corsPlugin())
+    .use(loggerPlugin())
+    .onError((payload) => {
+      const { error, code } = payload;
+      if (LOGGING.globalError) appLogger.error(error, code)
 
-			let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
+      let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
-			if (code === "VALIDATION") {
-				const result = safeJsonParse<ValidationError>(error.message);
-				message = result.ok ? result.value : error.message;
-				return { error: message };
-			}
+      if (code === "VALIDATION") {
+        const result = safeJsonParse<ValidationError>(error.message);
+        message = result.ok ? result.value : error.message;
+        return { error: message };
+      }
 
-			if (code === "NOT_FOUND") return { error: code };
+      if (code === "NOT_FOUND") return { error: code };
 
-			if ("response" in error) {
-				const response = error.response as { error?: string } | number;
+      if ("response" in error) {
+        const response = error.response as { error?: string } | number;
 
-				if (typeof response === "object" && response !== null) {
-					if (response.error) {
-						message = response.error;
-					}
-				} else {
-					message = String(response);
-				}
-			}
+        if (typeof response === "object" && response !== null) {
+          if (response.error) {
+            message = response.error;
+          }
+        } else {
+          message = String(response);
+        }
+      }
 
-			if (error instanceof Error) {
-				return { error: error.message };
-			}
+      if (error instanceof Error) {
+        return { error: error.message };
+      }
 
-			return { error: message };
-		})
-		.use(root)
-		.use(defineOptionalSession())
-		.onBeforeHandle(async ({ cookie, session: sessionToken }) =>
-			await session.updateSession(sessionToken ?? null, cookie)
-		)
-		.use(main);
+      return { error: message };
+    })
+    .use(root)
+    .use(defineOptionalSession())
+    .onBeforeHandle(async ({ cookie, session: sessionToken }) =>
+      await session.updateSession(sessionToken ?? null, cookie)
+    )
+    .use(main);
 
-	showRoutes({ routes: app.routes, logger: appLogger });
-	app.listen(env.PORT);
+  showRoutes({ routes: app.routes, logger: appLogger });
+  app.listen(env.PORT);
 
-	appLogger.success(`Server is running at ${app.server?.hostname}: ${app.server?.port}`);
+  appLogger.success(`Server is running at ${app.server?.hostname}: ${app.server?.port}`);
 
-	return app;
+  return app;
 }
 
 export type App = Awaited<ReturnType<typeof startApp>>;

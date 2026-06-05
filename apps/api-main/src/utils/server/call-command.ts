@@ -32,43 +32,48 @@ export const startOrderConsumer = async (): Promise<void> => {
   const js = jetstream(nc);
 
   const orderCons = NATS_CONSUMERS["order"][0]
-  const с = await js.consumers.get(orderCons.stream_name, orderCons.name);
+  const consumer = await js.consumers.get(orderCons.stream_name, orderCons.name);
 
-  while (true) {
+  const msgs = await consumer.consume({ max_messages: 1, expires: 1000 });
+
+  (async () => {
     try {
-      const msgs = await с.consume({ max_messages: 1, expires: 1000 });
-
-      (async () => {
-        for await (const s of await msgs.status()) {
-          switch (s.type) {
-            case "heartbeats_missed":
-              console.log(`${s.count} heartbeats missed`);
-
-              if (s.count === 2) {
-                msgs.stop();
-              }
+      for await (const s of msgs.status()) {
+        if (s.type === "heartbeats_missed") {
+          console.log(`${s.count} heartbeats missed`);
+          if (s.count === 2) {
+            msgs.stop();
           }
         }
-      })();
+      }
+    } catch (err) {
+      console.error("Status monitor error:", err);
+    }
+  })();
 
-      for await (const m of msgs) {
+  try {
+    for await (const m of msgs) {
+      try {
         const payload = m.data;
-
         console.log(new TextDecoder().decode(payload), m.seq, m.subject);
 
-        const r = await nc.request(SUBJECTS.SERVER.EVENTS.USER.EVENT, payload, { timeout })
+        const r = await nc.request(SUBJECTS.SERVER.EVENTS.USER.EVENT, payload, { timeout });
         const res = r.json<ResponseMsg>();
 
         if ("error" in res) {
-          m.nak()
-          throw new Error(res.error);
+          m.nak();
+          console.error("Business error from request:", res.error);
+          continue;
         }
 
         m.ack();
+      } catch (e) {
+        console.error("Failed to process message:", e);
+        m.nak();
       }
-    } catch (e) {
-      console.error(e);
     }
+  } catch (e) {
+    console.error("Consumer loop stopped due to critical error:", e);
   }
 }
 

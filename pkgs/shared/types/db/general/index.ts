@@ -176,14 +176,10 @@ export interface Likes {
 }
 
 export interface Modpacks {
-  client: string;
   created_at: Generated<Timestamp>;
+  downloadLink: string;
   id: Generated<number>;
-  imageUrl: string;
-  mods: string;
   name: string;
-  shaders: string | null;
-  version: string;
 }
 
 export interface News {

@@ -1,5 +1,5 @@
 import { normalizeIp } from "#/helpers/normalize-ip";
-import { getStaticUrl } from "#/helpers/volume";
+import { getUrl } from "#/helpers/volume";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema, createStringBoolSchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
@@ -31,7 +31,7 @@ export const newsPayloadSchema = t.Object({
   meta: withMeta
 })
 
-export const newsSchema = t.Composite([
+export const getNewsListSchema = t.Composite([
   t.Pick(metaSchema, ["asc", "endCursor", "limit"]),
   t.Partial(
     t.Object({
@@ -63,7 +63,7 @@ export async function createNewsViews(target: { ids: number[], ip: string | null
 
 export async function getNewsList({
   asc, limit, endCursor, searchQuery, content
-}: Static<typeof newsSchema>): Promise<Static<typeof newsPayloadSchema> | null> {
+}: Static<typeof getNewsListSchema>): Promise<Static<typeof newsPayloadSchema> | null> {
   const fields: SelectExpression<DB, 'news' | 'news_views'>[] = [
     'news.id',
     'news.created_at',
@@ -122,7 +122,7 @@ export async function getNewsList({
       nickname: news.creator,
       avatar: DEFAULT_HEAD(env.VOLUME_URL)
     },
-    imageUrl: getStaticUrl(news.imageUrl)
+    imageUrl: getUrl(news.imageUrl)
   }))
 
   return {
@@ -174,6 +174,6 @@ export async function getNewsSingle(
     views: Number(query.views),
     creator,
     created_at: query.created_at.toString(),
-    imageUrl: getStaticUrl(query.imageUrl)
+    imageUrl: getUrl(query.imageUrl)
   }
 }

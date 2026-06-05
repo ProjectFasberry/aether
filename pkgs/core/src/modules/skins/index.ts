@@ -99,6 +99,8 @@ export const createSkins = ({
     players: {
       async getCachedSkinPayloads(nicknames: string[]): Promise<Record<string, SkinsHistory | null>> {
         const keys = nicknames.map(getSkinsHistoryCacheRedisKey);
+        if (keys.length === 0) return {};
+
         const resultsStr = await redis().mget(...keys);
         const map: Record<string, SkinsHistory | null> = Object.create(null)
 

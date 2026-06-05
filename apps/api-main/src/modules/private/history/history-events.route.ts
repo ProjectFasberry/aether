@@ -1,9 +1,9 @@
 import { defineRequiredUser } from "#/lib/define";
 import { nats } from "#/shared/nats/client";
 import Elysia, { sse } from "elysia";
-import { ACTIVITY_LOG_SUBJECT } from "../private.model";
 import { logger } from "#/shared/constants/logger";
 import { safeJsonParse } from "#/utils";
+import { SUBJECTS } from "@repo/shared/constants/subjects";
 
 type HistoryPayload = {
   event: string;
@@ -21,7 +21,7 @@ export const historyEvents = new Elysia()
 
     yield sse({ event: "config", data: "connected" });
 
-    const sub = nc.subscribe(ACTIVITY_LOG_SUBJECT, {
+    const sub = nc.subscribe(SUBJECTS.ADMIN.ACTIVITY.LOG, {
       callback: (e, msg) => {
         try {
           if (e) {

@@ -40,7 +40,7 @@ export const createUrls = ({
       return data;
     },
     async init(
-      { onFinish, onError }: { onFinish?: () => void, onError?: () => void } = {}
+      { onFinish, onError }: { onFinish?: () => Awaitable<void>, onError?: () => void } = {}
     ) {
       try {
         const query = await this._getUrlsQuery();
@@ -49,7 +49,7 @@ export const createUrls = ({
         const dataStr = query.map((value) => `${value.name}: ${value.ip}`).join("\n");
         consola.box({ title: ` Urls `, message: dataStr })
 
-        onFinish?.()
+        await onFinish?.()
       } catch (e) {
         onError?.() ?? consola.error("Init error", e)
       }

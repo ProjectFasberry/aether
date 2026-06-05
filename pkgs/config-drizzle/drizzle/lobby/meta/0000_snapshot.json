@@ -1,0 +1,544 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "ajparkour_players": {
+      "name": "ajparkour_players",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "material": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "material",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(17)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gamesplayed": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "gamesplayed",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ajparkour_scores": {
+      "name": "ajparkour_scores",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "area": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "area",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "player": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "score": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "score",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "time",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_enabled_players": {
+      "name": "ij_enabled_players",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Item_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Item_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isEnabled": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "isEnabled",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_first_commands": {
+      "name": "ij_first_commands",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Command_String": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Command_String",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_first_join": {
+      "name": "ij_first_join",
+      "columns": {
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Item_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Item_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_first_world": {
+      "name": "ij_first_world",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Item_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Item_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_ip_limits": {
+      "name": "ij_ip_limits",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "IP_Address": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "IP_Address",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Item_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Item_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_map_ids": {
+      "name": "ij_map_ids",
+      "columns": {
+        "Map_IMG": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Map_IMG",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Map_ID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Map_ID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_on_cooldown": {
+      "name": "ij_on_cooldown",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Item_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Item_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Cooldown": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Cooldown",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Duration": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Duration",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_return_craftitems": {
+      "name": "ij_return_craftitems",
+      "columns": {
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Inventory64": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Inventory64",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_return_items": {
+      "name": "ij_return_items",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Region_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Region_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Inventory64": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Inventory64",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ij_return_switch_items": {
+      "name": "ij_return_switch_items",
+      "columns": {
+        "World_Name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "World_Name",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Player_UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Player_UUID",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Inventory64": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Inventory64",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Time_Stamp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Time_Stamp",
+          "type": "varchar(1000)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

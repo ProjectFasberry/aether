@@ -1,22 +1,15 @@
 import { general } from "#/shared/database/general-db";
 import { nats } from "#/shared/nats/client";
+import { SUBJECTS } from "@repo/shared/constants/subjects";
 
-export const ACTIVITY_LOG_SUBJECT = "admin.activity.log"
-
-export async function createAdminActivityLog(
-  { event, initiator }: { event: string, initiator: string }
-) {
+export async function createAdminActivityLog({
+  event, initiator
+}: { event: string, initiator: string }): Promise<void> {
   const query = await general
     .insertInto("admin_activity_log")
-    .values({
-      initiator, event
-    })
+    .values({ initiator, event })
     .returningAll()
     .executeTakeFirstOrThrow()
 
-  const nc = nats.getInstance()
-
-  nc.publish(ACTIVITY_LOG_SUBJECT, JSON.stringify(query))
-
-  return query;
+  nats.getInstance().publish(SUBJECTS.ADMIN.ACTIVITY.LOG, JSON.stringify(query))
 }

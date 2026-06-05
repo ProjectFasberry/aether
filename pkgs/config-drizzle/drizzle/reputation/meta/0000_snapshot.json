@@ -1,0 +1,119 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "commands": {
+      "name": "commands",
+      "columns": {
+        "id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commandId": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "commandId",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "favorites": {
+      "name": "favorites",
+      "columns": {
+        "id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favorite": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "favorite",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "action",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "reputation": {
+      "name": "reputation",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reputation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "reputation",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acceptReputation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "acceptReputation",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

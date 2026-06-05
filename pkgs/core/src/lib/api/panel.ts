@@ -7,5 +7,5 @@ import { Kysely } from "kysely";
 export const getPanelClient = (generalDb: Kysely<DB>) => {
   const panelUrl = createUrls({ generalDb }).getData().get("panel");
   invariant(panelUrl, "Panel url is not defined");
-  return rootClient.extend((opts) => ({ ...opts, prefixUrl: `https://${panelUrl}` }));
+  return rootClient.extend((opts) => ({ ...opts, baseUrl: `https://${panelUrl}` }));
 }

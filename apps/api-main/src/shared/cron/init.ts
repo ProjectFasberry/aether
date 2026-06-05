@@ -1,6 +1,7 @@
 import { Cron, type CronOptions } from "croner";
 import { CRON_JOBS } from "./jobs";
 import { logger } from "#/shared/constants/logger";
+import { isProduction } from "../env";
 
 type CronTask = Pick<(typeof CRON_JOBS)[number], "immediately" | "schedule" | "allowIsDev"> & {
 	scheduledTo: Date;
@@ -14,7 +15,7 @@ export function startJobs() {
 	for (const job of CRON_JOBS) {
 		let config: CronOptions = {};
 
-		if (process.env.NODE_ENV !== "production") {
+		if (!isProduction) {
 			if (!job.allowIsDev) {
 				continue;
 			}

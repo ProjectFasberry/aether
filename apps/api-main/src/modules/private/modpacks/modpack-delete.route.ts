@@ -6,13 +6,11 @@ import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 
 async function deleteModpack(id: number) {
-  const query = await general
+  return await general
     .deleteFrom("modpacks")
     .where("id", "=", id)
     .returning("id")
     .executeTakeFirstOrThrow();
-
-  return query;
 }
 
 export const modpackDelete = new Elysia()

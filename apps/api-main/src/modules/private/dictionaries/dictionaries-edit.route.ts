@@ -37,7 +37,9 @@ export const dictionariesEdit = new Elysia()
     return { data }
   }, {
     body: editDictSchema,
-    params: t.Object({ id: t.Number() }),
+    params: t.Object({
+      id: t.Number()
+    }),
     afterResponse: ({ permission, nickname: initiator }) => {
       createAdminActivityLog({ initiator, event: permission })
     },

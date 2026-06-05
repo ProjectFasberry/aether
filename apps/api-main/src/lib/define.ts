@@ -53,7 +53,6 @@ export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" 
     if (LOGGING.validators) {
       validateLogger.log("defineRequiredUser");
     }
-    if (!session) throw status(401)
 
     if (bearer && bearer.trim().length >= 1) {
       const result = await handleByBearer(bearer)
@@ -63,6 +62,7 @@ export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" 
       }
     }
 
+    if (!session) throw status(401)
     const nickname = await auth.getUserNickname(session);
     if (!nickname) throw status(401)
 

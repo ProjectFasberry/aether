@@ -1,21 +1,8 @@
 import { validatePermission } from "#/lib/validators"
 import { Permissions } from "#/shared/constants/permissions"
-import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia"
-
-async function getOptions() {
-  const query = await general
-    .selectFrom("options")
-    .select([
-      "name",
-      "value",
-      "title"
-    ])
-    .execute();
-
-  return query
-}
+import { getOptions } from "./options.model";
 
 export const optionsList = new Elysia()
   .use(validatePermission(Permissions.get("OPTIONS.READ")))

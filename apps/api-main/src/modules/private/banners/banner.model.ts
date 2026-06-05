@@ -72,7 +72,7 @@ export const banner = {
       .updateTable("banners")
       .set(updates)
       .where("id", "=", id)
-      .returning(keys)
+      .returningAll()
       .executeTakeFirstOrThrow();
 
     return query;

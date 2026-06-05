@@ -29,5 +29,8 @@
 	"workspaces": [
 		"apps/*",
 		"pkgs/*"
-	]
+	],
+	"dependencies": {
+		"mariadb": "3.5.2"
+	}
 }

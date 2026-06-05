@@ -1,23 +1,13 @@
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
-import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
-
-async function deleteNews(id: number) {
-  const query = await general
-    .deleteFrom("news")
-    .where("id", "=", id)
-    .returning(["id"])
-    .executeTakeFirstOrThrow()
-
-  return query
-}
+import { deleteNews } from "./news.model";
 
 export const newsDeleteRoute = new Elysia()
   .use(validatePermission(Permissions.get("NEWS.DELETE")))
-  .delete("/:id", async ({ status, params: { id } }) => {
+  .delete("/:id", async ({ params: { id } }) => {
     await deleteNews(id);
     return { data: "OK" }
   }, {
@@ -26,6 +16,8 @@ export const newsDeleteRoute = new Elysia()
       createAdminActivityLog({ initiator, event: permission })
     },
     response: {
-      200: withData(t.Literal("OK"))
+      200: withData(
+        t.Literal("OK")
+      )
     }
   })

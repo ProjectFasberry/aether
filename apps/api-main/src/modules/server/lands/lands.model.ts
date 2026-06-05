@@ -210,7 +210,7 @@ const OWNER_FIELDS: SelectExpression<DB, "lands_lands">[] = [
   "lands_lands.balance", "lands_lands.limits", "lands_lands.spawn"
 ]
 
-export const landSinglePayload = t.Composite([
+export const landSingleSchema = t.Composite([
   t.Pick(landSchema, BASE_FIELDS),
   t.Object({
     members: t.Array(
@@ -230,7 +230,7 @@ export const landSinglePayload = t.Composite([
 export async function getLand(
   ulid: string,
   { initiator }: { initiator: string | null }
-): Promise<Static<typeof landSinglePayload> | null> {
+): Promise<Static<typeof landSingleSchema> | null> {
   let isMember = false;
 
   const landRow = await bisquite
@@ -239,12 +239,16 @@ export async function getLand(
     .where('ulid', '=', ulid)
     .executeTakeFirstOrThrow();
 
-  const membersObject = JSON.parse(landRow.members ?? '{}');
+  const membersObject = safeJsonParse<{ [key: string]: { chunks: number } }>(landRow.members);
+  if (!membersObject.ok) {
+    console.error(membersObject.error)
+    return null;
+  }
 
   const membersRaw = await bisquite
     .selectFrom('cmi_users')
     .select(['player_uuid as uuid', 'username as nickname'])
-    .where('player_uuid', 'in', Object.keys(membersObject))
+    .where('player_uuid', 'in', Object.keys(membersObject.value))
     .$narrowType<{ nickname: string, uuid: string }>()
     .execute()
 
@@ -334,7 +338,7 @@ export async function getLand(
   ])
   if (!base || !members || !details) return null;
 
-  let privated: Static<typeof landSinglePayload>["privated"] | null = null
+  let privated: Static<typeof landSingleSchema>["privated"] | null = null
 
   if (isMember) {
     privated = {
@@ -344,7 +348,7 @@ export async function getLand(
     }
   }
 
-  const result: Static<typeof landSinglePayload> = {
+  const result: Static<typeof landSingleSchema> = {
     ...base,
     members,
     details,
@@ -427,7 +431,16 @@ export async function getLands({
     .execute();
 
   const nameMap = new Map(playersList.map(p => [p.uuid, p.nickname]));
-  const avatarsMap = await skinsModel.players.getAvatar(Array.from(nameMap).map(([_, nickname]) => nickname));
+  const nicknames = Array.from(nameMap).map(([_, nickname]) => nickname);
+
+  if (nicknames.length === 0) {
+    return {
+      data: [],
+      meta: wrapMeta(result)
+    };
+  }
+
+  const avatarsMap = await skinsModel.players.getAvatar(nicknames);
 
   const data = parsedLands.map((land) => {
     const members = Object

@@ -1,0 +1,2765 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "plan_access_log": {
+      "name": "plan_access_log",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "autoincrement": false,
+          "name": "time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "from_ip": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "from_ip",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_method": {
+          "autoincrement": false,
+          "name": "request_method",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "request_uri": {
+          "autoincrement": false,
+          "name": "request_uri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "response_code": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "response_code",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_allowlist_bounce": {
+      "name": "plan_allowlist_bounce",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "times": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "times",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_bounce": {
+          "autoincrement": false,
+          "name": "last_bounce",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_allowlist_bounce_ibfk_1": {
+          "name": "plan_allowlist_bounce_ibfk_1",
+          "tableFrom": "plan_allowlist_bounce",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {
+        "uuid": {
+          "name": "uuid",
+          "columns": [
+            "uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_cookies": {
+      "name": "plan_cookies",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "web_username": {
+          "autoincrement": false,
+          "name": "web_username",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires": {
+          "autoincrement": false,
+          "name": "expires",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cookie": {
+          "autoincrement": false,
+          "name": "cookie",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_groups": {
+      "name": "plan_extension_groups",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "group_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider_id": {
+          "autoincrement": false,
+          "name": "provider_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "provider_id": {
+          "name": "provider_id",
+          "columns": [
+            "provider_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_groups_ibfk_1": {
+          "name": "plan_extension_groups_ibfk_1",
+          "tableFrom": "plan_extension_groups",
+          "tableTo": "plan_extension_providers",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_icons": {
+      "name": "plan_extension_icons",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "default": "'''question'''",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family": {
+          "default": "'''SOLID'''",
+          "autoincrement": false,
+          "name": "family",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "default": "'''NONE'''",
+          "autoincrement": false,
+          "name": "color",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_plugins": {
+      "name": "plan_extension_plugins",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_updated": {
+          "autoincrement": false,
+          "name": "last_updated",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_uuid": {
+          "autoincrement": false,
+          "name": "server_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_id": {
+          "autoincrement": false,
+          "name": "icon_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "icon_id": {
+          "name": "icon_id",
+          "columns": [
+            "icon_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_plugins_ibfk_1": {
+          "name": "plan_extension_plugins_ibfk_1",
+          "tableFrom": "plan_extension_plugins",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_providers": {
+      "name": "plan_extension_providers",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "description",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priority": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "priority",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "show_in_players_table": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "show_in_players_table",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "groupable": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "groupable",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "condition_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "condition_name",
+          "type": "varchar(54)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provided_condition": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "provided_condition",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_type": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_type",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hidden": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "hidden",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "player_name",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plugin_id": {
+          "autoincrement": false,
+          "name": "plugin_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_id": {
+          "autoincrement": false,
+          "name": "icon_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tab_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "tab_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "plugin_id": {
+          "name": "plugin_id",
+          "columns": [
+            "plugin_id"
+          ],
+          "isUnique": false
+        },
+        "icon_id": {
+          "name": "icon_id",
+          "columns": [
+            "icon_id"
+          ],
+          "isUnique": false
+        },
+        "tab_id": {
+          "name": "tab_id",
+          "columns": [
+            "tab_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_providers_ibfk_1": {
+          "name": "plan_extension_providers_ibfk_1",
+          "tableFrom": "plan_extension_providers",
+          "tableTo": "plan_extension_plugins",
+          "columnsFrom": [
+            "plugin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_providers_ibfk_2": {
+          "name": "plan_extension_providers_ibfk_2",
+          "tableFrom": "plan_extension_providers",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_providers_ibfk_3": {
+          "name": "plan_extension_providers_ibfk_3",
+          "tableFrom": "plan_extension_providers",
+          "tableTo": "plan_extension_tabs",
+          "columnsFrom": [
+            "tab_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_server_table_values": {
+      "name": "plan_extension_server_table_values",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "table_row": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "table_row",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "col_1_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_1_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_2_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_2_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_3_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_3_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_4_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_4_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_5_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_5_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "table_id": {
+          "autoincrement": false,
+          "name": "table_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "table_id": {
+          "name": "table_id",
+          "columns": [
+            "table_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_server_table_values_ibfk_1": {
+          "name": "plan_extension_server_table_values_ibfk_1",
+          "tableFrom": "plan_extension_server_table_values",
+          "tableTo": "plan_extension_tables",
+          "columnsFrom": [
+            "table_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_server_values": {
+      "name": "plan_extension_server_values",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boolean_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "boolean_value",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "double_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "double_value",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "percentage_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "percentage_value",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "long_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "long_value",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "string_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "string_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "component_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "component_value",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "group_value",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider_id": {
+          "autoincrement": false,
+          "name": "provider_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "provider_id": {
+          "name": "provider_id",
+          "columns": [
+            "provider_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_server_values_ibfk_1": {
+          "name": "plan_extension_server_values_ibfk_1",
+          "tableFrom": "plan_extension_server_values",
+          "tableTo": "plan_extension_providers",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_tables": {
+      "name": "plan_extension_tables",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "color": {
+          "default": "'''NONE'''",
+          "autoincrement": false,
+          "name": "color",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "values_for": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "values_for",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "condition_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "condition_name",
+          "type": "varchar(54)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_1_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_1_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_2_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_2_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_3_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_3_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_4_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_4_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_5_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_5_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "plugin_id": {
+          "autoincrement": false,
+          "name": "plugin_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_1_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon_1_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_2_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon_2_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_3_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon_3_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_4_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon_4_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon_5_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon_5_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_1": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_1",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_2": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_2",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_3": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_3",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_4": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_4",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "format_5": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "format_5",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tab_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "tab_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "plugin_id": {
+          "name": "plugin_id",
+          "columns": [
+            "plugin_id"
+          ],
+          "isUnique": false
+        },
+        "icon_1_id": {
+          "name": "icon_1_id",
+          "columns": [
+            "icon_1_id"
+          ],
+          "isUnique": false
+        },
+        "icon_2_id": {
+          "name": "icon_2_id",
+          "columns": [
+            "icon_2_id"
+          ],
+          "isUnique": false
+        },
+        "icon_3_id": {
+          "name": "icon_3_id",
+          "columns": [
+            "icon_3_id"
+          ],
+          "isUnique": false
+        },
+        "icon_4_id": {
+          "name": "icon_4_id",
+          "columns": [
+            "icon_4_id"
+          ],
+          "isUnique": false
+        },
+        "icon_5_id": {
+          "name": "icon_5_id",
+          "columns": [
+            "icon_5_id"
+          ],
+          "isUnique": false
+        },
+        "tab_id": {
+          "name": "tab_id",
+          "columns": [
+            "tab_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_tables_ibfk_1": {
+          "name": "plan_extension_tables_ibfk_1",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_plugins",
+          "columnsFrom": [
+            "plugin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_2": {
+          "name": "plan_extension_tables_ibfk_2",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_1_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_3": {
+          "name": "plan_extension_tables_ibfk_3",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_2_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_4": {
+          "name": "plan_extension_tables_ibfk_4",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_3_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_5": {
+          "name": "plan_extension_tables_ibfk_5",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_4_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_6": {
+          "name": "plan_extension_tables_ibfk_6",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_5_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tables_ibfk_7": {
+          "name": "plan_extension_tables_ibfk_7",
+          "tableFrom": "plan_extension_tables",
+          "tableTo": "plan_extension_tabs",
+          "columnsFrom": [
+            "tab_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_tabs": {
+      "name": "plan_extension_tabs",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "element_order": {
+          "default": "'''VALUES,GRAPH,TABLE'''",
+          "autoincrement": false,
+          "name": "element_order",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tab_priority": {
+          "autoincrement": false,
+          "name": "tab_priority",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plugin_id": {
+          "autoincrement": false,
+          "name": "plugin_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "icon_id": {
+          "autoincrement": false,
+          "name": "icon_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "plugin_id": {
+          "name": "plugin_id",
+          "columns": [
+            "plugin_id"
+          ],
+          "isUnique": false
+        },
+        "icon_id": {
+          "name": "icon_id",
+          "columns": [
+            "icon_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_tabs_ibfk_1": {
+          "name": "plan_extension_tabs_ibfk_1",
+          "tableFrom": "plan_extension_tabs",
+          "tableTo": "plan_extension_plugins",
+          "columnsFrom": [
+            "plugin_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_extension_tabs_ibfk_2": {
+          "name": "plan_extension_tabs_ibfk_2",
+          "tableFrom": "plan_extension_tabs",
+          "tableTo": "plan_extension_icons",
+          "columnsFrom": [
+            "icon_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_user_table_values": {
+      "name": "plan_extension_user_table_values",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "table_row": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "table_row",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "col_1_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_1_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_2_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_2_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_3_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_3_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "col_4_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "col_4_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "table_id": {
+          "autoincrement": false,
+          "name": "table_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "table_id": {
+          "name": "table_id",
+          "columns": [
+            "table_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_user_table_values_ibfk_1": {
+          "name": "plan_extension_user_table_values_ibfk_1",
+          "tableFrom": "plan_extension_user_table_values",
+          "tableTo": "plan_extension_tables",
+          "columnsFrom": [
+            "table_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_extension_user_values": {
+      "name": "plan_extension_user_values",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "boolean_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "boolean_value",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "double_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "double_value",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "percentage_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "percentage_value",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "long_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "long_value",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "string_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "string_value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "component_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "component_value",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "group_value",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "provider_id": {
+          "autoincrement": false,
+          "name": "provider_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "provider_id": {
+          "name": "provider_id",
+          "columns": [
+            "provider_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_extension_user_values_ibfk_1": {
+          "name": "plan_extension_user_values_ibfk_1",
+          "tableFrom": "plan_extension_user_values",
+          "tableTo": "plan_extension_providers",
+          "columnsFrom": [
+            "provider_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_geolocations": {
+      "name": "plan_geolocations",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "geolocation": {
+          "autoincrement": false,
+          "name": "geolocation",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_used": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "last_used",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_geolocations_ibfk_1": {
+          "name": "plan_geolocations_ibfk_1",
+          "tableFrom": "plan_geolocations",
+          "tableTo": "plan_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_join_address": {
+      "name": "plan_join_address",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "join_address": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "join_address",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "join_address": {
+          "name": "join_address",
+          "columns": [
+            "join_address"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_kills": {
+      "name": "plan_kills",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "killer_uuid": {
+          "autoincrement": false,
+          "name": "killer_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_uuid": {
+          "autoincrement": false,
+          "name": "victim_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_uuid": {
+          "autoincrement": false,
+          "name": "server_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weapon": {
+          "autoincrement": false,
+          "name": "weapon",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_id": {
+          "autoincrement": false,
+          "name": "session_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "session_id": {
+          "name": "session_id",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "plan_kills_uuid_index": {
+          "name": "plan_kills_uuid_index",
+          "columns": [
+            "killer_uuid",
+            "victim_uuid",
+            "server_uuid"
+          ],
+          "isUnique": false
+        },
+        "plan_kills_date_index": {
+          "name": "plan_kills_date_index",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_kills_ibfk_1": {
+          "name": "plan_kills_ibfk_1",
+          "tableFrom": "plan_kills",
+          "tableTo": "plan_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_nicknames": {
+      "name": "plan_nicknames",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nickname": {
+          "autoincrement": false,
+          "name": "nickname",
+          "type": "varchar(75)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_uuid": {
+          "autoincrement": false,
+          "name": "server_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_used": {
+          "autoincrement": false,
+          "name": "last_used",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_ping": {
+      "name": "plan_ping",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "max_ping": {
+          "autoincrement": false,
+          "name": "max_ping",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "min_ping": {
+          "autoincrement": false,
+          "name": "min_ping",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "avg_ping": {
+          "autoincrement": false,
+          "name": "avg_ping",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        },
+        "plan_ping_date_index": {
+          "name": "plan_ping_date_index",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_ping_ibfk_1": {
+          "name": "plan_ping_ibfk_1",
+          "tableFrom": "plan_ping",
+          "tableTo": "plan_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_ping_ibfk_2": {
+          "name": "plan_ping_ibfk_2",
+          "tableFrom": "plan_ping",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_plugin_versions": {
+      "name": "plan_plugin_versions",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plugin_name": {
+          "autoincrement": false,
+          "name": "plugin_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "version",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "modified": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "modified",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_plugin_versions_ibfk_1": {
+          "name": "plan_plugin_versions_ibfk_1",
+          "tableFrom": "plan_plugin_versions",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_security": {
+      "name": "plan_security",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "autoincrement": false,
+          "name": "username",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "linked_to_uuid": {
+          "default": "''''''",
+          "autoincrement": false,
+          "name": "linked_to_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "salted_pass_hash": {
+          "autoincrement": false,
+          "name": "salted_pass_hash",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "autoincrement": false,
+          "name": "group_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "group_id": {
+          "name": "group_id",
+          "columns": [
+            "group_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_security_ibfk_1": {
+          "name": "plan_security_ibfk_1",
+          "tableFrom": "plan_security",
+          "tableTo": "plan_web_group",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {
+        "username": {
+          "name": "username",
+          "columns": [
+            "username"
+          ]
+        },
+        "salted_pass_hash": {
+          "name": "salted_pass_hash",
+          "columns": [
+            "salted_pass_hash"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_servers": {
+      "name": "plan_servers",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "web_address": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "web_address",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_installed": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "is_installed",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_proxy": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "is_proxy",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "plan_version": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "plan_version",
+          "type": "varchar(18)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "uuid": {
+          "name": "uuid",
+          "columns": [
+            "uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_sessions": {
+      "name": "plan_sessions",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_start": {
+          "autoincrement": false,
+          "name": "session_start",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_end": {
+          "autoincrement": false,
+          "name": "session_end",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mob_kills": {
+          "autoincrement": false,
+          "name": "mob_kills",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deaths": {
+          "autoincrement": false,
+          "name": "deaths",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "afk_time": {
+          "autoincrement": false,
+          "name": "afk_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "join_address_id": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "join_address_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        },
+        "plan_sessions_date_index": {
+          "name": "plan_sessions_date_index",
+          "columns": [
+            "session_start"
+          ],
+          "isUnique": false
+        },
+        "plan_session_join_address_index": {
+          "name": "plan_session_join_address_index",
+          "columns": [
+            "join_address_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_sessions_ibfk_1": {
+          "name": "plan_sessions_ibfk_1",
+          "tableFrom": "plan_sessions",
+          "tableTo": "plan_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_sessions_ibfk_2": {
+          "name": "plan_sessions_ibfk_2",
+          "tableFrom": "plan_sessions",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_settings": {
+      "name": "plan_settings",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_uuid": {
+          "autoincrement": false,
+          "name": "server_uuid",
+          "type": "varchar(39)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated": {
+          "autoincrement": false,
+          "name": "updated",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "autoincrement": false,
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "server_uuid": {
+          "name": "server_uuid",
+          "columns": [
+            "server_uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_tps": {
+      "name": "plan_tps",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tps": {
+          "autoincrement": false,
+          "name": "tps",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "players_online": {
+          "autoincrement": false,
+          "name": "players_online",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cpu_usage": {
+          "autoincrement": false,
+          "name": "cpu_usage",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ram_usage": {
+          "autoincrement": false,
+          "name": "ram_usage",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entities": {
+          "autoincrement": false,
+          "name": "entities",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chunks_loaded": {
+          "autoincrement": false,
+          "name": "chunks_loaded",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "free_disk_space": {
+          "autoincrement": false,
+          "name": "free_disk_space",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        },
+        "plan_tps_date_index": {
+          "name": "plan_tps_date_index",
+          "columns": [
+            "date"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_tps_ibfk_1": {
+          "name": "plan_tps_ibfk_1",
+          "tableFrom": "plan_tps",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_users": {
+      "name": "plan_users",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "registered": {
+          "autoincrement": false,
+          "name": "registered",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "times_kicked": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "times_kicked",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "plan_users_uuid_index": {
+          "name": "plan_users_uuid_index",
+          "columns": [
+            "uuid"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "uuid": {
+          "name": "uuid",
+          "columns": [
+            "uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_user_info": {
+      "name": "plan_user_info",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "join_address": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "join_address",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "registered": {
+          "autoincrement": false,
+          "name": "registered",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opped": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "opped",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "banned": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "banned",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_user_info_ibfk_1": {
+          "name": "plan_user_info_ibfk_1",
+          "tableFrom": "plan_user_info",
+          "tableTo": "plan_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_user_info_ibfk_2": {
+          "name": "plan_user_info_ibfk_2",
+          "tableFrom": "plan_user_info",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_web_group": {
+      "name": "plan_web_group",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_name": {
+          "autoincrement": false,
+          "name": "group_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "group_name": {
+          "name": "group_name",
+          "columns": [
+            "group_name"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_web_group_to_permission": {
+      "name": "plan_web_group_to_permission",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_id": {
+          "autoincrement": false,
+          "name": "group_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission_id": {
+          "autoincrement": false,
+          "name": "permission_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "group_id": {
+          "name": "group_id",
+          "columns": [
+            "group_id"
+          ],
+          "isUnique": false
+        },
+        "permission_id": {
+          "name": "permission_id",
+          "columns": [
+            "permission_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_web_group_to_permission_ibfk_1": {
+          "name": "plan_web_group_to_permission_ibfk_1",
+          "tableFrom": "plan_web_group_to_permission",
+          "tableTo": "plan_web_group",
+          "columnsFrom": [
+            "group_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_web_group_to_permission_ibfk_2": {
+          "name": "plan_web_group_to_permission_ibfk_2",
+          "tableFrom": "plan_web_group_to_permission",
+          "tableTo": "plan_web_permission",
+          "columnsFrom": [
+            "permission_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_web_permission": {
+      "name": "plan_web_permission",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "permission": {
+          "autoincrement": false,
+          "name": "permission",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "permission": {
+          "name": "permission",
+          "columns": [
+            "permission"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "plan_web_user_preferences": {
+      "name": "plan_web_user_preferences",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preferences": {
+          "autoincrement": false,
+          "name": "preferences",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "web_user_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "web_user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "web_user_id": {
+          "name": "web_user_id",
+          "columns": [
+            "web_user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_web_user_preferences_ibfk_1": {
+          "name": "plan_web_user_preferences_ibfk_1",
+          "tableFrom": "plan_web_user_preferences",
+          "tableTo": "plan_security",
+          "columnsFrom": [
+            "web_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_worlds": {
+      "name": "plan_worlds",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "world_name": {
+          "autoincrement": false,
+          "name": "world_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_uuid": {
+          "autoincrement": false,
+          "name": "server_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "plan_world_times": {
+      "name": "plan_world_times",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_id": {
+          "autoincrement": false,
+          "name": "user_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "world_id": {
+          "autoincrement": false,
+          "name": "world_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_id": {
+          "autoincrement": false,
+          "name": "server_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_id": {
+          "autoincrement": false,
+          "name": "session_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "survival_time": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "survival_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creative_time": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "creative_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "adventure_time": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "adventure_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "spectator_time": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "spectator_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "world_id": {
+          "name": "world_id",
+          "columns": [
+            "world_id"
+          ],
+          "isUnique": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "columns": [
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "columns": [
+            "user_id"
+          ],
+          "isUnique": false
+        },
+        "server_id": {
+          "name": "server_id",
+          "columns": [
+            "server_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "plan_world_times_ibfk_1": {
+          "name": "plan_world_times_ibfk_1",
+          "tableFrom": "plan_world_times",
+          "tableTo": "plan_worlds",
+          "columnsFrom": [
+            "world_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_world_times_ibfk_2": {
+          "name": "plan_world_times_ibfk_2",
+          "tableFrom": "plan_world_times",
+          "tableTo": "plan_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_world_times_ibfk_3": {
+          "name": "plan_world_times_ibfk_3",
+          "tableFrom": "plan_world_times",
+          "tableTo": "plan_users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        },
+        "plan_world_times_ibfk_4": {
+          "name": "plan_world_times_ibfk_4",
+          "tableFrom": "plan_world_times",
+          "tableTo": "plan_servers",
+          "columnsFrom": [
+            "server_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

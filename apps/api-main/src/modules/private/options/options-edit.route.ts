@@ -1,24 +1,9 @@
-import Elysia, { type Static, t } from "elysia";
-import { general } from "#/shared/database/general-db";
+import Elysia from "elysia";
 import { validatePermission } from "#/lib/validators";
 import { Permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
-
-const updateOptionsSchema = t.Object({
-  value: t.Boolean()
-})
-
-async function updateOptions(name: string, { value }: Static<typeof updateOptionsSchema>) {
-  const query = await general
-    .updateTable("options")
-    .set({ name, value })
-    .where("name", "=", name)
-    .returning("value")
-    .executeTakeFirstOrThrow()
-
-  return query;
-}
+import { updateOptions, updateOptionsSchema } from "./options.model";
 
 export const optionsUpdate = new Elysia()
   .use(validatePermission(Permissions.get("OPTIONS.UPDATE")))
@@ -31,10 +16,6 @@ export const optionsUpdate = new Elysia()
       createAdminActivityLog({ initiator, event: permission })
     },
     response: {
-      200: withData(
-        t.Object({
-          value: t.Boolean()
-        })
-      )
+      200: withData(updateOptionsSchema)
     }
   })

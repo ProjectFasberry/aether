@@ -1,14 +1,15 @@
 import Elysia, { type Static, t } from "elysia";
-import { bannerSchema } from "./banner.model";
+import { bannerSchema, bannerSingleSchema } from "./banner.model";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
-import { bannerPayload } from "./banner-list.route";
+
+type Banner = Static<typeof bannerSingleSchema>
 
 const baseQuery = general
   .selectFrom("banners")
   .select(["id", "title", "description", "href_title", "href_value"])
 
-async function getLatestBanner(): Promise<Static<typeof bannerPayload> | null> {
+async function getLatestBanner(): Promise<Banner | null> {
   const query = await baseQuery
     .orderBy("created_at", "desc")
     .executeTakeFirst()
@@ -26,9 +27,7 @@ async function getLatestBanner(): Promise<Static<typeof bannerPayload> | null> {
   }
 }
 
-async function getBanner(
-  id: number
-): Promise<Static<typeof bannerPayload> | null> {
+async function getBanner(id: number): Promise<Banner | null> {
   const query = await baseQuery
     .where("id", "=", id)
     .executeTakeFirst()
@@ -54,7 +53,7 @@ export const bannerSolo = new Elysia()
     params: bannerSchema,
     response: {
       200: withData(
-        t.Nullable(bannerPayload)
+        t.Nullable(bannerSingleSchema)
       )
     }
   })
@@ -66,7 +65,7 @@ export const bannerLatest = new Elysia()
   }, {
     response: {
       200: withData(
-        t.Nullable(bannerPayload)
+        t.Nullable(bannerSingleSchema)
       )
     }
   })

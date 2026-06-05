@@ -12,6 +12,8 @@ import { events } from "./events";
 import { history } from "./history";
 import { chat } from "./chat";
 import { dictionaries } from "./dictionaries";
+import { volume } from "./volume";
+import { lands } from "./lands";
 
 export const privated = new Elysia()
   .use(validateBannedStatus())
@@ -28,4 +30,6 @@ export const privated = new Elysia()
     .use(history)
     .use(chat)
     .use(dictionaries)
-  )
+    .use(volume)
+    .use(lands)
+)

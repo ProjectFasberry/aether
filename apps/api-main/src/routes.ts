@@ -19,7 +19,7 @@ import { fact } from "./modules/fact";
 import { banner } from "./modules/banner";
 import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
-import { minio } from "./shared/minio/client";
+import { S3 } from "./shared/minio/client";
 import { wrapError } from "./utils";
 
 const MISC_FILES: Partial<Record<string, string>> = {
@@ -30,12 +30,15 @@ const MISC_FILES: Partial<Record<string, string>> = {
 
 const misc = new Elysia()
   .group("/misc", app => app
-    .get("/:id", async ({ params: { id }, status }) => {
+    .get("/:id", async ({ params: { id }, status, set }) => {
       const target = MISC_FILES[id]
       if (!target) return status(404, wrapError("NOT_FOUND"))
 
-      const data = await minio.getInstance().getObject("static", `misc/${target}`)
-      return data;
+      const data = await S3.getClient("static").file(`misc/${target}`).arrayBuffer()
+
+      set.headers["Content-Type"] = "application/pdf"
+
+      return data
     })
   )
 

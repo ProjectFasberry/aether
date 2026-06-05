@@ -21,13 +21,12 @@ function defineError(e: Error | unknown, status: SelectiveStatus<any>) {
   if (isError(e)) {
     const message = e.message as ErrorKeys
     const target = SESSION_ERRORS_MAP[message];
+    if (target) throw status(target, wrapError(message))
 
-    if (target) {
-      throw status(target, wrapError(message))
-    }
-
-    throw new Error("Unexpected error")
+    throw status(500, wrapError("UNKNOWN"))
   }
+
+  throw status(500, wrapError("UNKNOWN"))
 }
 
 export const session = new Elysia()

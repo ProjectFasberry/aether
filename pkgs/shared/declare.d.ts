@@ -13,7 +13,7 @@ declare global {
 		hasPrevPage: boolean;
 		endCursor?: string;
 		startCursor?: string;
-	}
+  }
 }
 
 export {};

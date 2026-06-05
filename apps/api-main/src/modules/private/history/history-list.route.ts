@@ -4,27 +4,32 @@ import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 
+const historySchema =  t.Array(
+  t.Object({
+    id: t.Number(),
+    created_at: t.String(),
+    event: t.String(),
+    initiator: t.String()
+  })
+)
+
+async function getHistoryList() {
+  const query = await general
+    .selectFrom("admin_activity_log")
+    .selectAll()
+    .orderBy("created_at", "desc")
+    .execute();
+
+  return query.map((item) => ({ ...item, created_at: item.created_at.toString() }))
+}
+
 export const historyList = new Elysia()
   .use(validatePermission(Permissions.get("HISTORY.READ")))
-  .get("/list", async (ctx) => {
-    const data = await general
-      .selectFrom("admin_activity_log")
-      .selectAll()
-      .orderBy("created_at", "desc")
-      .execute();
-
-    return { data: data.map(d => ({ ...d, created_at: d.created_at.toString() })) }
+  .get("/list", async () => {
+    const data = await getHistoryList();
+    return { data }
   }, {
     response: {
-      200: withData(
-        t.Array(
-          t.Object({
-            id: t.Number(),
-            created_at: t.String(),
-            event: t.String(),
-            initiator: t.String()
-          })
-        )
-      )
+      200: withData(historySchema)
     }
   })

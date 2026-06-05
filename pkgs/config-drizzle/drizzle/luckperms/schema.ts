@@ -1,40 +1,36 @@
-import { pgTable, index, unique, serial, varchar, boolean, bigint, char, text } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm";
+import { pgTable, index, unique, serial, varchar, boolean, bigint, char, text } from "drizzle-orm/pg-core"
+import { sql } from "drizzle-orm"
 
-export const luckpermsUserPermissions = pgTable(
-	"luckperms_user_permissions",
-	{
-		id: serial().primaryKey().notNull(),
-		uuid: varchar({ length: 36 }).notNull(),
-		permission: varchar({ length: 200 }).notNull(),
-		value: boolean().notNull(),
-		server: varchar({ length: 36 }).notNull(),
-		world: varchar({ length: 64 }).notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-		expiry: bigint({ mode: "number" }).notNull(),
-		contexts: varchar({ length: 200 }).notNull(),
-	},
-	(table) => [
-		index("luckperms_user_permissions_uuid").using("btree", table.uuid.asc().nullsLast().op("text_ops")),
-		unique("unique_uuid_permission").on(table.uuid, table.permission),
-	],
-);
 
-export const luckpermsGroupPermissions = pgTable(
-	"luckperms_group_permissions",
-	{
-		id: serial().primaryKey().notNull(),
-		name: varchar({ length: 36 }).notNull(),
-		permission: varchar({ length: 200 }).notNull(),
-		value: boolean().notNull(),
-		server: varchar({ length: 36 }).notNull(),
-		world: varchar({ length: 64 }).notNull(),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-		expiry: bigint({ mode: "number" }).notNull(),
-		contexts: varchar({ length: 200 }).notNull(),
-	},
-	(table) => [index("luckperms_group_permissions_name").using("btree", table.name.asc().nullsLast().op("text_ops"))],
-);
+
+export const luckpermsUserPermissions = pgTable("luckperms_user_permissions", {
+	id: serial().primaryKey().notNull(),
+	uuid: varchar({ length: 36 }).notNull(),
+	permission: varchar({ length: 200 }).notNull(),
+	value: boolean().notNull(),
+	server: varchar({ length: 36 }).notNull(),
+	world: varchar({ length: 64 }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	expiry: bigint({ mode: "number" }).notNull(),
+	contexts: varchar({ length: 200 }).notNull(),
+}, (table) => [
+	index("luckperms_user_permissions_uuid").using("btree", table.uuid.asc().nullsLast().op("text_ops")),
+	unique("unique_uuid_permission").on(table.uuid, table.permission),
+]);
+
+export const luckpermsGroupPermissions = pgTable("luckperms_group_permissions", {
+	id: serial().primaryKey().notNull(),
+	name: varchar({ length: 36 }).notNull(),
+	permission: varchar({ length: 200 }).notNull(),
+	value: boolean().notNull(),
+	server: varchar({ length: 36 }).notNull(),
+	world: varchar({ length: 64 }).notNull(),
+	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
+	expiry: bigint({ mode: "number" }).notNull(),
+	contexts: varchar({ length: 200 }).notNull(),
+}, (table) => [
+	index("luckperms_group_permissions_name").using("btree", table.name.asc().nullsLast().op("text_ops")),
+]);
 
 export const luckpermsGroups = pgTable("luckperms_groups", {
 	name: varchar({ length: 36 }).primaryKey().notNull(),
@@ -57,12 +53,10 @@ export const luckpermsTracks = pgTable("luckperms_tracks", {
 	groups: text().notNull(),
 });
 
-export const luckpermsPlayers = pgTable(
-	"luckperms_players",
-	{
-		uuid: varchar({ length: 36 }).primaryKey().notNull(),
-		username: varchar({ length: 16 }).notNull(),
-		primaryGroup: varchar("primary_group", { length: 36 }).notNull(),
-	},
-	(table) => [index("luckperms_players_username").using("btree", table.username.asc().nullsLast().op("text_ops"))],
-);
+export const luckpermsPlayers = pgTable("luckperms_players", {
+	uuid: varchar({ length: 36 }).primaryKey().notNull(),
+	username: varchar({ length: 16 }).notNull(),
+	primaryGroup: varchar("primary_group", { length: 36 }).notNull(),
+}, (table) => [
+	index("luckperms_players_username").using("btree", table.username.asc().nullsLast().op("text_ops")),
+]);

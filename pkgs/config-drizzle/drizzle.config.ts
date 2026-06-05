@@ -27,7 +27,7 @@ consola.box(`
 
 export default defineConfig({
 	schema: `./drizzle/${SELECTED_DATABASE}/noop.ts`,
-	out: `./drizzle`,
+	out: `./drizzle/${SELECTED_DATABASE}`,
 	dialect: SELECTED_DIALECT,
 	dbCredentials: {
 		url: SELECTED_URL,

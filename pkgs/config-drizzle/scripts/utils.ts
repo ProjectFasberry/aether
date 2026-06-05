@@ -5,16 +5,17 @@ import * as z from "zod";
 const infisicalSchema = z.object({
 	INFISICAL_CLIENT_ID: z.string(),
 	INFISICAL_CLIENT_SECRET: z.string(),
-	INFISICAL_PROJECT_ID: z.string(),
+  INFISICAL_PROJECT_ID: z.string(),
+	INFISICAL_API_URL: z.string()
 });
 
 const infisicalEnv = infisicalSchema.parse(process.env);
 
 export async function getDatabaseUrl(databaseName: string, mode: "dev" | "prod") {
-	const { INFISICAL_CLIENT_ID, INFISICAL_CLIENT_SECRET, INFISICAL_PROJECT_ID } = infisicalEnv;
+	const { INFISICAL_CLIENT_ID, INFISICAL_API_URL, INFISICAL_CLIENT_SECRET, INFISICAL_PROJECT_ID } = infisicalEnv;
 
 	const client = new InfisicalSDK({
-		siteUrl: "https://infisical.fasberry.fun",
+		siteUrl: INFISICAL_API_URL
 	});
 
 	await client.auth().universalAuth.login({
@@ -48,14 +49,12 @@ export async function getDatabaseUrl(databaseName: string, mode: "dev" | "prod")
 }
 
 export function getDatabase(name: keyof typeof DATABASES) {
-	const t = DATABASES[name];
-	if (!t) throw new Error(`Database "${name}" not found`);
-	return t;
+	const target = DATABASES[name];
+	if (!target) throw new Error(`Database "${name}" not found`);
+	return target;
 }
 
-export function getDatabasesList() {
-	return Object.keys(DATABASES);
-}
+export const getDatabasesList = () => Object.keys(DATABASES)
 
 export async function defineSelectedDatabase(databaseName: string, mode: "dev" | "prod") {
 	const url = await getDatabaseUrl(databaseName, mode);

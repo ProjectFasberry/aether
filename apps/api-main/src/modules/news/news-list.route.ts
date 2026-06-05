@@ -1,7 +1,7 @@
 import Elysia, { type Static } from "elysia";
 import { ipPlugin } from "#/lib/plugins/index";
 import { withData } from "#/shared/schemas";
-import { createNewsViews, getNewsList, newsPayloadSchema, newsSchema } from "./news.model";
+import { createNewsViews, getNewsList, newsPayloadSchema, getNewsListSchema } from "./news.model";
 
 export const newsList = new Elysia()
   .use(ipPlugin())
@@ -9,7 +9,7 @@ export const newsList = new Elysia()
     const data = await getNewsList(query)
     return { data }
   }, {
-    query: newsSchema,
+    query: getNewsListSchema,
     response: {
       200: withData(
         newsPayloadSchema

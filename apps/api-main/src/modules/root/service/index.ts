@@ -1,9 +1,17 @@
 import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
-import { checkDatabasesHealth, healthCheckResultSchema } from "#/shared/database/init";
 import { defineBearer } from "#/lib/define";
 import { wrapError } from "#/utils";
 import { cronTasks } from "#/shared/cron/init";
+import { checkDatabasesHealth, type HealthCheckResult } from "@repo/core/utils/database";
+import { DATABASES_FOR_CHECK } from "#/shared/database";
+
+const healthCheckResultSchema = t.Object({
+  name: t.String(),
+  type: t.UnionEnum(["mysql", "postgre", "mariadb"]),
+  healthy: t.Boolean(),
+  error: t.Optional(t.Unknown()),
+})
 
 const healthPayloadSchema = t.Object({
   status: t.Literal("OK"),
@@ -42,9 +50,14 @@ export const health = new Elysia()
     .use(defineBearer())
     .get("/ready", async ({ status }) => {
       try {
-        const databases = await checkDatabasesHealth().catch(() => {
-          throw new Error("DB_CONNECTION_FAILED")
-        });
+        let databases: HealthCheckResult[] = []
+
+        await checkDatabasesHealth({
+          databases: DATABASES_FOR_CHECK,
+          onSuccess: (results) => {
+            databases = results
+          }
+        })
 
         return {
           data: {

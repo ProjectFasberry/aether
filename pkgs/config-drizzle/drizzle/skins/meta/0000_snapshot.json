@@ -1,0 +1,378 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "sr_cache": {
+      "name": "sr_cache",
+      "columns": {
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timestamp": {
+          "autoincrement": false,
+          "name": "timestamp",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_cooldowns": {
+      "name": "sr_cooldowns",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_name": {
+          "autoincrement": false,
+          "name": "group_name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creation_time": {
+          "autoincrement": false,
+          "name": "creation_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration": {
+          "autoincrement": false,
+          "name": "duration",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_custom_skins": {
+      "name": "sr_custom_skins",
+      "columns": {
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value": {
+          "autoincrement": false,
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature": {
+          "autoincrement": false,
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "display_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "display_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_players": {
+      "name": "sr_players",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_identifier": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_identifier",
+          "type": "varchar(2083)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skin_variant": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_variant",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skin_type": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_player_favourites": {
+      "name": "sr_player_favourites",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "autoincrement": false,
+          "name": "timestamp",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_identifier": {
+          "autoincrement": false,
+          "name": "skin_identifier",
+          "type": "varchar(2083)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_variant": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_variant",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skin_type": {
+          "autoincrement": false,
+          "name": "skin_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_player_history": {
+      "name": "sr_player_history",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "autoincrement": false,
+          "name": "timestamp",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_identifier": {
+          "autoincrement": false,
+          "name": "skin_identifier",
+          "type": "varchar(2083)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_variant": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_variant",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "skin_type": {
+          "autoincrement": false,
+          "name": "skin_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_player_skins": {
+      "name": "sr_player_skins",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_known_name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "last_known_name",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "autoincrement": false,
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature": {
+          "autoincrement": false,
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamp": {
+          "autoincrement": false,
+          "name": "timestamp",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_url_index": {
+      "name": "sr_url_index",
+      "columns": {
+        "url": {
+          "autoincrement": false,
+          "name": "url",
+          "type": "varchar(266)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_variant": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_variant",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sr_url_skins": {
+      "name": "sr_url_skins",
+      "columns": {
+        "url": {
+          "autoincrement": false,
+          "name": "url",
+          "type": "varchar(266)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mine_skin_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "mine_skin_id",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "autoincrement": false,
+          "name": "value",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature": {
+          "autoincrement": false,
+          "name": "signature",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "skin_variant": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "skin_variant",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

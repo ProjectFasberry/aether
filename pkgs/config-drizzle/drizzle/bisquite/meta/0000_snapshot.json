@@ -1,0 +1,3247 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "betonquest_backpack": {
+      "name": "betonquest_backpack",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instruction": {
+          "autoincrement": false,
+          "name": "instruction",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "autoincrement": false,
+          "name": "amount",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "profileID": {
+          "name": "profileID",
+          "columns": [
+            "profileID"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "betonquest_backpack_ibfk_1": {
+          "name": "betonquest_backpack_ibfk_1",
+          "tableFrom": "betonquest_backpack",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_global_points": {
+      "name": "betonquest_global_points",
+      "columns": {
+        "category": {
+          "autoincrement": false,
+          "name": "category",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "autoincrement": false,
+          "name": "count",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_global_tags": {
+      "name": "betonquest_global_tags",
+      "columns": {
+        "tag": {
+          "autoincrement": false,
+          "name": "tag",
+          "type": "varchar(510)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_journal": {
+      "name": "betonquest_journal",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pointer": {
+          "autoincrement": false,
+          "name": "pointer",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "profileID": {
+          "name": "profileID",
+          "columns": [
+            "profileID"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "betonquest_journal_ibfk_1": {
+          "name": "betonquest_journal_ibfk_1",
+          "tableFrom": "betonquest_journal",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_migration": {
+      "name": "betonquest_migration",
+      "columns": {
+        "namespace": {
+          "autoincrement": false,
+          "name": "namespace",
+          "type": "varchar(63)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "migration_id": {
+          "autoincrement": false,
+          "name": "migration_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "default": "'current_timestamp()'",
+          "autoincrement": false,
+          "name": "time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_objectives": {
+      "name": "betonquest_objectives",
+      "columns": {
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective": {
+          "autoincrement": false,
+          "name": "objective",
+          "type": "varchar(510)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instructions": {
+          "autoincrement": false,
+          "name": "instructions",
+          "type": "varchar(2046)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {
+        "betonquest_objectives_ibfk_1": {
+          "name": "betonquest_objectives_ibfk_1",
+          "tableFrom": "betonquest_objectives",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_player": {
+      "name": "betonquest_player",
+      "columns": {
+        "playerID": {
+          "autoincrement": false,
+          "name": "playerID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "active_profile": {
+          "autoincrement": false,
+          "name": "active_profile",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "autoincrement": false,
+          "name": "language",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "conversation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "conversation",
+          "type": "varchar(510)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "active_profile": {
+          "name": "active_profile",
+          "columns": [
+            "active_profile"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "betonquest_player_ibfk_1": {
+          "name": "betonquest_player_ibfk_1",
+          "tableFrom": "betonquest_player",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "active_profile"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_player_profile": {
+      "name": "betonquest_player_profile",
+      "columns": {
+        "playerID": {
+          "autoincrement": false,
+          "name": "playerID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(63)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {
+        "betonquest_player_profile_ibfk_1": {
+          "name": "betonquest_player_profile_ibfk_1",
+          "tableFrom": "betonquest_player_profile",
+          "tableTo": "betonquest_player",
+          "columnsFrom": [
+            "playerID"
+          ],
+          "columnsTo": [
+            "playerID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        },
+        "betonquest_player_profile_ibfk_2": {
+          "name": "betonquest_player_profile_ibfk_2",
+          "tableFrom": "betonquest_player_profile",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {
+        "playerID": {
+          "name": "playerID",
+          "columns": [
+            "playerID",
+            "name"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "betonquest_points": {
+      "name": "betonquest_points",
+      "columns": {
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "autoincrement": false,
+          "name": "category",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "count": {
+          "autoincrement": false,
+          "name": "count",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {
+        "betonquest_points_ibfk_1": {
+          "name": "betonquest_points_ibfk_1",
+          "tableFrom": "betonquest_points",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_profile": {
+      "name": "betonquest_profile",
+      "columns": {
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "betonquest_tags": {
+      "name": "betonquest_tags",
+      "columns": {
+        "profileID": {
+          "autoincrement": false,
+          "name": "profileID",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag": {
+          "autoincrement": false,
+          "name": "tag",
+          "type": "varchar(510)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {
+        "betonquest_tags_ibfk_1": {
+          "name": "betonquest_tags_ibfk_1",
+          "tableFrom": "betonquest_tags",
+          "tableTo": "betonquest_profile",
+          "columnsFrom": [
+            "profileID"
+          ],
+          "columnsTo": [
+            "profileID"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cmi_inventories": {
+      "name": "cmi_inventories",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inventories": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "inventories",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cmi_playtime": {
+      "name": "cmi_playtime",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "date",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h0": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h0",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h1": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h1",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h2": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h2",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h3": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h3",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h4": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h4",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h5": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h5",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h6": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h6",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h7": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h7",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h8": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h8",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h9": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h9",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h10": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h10",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h11": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h11",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h12": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h12",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h13": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h13",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h14": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h14",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h15": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h15",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h16": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h16",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h17": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h17",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h18": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h18",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h19": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h19",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h20": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h20",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h21": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h21",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h22": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h22",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "h23": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "h23",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cmi_playtimereward": {
+      "name": "cmi_playtimereward",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "repeatable": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "repeatable",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "onetime": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "onetime",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "cmi_users": {
+      "name": "cmi_users",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_uuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nickname": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "nickname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LogOutLocation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "LogOutLocation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DeathLocation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "DeathLocation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TeleportLocation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "TeleportLocation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Homes": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Homes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LastLoginTime": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "LastLoginTime",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LastLogoffTime": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "LastLogoffTime",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TotalPlayTime": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "TotalPlayTime",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tFly": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "tFly",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tGod": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "tGod",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Glow": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Glow",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Ips": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Ips",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Cuffed": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "Cuffed",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "AlertUntil": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "AlertUntil",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "AlertReason": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "AlertReason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JoinedCounter": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "JoinedCounter",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "LockedIps": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "LockedIps",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pTime": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "pTime",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Kits": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Kits",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Charges": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Charges",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Cooldowns": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Cooldowns",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Balance": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Balance",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Notes": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Rank": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Rank",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BannedUntil": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "BannedUntil",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BannedAt": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "BannedAt",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BannedBy": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "BannedBy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BanReason": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "BanReason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Ignores": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Ignores",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Vanish": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Vanish",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Economy": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Economy",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Mail": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Mail",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FlightCharge": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "FlightCharge",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "UserMeta": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "UserMeta",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Flying": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "Flying",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Votifier": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Votifier",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Jail": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Jail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JailedUntil": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "JailedUntil",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "FakeAccount": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "FakeAccount",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "PlaytimeOptimized": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "PlaytimeOptimized",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flightChargeEnabled": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "flightChargeEnabled",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JailReason": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "JailReason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Skin": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Skin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Collision": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "Collision",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NamePrefix": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "NamePrefix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NameSuffix": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "NameSuffix",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Warnings": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Warnings",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NameColor": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "NameColor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Muted": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Muted",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "AFRecharge": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "AFRecharge",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "DisplayName": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "DisplayName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Options": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "Options",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ChatColor": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "ChatColor",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "commands": {
+      "name": "commands",
+      "columns": {
+        "id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "commandId": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "commandId",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "favorites": {
+      "name": "favorites",
+      "columns": {
+        "id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "favorite": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "favorite",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "action",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "index_mapping": {
+      "name": "index_mapping",
+      "columns": {
+        "ENTRY": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "ENTRY",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "BITMASK_INDEX": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "BITMASK_INDEX",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_archive": {
+      "name": "jobs_archive",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "job",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "experience": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "experience",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "level",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "left": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "left",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jobid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "jobid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_blocks": {
+      "name": "jobs_blocks",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "world": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "world",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "x": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "x",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "y": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "y",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "z": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "z",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recorded": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "recorded",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resets": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "resets",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "worldid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "worldid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_exploredata": {
+      "name": "jobs_exploredata",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "worldname": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "worldname",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chunkX": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "chunkX",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chunkZ": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "chunkZ",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "playerNames": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "playerNames",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "worldid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "worldid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_jobnames": {
+      "name": "jobs_jobnames",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "template_jobNames": {
+          "name": "template_jobNames",
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "jobs_jobs": {
+      "name": "jobs_jobs",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "job",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "experience": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "experience",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "level",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "jobid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "jobid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_limits": {
+      "name": "jobs_limits",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "type",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "collected": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "collected",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "started",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "typeid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "typeid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_log": {
+      "name": "jobs_log",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "action",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "itemname": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "itemname",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "count": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "count",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "money": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "money",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "exp": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "exp",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "points": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "points",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_points": {
+      "name": "jobs_points",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "totalpoints": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "totalpoints",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currentpoints": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "currentpoints",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_users": {
+      "name": "jobs_users",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "seen": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "seen",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "donequests": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "donequests",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quests": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "quests",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "jobs_worlds": {
+      "name": "jobs_worlds",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "template_worlds": {
+          "name": "template_worlds",
+          "columns": [
+            "name"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "lands_banners": {
+      "name": "lands_banners",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ulid": {
+          "autoincrement": false,
+          "name": "ulid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "default": "'current_timestamp()'",
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "banner_url": {
+          "autoincrement": false,
+          "name": "banner_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_gallery": {
+      "name": "lands_gallery",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ulid": {
+          "autoincrement": false,
+          "name": "ulid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "autoincrement": false,
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_lands": {
+      "name": "lands_lands",
+      "columns": {
+        "ulid": {
+          "autoincrement": false,
+          "name": "ulid",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server": {
+          "autoincrement": false,
+          "name": "server",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "world": {
+          "autoincrement": false,
+          "name": "world",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "autoincrement": false,
+          "name": "type",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "category",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "nation",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "area": {
+          "autoincrement": false,
+          "name": "area",
+          "type": "mediumtext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "members": {
+          "autoincrement": false,
+          "name": "members",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "autoincrement": false,
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "balance": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "balance",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "title",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "spawn": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "spawn",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inbox": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "inbox",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "limits": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "limits",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "shield": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "shield",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stats": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "stats",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "icon": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "icon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "storage": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "storage",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "autoincrement": false,
+          "name": "level",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "server": {
+          "name": "server",
+          "columns": [
+            "server"
+          ],
+          "isUnique": false
+        },
+        "world": {
+          "name": "world",
+          "columns": [
+            "world"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lands_lands_ibfk_1": {
+          "name": "lands_lands_ibfk_1",
+          "tableFrom": "lands_lands",
+          "tableTo": "lands_servers",
+          "columnsFrom": [
+            "server"
+          ],
+          "columnsTo": [
+            "server"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        },
+        "lands_lands_ibfk_2": {
+          "name": "lands_lands_ibfk_2",
+          "tableFrom": "lands_lands",
+          "tableTo": "lands_worlds",
+          "columnsFrom": [
+            "world"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_lands_claims": {
+      "name": "lands_lands_claims",
+      "columns": {
+        "land": {
+          "autoincrement": false,
+          "name": "land",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "world": {
+          "autoincrement": false,
+          "name": "world",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "chunks": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "chunks",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chunks_amount": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "chunks_amount",
+          "type": "mediumint(8) unsigned",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "areas": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "areas",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "areas_amount": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "areas_amount",
+          "type": "mediumint(8) unsigned",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "blocks": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "blocks",
+          "type": "longtext",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "world": {
+          "name": "world",
+          "columns": [
+            "world"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lands_lands_claims_ibfk_1": {
+          "name": "lands_lands_claims_ibfk_1",
+          "tableFrom": "lands_lands_claims",
+          "tableTo": "lands_lands",
+          "columnsFrom": [
+            "land"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        },
+        "lands_lands_claims_ibfk_2": {
+          "name": "lands_lands_claims_ibfk_2",
+          "tableFrom": "lands_lands_claims",
+          "tableTo": "lands_worlds",
+          "columnsFrom": [
+            "world"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_players": {
+      "name": "lands_players",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "edit_land": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "edit_land",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "invites": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "invites",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "limits": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "limits",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "chatmode": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "chatmode",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flags": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "flags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "edit_land": {
+          "name": "edit_land",
+          "columns": [
+            "edit_land"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lands_players_ibfk_1": {
+          "name": "lands_players_ibfk_1",
+          "tableFrom": "lands_players",
+          "tableTo": "lands_lands",
+          "columnsFrom": [
+            "edit_land"
+          ],
+          "columnsTo": [
+            "ulid"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_servers": {
+      "name": "lands_servers",
+      "columns": {
+        "server": {
+          "autoincrement": false,
+          "name": "server",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_seen": {
+          "autoincrement": false,
+          "name": "last_seen",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "autoincrement": false,
+          "name": "version",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version_prev": {
+          "autoincrement": false,
+          "name": "version_prev",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "timestamps": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "timestamps",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flags": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "flags",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_wars": {
+      "name": "lands_wars",
+      "columns": {
+        "attacker": {
+          "autoincrement": false,
+          "name": "attacker",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "defender": {
+          "autoincrement": false,
+          "name": "defender",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "autoincrement": false,
+          "name": "started_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tribute": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "tribute",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_stats": {
+          "autoincrement": false,
+          "name": "attacker_stats",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "defender_stats": {
+          "autoincrement": false,
+          "name": "defender_stats",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_wars_declarations": {
+      "name": "lands_wars_declarations",
+      "columns": {
+        "attacker": {
+          "autoincrement": false,
+          "name": "attacker",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "defender": {
+          "autoincrement": false,
+          "name": "defender",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tribute": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "tribute",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sent_at": {
+          "autoincrement": false,
+          "name": "sent_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "mutual": {
+          "default": "'b''0'''",
+          "autoincrement": false,
+          "name": "mutual",
+          "type": "bit(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preparation_time": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "preparation_time",
+          "type": "bigint(20)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lands_worlds": {
+      "name": "lands_worlds",
+      "columns": {
+        "ulid": {
+          "autoincrement": false,
+          "name": "ulid",
+          "type": "char(26)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server": {
+          "autoincrement": false,
+          "name": "server",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "tinytext",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uid": {
+          "autoincrement": false,
+          "name": "uid",
+          "type": "char(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "flags_role": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "flags_role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "flags_natural": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "flags_natural",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "server": {
+          "name": "server",
+          "columns": [
+            "server"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "lands_worlds_ibfk_1": {
+          "name": "lands_worlds_ibfk_1",
+          "tableFrom": "lands_worlds",
+          "tableTo": "lands_servers",
+          "columnsFrom": [
+            "server"
+          ],
+          "columnsTo": [
+            "server"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "mcpets_player_data": {
+      "name": "mcpets_player_data",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "names": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "names",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inventories": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "inventories",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "data": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "data",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerparticles_fixed": {
+      "name": "playerparticles_fixed",
+      "columns": {
+        "owner_uuid": {
+          "autoincrement": false,
+          "name": "owner_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "particle_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "particle_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "world": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "world",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "xPos": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "xPos",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "yPos": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "yPos",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "zPos": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "zPos",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "yaw": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "yaw",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pitch": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "pitch",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "particle_uuid": {
+          "name": "particle_uuid",
+          "columns": [
+            "particle_uuid"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "playerparticles_fixed_ibfk_1": {
+          "name": "playerparticles_fixed_ibfk_1",
+          "tableFrom": "playerparticles_fixed",
+          "tableTo": "playerparticles_particle",
+          "columnsFrom": [
+            "particle_uuid"
+          ],
+          "columnsTo": [
+            "uuid"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "restrict"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerparticles_group": {
+      "name": "playerparticles_group",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "owner_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "owner_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerparticles_migrations": {
+      "name": "playerparticles_migrations",
+      "columns": {
+        "migration_version": {
+          "autoincrement": false,
+          "name": "migration_version",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerparticles_particle": {
+      "name": "playerparticles_particle",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "group_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "group_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "id": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "id",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "effect": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "effect",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "style": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "style",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "item_material": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "item_material",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "block_material": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "block_material",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "note": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "note",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "r": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "r",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "g": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "g",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "b": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "b",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "r_end": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "r_end",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "g_end": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "g_end",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "b_end": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "b_end",
+          "type": "smallint(6)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duration": {
+          "default": 20,
+          "autoincrement": false,
+          "name": "duration",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerparticles_settings": {
+      "name": "playerparticles_settings",
+      "columns": {
+        "player_uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "player_uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "particles_hidden": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "particles_hidden",
+          "type": "tinyint(4)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "particles_hidden_self": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "particles_hidden_self",
+          "type": "tinyint(4)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerpoints_migrations": {
+      "name": "playerpoints_migrations",
+      "columns": {
+        "migration_version": {
+          "autoincrement": false,
+          "name": "migration_version",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "playerpoints_points": {
+      "name": "playerpoints_points",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "points": {
+          "autoincrement": false,
+          "name": "points",
+          "type": "int(11)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "uuid": {
+          "name": "uuid",
+          "columns": [
+            "uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "playerpoints_username_cache": {
+      "name": "playerpoints_username_cache",
+      "columns": {
+        "uuid": {
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(36)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "username": {
+          "autoincrement": false,
+          "name": "username",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {
+        "playerpoints_username_cache_uuid_index": {
+          "name": "playerpoints_username_cache_uuid_index",
+          "columns": [
+            "uuid"
+          ],
+          "isUnique": false
+        },
+        "playerpoints_username_cache_username_index": {
+          "name": "playerpoints_username_cache_username_index",
+          "columns": [
+            "username"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "uuid": {
+          "name": "uuid",
+          "columns": [
+            "uuid"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "reputation": {
+      "name": "reputation",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uuid": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "uuid",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reputation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "reputation",
+          "type": "bigint(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "acceptReputation": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "acceptReputation",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "tab_groups": {
+      "name": "tab_groups",
+      "columns": {
+        "group": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "group",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "property": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "property",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "value",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "world": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "world",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "server": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "server",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "tab_users": {
+      "name": "tab_users",
+      "columns": {
+        "user": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "user",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "property": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "property",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "value",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "world": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "world",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "server": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "server",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "user_perferences": {
+      "name": "user_perferences",
+      "columns": {
+        "UUID": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "UUID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "NAME": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "NAME",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ITEMSTAND": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "ITEMSTAND",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ITEMDROP": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "ITEMDROP",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "HOLOGRAM": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "HOLOGRAM",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "use_lock": {
+      "name": "use_lock",
+      "columns": {
+        "STATUS_LOCK": {
+          "default": "'NULL'",
+          "autoincrement": false,
+          "name": "STATUS_LOCK",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {},
+    "indexes": {}
+  }
+}

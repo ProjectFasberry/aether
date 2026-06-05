@@ -59,5 +59,10 @@ export const SUBJECTS = {
 	},
 	INTERNAL: {
 		HEALTH: "internal.health",
-	},
+  },
+  ADMIN: {
+    ACTIVITY: {
+      LOG: "admin.activity.log"
+    }
+	}
 } as const;

@@ -1,6 +1,6 @@
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
-import { banner, editBannerSchema } from "./banner.model";
+import { banner, bannerSchema, editBannerSchema } from "./banner.model";
 
 export const bannerEdit = new Elysia()
 	.post("/:id/edit", async ({ params: { id }, body }) => {
@@ -12,11 +12,6 @@ export const bannerEdit = new Elysia()
 			id: t.Number()
 		}),
 		response: {
-			200: withData(
-				t.Object({
-					title: t.String(),
-					description: t.Nullable(t.String())
-				})
-			)
+			200: withData(bannerSchema)
 		}
 	});

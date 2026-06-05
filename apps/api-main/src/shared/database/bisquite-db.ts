@@ -8,7 +8,7 @@ const config: PoolOptions = {
   connectionLimit: 10,
 }
 const database = createDatabase<DB>()({
-  name: "bisquite", dialect: "mysql", config,
+  name: "bisquite", dialect: "mariadb", config: env.BISQUITE_MYSQL_URI,
 })
 export const bisquitePool = database.pool
 export const bisquite = database.connection

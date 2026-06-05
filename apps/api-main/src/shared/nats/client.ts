@@ -48,7 +48,13 @@ export const nats = {
       process.exit(1)
     }
   },
-  async start() {
+  async start({
+    onStart
+  }: {
+    onStart?: () => void
+    } = {}) {
+    onStart?.();
+
     await this._init();
 
     const nc = this.getInstance();
