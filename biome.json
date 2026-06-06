@@ -67,7 +67,7 @@
 			}
 		},
 		{
-			"includes": ["apps/api-main/**"],
+			"includes": ["apps/api-core/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"
 			},

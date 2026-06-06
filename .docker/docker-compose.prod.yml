@@ -14,7 +14,7 @@ x-logging: &loki-logging
 services:
   backend:
     container_name: backend
-    image: ${REGISTRY_HOST}/prod/api-main:latest
+    image: ${REGISTRY_HOST}/prod/api-core:latest
     network_mode: "host"
     environment:
       - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}

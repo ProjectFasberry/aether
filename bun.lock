@@ -5,7 +5,7 @@
     "": {
       "name": "fasberry-minecraft",
       "dependencies": {
-        "mariadb": "^3.5.2",
+        "mariadb": "3.5.2",
       },
       "devDependencies": {
         "@biomejs/biome": "2.2.4",
@@ -17,8 +17,8 @@
         "lefthook": "2.1.4",
       },
     },
-    "apps/api-main": {
-      "name": "api-main",
+    "apps/api-core": {
+      "name": "api-core",
       "version": "1.0.0",
       "dependencies": {
         "@elysia/bearer": "1.4.4",
@@ -45,9 +45,8 @@
         "ioredis": "5.6.1",
         "ky": "2.0.2",
         "kysely": "0.28.2",
-        "kysely-mariadb": "^0.1.2",
+        "kysely-mariadb": "0.1.2",
         "kysely-paginate": "0.3.1",
-        "mariadb": "^3.5.2",
         "minio": "8.0.7",
         "modern-rcon": "1.0.3",
         "mysql2": "3.14.1",
@@ -138,8 +137,7 @@
         "ioredis": "5.6.1",
         "ky": "2.0.2",
         "kysely": "0.28.2",
-        "kysely-mariadb": "^0.1.2",
-        "mariadb": "^3.5.2",
+        "kysely-mariadb": "0.1.2",
         "minio": "8.0.7",
         "modern-rcon": "^1.0.3",
         "nanoid": "5.1.5",
@@ -496,7 +494,7 @@
 
     "ansi-styles": ["ansi-styles@4.3.0", "", { "dependencies": { "color-convert": "^2.0.1" } }, "sha512-zbB9rCJAT1rbjiVDb2hqKFHNYLxgtk8NURxZ3IZwD3F6NtxbXZQCnnSi1Lkx+IDohdPlFp222wVALIheZJQSEg=="],
 
-    "api-main": ["api-main@workspace:apps/api-main"],
+    "api-core": ["api-core@workspace:apps/api-core"],
 
     "api-panel": ["api-panel@workspace:apps/api-panel"],
 

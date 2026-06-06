@@ -1,5 +1,5 @@
 {
-	"name": "api-main",
+	"name": "api-core",
 	"version": "1.0.0",
 	"private": true,
 	"license": "MIT",
@@ -19,8 +19,8 @@
 		"build:image:tag": "infisical run --env=common --path=/root -- make tag",
 		"build:image:push": "infisical run --env=common --path=/root -- make push",
 		"--------------------": "",
-		"release:prod": "infisical run --env=common --path=/root -- make all STAGE=prod NAME=api-main",
-		"release:staging": "infisical run --env=common --path=/root -- make all STAGE=staging NAME=api-main"
+		"release:prod": "infisical run --env=common --path=/root -- make all STAGE=prod NAME=api-core",
+		"release:staging": "infisical run --env=common --path=/root -- make all STAGE=staging NAME=api-core"
 	},
 	"dependencies": {
 		"@elysia/bearer": "1.4.4",

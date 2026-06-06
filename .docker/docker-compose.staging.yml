@@ -6,7 +6,7 @@ include:
 services:
   backend:
     container_name: backend
-    image: ${REGISTRY_HOST}/staging/api-main:latest
+    image: ${REGISTRY_HOST}/staging/api-core:latest
     network_mode: "host"
     environment:
       - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
@@ -36,7 +36,7 @@ services:
     image: ${REGISTRY_HOST}/staging/api-panel:latest
     ports:
       - ${API_PANEL_EXTERNAL_PORT}:4105
-    environment: 
+    environment:
       - INFISICAL_CLIENT_ID=${INFISICAL_CLIENT_ID}
       - INFISICAL_CLIENT_SECRET=${INFISICAL_CLIENT_SECRET}
       - INFISICAL_PROJECT_ID=${INFISICAL_PROJECT_ID}

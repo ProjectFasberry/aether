@@ -1,5 +1,5 @@
 STAGE ?= dev
-NAME ?= api-main
+NAME ?= api-core
 
 ifneq (,$(wildcard ../../.env))
     include ../../.env
