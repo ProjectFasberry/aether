@@ -7,6 +7,7 @@ import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";
+import { buildRouteSummary } from "#/utils";
 
 type PlayerSocialsValuePayload = {
   id: string | number;
@@ -61,7 +62,10 @@ const playerSocialsAvailable = new Elysia()
           })
         )
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get player socials available")
+    },
   });
 
 const playerSocialsAddEvents = new Elysia().get("/add/events", async (ctx) => {
@@ -145,7 +149,10 @@ const playerSocialsAdd = new Elysia()
       400: withError(
         t.UnionEnum(["SOCIAL_REQUEST_EXISTS", "SAVED_SOCIAL_EXISTS", "SOCIAL_NOT_FOUND"])
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Add player social")
+    },
   });
 
 const playerSocialsDelete = new Elysia()
@@ -173,7 +180,10 @@ const playerSocialsDelete = new Elysia()
       500: withError(
         t.UnionEnum(["NOT_DELETED"])
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Delete player social")
+    },
   });
 
 const playerSocialsList = new Elysia()
@@ -230,7 +240,10 @@ const playerSocialsList = new Elysia()
           "NOT_ACCESSIBLE"
         ])
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get player socials")
+    },
   });
 
 export const playerSocials = new Elysia()

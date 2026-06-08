@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 export const fact = new Elysia()
   .get('/random-fact', async () => {
@@ -21,5 +22,8 @@ export const fact = new Elysia()
   }, {
     response: {
       200: withData(t.Nullable(t.String()))
+    },
+    detail: {
+      summary: buildRouteSummary("Get random fact")
     }
   })

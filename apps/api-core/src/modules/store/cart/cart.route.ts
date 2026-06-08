@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { defineGlobalPrice } from "#/utils/store/store-helpers";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
-import { wrapError } from "#/utils";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
 
@@ -41,7 +41,10 @@ const cartAddItem = new Elysia()
           "ITEM_NOT_FOUND"
         ])
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Add item to cart")
+    },
   })
 
 const cartRemoveItem = new Elysia()
@@ -57,6 +60,9 @@ const cartRemoveItem = new Elysia()
       200: withData(
         t.Number()
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Remove item from cart")
     }
   })
 
@@ -76,6 +82,9 @@ const cartEditItem = new Elysia()
           t.String(), t.Boolean()
         ])
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Edit item in cart")
     }
   })
 
@@ -87,6 +96,9 @@ const cartPrice = new Elysia()
   }, {
     response: {
       200: withData(cartPriceSchema)
+    },
+    detail: {
+      summary: buildRouteSummary("Get cart price")
     }
   })
 
@@ -107,6 +119,9 @@ const cartList = new Elysia()
   }, {
     response: {
       200: withData(cartListSchema)
+    },
+    detail: {
+      summary: buildRouteSummary("Get cart list")
     }
   })
 

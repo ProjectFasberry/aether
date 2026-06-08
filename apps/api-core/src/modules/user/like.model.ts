@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { skinsModel } from "../server/skin/index.model";
+import { skinsService } from "../server/skin/index.model";
 
 export async function ratePlayer({ recipient, initiator }: { initiator: string, recipient: string }) {
   const query = await general.transaction().execute(async (trx) => {
@@ -41,7 +41,7 @@ export async function getPlayerLikes(nickname: string) {
     .orderBy("created_at", "desc")
     .execute()
 
-  const avatarsMap = await skinsModel.players.getAvatar(query.map(r => r.initiator));
+  const avatarsMap = await skinsService.players.getAvatar(query.map(r => r.initiator));
 
   const data = await Promise.all(
     query.map(async (row) => ({

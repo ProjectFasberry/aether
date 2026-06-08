@@ -1,6 +1,7 @@
 import Elysia, { t } from "elysia";
 import { getSeemsLikePlayersByPlayer, seemsPlayersSchema } from "./seems-players.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 const seemsPlayersPayload = t.Object({
   data: t.Array(t.Object({
@@ -22,5 +23,8 @@ export const seemsPlayers = new Elysia()
     query: seemsPlayersSchema,
     response: {
       200: withData(seemsPlayersPayload)
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get seems players")
+    },
   })

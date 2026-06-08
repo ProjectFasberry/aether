@@ -2,7 +2,8 @@ import { defineRequiredUser } from "#/lib/define"
 import { general } from "#/shared/database/general-db"
 import Elysia, { type Static, t } from "elysia"
 import { withData } from "#/shared/schemas"
-import { skinsModel } from "../skin/index.model"
+import { skinsService } from "../skin/index.model"
+import { buildRouteSummary } from "#/utils"
 
 const referralsListSchema = t.Array(
   t.Object({
@@ -28,7 +29,7 @@ async function getReferals(nickname: string): Promise<Static<typeof referralsLis
     .where("referrer", "=", nickname)
     .execute()
 
-  const avatarsMap = await skinsModel.players.getAvatar(query.map(r => r.referral));
+  const avatarsMap = await skinsService.players.getAvatar(query.map(r => r.referral));
 
   const data = await Promise.all(
     query.map(async (row) => ({
@@ -53,6 +54,9 @@ const referralsList = new Elysia()
   }, {
     response: {
       200: withData(referralsListSchema)
+    },
+    detail: {
+      summary: buildRouteSummary("List referrals")
     }
   })
 

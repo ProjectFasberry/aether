@@ -3,6 +3,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { bannerSchema } from "./banner.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 async function viewBanner(id: number, nickname: string) {
   const query = await general
@@ -32,5 +33,8 @@ export const bannerView = new Elysia()
     params: bannerSchema,
     response: {
       200: withData(bannerViewPayload)
+    },
+    detail: {
+      summary: buildRouteSummary("View banner")
     }
   })

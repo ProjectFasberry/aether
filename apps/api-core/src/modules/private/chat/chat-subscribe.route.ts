@@ -12,6 +12,7 @@ import {
   type ChatItem,
   chat,
 } from "./chat.model";
+import { buildRouteSummary } from "#/utils";
 
 type ExecEvent = {
   data: unknown,
@@ -116,5 +117,8 @@ export const chatWs = new Elysia()
       }
 
       console.log(`Client closed. Code: ${code}; Reason: ${reason}`)
+    },
+    detail: {
+      summary: buildRouteSummary("Subscribe to chat events")
     }
   })

@@ -19,8 +19,8 @@
 		"build:image:tag": "infisical run --env=common --path=/root -- make tag",
 		"build:image:push": "infisical run --env=common --path=/root -- make push",
 		"--------------------": "",
-		"release:prod": "infisical run --env=common --path=/root -- make all STAGE=prod NAME=api-panel",
-		"release:staging": "infisical run --env=common --path=/root -- make all STAGE=staging NAME=api-panel"
+		"release:prod": "bun run type-check && infisical run --env=common --path=/root -- make all STAGE=prod NAME=api-panel",
+		"release:staging": "bun run type-check && infisical run --env=common --path=/root -- make all STAGE=staging NAME=api-panel"
 	},
 	"dependencies": {
 		"@elysia/bearer": "1.4.4",
@@ -34,13 +34,12 @@
 		"@sinclair/typebox": "0.34.49",
 		"@tqman/nice-logger": "1.1.1",
 		"croner": "9.1.0",
-		"minio": "8.0.7",
 		"elysia": "1.4.28",
 		"elysia-ip": "1.1.0",
 		"gramio": "0.6.0",
 		"ioredis": "5.6.1",
-		"ky": "2.0.2",
 		"kysely": "0.28.2",
+		"minio": "8.0.7",
 		"modern-rcon": "1.0.3",
 		"mysql2": "3.14.1",
 		"pg": "8.13.1",

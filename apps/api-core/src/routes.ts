@@ -1,4 +1,4 @@
-import Elysia from "elysia";
+import Elysia, { redirect, t } from "elysia";
 import { store } from "./modules/store";
 import { auth } from "./modules/auth";
 import { serverGroup } from "./modules/server";
@@ -21,24 +21,47 @@ import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { S3 } from "./shared/minio/client";
 import { wrapError } from "./utils";
+import { withError } from "./shared/schemas";
 
-const MISC_FILES: Partial<Record<string, string>> = {
-  terms: "info_terms_page.pdf",
-  privacy: "info_privacy_page.pdf",
-  contacts: "info_contacts_page.pdf",
+const MISC_FILES: Partial<Record<string, { variant: "static" | "redirect", content: string  }>> = {
+  terms: { variant: "static", content: "info_terms_page.pdf" },
+  privacy: { variant: "static", content: "info_privacy_page.pdf" },
+  contacts: { variant: "static", content: "info_contacts_page.pdf" },
+  telegram: { variant: "redirect", content: "https://t.me/fasberry" },
+  discord: { variant: "redirect", content: "https://discord.gg/fasberry" },
+  vk: { variant: "redirect", content: "https://vk.com/fasberry" },
 }
 
 const misc = new Elysia()
   .group("/misc", app => app
     .get("/:id", async ({ params: { id }, status, set }) => {
       const target = MISC_FILES[id]
-      if (!target) return status(404, wrapError("NOT_FOUND"))
+      if (!target) {
+        throw status(404, wrapError("NOT_FOUND"))
+      }
 
-      const data = await S3.getClient("static").file(`misc/${target}`).arrayBuffer()
+      if (target.variant === 'redirect') {
+        return redirect(target.content)
+      }
 
-      set.headers["Content-Type"] = "application/pdf"
+      if (target.variant === 'static') {
+        const data = await S3
+          .getClient("static")
+          .file(`misc/${target.content}`)
+          .arrayBuffer()
 
-      return data
+        set.headers["Content-Type"] = "application/pdf"
+
+        return data
+      }
+
+      throw status(404, wrapError("NOT_FOUND"))
+    }, {
+      response: {
+        404: withError(
+          t.UnionEnum(["NOT_FOUND"])
+        )
+      }
     })
   )
 

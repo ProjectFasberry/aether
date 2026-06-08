@@ -5,6 +5,7 @@ import { wrapMeta } from "#/utils/config/transforms"
 import Elysia, { type Static, t } from "elysia"
 import { executeWithCursorPagination } from "kysely-paginate"
 import { taskPayload } from "./tasks.model"
+import { buildRouteSummary } from "#/utils"
 
 export type TaskItem = {
   id: number;
@@ -76,5 +77,8 @@ export const tasksList = new Elysia()
           meta: withMeta
         })
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get tasks list")
     }
   })

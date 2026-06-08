@@ -1,6 +1,6 @@
 import { getStaticUrl } from "#/helpers/volume";
 import { newsSingleSchema } from "#/modules/news/news.model";
-import { skinsModel } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/modules/server/skin/index.model";
 import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
@@ -39,7 +39,7 @@ export async function updateNews(
     created_at: query.created_at.toString(),
     creator: {
       nickname: query.creator,
-      avatar: await skinsModel.player.getAvatar(query.creator)
+      avatar: await skinsService.player.getAvatar(query.creator)
     }
   };
 }
@@ -60,7 +60,7 @@ export async function createNews(
     imageUrl: getStaticUrl(query.imageUrl),
     creator: {
       nickname: query.creator,
-      avatar: await skinsModel.player.getAvatar(query.creator)
+      avatar: await skinsService.player.getAvatar(query.creator)
     }
   }
 }

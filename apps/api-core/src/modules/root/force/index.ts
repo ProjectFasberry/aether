@@ -1,13 +1,14 @@
 import Elysia from "elysia";
 import * as z from "zod";
 import { defineBearer } from "#/lib/define";
-import { skinsModel } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/modules/server/skin/index.model";
 import { minio } from "#/shared/minio/client";
+import { nats } from "#/shared/nats/client";
 
 export const forceSkinInit = new Elysia()
   .get("/skin/:nickname", async ({ params: { nickname }, query }) => {
     if (query.type === "single") {
-      const ok = await skinsModel.skin.initSkin({
+      const ok = await skinsService.skin.initSkin({
         nickname,
         minio: minio.getInstance,
       });
@@ -16,7 +17,7 @@ export const forceSkinInit = new Elysia()
     }
 
     if (query.type === "all") {
-      skinsModel.skin.updateSkins({ minio: minio.getInstance });
+      skinsService.skin.updateSkins({ minio: minio.getInstance, nats: nats.getInstance });
     }
 
     return { data: "started" };

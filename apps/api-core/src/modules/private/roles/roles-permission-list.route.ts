@@ -1,12 +1,13 @@
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { rolesRolePermissionListSchema, type RolesRolePermissionListPayload } from "./roles-list.route";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 export const rolesRolePermissionList = new Elysia()
-  .use(validatePermission(Permissions.get("ROLES.READ")))
+  .use(validatePermission(permissions.get("ROLES.READ")))
   .get("/:id/permission/list", async ({ params: { id } }) => {
     const query = await general
       .selectFrom("role_permissions")
@@ -28,12 +29,15 @@ export const rolesRolePermissionList = new Elysia()
 
     return { data }
   }, {
-    params: t.Object({ 
+    params: t.Object({
       id: t.Number()
     }),
     response: {
       200: withData(
         rolesRolePermissionListSchema
       )
+    },
+    detail: {
+      summary: buildRouteSummary("List role permissions")
     }
   })

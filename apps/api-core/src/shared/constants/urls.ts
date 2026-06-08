@@ -1,6 +1,6 @@
-import { createUrls } from "@repo/core/lib/urls"
+import { createUrlsService } from "@repo/core/lib/urls"
 import { general as generalDb } from "../database/general-db"
 
-export const urls = createUrls({
+export const urlsService = createUrlsService({
   generalDb
 })

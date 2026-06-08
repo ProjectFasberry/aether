@@ -1,10 +1,20 @@
-import { isProduction } from "../env";
+import { env, isProduction } from "../env";
 import { client } from "./client";
 
-export const CRYPTO_PAY_API = client.extend((opts) => ({
+if (process.env.NODE_ENV !== 'production') {
+  if (!env.CRYPTO_PAY_TESTNET_URL || !env.CRYPTO_PAY_TESTNET_TOKEN) {
+    console.warn("TESTNET_URL or TESTNET_TOKEN is not defined, but declared")
+  }
+}
+
+export const cryptoPayClient = client.extend((opts) => ({
   ...opts,
-  baseUrl: isProduction ? Bun.env.CRYPTO_PAY_MAINNET_URL : Bun.env.CRYPTO_PAY_TESTNET_URL,
+  baseUrl: isProduction
+    ? env.CRYPTO_PAY_MAINNET_URL
+    : env.CRYPTO_PAY_TESTNET_URL,
   headers: {
-    "Crypto-Pay-API-Token": isProduction ? Bun.env.CRYPTO_PAY_MAINNET_TOKEN : Bun.env.CRYPTO_PAY_TESTNET_TOKEN,
+    "Crypto-Pay-API-Token": isProduction
+      ? env.CRYPTO_PAY_MAINNET_TOKEN
+      : env.CRYPTO_PAY_TESTNET_TOKEN,
   }
 }))

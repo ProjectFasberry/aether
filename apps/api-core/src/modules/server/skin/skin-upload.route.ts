@@ -8,7 +8,7 @@ import {
   uploadQuerySchema,
   UpstreamError
 } from "./skin.model"
-import { wrapError } from "#/utils"
+import { buildRouteSummary, wrapError } from "#/utils"
 
 export const skinUpload = new Elysia()
   .use(defineRequiredUser())
@@ -53,5 +53,8 @@ export const skinUpload = new Elysia()
   }, {
     parse: "multipart/form-data",
     query: uploadQuerySchema,
-    body: uploadBodySchema
+    body: uploadBodySchema,
+    detail: {
+      summary: buildRouteSummary("Upload skin")
+    }
   })

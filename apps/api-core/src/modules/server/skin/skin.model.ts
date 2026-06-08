@@ -14,7 +14,7 @@ import { wrapError } from "#/utils";
 import type { KyInstance } from "ky";
 import type { Context } from "elysia";
 import { nanoid } from "nanoid";
-import { skinsModel } from "./index.model";
+import { skinsService } from "./index.model";
 
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
@@ -822,7 +822,7 @@ export async function upload(
     return { url: urlPayload.url }
   })
 
-  skinsModel.skin.initSkin({
+  skinsService.skin.initSkin({
     nickname,
     minio: minio.getInstance,
   })

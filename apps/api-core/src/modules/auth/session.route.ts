@@ -2,7 +2,7 @@ import { defineRequiredSession } from "#/lib/define";
 import Elysia, { type SelectiveStatus, t } from "elysia";
 import { sessionParsedPayloadSchema, session as sessionService, sessions, sessionsParsedPayloadSchema } from "./login.model";
 import { withData, withError } from "#/shared/schemas";
-import { wrapError } from "#/utils";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { isError } from "@repo/shared/lib/helpers"
 
 const SESSION_ERRORS_MAP = {
@@ -38,7 +38,10 @@ export const session = new Elysia()
     }, {
       response: {
         200: withData(sessionsParsedPayloadSchema)
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Get session list")
+      },
     })
     .get("/current", async ({ session: sessionToken, nickname }) => {
       const data = await sessionService.get({ nickname, sessionToken })
@@ -46,7 +49,10 @@ export const session = new Elysia()
     }, {
       response: {
         200: withData(sessionParsedPayloadSchema)
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Get current session")
+      },
     })
     .delete("/all", async ({ session: sessionToken, nickname, status }) => {
       try {
@@ -64,7 +70,10 @@ export const session = new Elysia()
         400: withError(
           t.UnionEnum(SESSION_ERRORS)
         )
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Delete all sessions")
+      },
     })
     .delete("/:id", async ({ params: { id }, nickname, session: sessionToken, status }) => {
       try {
@@ -85,6 +94,9 @@ export const session = new Elysia()
         400: withError(
           t.UnionEnum(SESSION_ERRORS)
         )
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Delete session by id")
+      },
     })
   );

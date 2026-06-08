@@ -61,19 +61,23 @@ type CreateServerStatus = {
   generalDb: Kysely<DB>
 }
 
-export const createServerStatus = (
-  { config, generalDb }:CreateServerStatus
-) => {
+type SharedParams = {
+  redis: () => Redis
+}
+
+export const createServerStatusService = ({
+  config, generalDb
+}: CreateServerStatus) => {
   return {
-    async getPlayerStatusGlobal(
-      { nickname, panelUser, panelPassword }: { nickname: string } & WithPanelCredentials
-    ) {
+    async getPlayerStatusGlobal({
+      nickname, panelUser, panelPassword
+    }: { nickname: string } & WithPanelCredentials) {
       type PlayerPayload = Player & {
         ping: number;
         sessionDurationSeconds: number;
       };
 
-      const result = await getPanelClient(generalDb)
+      const result = await getPanelClient({ generalDb })
         .get(`player/${nickname}`, {
           headers: getAuthHeaderWithBtoa(panelUser, panelPassword),
           timeout: 1000,
@@ -84,35 +88,38 @@ export const createServerStatus = (
 
       return result;
     },
-    async _getProxyStats(
-      { panelUser, panelPassword }: WithPanelCredentials
-    ) {
-      async function getTarget<T>(path: string): Promise<T | null> {
-        return getPanelClient(generalDb)
+    async _getProxyStats({
+      panelUser, panelPassword
+    }: WithPanelCredentials) {
+      async function getTarget<T>(path: string, fallback: T): Promise<T> {
+        return getPanelClient({ generalDb })
           .get(path, {
             headers: getAuthHeaderWithBtoa(panelUser, panelPassword)
           })
-          .json<T>()
-          .catch(() => null);
+          .then((res) => res.json() as Promise<T>)
+          .then((data) => data ?? fallback)
+          .catch(() => fallback);
       }
 
-      const [onlineResult, serversResult, statusResult, playersList] = await Promise.all([
-        getTarget<{ count: number }>("count"),
-        getTarget<{ [key: string]: number }>("servers"),
-        getTarget<{ status: string }>("health"),
-        getTarget<{ count: number; players: Player[] }>("playerlist"),
+      const [online, servers, status, playersList] = await Promise.all([
+        getTarget<{ count: number }>("count", { count: 0 }),
+        getTarget<{ [key: string]: number }>("servers", {}),
+        getTarget<{ status: string }>("health", { status: "offline" }),
+        getTarget<{ count: number; players: Player[] }>("playerlist", { count: 0, players: [] }),
       ]);
 
-      return {
-        online: onlineResult?.count ?? 0,
-        servers: serversResult ?? {},
-        status: statusResult?.status ?? "offline",
-        playersList: playersList ?? { players: [], count: 0 },
+      const result = {
+        servers,
+        playersList,
+        online: online.count,
+        status: status.status,
       };
+
+      return result;
     },
-    async _getRawData(
-      { panelUser, panelPassword }: WithPanelCredentials
-    ) {
+    async _getRawData({
+      panelUser, panelPassword
+    }: WithPanelCredentials) {
       try {
         const [proxyStats, serversStats] = await Promise.all([
           this._getProxyStats({ panelUser, panelPassword }),
@@ -126,20 +133,20 @@ export const createServerStatus = (
         function mapServerData(
           server: string, online: number, allPlayers: Player[], servers: Selectable<DB["servers"]>[],
         ) {
-          const dbData = servers.find((d) => d.origin === server.toLowerCase());
+          const rawData = servers.find((d) => d.origin === server.toLowerCase());
 
           const result = [
             server.toLowerCase(),
             {
               online,
               players: allPlayers.filter((p) => p.currentServer === server).map((p) => p.username),
-              fullname: dbData?.fullname ?? "unknown",
-              thumbnail: getStaticUrl(dbData?.thumbnail ?? "", config.VOLUME_URL),
+              fullname: rawData?.fullname ?? "unknown",
+              thumbnail: getStaticUrl(rawData?.thumbnail ?? "", config.VOLUME_URL),
               status: "online",
               max: 200,
-              description: dbData?.description,
-              available: dbData?.available ?? true,
-              excluded: dbData?.excluded ?? false,
+              description: rawData?.description,
+              available: rawData?.available ?? true,
+              excluded: rawData?.excluded ?? false,
             },
           ] as const;
 
@@ -164,15 +171,21 @@ export const createServerStatus = (
         return null;
       }
     },
-    async updateServerStatus(
-      { redis, panelUser, panelPassword }: { redis: () => Redis } & WithPanelCredentials
-    ) {
-      const data = await this._getRawData({ panelUser, panelPassword });
+    async updateServerStatus({
+      redis, panelUser, panelPassword
+    }: WithPanelCredentials & Pick<SharedParams, "redis">) {
+      const data = await this._getRawData({
+        panelUser, panelPassword
+      });
+
       await redis().set(SERVER_STATUS_KEY, JSON.stringify(data));
     },
-    async getData(
-      { query, redis }: { query?: StatusQuery, redis: () => Redis }
-    ) {
+    async getData({
+      query, redis
+    }: {
+      query?: StatusQuery,
+      redis: SharedParams["redis"]
+    }) {
       const dataStr = await redis().get(SERVER_STATUS_KEY);
       if (!dataStr) return null;
 

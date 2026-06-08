@@ -1,19 +1,21 @@
 import consola from "consola"
 import ky from "ky"
 
-const timings = new Map()
-const clientLogger = consola.withTag("Request");
-
+const timings = new Map<number, number>()
 let counter = 0
+
+const requestLogger = consola.withTag("request")
+const getRequestInfo = (request: Request, ...args: unknown[]) =>
+  `${request.method} ${request.url} ${args.join(" ")}`
 
 export const client = ky.create({
   hooks: {
     beforeRequest: [
       ({ request }) => {
         const id = ++counter
-        request.headers.set("x-request-id", id.toString())
+        request.headers.set("x-request-id", String(id))
         timings.set(id, Date.now())
-        clientLogger.log(`${request.method} ${request.url}`)
+        requestLogger.withTag("start").log(getRequestInfo(request))
       }
     ],
     afterResponse: [
@@ -21,9 +23,8 @@ export const client = ky.create({
         const id = request.headers.get("x-request-id")
         if (!id) return;
 
-        const start = id && timings.get(Number(id))
-        const duration = start ? Date.now() - start : 0
-        clientLogger.log(`${request.method} ${request.url} / ${duration}ms`)
+        const start = id ? (timings.get(Number(id)) ?? Date.now()) : Date.now()
+        requestLogger.withTag("end").log(getRequestInfo(request, `${Date.now() - start}ms`))
 
         if (id) {
           timings.delete(Number(id))

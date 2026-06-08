@@ -1,7 +1,8 @@
 import { validatePermission } from "#/lib/validators"
-import { Permissions } from "#/shared/constants/permissions"
+import { permissions } from "#/shared/constants/permissions"
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas"
+import { buildRouteSummary } from "#/utils"
 import Elysia, { t } from "elysia"
 
 const dictListPayloadSchema = t.Array(
@@ -22,7 +23,7 @@ async function getDictList() {
 }
 
 export const dictionariesList = new Elysia()
-  .use(validatePermission(Permissions.get("DICTIONARIES.READ")))
+  .use(validatePermission(permissions.get("DICTIONARIES.READ")))
   .get("/list", async (ctx) => {
     const data = await getDictList()
     return { data }
@@ -31,5 +32,8 @@ export const dictionariesList = new Elysia()
       200: withData(
         dictListPayloadSchema
       )
+    },
+    detail: {
+      summary: buildRouteSummary("List all dictionaries")
     }
   })

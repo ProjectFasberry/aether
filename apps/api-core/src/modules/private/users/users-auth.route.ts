@@ -1,13 +1,14 @@
 import { validatePermission } from "#/lib/validators";
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { nats } from "#/shared/nats/client";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import Elysia, { t } from "elysia";
 import * as z from "zod";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = nats.getInstance()
@@ -36,6 +37,9 @@ const playersAuthReg = new Elysia()
           created_at: t.String()
         })
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Register player")
     }
   })
 
@@ -61,11 +65,14 @@ const playersAuthUnreg = new Elysia()
           nickname: t.String()
         })
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Unregister player")
     }
   })
 
 export const playersAuth = new Elysia()
-  .use(validatePermission(Permissions.get("PLAYERS.AUTH")))
+  .use(validatePermission(permissions.get("PLAYERS.AUTH")))
   .group("/auth", app => app
     .use(playersAuthReg)
     .use(playersAuthUnreg)

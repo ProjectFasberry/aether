@@ -4,7 +4,6 @@ import { permissions } from "./permissions";
 import { storePrivate } from "./store";
 import { users } from "./users";
 import { roles } from "./roles";
-import { validateBannedStatus } from "#/lib/validators";
 import { news } from "./news";
 import { banners } from "./banners";
 import { modpacks } from "./modpacks";
@@ -14,9 +13,9 @@ import { chat } from "./chat";
 import { dictionaries } from "./dictionaries";
 import { volume } from "./volume";
 import { lands } from "./lands";
+import { api } from "./api";
 
 export const privated = new Elysia()
-  .use(validateBannedStatus())
   .group("/privated", app => app
     .use(options)
     .use(permissions)
@@ -32,4 +31,5 @@ export const privated = new Elysia()
     .use(dictionaries)
     .use(volume)
     .use(lands)
+    .use(api)
 )

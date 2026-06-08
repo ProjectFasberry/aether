@@ -3,66 +3,37 @@ import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/utils/auth/cookie";
 import { bearer } from "@elysia/bearer";
-import { validateLogger } from "#/shared/constants/logger";
-import { LOGGING } from "#/shared/constants";
+import { logValidators } from "#/utils/config/log-utils";
 
-async function handleByBearer(bearer: string): Promise<{ nickname: string } | null> {
+export async function handleByBearer(bearer: string): Promise<boolean> {
   const hash = new Bun.CryptoHasher("sha256").update(bearer).digest("hex");
 
   const query = await general
     .selectFrom("api_keys")
-    .select("nickname")
+    .select("id")
     .where("key", "=", hash)
     .executeTakeFirst()
 
-  if (!query) return null;
-
-  return { nickname: query.nickname }
+  return Boolean(query?.id)
 }
 
 export const defineOptionalUser = () => new Elysia({ name: "defineOptionalUser" })
   .use(defineOptionalSession())
-  .use(bearer())
-  .derive(async ({ session, bearer }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("defineOptionalUser");
-    }
+  .derive(async ({ session }): Promise<{ nickname: string | null }> => {
+    logValidators("defineOptionalUser");
 
-    if (bearer && bearer.trim().length !== 0) {
-      const result = await handleByBearer(bearer)
-
-      if (result) {
-        return result
-      }
-    }
-
-    let nickname: string | null = null;
-
-    if (session) {
-      nickname = await auth.getUserNickname(session);
-    }
-
+    const nickname = session ? await auth.getUserNickname(session) : null;
     return { nickname }
   })
   .as("scoped")
 
 export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" })
   .use(defineOptionalSession())
-  .use(bearer())
-  .derive(async ({ session, status, bearer }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("defineRequiredUser");
-    }
+  .derive(async ({ session, status }): Promise<{ nickname: string }> => {
+    logValidators("defineRequiredUser");
 
-    if (bearer && bearer.trim().length >= 1) {
-      const result = await handleByBearer(bearer)
+    if (!session) throw status(401);
 
-      if (result) {
-        return { nickname: result.nickname }
-      }
-    }
-
-    if (!session) throw status(401)
     const nickname = await auth.getUserNickname(session);
     if (!nickname) throw status(401)
 
@@ -75,29 +46,9 @@ export const defineOptionalSession = () => new Elysia({ name: "defineOptionalSes
   .as("scoped")
 
 export const defineUserRole = () => new Elysia({ name: "defineUserRole" })
-  .use(defineOptionalUser())
-  .use(bearer())
-  .derive(async ({ nickname, status, bearer }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("defineUserRole");
-    }
-
-    if (bearer && bearer.trim().length >= 1) {
-      const result = await handleByBearer(bearer)
-
-      if (result?.nickname) {
-        // todo: impl correct way for define the highest role
-        return {
-          role: {
-            id: 3,
-            name: 'admin'
-          },
-          nickname: result.nickname
-        }
-      }
-    }
-
-    if (!nickname) throw status(401)
+  .use(defineRequiredUser())
+  .derive(async ({ nickname, status }): Promise<{ role: { id: number; name: string }; nickname: string }> => {
+    logValidators("defineUserRole");
 
     const role = await general
       .selectFrom("players")
@@ -114,7 +65,7 @@ export const defineUserRole = () => new Elysia({ name: "defineUserRole" })
 
 export const defineRequiredSession = () => new Elysia({ name: "defineRequiredSession" })
   .use(defineRequiredUser())
-  .derive(async ({ session, status }) => {
+  .derive(({ session, status }) => {
     if (!session) throw status(401);
     return { session };
   })
@@ -123,14 +74,12 @@ export const defineRequiredSession = () => new Elysia({ name: "defineRequiredSes
 export const defineBearer = () => new Elysia({ name: "defineBearer" })
   .use(bearer())
   .derive(async ({ bearer, status }) => {
+    logValidators("defineBearer");
+
     if (!bearer) throw status(401);
 
-    if (LOGGING.validators) {
-      validateLogger.log("defineBearer");
-    }
-
-    const b = await handleByBearer(bearer)
-    if (!b) throw status(401);
+    const result = await handleByBearer(bearer)
+    if (!result) throw status(401);
 
     return { bearer };
   })

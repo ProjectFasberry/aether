@@ -1,13 +1,14 @@
 import Elysia, { t } from "elysia";
 import { bannerSchema } from "../../banner/banner.model";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import { banner } from "./banner.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 export const bannerDelete = new Elysia()
-  .use(validatePermission(Permissions.get("BANNERS.DELETE")))
+  .use(validatePermission(permissions.get("BANNERS.DELETE")))
   .delete("/:id", async ({ params: { id } }) => {
     await banner.delete(id);
     return { data: "OK" }
@@ -20,5 +21,8 @@ export const bannerDelete = new Elysia()
       200: withData(
         t.Literal("OK")
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Delete a banner")
+		}
   })

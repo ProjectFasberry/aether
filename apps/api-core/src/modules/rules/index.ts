@@ -1,6 +1,7 @@
 import Elysia, { type Static, t } from "elysia";
 import { withData } from "#/shared/schemas";
 import { getRules, rulesPayloadSchema } from "./rules.model";
+import { buildRouteSummary } from "#/utils";
 
 const rulesTagsPayloadSchema = t.Array(
   t.Object({
@@ -22,6 +23,9 @@ const rulesTags = new Elysia()
   }, {
     response: {
       200: withData(rulesTagsPayloadSchema)
+    },
+    detail: {
+      summary: buildRouteSummary("Get rules tags")
     }
   })
 
@@ -36,6 +40,9 @@ export const rulesList = new Elysia()
   }, {
     response: {
       200: withData(rulesPayloadSchema)
+    },
+    detail: {
+      summary: buildRouteSummary("Get rules list")
     }
   })
 

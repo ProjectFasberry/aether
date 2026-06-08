@@ -87,11 +87,13 @@ export const chat = {
       message_id: d.id
     })))
 
-    await general
-      .insertInto("chat_views")
-      .values(acc)
-      .onConflict((oc) => oc.columns(["nickname", "message_id"]).doNothing())
-      .execute()
+    if (acc.length >= 1) {
+      await general
+        .insertInto("chat_views")
+        .values(acc)
+        .onConflict((oc) => oc.columns(["nickname", "message_id"]).doNothing())
+        .execute()
+    }
 
     return data
   },

@@ -1,5 +1,6 @@
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia"
 
 export const appDictionaries = new Elysia()
@@ -9,7 +10,7 @@ export const appDictionaries = new Elysia()
       .select(["key", "value"])
       .execute()
 
-    if (!query.length) return { data: null } 
+    if (!query.length) return { data: null }
 
     const data = query.reduce<Record<string, string>>((acc, cur) => {
       acc[cur.key] = cur.value;
@@ -22,5 +23,8 @@ export const appDictionaries = new Elysia()
       200: withData(
         t.Nullable(t.Record(t.String(), t.String()))
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get app dictionaries")
     }
   })

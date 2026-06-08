@@ -1,12 +1,10 @@
-import dayjs from 'dayjs';
 import { nats } from "#/shared/nats/client"
 import { SUBJECTS } from "#/shared/nats/subjects"
 import * as z from "zod"
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from '#/shared/database/general-db';
-import type { Msg, NatsConnection } from '@nats-io/nats-core';
+import type { NatsConnection } from '@nats-io/nats-core';
 import { logger } from '#/shared/constants/logger';
-import { safeJsonParse } from '#/utils';
 
 const userJoinSchema = z.object({
   date: z.string(),
@@ -23,9 +21,9 @@ function pushToReferral(
   nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload)
 }
 
-async function joinEvents(
-  { nickname, date }: Omit<z.infer<typeof userJoinSchema>, "event">
-) {
+async function joinEvents({
+  nickname, date
+}: Omit<z.infer<typeof userJoinSchema>, "event">) {
   pushToReferral({ nickname });
 
   const query = await general
@@ -59,30 +57,18 @@ async function quitEvents(
   }
 }
 
-async function handlePlayerJoin(msg: Msg) {
-  const str = new TextDecoder().decode(msg.data);
-
-  const result = safeJsonParse<z.infer<typeof userJoinSchema>>(str)
-  if (!result.ok) return;
-
-  const payload = result.value
-
+async function handlePlayerJoin(payload: z.infer<typeof userJoinSchema>) {
   if (!userJoinSchema.shape.event.options.includes(payload.event)) {
     return;
   }
 
-  const { success, data } = userJoinSchema.safeParse(payload)
-  if (!success) return;
-
   try {
-    nats.logger.log(`${data.nickname} ${data.event}`, dayjs().format("HH:mm:ss YYYY-MM-DD"))
-
-    switch (data.event) {
+    switch (payload.event) {
       case "join":
-        joinEvents(data);
+        joinEvents(payload);
         break;
       case "quit":
-        quitEvents(data)
+        quitEvents(payload)
         break;
     }
   } catch (e) {
@@ -93,9 +79,17 @@ async function handlePlayerJoin(msg: Msg) {
 export const subscribePlayerJoin = (nc: NatsConnection, subject: string) => {
   const subscription = nc.subscribe(subject, {
     callback: (e, msg) => {
-      if (e) return logErrorMsg(e)
+      if (e) {
+        return logErrorMsg(e, { subject })
+      }
 
-      void handlePlayerJoin(msg)
+      const parsed = userJoinSchema.safeParse(msg.json())
+
+      if (!parsed.success) {
+        return logErrorMsg(parsed.error.issues[0].message, { subject })
+      }
+
+      handlePlayerJoin(parsed.data)
     }
   })
 

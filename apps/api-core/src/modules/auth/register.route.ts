@@ -1,23 +1,17 @@
 import Elysia, { t } from "elysia";
 import { auth } from "./auth.model";
-import { wrapError } from "#/utils";
-import { general } from "#/shared/database/general-db";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";
 import { registerSchema } from "@repo/shared/schemas/auth"
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "./register.model"
 import { isProduction } from "#/shared/env";
+import { getOption } from "#/shared/constants/options";
 
 const registerValidator = () => new Elysia()
   .onBeforeHandle(async ({ status }) => {
-    const query = await general
-      .selectFrom("options")
-      .select("value")
-      .where("name", "=", "registrationEnabled")
-      .executeTakeFirst()
-
-    const isEnabled = Boolean(query?.value)
+    const isEnabled = await getOption("registrationEnabled")
     if (!isEnabled) throw status(400, "AUTHORIZATION_DISABLED")
   })
   .as("scoped")
@@ -81,6 +75,9 @@ export const registerRoute = new Elysia()
           ])
         ),
         500: withError()
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Register")
+      },
     })
   )

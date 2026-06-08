@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { modpackPayloadSchema } from "./modpack.model";
+import { buildRouteSummary } from "#/utils";
 
 async function getModpacks() {
   const query = await general
@@ -24,5 +25,8 @@ export const modpackList = new Elysia()
       200: withData(
         t.Array(modpackPayloadSchema)
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get modpack list")
     }
   })

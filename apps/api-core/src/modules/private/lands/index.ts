@@ -1,13 +1,13 @@
 import { createError, withShared } from "#/helpers/error";
 import { defineRequiredUser } from "#/lib/define";
 import { landSchema } from "#/modules/server/lands/lands.model";
-import { skinsModel } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/modules/server/skin/index.model";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
 import { redis } from "#/shared/redis/client";
 import { withData, withError } from "#/shared/schemas";
-import { safeJsonParse, wrapError } from "#/utils";
-import { createPlayer } from "@repo/core/modules/player";
+import { buildRouteSummary, safeJsonParse, wrapError } from "#/utils";
+import { createPlayerService } from "@repo/core/modules/player";
 import Elysia, { type Static, t } from "elysia";
 import { sql } from "kysely";
 import { nanoid } from "nanoid";
@@ -43,7 +43,7 @@ const CREATE_LAND_INTERNAL_ERRORS = {
 } as const;
 const createLandError = createError(withShared(CREATE_LAND_INTERNAL_ERRORS), "INTERNAL_UNKNOWN");
 
-const player = createPlayer({
+const playerService = createPlayerService({
   generalDb: general, redis: redis.getInstance
 })
 
@@ -73,7 +73,7 @@ async function createLand(
     if (!defaults) throw createLandError.raise("NO_DEFAULTS")
     //
 
-    const uuid = await player.getUUID(initiator)
+    const uuid = await playerService.getUUID(initiator)
 
     // initial members
     const members = JSON.stringify({
@@ -114,7 +114,7 @@ async function createLand(
     title: query.title,
     owner: {
       nickname: query.owner,
-      avatar: await skinsModel.player.getAvatar(query.owner)
+      avatar: await skinsService.player.getAvatar(query.owner)
     },
     server: query.server,
     world: query.world,
@@ -140,7 +140,7 @@ async function deleteLand(ulid: string, initiator: string): Promise<void> {
 
     if (!land) throw deleteLandError.raise("NOT_FOUND")
 
-    const initiatorUuid = await player.getUUID(initiator)
+    const initiatorUuid = await playerService.getUUID(initiator)
 
     const members = safeJsonParse<{ [uuid: string]: { chunks: number } }>(land.members)
     if (!members.ok) throw deleteLandError.raise("INTERNAL_UNKNOWN")
@@ -157,38 +157,51 @@ async function deleteLand(ulid: string, initiator: string): Promise<void> {
   return query;
 }
 
-export const lands = new Elysia()
+const createLandRoute = new Elysia()
   .use(defineRequiredUser())
+  .post("/create", async ({ body, nickname, status }) => {
+    try {
+      const data = await createLand(body, nickname)
+      return { data }
+    } catch (e) {
+      const err = createLandError.reader(e)
+      throw status(err.code, wrapError(err.msg))
+    }
+  }, {
+    body: createLandSchema,
+    response: {
+      200: withData(createLandSchemaPayload),
+      500: withError(t.UnionEnum(createLandError.scopes[500]))
+    },
+    detail: {
+      summary: buildRouteSummary("Create a land")
+    }
+  })
+
+const deleteLandRoute = new Elysia()
+  .use(defineRequiredUser())
+  .delete("/:ulid", async ({ nickname, status, params: { ulid } }) => {
+    try {
+      await deleteLand(ulid, nickname)
+      return { data: "OK" }
+    } catch (e) {
+      const err = deleteLandError.reader(e)
+      throw status(err.code, wrapError(err.msg))
+    }
+  }, {
+    response: {
+      200: withData(t.Literal("OK")),
+      500: withError(t.UnionEnum(deleteLandError.scopes[500])),
+      403: withError(t.UnionEnum(deleteLandError.scopes[403])),
+      404: withError(t.UnionEnum(deleteLandError.scopes[404])),
+    },
+    detail: {
+      summary: buildRouteSummary("Delete a land")
+    }
+  })
+
+export const lands = new Elysia()
   .group("/lands", app => app
-    .post("/create", async ({ body, nickname, status }) => {
-      try {
-        const data = await createLand(body, nickname)
-        return { data }
-      } catch (e) {
-        const err = createLandError.reader(e)
-        throw status(err.code, wrapError(err.msg))
-      }
-    }, {
-      body: createLandSchema,
-      response: {
-        200: withData(createLandSchemaPayload),
-        500: withError(t.UnionEnum(createLandError.scopes[500]))
-      }
-    })
-    .delete("/:ulid", async ({ nickname, status, params: { ulid } }) => {
-      try {
-        await deleteLand(ulid, nickname)
-        return { data: "OK" }
-      } catch (e) {
-        const err = deleteLandError.reader(e)
-        throw status(err.code, wrapError(err.msg))
-      }
-    }, {
-      response: {
-        200: withData(t.Literal("OK")),
-        500: withError(t.UnionEnum(deleteLandError.scopes[500])),
-        403: withError(t.UnionEnum(deleteLandError.scopes[403])),
-        404: withError(t.UnionEnum(deleteLandError.scopes[404])),
-      }
-    })
+    .use(createLandRoute)
+    .use(deleteLandRoute)
   )

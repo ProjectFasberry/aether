@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { balanceSchema, getBalance } from "./balance.model";
+import { buildRouteSummary } from "#/utils";
 
 const balancePayload = t.Object({
   CHARISM: t.Number(),
@@ -17,5 +18,8 @@ export const balance = new Elysia()
     response: {
       200: withData(balancePayload)
     },
-    query: balanceSchema
+    query: balanceSchema,
+    detail: {
+      summary: buildRouteSummary("Get balance")
+    },
   })

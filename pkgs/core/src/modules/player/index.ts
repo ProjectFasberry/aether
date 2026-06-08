@@ -8,27 +8,34 @@ export const getPlayerUUIDCacheRedisKey = (nickname: string) => buildRedisKey({
   target: "internal",
 })
 
-export const createPlayer = (
-  { redis, generalDb }: { redis: () => Redis, generalDb: Kysely<DB> }
-) => {
+type PlayerService = {
+  redis: () => Redis,
+  generalDb: Kysely<DB>
+}
+
+export const createPlayerService = ({
+  redis, generalDb
+}: PlayerService) => {
   return {
-    async getUUID(nickname: string) {
-      let playerUUID = await redis().get(getPlayerUUIDCacheRedisKey(nickname))
+    async getUUID(nickname: string): Promise<string> {
+      const playerUUIDKey = getPlayerUUIDCacheRedisKey(nickname);
+      const playerUUID = await redis().get(playerUUIDKey)
 
       if (!playerUUID) {
-        const { UUID: uuid } = await generalDb
+        const { UUID } = await generalDb
           .selectFrom("AUTH")
           .select("UUID")
           .where("NICKNAME", "=", nickname)
           .executeTakeFirstOrThrow()
 
-        if (!uuid) {
-          throw new Error()
+        if (!UUID) {
+          throw new Error("UUID is not found")
         }
 
-        await redis().set(getPlayerUUIDCacheRedisKey(nickname), uuid)
+        await redis().set(playerUUIDKey, UUID)
+        console.log("UUID cached updated for", nickname)
 
-        playerUUID = uuid;
+        return UUID;
       }
 
       return playerUUID

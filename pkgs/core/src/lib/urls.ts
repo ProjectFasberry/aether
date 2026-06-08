@@ -5,7 +5,7 @@ import type { Kysely } from "kysely";
 
 let data: Map<string, string> | null = null;
 
-export const createUrls = ({
+export const createUrlsService = ({
   generalDb
 }: {
   generalDb: Kysely<DB>

@@ -1,8 +1,8 @@
 import { general } from "#/shared/database/general-db";
 import { env } from "#/shared/env";
-import { createServerStatus } from "@repo/core/modules/status";
+import { createServerStatusService } from "@repo/core/modules/status";
 
-export const serverStatus = createServerStatus({
+export const serverStatusService = createServerStatusService({
   config: {
     VOLUME_URL: env.VOLUME_URL
   },

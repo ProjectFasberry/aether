@@ -9,7 +9,7 @@ import type { DB } from "@repo/shared/types/db/general";
 import { type Static, t } from "elysia";
 import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import { skinsModel } from "../server/skin/index.model";
+import { skinsService } from "../server/skin/index.model";
 import { env } from "#/shared/env";
 
 export const newsSingleSchema = t.Object({
@@ -166,7 +166,7 @@ export async function getNewsSingle(
 
   const creator = {
     nickname: newsCreator,
-    avatar: await skinsModel.player.getAvatar(newsCreator)
+    avatar: await skinsService.player.getAvatar(newsCreator)
   }
 
   return {

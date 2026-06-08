@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { defineOptionalUser, defineOptionalSession, defineUserRole } from "./define";
+import { defineOptionalUser, defineOptionalSession, defineUserRole, defineBearer, handleByBearer } from "./define";
 import { general } from "#/shared/database/general-db";
 import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
@@ -7,34 +7,71 @@ import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
 import { env } from "#/shared/env";
-import { logErrorMsg } from "#/utils/config/log-utils";
+import { logErrorMsg, logValidators } from "#/utils/config/log-utils";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { urls } from "#/shared/constants/urls";
-import { validateLogger } from "#/shared/constants/logger";
-import { LOGGING } from "#/shared/constants";
+import { urlsService } from "#/shared/constants/urls";
 import { safeJsonParse } from "#/utils";
+import { getOption } from "#/shared/constants/options";
 
-export const validatePermission = (permission: string) => new Elysia({ name: "validatePermission" })
-  .use(defineUserRole())
-  .derive(async ({ role, nickname, status }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("validatePermission")
+type ValidatePermission<T extends boolean> = T extends true
+  ? { as: "external"; permission: string }
+  : { as: "internal"; role: { id: number; name: string }; nickname: string; permission: string };
+
+/**
+ *
+ * @param permission - The permission to validate
+ * @param withExternal - Whether to use external bearer authentication
+ */
+export const validatePermission = <T extends boolean = false>(
+  permission: string | null,
+  { withExternal }: { withExternal: T } = { withExternal: false as T }
+) => new Elysia()
+  .use(withExternal ? defineBearer() : defineUserRole())
+  .derive(async ({ status, ...args }): Promise<ValidatePermission<T>> => {
+    logValidators("validatePermission")
+
+    if (!permission) {
+      console.warn(`Permission "${permission}" is not found. Route is disabled for security reasons`)
+      throw status(500, "INTERNAL_SERVER_ERROR")
     }
-    const perms = await getPermissions(nickname, role.id)
 
-    const isExist = perms.includes(permission)
-    if (!isExist) throw status(400, "RESTRICT_BY_ROLE")
+    if ("role" in args && "nickname" in args) {
+      const { role, nickname } = args
 
-    return { role, permission }
+      const perms = await getPermissions(nickname, role.id)
+
+      const isExist = perms.includes(permission)
+      if (!isExist) {
+        throw status(400, "PERMISSION_DENIED")
+      }
+
+      return { as: "internal", role, permission, nickname } as any
+    }
+
+    if ("bearer" in args) {
+      const { bearer } = args
+
+      if (bearer.trim().length === 0) {
+        throw status(401, "BEARER_EMPTY")
+      }
+
+      const result = await handleByBearer(bearer)
+      if (!result) {
+        throw status(401, "UNAUTHORIZED");
+      }
+
+      return { as: "external", permission } as any
+    }
+
+    throw status(401, "UNAUTHORIZED")
   })
   .as("scoped")
 
 export const validateAuthStatus = () => new Elysia({ name: "validateAuthStatus" })
   .use(defineOptionalSession())
   .onBeforeHandle(async ({ session, status }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("validateAuthStatus")
-    }
+    logValidators("validateAuthStatus");
+
     if (!session) return;
 
     const nickname = await auth.getUserNickname(session);
@@ -45,9 +82,8 @@ export const validateAuthStatus = () => new Elysia({ name: "validateAuthStatus" 
 export const validateBannedStatus = () => new Elysia({ name: "validateBannedStatus" })
   .use(defineOptionalUser())
   .onBeforeHandle(async ({ nickname, status }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("validateBannedStatus");
-    }
+    logValidators("validateBannedStatus");
+
     if (!nickname) return;
 
     const target = await general
@@ -114,20 +150,12 @@ export const botValidator = () => new Elysia({ name: "botValidator" })
   .use(ipPlugin())
   .resolve(({ query }) => ({ token: query.token }))
   .onBeforeHandle(async ({ status, token, ip }) => {
-    if (LOGGING.validators) {
-      validateLogger.log("botValidator");
-    }
+    logValidators("botValidator");
 
-    const whitelist = urls.getWhitelistIpList()
+    const whitelist = urlsService.getWhitelistIpList()
     if (whitelist.includes(ip)) return;
 
-    const query = await general
-      .selectFrom("options")
-      .select("value")
-      .where("name", "=", "botCheckEnabled")
-      .executeTakeFirst()
-
-    const isEnabled = Boolean(query?.value)
+    const isEnabled = await getOption("botCheckEnabled")
     if (!isEnabled) return;
 
     if (token.length <= 1) throw status(400)
@@ -137,6 +165,7 @@ export const botValidator = () => new Elysia({ name: "botValidator" })
 
       const result = await verifyRequest(token);
       if (!result.ok) throw status(400, result.error)
+
     } catch (e) {
       logErrorMsg(e);
 

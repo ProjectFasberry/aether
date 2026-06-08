@@ -1,9 +1,10 @@
 import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 async function removeStoreItem(id: number): Promise<{ id: number }> {
   const query = await general
@@ -16,7 +17,7 @@ async function removeStoreItem(id: number): Promise<{ id: number }> {
 }
 
 export const storeItemDelete = new Elysia()
-  .use(validatePermission(Permissions.get("STORE.ITEM.DELETE")))
+  .use(validatePermission(permissions.get("STORE.ITEM.DELETE")))
   .delete("/:id", async ({ params: { id } }) => {
     const data = await removeStoreItem(id);
     return { data }
@@ -33,5 +34,8 @@ export const storeItemDelete = new Elysia()
           id: t.Number()
         })
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Delete store item")
     }
   })

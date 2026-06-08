@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import bcrypt from "bcryptjs";
-import { wrapError } from "#/utils";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { auth } from "./auth.model";
 import { SESSION_KEY, setCookie } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
@@ -54,6 +54,9 @@ const withPassword = new Elysia()
 			),
 			404: withError(),
 		},
+		detail: {
+			summary: buildRouteSummary("Login")
+		},
 	});
 
 const tokenSchema = t.Object({
@@ -92,7 +95,10 @@ export const withQR = new Elysia()
 					"INVALID_REQUEST"
 				])
 			)
-		}
+		},
+		detail: {
+			summary: buildRouteSummary("Generate QR code")
+		},
 	})
 	.ws("/events", {
 		query: tokenSchema,
@@ -154,7 +160,10 @@ export const withQR = new Elysia()
 			if (!isProduction) {
 				qrLogger.log(`Client closed. Code: ${code}; Reason: ${reason}`)
 			}
-		}
+    },
+    detail: {
+			summary: buildRouteSummary("Login via QR code")
+		},
 	})
 	.group("", (app) => app
 		.use(defineRequiredUser())
@@ -178,7 +187,10 @@ export const withQR = new Elysia()
 						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
 					])
 				)
-			}
+			},
+			detail: {
+				summary: buildRouteSummary("Confirm QR code")
+			},
 		})
 		.post("/decline", async ({ query: { token }, status }) => {
 			const isExists = await loginQR.checkQRTokenExistence(token);
@@ -200,7 +212,10 @@ export const withQR = new Elysia()
 						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
 					])
 				)
-			}
+			},
+			detail: {
+				summary: buildRouteSummary("Decline QR code")
+			},
 		})
 		.get("/callback", async ({ query: { e, token }, status }) => {
 			const CALLBACK_EVENTS: Record<typeof e, () => Promise<{ token: string }>> = {
@@ -232,7 +247,10 @@ export const withQR = new Elysia()
 						TOKEN_MSG_RECORDS[TOKEN_ERROR_CODES.TOKEN_EXPIRED]
 					])
 				)
-			}
+			},
+			detail: {
+				summary: buildRouteSummary("Callback")
+			},
 		})
 	)
 	.post("/create", async ({ cookie, query: { token: qrToken }, status }) => {
@@ -268,7 +286,10 @@ export const withQR = new Elysia()
 				])
 			),
 			500: withError()
-		}
+		},
+		detail: {
+			summary: buildRouteSummary("Create session")
+		},
 	})
 	.get("/validate", async ({ query: { token } }) => {
 		const isExists = await loginQR.checkQRTokenExistence(token);
@@ -311,7 +332,10 @@ export const withQR = new Elysia()
 				])
 			),
 			500: withError()
-		}
+		},
+		detail: {
+			summary: buildRouteSummary("Validate QR code")
+		},
 	});
 
 export const withGame = new Elysia()
@@ -340,7 +364,10 @@ export const withGame = new Elysia()
 					"INCORRECT_REQUEST"
 				])
 			)
-		}
+    },
+		detail: {
+			summary: buildRouteSummary("Generate game code")
+		},
 	});
 
 export const login = new Elysia()

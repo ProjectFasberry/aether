@@ -1,19 +1,41 @@
 import { appLogger } from "#/shared/constants/logger";
 import { general } from "../database/general-db";
 
-export let PERMISSIONS: Record<string, any> = {}
+let PERMISSIONS: Record<string, any> = {}
 
-export const Permissions = {
-  get(path: string): string {
-    const result = path
-      .split(".")
-      .reduce((acc, part) => acc?.[part.toUpperCase()], PERMISSIONS);
+export const permissions = {
+  get(path: string): string | null {
+    try {
+      const result = path
+        .split(".")
+        .reduce((acc, part) => acc?.[part.toUpperCase()], PERMISSIONS);
 
-    if (!result || typeof result !== "string") {
-      throw new Error(`Permission "${path}" not found`);
+      if (!result || typeof result !== "string") {
+        return null;
+      }
+
+      return result;
+    } catch (e) {
+      return null;
     }
+  },
+  async init() {
+    const query = await general
+      .selectFrom("permissions")
+      .selectAll()
+      .orderBy("name", "asc")
+      .execute()
 
-    return result;
+    PERMISSIONS = buildPermissions(query)
+
+    const stats = analyzePermissions(PERMISSIONS);
+
+    appLogger.success(
+      `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
+    );
+  },
+  getList() {
+    return PERMISSIONS
   }
 };
 
@@ -67,22 +89,4 @@ function analyzePermissions(obj: Record<string, any>): PermissionStats {
   recurse(obj, 1);
 
   return stats;
-}
-
-export const permissions = {
-  async init() {
-    const query = await general
-      .selectFrom("permissions")
-      .selectAll()
-      .orderBy("name", "asc")
-      .execute()
-
-    PERMISSIONS = buildPermissions(query)
-
-    const stats = analyzePermissions(PERMISSIONS);
-
-    appLogger.success(
-      `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
-    );
-  }
 }

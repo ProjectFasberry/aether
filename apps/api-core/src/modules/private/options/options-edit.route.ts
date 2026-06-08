@@ -1,12 +1,13 @@
 import Elysia from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { updateOptions, updateOptionsSchema } from "./options.model";
+import { buildRouteSummary } from "#/utils";
 
 export const optionsUpdate = new Elysia()
-  .use(validatePermission(Permissions.get("OPTIONS.UPDATE")))
+  .use(validatePermission(permissions.get("OPTIONS.UPDATE")))
   .post("/:name/edit", async ({ params: { name }, body }) => {
     const data = await updateOptions(name, body);
     return { data }
@@ -17,5 +18,8 @@ export const optionsUpdate = new Elysia()
     },
     response: {
       200: withData(updateOptionsSchema)
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Update an option")
+    },
   })

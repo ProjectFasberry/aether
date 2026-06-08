@@ -2,6 +2,7 @@ import Elysia, { type Static } from "elysia";
 import { ipPlugin } from "#/lib/plugins/index";
 import { withData } from "#/shared/schemas";
 import { createNewsViews, getNewsList, newsPayloadSchema, getNewsListSchema } from "./news.model";
+import { buildRouteSummary } from "#/utils";
 
 export const newsList = new Elysia()
   .use(ipPlugin())
@@ -26,5 +27,8 @@ export const newsList = new Elysia()
       createNewsViews({
         ids: data.map(target => target.id), ip
       })
+    },
+    detail: {
+      summary: buildRouteSummary("Get news list")
     }
   })

@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { publishVoteNotify } from "#/lib/publishers/pub-vote-notify";
 import { general } from "#/shared/database/general-db";
+import { buildRouteSummary } from "#/utils";
 
 async function postVoted(nickname: string) {
   const result = await general
@@ -68,5 +69,8 @@ export const processPlayerVote = new Elysia()
 
     return "OK"
   }, {
-    parse: "multipart/form-data"
+    parse: "multipart/form-data",
+    detail: {
+      summary: buildRouteSummary("Process player vote")
+    }
   })

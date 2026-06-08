@@ -3,6 +3,7 @@ import { withData, withError } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { changePassword, changePasswordSchema, deleteAccount } from "./account.model";
 import { ipPlugin } from "#/lib/plugins";
+import { buildRouteSummary } from "#/utils";
 
 export const account = new Elysia()
   .use(defineRequiredUser())
@@ -17,7 +18,10 @@ export const account = new Elysia()
           t.Literal("OK")
         ),
         500: withError()
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Delete account")
+      },
     })
     .patch("/password", async ({ nickname, ip, body: { currentPass, newPass } }) => {
       await changePassword({ nickname, ip, newPass, currentPass });
@@ -29,6 +33,9 @@ export const account = new Elysia()
           t.Literal("OK")
         ),
         500: withError()
-      }
+      },
+      detail: {
+        summary: buildRouteSummary("Change password")
+      },
     })
   )

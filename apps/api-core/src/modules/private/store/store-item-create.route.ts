@@ -2,9 +2,10 @@ import Elysia from "elysia";
 import type * as z from "zod"
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { storeItemCreateSchema } from "@repo/shared/schemas/store";
+import { buildRouteSummary } from "#/utils";
 
 async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
   const query = await general
@@ -17,7 +18,7 @@ async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
 }
 
 export const storeItemCreate = new Elysia()
-  .use(validatePermission(Permissions.get("STORE.ITEM.CREATE")))
+  .use(validatePermission(permissions.get("STORE.ITEM.CREATE")))
   .post("/create", async ({ body }) => {
     const data = await createStoreItem(body)
     return { data }
@@ -25,5 +26,8 @@ export const storeItemCreate = new Elysia()
     body: storeItemCreateSchema,
     afterResponse: ({ permission, nickname: initiator }) => {
       createAdminActivityLog({ initiator, event: permission })
+    },
+    detail: {
+      summary: buildRouteSummary("Create store item")
     }
   })

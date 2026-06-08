@@ -1,9 +1,10 @@
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 async function deleteModpack(id: number) {
   return await general
@@ -14,7 +15,7 @@ async function deleteModpack(id: number) {
 }
 
 export const modpackDelete = new Elysia()
-  .use(validatePermission(Permissions.get("MODPACKS.DELETE")))
+  .use(validatePermission(permissions.get("MODPACKS.DELETE")))
   .delete("/:id", async ({ params: { id } }) => {
     await deleteModpack(id)
     return { data: "OK" }
@@ -27,5 +28,8 @@ export const modpackDelete = new Elysia()
       200: withData(
         t.Literal("OK")
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Delete a modpack")
     }
   })

@@ -3,7 +3,8 @@ import { defineOptionalUser } from "#/lib/define";
 import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";
-import { skinsModel } from "../server/skin/index.model";
+import { skinsService } from "../server/skin/index.model";
+import { buildRouteSummary } from "#/utils";
 
 const playerPayload = t.Object({
   nickname: t.String(),
@@ -29,7 +30,7 @@ export const player = new Elysia()
     const [main, group, avatar, rate] = await Promise.all([
       getMain({ recipient }),
       getDonate({ recipient }),
-      skinsModel.player.getAvatar(recipient),
+      skinsService.player.getAvatar(recipient),
       getRate({ recipient, initiator }),
     ]);
 
@@ -50,5 +51,8 @@ export const player = new Elysia()
     response: {
       200: withData(playerPayload),
       404: t.Object({ data: t.Null() })
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get player profile")
+    },
   })

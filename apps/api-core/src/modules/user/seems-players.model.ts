@@ -6,7 +6,7 @@ import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
 import * as z from "zod";
-import { skinsModel } from "../server/skin/index.model";
+import { skinsService } from "../server/skin/index.model";
 import { safeJsonParse } from "#/utils";
 
 export type SeemsLikePlayer = {
@@ -264,7 +264,7 @@ export async function getSeemsLikePlayersByPlayer(
 		data = data.slice(0, limit);
 	}
 
-	const avatarsMap = await skinsModel.players.getAvatar(data.map(r => r.nickname));
+	const avatarsMap = await skinsService.players.getAvatar(data.map(r => r.nickname));
 
 	data = data.map((row) => ({
 		...row,

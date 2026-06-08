@@ -1,9 +1,10 @@
 import { validatePermission } from "#/lib/validators"
-import { Permissions } from "#/shared/constants/permissions"
+import { permissions } from "#/shared/constants/permissions"
 import { general } from "#/shared/database/general-db"
 import Elysia, { type Static, t } from "elysia"
 import { createAdminActivityLog } from "../private.model"
 import { withData } from "#/shared/schemas"
+import { buildRouteSummary } from "#/utils"
 
 async function addPermissionForRole(
   roleId: number,
@@ -29,7 +30,7 @@ const rolesAddPermissionForRoleSchema = t.Object({
 })
 
 export const rolesAddPermissionForRole = new Elysia()
-  .use(validatePermission(Permissions.get("ROLES.UPDATE")))
+  .use(validatePermission(permissions.get("ROLES.UPDATE")))
   .post("/:id/permission/add", async ({ params: { id }, body }) => {
     const data = await addPermissionForRole(id, body)
     return { data }
@@ -43,5 +44,8 @@ export const rolesAddPermissionForRole = new Elysia()
       200: withData(
         t.Number()
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Add permission to role")
     }
   })

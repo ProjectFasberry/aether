@@ -1,9 +1,10 @@
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 const createDictSchema = t.Object({
   key: t.UnionEnum(["title", "key"]),
@@ -32,7 +33,7 @@ async function createDisc({
 }
 
 export const dictionariesCreate = new Elysia()
-  .use(validatePermission(Permissions.get("DICTIONARIES.CREATE")))
+  .use(validatePermission(permissions.get("DICTIONARIES.CREATE")))
   .post("/create", async ({ body }) => {
     const data = await createDisc(body)
     return { data }
@@ -45,5 +46,8 @@ export const dictionariesCreate = new Elysia()
       200: withData(
         createDictPayloadSchema
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Create a dictionary entry")
     }
   })

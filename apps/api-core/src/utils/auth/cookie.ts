@@ -1,5 +1,5 @@
 import { invariant } from "#/utils"
-import { urls } from "#/shared/constants/urls"
+import { urlsService } from "#/shared/constants/urls"
 import { isProduction } from "#/shared/env"
 import type { Context } from "elysia"
 
@@ -19,7 +19,7 @@ export const SESSION_KEY = "session";
 function getDomain() {
   if (!isProduction) return FALLBACK_DOMAIN;
 
-  const domain = urls.getData().get("domain")
+  const domain = urlsService.getData().get("domain")
   invariant(domain, "Domain is not defined");
 
   return `.${domain}`

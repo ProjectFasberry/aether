@@ -2,6 +2,7 @@ import Elysia, { type Static, t } from "elysia";
 import { bannerSchema, bannerSingleSchema } from "./banner.model";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 type Banner = Static<typeof bannerSingleSchema>
 
@@ -55,6 +56,9 @@ export const bannerSolo = new Elysia()
       200: withData(
         t.Nullable(bannerSingleSchema)
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get banner by id")
     }
   })
 
@@ -67,5 +71,8 @@ export const bannerLatest = new Elysia()
       200: withData(
         t.Nullable(bannerSingleSchema)
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get latest banner")
     }
   })

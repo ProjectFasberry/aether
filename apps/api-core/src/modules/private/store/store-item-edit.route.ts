@@ -3,13 +3,14 @@ import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import type { StoreItems } from "@repo/shared/types/db/general";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
 import type { Selectable } from "kysely";
 import { buildUpdates } from "#/utils/config/transforms";
+import { buildRouteSummary } from "#/utils";
 
-const PERMISSION = Permissions.get("STORE.ITEM.UPDATE");
+const PERMISSION = permissions.get("STORE.ITEM.UPDATE");
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
 	const updates = buildUpdates<Selectable<StoreItems>>(values);
@@ -36,12 +37,19 @@ const storeItemEdit = new Elysia()
 		body: storeItemEditSchema,
 		afterResponse: ({ permission, nickname: initiator }) => {
 			createAdminActivityLog({ initiator, event: permission });
-		},
+    },
+    detail: {
+      summary: buildRouteSummary("Edit store item")
+    }
 	});
 
 const storeItemEditFields = new Elysia()
-	.use(validatePermission(Permissions.get("STORE.ITEM.UPDATE")))
-	.get("/editable-fields", async () => ({ data: EDITABLE_FIELDS }));
+	.use(validatePermission(permissions.get("STORE.ITEM.UPDATE")))
+  .get("/editable-fields", async () => ({ data: EDITABLE_FIELDS }), {
+    detail: {
+      summary: buildRouteSummary("Get editable store item fields")
+    }
+	});
 
 export const storeItemEditGroup = new Elysia()
 	.group("", (app) => app

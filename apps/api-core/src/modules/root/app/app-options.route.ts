@@ -3,12 +3,13 @@ import { defineOptionalUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { bannerExists } from "../../banner/banner.model";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { urls } from "#/shared/constants/urls";
+import { urlsService } from "#/shared/constants/urls";
 import { ipPlugin } from "#/lib/plugins/index";
-import { general } from "#/shared/database/general-db";
+import { getOption } from "#/shared/constants/options";
+import { buildRouteSummary } from "#/utils";
 
 function getWhitelist(ip: string) {
-  const whitelist = urls.getWhitelistIpList()
+  const whitelist = urlsService.getWhitelistIpList()
   return whitelist.includes(ip);
 }
 
@@ -51,13 +52,8 @@ const appOptionsSchema = t.Object({
 type AppOptionsPayload = Static<typeof appOptionsSchema>;
 
 async function getPofStatus(): Promise<boolean> {
-  const query = await general
-    .selectFrom("options")
-    .select("value")
-    .where("name", "=", "botCheckEnabled")
-    .executeTakeFirstOrThrow()
-
-  return query.value
+  const isEnabled = await getOption("botCheckEnabled")
+  return isEnabled
 }
 
 export const appOptionsList = new Elysia()
@@ -91,5 +87,8 @@ export const appOptionsList = new Elysia()
       200: withData(
         appOptionsSchema
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get app options")
     }
   })

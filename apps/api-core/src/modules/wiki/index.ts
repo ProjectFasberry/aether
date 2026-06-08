@@ -1,5 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia";
 
 type GroupPayload = Record<string, {
@@ -69,7 +70,10 @@ const wikiCategories = new Elysia()
           })
         )
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get wiki categories")
+    },
   })
 
 const wikiCategory = new Elysia()
@@ -101,7 +105,10 @@ const wikiCategory = new Elysia()
           })
         )
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get wiki category")
+    },
   })
 
 export const wiki = new Elysia()

@@ -2,6 +2,7 @@ import Elysia, { t } from 'elysia';
 import { general } from '#/shared/database/general-db';
 import dayjs from 'dayjs';
 import { withData } from '#/shared/schemas';
+import { buildRouteSummary } from '#/utils';
 
 export type PlayerActivitySummaryPayload = {
   [k: string]: {
@@ -105,5 +106,8 @@ export const activitySummary = new Elysia()
       200: withData(
         t.Nullable(activitySummaryPayload)
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get activity summary")
     }
   })

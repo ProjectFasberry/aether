@@ -4,7 +4,7 @@ import { redis } from "./shared/redis/client";
 import { chats } from "./shared/bot/chats";
 import { bot } from "./shared/bot";
 import { rcon } from "./shared/rcon/client";
-import { urls } from "./shared/bot/urls";
+import { urlsService } from "./shared/bot/urls";
 import { handleProcessOnEvent } from "./shared/utils/handle-log";
 import { nats } from "./shared/nats/client";
 import { env } from "./shared/env";
@@ -40,7 +40,7 @@ const pipeline: BootstrapStep[] = [
   },
   {
     name: "urls",
-    run: () => urls.init()
+    run: () => urlsService.init()
   },
   {
     name: "redis",

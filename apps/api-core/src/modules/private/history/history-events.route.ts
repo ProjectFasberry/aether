@@ -2,7 +2,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { nats } from "#/shared/nats/client";
 import Elysia, { sse } from "elysia";
 import { logger } from "#/shared/constants/logger";
-import { safeJsonParse } from "#/utils";
+import { buildRouteSummary, safeJsonParse } from "#/utils";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
 
 type HistoryPayload = {
@@ -53,5 +53,9 @@ export const historyEvents = new Elysia()
       }
     } finally {
       sub.unsubscribe();
+    }
+  }, {
+    detail: {
+      summary: buildRouteSummary("Get history events")
     }
   })

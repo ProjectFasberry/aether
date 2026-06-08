@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
-import { wrapError } from "#/utils";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { withData } from "#/shared/schemas";
 import { validateBannedStatus } from "#/lib/validators";
 import { getPlayerLikes, ratePlayer } from "./like.model";
@@ -25,7 +25,10 @@ const likes = new Elysia()
           })
         })
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Get player likes")
+    },
   })
 
 const like = new Elysia()
@@ -43,7 +46,10 @@ const like = new Elysia()
         t.UnionEnum(["unrated", "rated"])
       ),
       400: t.Object({ error: t.String() })
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("Rate player")
+    },
   })
 
 export const rate = new Elysia()

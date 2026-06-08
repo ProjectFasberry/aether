@@ -3,6 +3,7 @@ import { SESSION_KEY, unsetCookie } from "#/utils/auth/cookie";
 import { defineRequiredSession } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { session } from "./login.model";
+import { buildRouteSummary } from "#/utils";
 
 export const invalidate = new Elysia()
   .use(defineRequiredSession())
@@ -20,4 +21,7 @@ export const invalidate = new Elysia()
       500: withError(),
       401: withError()
     },
+    detail: {
+      summary: buildRouteSummary("Invalidate session")
+    }
   });

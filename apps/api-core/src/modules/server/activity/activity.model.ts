@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { sql } from "kysely";
 import type { PlayerActivityPayload } from "./activity-now.route";
 import { env } from "#/shared/env";
-import { serverStatus } from "../status/index.model";
+import { serverStatusService } from "../status/index.model";
 import { invariant } from "#/utils";
 
 type PlayerStatus = {
@@ -46,7 +46,7 @@ export async function getPlayerStatus(nickname: string): Promise<PlayerActivityP
   const nc = nats.getInstance()
 
   try {
-    const playerStatus = await serverStatus.getPlayerStatusGlobal({
+    const playerStatus = await serverStatusService.getPlayerStatusGlobal({
       nickname,
       panelPassword: env.PANEL_PASSWORD,
       panelUser: env.PANEL_USER,

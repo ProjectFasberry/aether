@@ -1,7 +1,7 @@
 import { Cron, type CronOptions } from "croner";
 import { CRON_JOBS } from "./jobs";
-import { logger } from "#/shared/constants/logger";
 import { isProduction } from "../env";
+import { cronLogger } from ".";
 
 type CronTask = Pick<(typeof CRON_JOBS)[number], "immediately" | "schedule" | "allowIsDev"> & {
 	scheduledTo: Date;
@@ -56,7 +56,7 @@ export function startJobs() {
 
 		const cronJob = new Cron(job.cron, config, async () => await job.callback());
 
-		logger.withTag("Cron").log(`Job "${job.name}" will be started at ${cronJob.nextRun()?.toISOString()}`);
+		cronLogger.log(`Job "${job.name}" will be started at ${cronJob.nextRun()?.toISOString()}`);
 	}
 
 	immediatelyJobs.forEach((fn) => {

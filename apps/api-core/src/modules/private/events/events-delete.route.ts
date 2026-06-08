@@ -1,13 +1,14 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { deleteEvent } from "./events.model";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";
+import { buildRouteSummary } from "#/utils";
 
 export const eventsDelete = new Elysia()
-  .use(validatePermission(Permissions.get("EVENTS.DELETE")))
+  .use(validatePermission(permissions.get("EVENTS.DELETE")))
   .delete("/:id", async ({ params: { id }, status }) => {
     const data = await deleteEvent(id)
     if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));
@@ -23,5 +24,8 @@ export const eventsDelete = new Elysia()
       404: withError(
         t.UnionEnum(["ITEM_NOT_FOUND"])
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Delete an event")
     }
   })

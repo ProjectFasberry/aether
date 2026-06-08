@@ -3,7 +3,7 @@ import "../declare.d.ts";
 import "./assign";
 
 import { handleProcessOnEvent } from "./utils/config/handle-log";
-import { urls } from "./shared/constants/urls";
+import { urlsService } from "./shared/constants/urls";
 import { permissions } from "./shared/constants/permissions";
 import { minio } from "./shared/minio/client";
 import { redis } from "./shared/redis/client";
@@ -40,7 +40,7 @@ const bootstrapPipeline: BootstrapStep[] = [
   },
   {
     name: "urls",
-    run: () => urls.init()
+    run: () => urlsService.init()
   },
   {
     name: "permissions",

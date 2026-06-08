@@ -13,7 +13,7 @@ import type * as z from "zod";
 import { isProduction } from "#/shared/env";
 import type { registerSchema } from "@repo/shared/schemas/auth";
 import { HTTPError } from "ky";
-import { skinsModel } from "../server/skin/index.model";
+import { skinsService } from "../server/skin/index.model";
 import { minio } from "#/shared/minio/client";
 import { invariant } from "#/utils";
 
@@ -76,7 +76,7 @@ const MOJANG_API_URL = "https://api.ashcon.app";
 export const register = {
   async registrationEvents({ nickname }: { nickname: string }) {
     const REGISTRATION_EVENTS = {
-      skin: () => skinsModel.skin.initSkin({
+      skin: () => skinsService.skin.initSkin({
         nickname, minio: minio.getInstance
       }),
     };

@@ -1,6 +1,7 @@
 import { getStaticUrl } from "#/helpers/volume";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia";
 
 export const appLibrary = new Elysia()
@@ -27,5 +28,8 @@ export const appLibrary = new Elysia()
 					)
 				})
 			)
+    },
+		detail: {
+			summary: buildRouteSummary("Get app library")
 		}
 	});

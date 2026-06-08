@@ -3,7 +3,7 @@ import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLin
 import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/store/payment";
 import { redis } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
-import { CRYPTO_PAY_API } from "#/shared/api/crypto-api";
+import { cryptoPayClient } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";
 import type * as z from "zod"
 import { getRedisKey } from "#/helpers/redis";
@@ -88,7 +88,7 @@ async function rollbackOrder({
 }): Promise<void> {
   const redisClient = redis.getInstance();
 
-  const deleteInvoice = await CRYPTO_PAY_API
+  const deleteInvoice = await cryptoPayClient
     .post(`deleteInvoice`, { json: { invoice_id: invoiceId } })
     .json<CryptoPayPayload<boolean>>()
 
@@ -136,7 +136,7 @@ async function createCryptoOrder({
     expires_in: DEFAULT_EXPIRATION_DATE
   }
 
-  const createdInvoice = await CRYPTO_PAY_API
+  const createdInvoice = await cryptoPayClient
     .post("createInvoice", { json: createInvoicePayload })
     .json<CryptoPayPayload<InvoiceType>>()
 
@@ -234,7 +234,7 @@ export async function updateExchangeRates() {
   const redisClient = redis.getInstance()
 
   try {
-    const data = await CRYPTO_PAY_API
+    const data = await cryptoPayClient
       .get("getExchangeRates")
       .json<CryptoPayPayload<ExchangeRate[]>>()
 

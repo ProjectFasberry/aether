@@ -1,4 +1,4 @@
-import { skinsModel } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/modules/server/skin/index.model";
 import { general } from "#/shared/database/general-db";
 import { env } from "#/shared/env";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
@@ -68,7 +68,7 @@ type RawPlayer = {
 }
 
 async function process(nicknames: string[]) {
-  const skins = await skinsModel.players.getCachedSkinPayloads(nicknames);
+  const skins = await skinsService.players.getCachedSkinPayloads(nicknames);
 
   const mapper = (user: RawPlayer): Static<typeof privatedUserSchema> => {
     const {

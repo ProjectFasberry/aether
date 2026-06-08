@@ -2,9 +2,10 @@ import Elysia, { type Static, t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { getStaticUrl } from "#/helpers/volume";
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { createStringBoolSchema, withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 
 export type PrivatedMethodsPayload = Static<typeof storeMethodsPayloadSchema>
 
@@ -32,7 +33,7 @@ async function getMethods(): Promise<PrivatedMethodsPayload> {
 }
 
 export const storeMethodsList = new Elysia()
-  .use(validatePermission(Permissions.get("STORE.METHODS.READ")))
+  .use(validatePermission(permissions.get("STORE.METHODS.READ")))
   .get("/list", async () => {
     const data = await getMethods()
     return { data }
@@ -41,6 +42,9 @@ export const storeMethodsList = new Elysia()
       200: withData(
         storeMethodsPayloadSchema
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get store methods")
     }
   })
 
@@ -62,7 +66,7 @@ async function updateStoreMethod(method: string, { key, value }: Static<typeof u
 }
 
 export const storeMethodsEdit = new Elysia()
-  .use(validatePermission(Permissions.get("STORE.METHODS.UPDATE")))
+  .use(validatePermission(permissions.get("STORE.METHODS.UPDATE")))
   .post("/edit/:method", async ({ params: { method }, body }) => {
     const data = await updateStoreMethod(method, body)
     return { data }
@@ -82,5 +86,8 @@ export const storeMethodsEdit = new Elysia()
           })
         )
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Edit store method")
     }
   })

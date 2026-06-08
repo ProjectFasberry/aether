@@ -1,5 +1,6 @@
 import Elysia, { t } from "elysia";
 import { chat, chatMessageViewsSchema } from "./chat.model";
+import { buildRouteSummary } from "#/utils";
 
 export const chatMessageViews = new Elysia()
   .get("/:id/views", async ({ params: { id }, query }) => {
@@ -9,5 +10,8 @@ export const chatMessageViews = new Elysia()
     params: t.Object({
       id: t.Number()
     }),
-    query: chatMessageViewsSchema
+    query: chatMessageViewsSchema,
+    detail: {
+      summary: buildRouteSummary("Get chat message views")
+    },
   })

@@ -1,11 +1,11 @@
+import type { NatsConnection, Subscription } from "@nats-io/nats-core";
+import { SUBJECTS } from "./subjects";
 import { subscribeGiveBalance } from "#/lib/subscribers/sub-give-balance";
 import { subscribePlayerJoin } from "#/lib/subscribers/sub-player-join";
 import { subscribePlayerStats } from "#/lib/subscribers/sub-player-stats";
-import { subscribePostHook } from "#/lib/subscribers/sub-post-hook";
 import { subscribeRefferalCheck } from "#/lib/subscribers/sub-referal-check";
 import { subscribeReferalReward } from "#/lib/subscribers/sub-referal-reward";
-import type { NatsConnection, Subscription } from "@nats-io/nats-core";
-import { SUBJECTS } from "./subjects";
+import { subscribeConfig } from "#/lib/subscribers/sub-config";
 
 type Sub = {
 	name: string;
@@ -33,8 +33,8 @@ export const SUBSCRIBERS: Sub[] = [
 		name: "Player stats",
 		cb: (nc) => subscribePlayerStats(nc, "todo" + ".*"),
 	},
-	{
-		name: "Post hook",
-		cb: (nc) => subscribePostHook(nc, `${SUBJECTS.EVENTS.BASE}.>`),
-	},
+  {
+    name: "subscribeConfig",
+    cb: (nc) => subscribeConfig(nc, `${SUBJECTS.CONFIG.BASE}.>`)
+  }
 ]

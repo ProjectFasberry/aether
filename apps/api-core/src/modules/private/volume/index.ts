@@ -1,7 +1,8 @@
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { minio, S3 } from "#/shared/minio/client";
 import { withData } from "#/shared/schemas";
+import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia";
 
 const S3ObjectSchema = t.Object({
@@ -59,7 +60,7 @@ const S3ListObjectsResponseSchema = t.Object({
 });
 
 export const volume = new Elysia()
-  .use(validatePermission(Permissions.get("VOLUME.CONTROL")))
+  .use(validatePermission(permissions.get("VOLUME.CONTROL")))
   .group("/volume", app => app
     .get("/buckets/list", async () => {
       const buckets = await minio.getInstance().listBuckets()
@@ -80,6 +81,9 @@ export const volume = new Elysia()
             })
           )
         )
+      },
+      detail: {
+        summary: buildRouteSummary("List buckets")
       }
     })
     .group("/buckets/:bucket", app => app
@@ -114,6 +118,9 @@ export const volume = new Elysia()
               notification: t.Optional(t.Object({})),
             })
           )
+        },
+        detail: {
+          summary: buildRouteSummary("Get bucket details")
         }
       })
       .get("/list", async ({ params: { bucket }, query: { folder } }) => {
@@ -134,6 +141,9 @@ export const volume = new Elysia()
           200: withData(
             t.Nullable(S3ListObjectsResponseSchema)
           )
+        },
+        detail: {
+          summary: buildRouteSummary("List bucket objects")
         }
       })
     )

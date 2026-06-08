@@ -1,4 +1,5 @@
 import { getNewsList, getNewsListSchema } from "#/modules/news/news.model"
+import { buildRouteSummary } from "#/utils"
 import Elysia from "elysia"
 
 export const newsList = new Elysia()
@@ -6,5 +7,8 @@ export const newsList = new Elysia()
     const data = await getNewsList(query)
     return { data }
   }, {
-    query: getNewsListSchema
+    query: getNewsListSchema,
+    detail: {
+      summary: buildRouteSummary("List news articles")
+    },
   })

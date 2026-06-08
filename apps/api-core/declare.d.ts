@@ -5,6 +5,8 @@ declare global {
     startCursor?: string,
     endCursor?: string
   }
+
+  type Awaitable<T> = T | Promise<T>;
 }
 
 declare module "*.txt"

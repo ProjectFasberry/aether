@@ -3,18 +3,18 @@ import { bot } from ".";
 import { type CommandCtx, GUARD_COMMANDS } from "./cmds";
 import { Keyboard } from "gramio";
 import { chats } from "./chats";
-import { urls } from "./urls";
+import { urlsService } from "./urls";
 import { rcon } from "../rcon/client";
 import { env } from "../env";
 import { wrapError } from "@repo/shared/lib/utils";
-import { createSkins } from "@repo/core/modules/skins/index";
+import { createSkinsService } from "@repo/core/modules/skins/index";
 import { general as generalDb, skins as skinsDb } from "../database";
 import { nats } from "../nats/client";
 import { redis } from "../redis/client";
 import { minio } from "../minio/client";
-import { createServerStatus } from "@repo/core/modules/status/index"
+import { createServerStatusService } from "@repo/core/modules/status/index"
 
-const skinsModel = createSkins({
+const skinsService = createSkinsService({
   databases: {
     general: generalDb,
     skins: skinsDb
@@ -23,10 +23,9 @@ const skinsModel = createSkins({
     VOLUME_URL: env.VOLUME_URL
   },
   redis: redis.getInstance,
-  nats: nats.getInstance
 })
 
-const serverStatus = createServerStatus({
+const serverStatusService = createServerStatusService({
   generalDb,
   config: {
     VOLUME_URL: env.VOLUME_URL
@@ -52,7 +51,7 @@ export async function botInfoCmdCb(ctx: CommandCtx) {
 }
 
 export async function backendInfoCmdCb(ctx: CommandCtx) {
-  const urlsEntries = Array.from(urls.getData().entries());
+  const urlsEntries = Array.from(urlsService.getData().entries());
   const chatsList = chats.getData();
 
   const urlsText = urlsEntries.length > 0
@@ -110,7 +109,7 @@ export async function revalidateChatsCmdCb(ctx: CommandCtx) {
 }
 
 export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
-  const result = await urls.revalidate();
+  const result = await urlsService.revalidate();
 
   if (!result.ok) {
     const errorMsg = wrapError(result.error).error;
@@ -154,51 +153,54 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
 
   const updateVariant = (nickname && nickname.trim().length > 0) ? "single" : "all";
 
-  const taskFn = updateVariant === "single"
-    ? () => skinsModel.skin.initSkin({
-      nickname,
-      minio: minio.getInstance,
-      onStart() {
-        bot.logger.log(`Start updating skin for ${nickname}`)
-      },
-      async onFinish() {
-        const botClient = bot.getInstance();
+  const singleCb = () => skinsService.skin.initSkin({
+    nickname,
+    minio: minio.getInstance,
+    onStart() {
+      bot.logger.log(`Start updating skin for ${nickname}`)
+    },
+    async onFinish() {
+      const botClient = bot.getInstance();
 
-        await botClient.api.sendMessage({
-          chat_id: chatId,
-          text: `📊 Success for ${nickname}`,
-          parse_mode: "HTML",
-        });
-      },
-      onError(e) {
-        bot.logger.error(`Skin ${nickname} updating error`, e)
-      },
-    })
-    : () => skinsModel.skin.updateSkins({
-      ...opts,
-      minio: minio.getInstance,
-      onStart() {
-        bot.logger.log("Start updating skins all users")
-      },
-      async onSuccess(processedCount) {
-        const botClient = bot.getInstance();
+      await botClient.api.sendMessage({
+        chat_id: chatId,
+        text: `📊 Success for ${nickname}`,
+        parse_mode: "HTML",
+      });
+    },
+    onError(e) {
+      bot.logger.error(`Skin ${nickname} updating error`, e)
+    },
+  })
 
-        await botClient.api.sendMessage({
-          chat_id: chatId,
-          text: `📊 Success updating ${processedCount} users`,
-          parse_mode: "HTML",
-        });
-      },
-      onSuccessPlayer(nickname) {
-        bot.logger.log(`Skin ${nickname} updated`)
-      },
-      onError(e) {
-        bot.logger.error(`Skins updating error`, e)
-      },
-      onErrorPlayer(nickname, e) {
-        bot.logger.error(`Skin ${nickname} updating error`, e)
-      },
-    });
+  const multiCb = () => skinsService.skin.updateSkins({
+    ...opts,
+    minio: minio.getInstance,
+    nats: nats.getInstance,
+    onStart() {
+      bot.logger.log("Start updating skins all users")
+    },
+    async onSuccess(processedCount) {
+      const botClient = bot.getInstance();
+
+      await botClient.api.sendMessage({
+        chat_id: chatId,
+        text: `📊 Success updating ${processedCount} users`,
+        parse_mode: "HTML",
+      });
+    },
+    onSuccessPlayer(nickname) {
+      bot.logger.log(`Skin ${nickname} updated`)
+    },
+    onError(e) {
+      bot.logger.error(`Skins updating error`, e)
+    },
+    onErrorPlayer(nickname, e) {
+      bot.logger.error(`Skin ${nickname} updating error`, e)
+    },
+  })
+
+  const taskFn = updateVariant === "single" ? singleCb : multiCb
 
   const startNotice = updateVariant === 'single'
     ? `Updating the player skin: <code>${nickname}</code>`
@@ -220,7 +222,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
 }
 
 export async function statusCmdCb(ctx: CommandCtx) {
-  const status = await serverStatus.getData({ redis: redis.getInstance });
+  const status = await serverStatusService.getData({ redis: redis.getInstance });
 
   const proxyInfo = status?.proxy ? `${status.proxy.online}/${status.proxy.max}` : "n/a";
 

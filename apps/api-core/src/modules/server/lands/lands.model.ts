@@ -7,9 +7,9 @@ import { withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
-import type { SelectExpression } from "kysely";
+import { sql, type SelectExpression } from "kysely";
 import type { DB } from "@repo/shared/types/db/bisquite";
-import { skinsModel } from "../skin/index.model";
+import { skinsService } from "../skin/index.model";
 import { safeJsonParse } from "#/utils";
 
 export const landSchema = t.Object({
@@ -85,36 +85,7 @@ export const landsByPlayerSchema = t.Object({
   })
 })
 
-export async function getLandsByNickname(
-  nickname: string,
-  { exclude }: Static<typeof landsByNicknameSchema>
-): Promise<Static<typeof landsByPlayerSchema>> {
-  const uuid = await getPlayerUUID(nickname)
-
-  let query = bisquite
-    .selectFrom("lands_lands")
-    .select([
-      "lands_lands.ulid",
-      "lands_lands.name",
-      "lands_lands.type",
-      "lands_lands.members",
-      "lands_lands.created_at",
-      "lands_lands.title",
-    ])
-    .where("members", "like", `%${uuid}%`)
-
-  if (exclude) {
-    query = query.where("lands_lands.ulid", "!=", exclude)
-  }
-
-  const lands = await query.execute();
-
-  if (!lands.length) {
-    return { data: [], meta: { count: 0 } }
-  }
-
-  const ulids = lands.map(l => l.ulid)
-
+async function getBannerAndGalleryByLands(ulids: string[]) {
   const [bannerRows, galleryRows] = await Promise.all([
     bisquite
       .selectFrom("lands_banners")
@@ -128,9 +99,64 @@ export async function getLandsByNickname(
       .execute()
   ])
 
+  return { bannerRows, galleryRows }
+}
+
+async function getMembersByUUIDs(uuids: string[]) {
+  const membersList = await bisquite
+    .selectFrom("lands_players")
+    .select(["uuid", "name"])
+    .where("uuid", "in", uuids)
+    .execute();
+
+  return membersList
+}
+
+type RawMembers = Record<string, { chunks: number }>;
+
+const LANDS_FIELDS = [
+  "lands_lands.ulid",
+  "lands_lands.name",
+  "lands_lands.type",
+  "lands_lands.members",
+  "lands_lands.created_at",
+  "lands_lands.title"
+]
+
+export const LIMIT = 12;
+
+export const landsByRandomSchema = landsByPlayerSchema
+
+type Land = {
+  type: string;
+  title: string | null;
+  area: string;
+  ulid: string;
+  created_at: Date;
+  members: string;
+  name: string;
+  level: number;
+  limits: string | null;
+  stats: string | null;
+  balance: number;
+  spawn: string | null;
+  server: string;
+  category: string | null;
+  icon: string | null;
+  inbox: string | null;
+  nation: string | null;
+  shield: number;
+  storage: string | null;
+  world: string;
+}
+
+async function getLandsWithMembers(lands: Land[]) {
+  const landsUlids = lands.map((land) => land.ulid)
+  const { bannerRows, galleryRows } = await getBannerAndGalleryByLands(landsUlids)
+
   const detailsMap: Map<string, { banner: string | null, gallery: string[] }> = new Map()
 
-  for (const id of ulids) {
+  for (const id of landsUlids) {
     detailsMap.set(id, { banner: null, gallery: [] })
   }
 
@@ -150,41 +176,144 @@ export async function getLandsByNickname(
     }
   }
 
-  const allMemberUUIDs: Set<string> = new Set();
+  const allMemberUUIDs = new Set<string>();
 
-  const parsedLands = lands.map(l => {
-    const parsed = safeJsonParse<Record<string, { chunks: number }>>(l.members)
+  const landsWithMembers = lands.map((land) => {
+    const parsed = safeJsonParse<RawMembers>(land.members)
     if (!parsed.ok) throw parsed.error
 
     const members = parsed.value
 
-    for (const uid in members) {
-      allMemberUUIDs.add(uid)
+    for (const uuid in members) {
+      allMemberUUIDs.add(uuid)
     }
 
-    return { ...l, members }
+    return { ...land, members }
   })
 
-  const membersList = await bisquite
-    .selectFrom("lands_players")
-    .select(["uuid", "name"])
-    .where("uuid", "in", Array.from(allMemberUUIDs))
-    .execute();
+  const membersList = await getMembersByUUIDs(Array.from(allMemberUUIDs))
+  const membersNicknamesByUUIDMap = new Map(membersList.map(m => [m.uuid, m.name]))
+  const membersNicknames = Array.from(membersNicknamesByUUIDMap).map(([_, nickname]) => nickname)
+  const membersAvatarsMap = await skinsService.players.getAvatar(membersNicknames);
 
-  const nameMap = new Map(membersList.map(m => [m.uuid, m.name]))
+  const data = landsWithMembers.map((land) => {
+    const members = Object.entries(land.members).map(([uuid, { chunks }]) => {
+      const nickname = membersNicknamesByUUIDMap.get(uuid) ?? "unknown"
+      const avatar = membersAvatarsMap[nickname] ?? "unknown"
 
-  const avatarsMap = await skinsModel.players.getAvatar(
-    Array.from(nameMap).map(([_, nickname]) => nickname)
-  );
+      return {
+        uuid, nickname, chunks, avatar
+      }
+    })
 
-  const data = parsedLands.map((land) => {
-    const nickname = nameMap.get(uuid)!;
+    return {
+      ...land,
+      members,
+      details: detailsMap.get(land.ulid)!,
+    }
+  })
 
-    const members = Object.entries(land.members).map(([uuid, data]) => ({
-      uuid,
-      nickname,
-      chunks: data.chunks,
-      avatar: avatarsMap[nickname]
+  return data
+}
+
+export async function getRandomLands({ exclude, limit }: Static<typeof landsByNicknameSchema> & { limit?: number }) {
+  let result: Static<typeof landsByRandomSchema> = { data: [], meta: { count: 0 } }
+
+  let query = bisquite
+    .selectFrom("lands_lands")
+    // @ts-expect-error
+    .select(LANDS_FIELDS)
+    .orderBy(sql`RAND()`)
+    .limit(limit ?? LIMIT)
+
+  if (exclude) {
+    query = query.where("lands_lands.ulid", "!=", exclude)
+  }
+
+  const lands = await query.execute();
+  if (lands.length === 0) return result
+
+  const data = await getLandsWithMembers(lands);
+
+  result = {
+    data, meta: { count: data.length }
+  }
+
+  return result
+}
+
+export async function getLandsByNickname(
+  nickname: string,
+  { exclude, limit }: Static<typeof landsByNicknameSchema> & { limit?: number }
+): Promise<Static<typeof landsByPlayerSchema>> {
+  const recipientUUID = await getPlayerUUID(nickname);
+
+  let result: Static<typeof landsByPlayerSchema> = { data: [], meta: { count: 0 } }
+
+  let query = bisquite
+    .selectFrom("lands_lands")
+    // @ts-expect-error
+    .select(LANDS_FIELDS)
+    .where("members", "like", `%${recipientUUID}%`)
+    .limit(limit ?? LIMIT)
+
+  if (exclude) {
+    query = query.where("lands_lands.ulid", "!=", exclude)
+  }
+
+  const lands = await query.execute();
+  if (lands.length === 0) return result
+
+  const landsUlids = lands.map((land) => land.ulid)
+  const { bannerRows, galleryRows } = await getBannerAndGalleryByLands(landsUlids)
+
+  const detailsMap: Map<string, { banner: string | null, gallery: string[] }> = new Map()
+
+  for (const id of landsUlids) {
+    detailsMap.set(id, { banner: null, gallery: [] })
+  }
+
+  for (const row of bannerRows) {
+    const target = detailsMap.get(row.ulid);
+
+    if (target) {
+      target.banner = landHelpers.getLandsUrl(row.banner_url)
+    }
+  }
+
+  for (const row of galleryRows) {
+    const target = detailsMap.get(row.ulid)
+
+    if (target) {
+      target.gallery.push(landHelpers.getLandsUrl(row.url))
+    }
+  }
+
+  const allMemberUUIDs = new Set<string>();
+
+  const landsWithMembers = lands.map((land) => {
+    const parsed = safeJsonParse<RawMembers>(land.members)
+    if (!parsed.ok) throw parsed.error
+
+    const members = parsed.value
+
+    for (const uuid in members) {
+      allMemberUUIDs.add(uuid)
+    }
+
+    return { ...land, members }
+  })
+
+  const membersList = await getMembersByUUIDs(Array.from(allMemberUUIDs))
+  const membersNicknamesByUUIDMap = new Map(membersList.map(m => [m.uuid, m.name]))
+  const membersNicknames = Array.from(membersNicknamesByUUIDMap).map(([_, nickname]) => nickname)
+  const membersAvatarsMap = await skinsService.players.getAvatar(membersNicknames);
+
+  const data = landsWithMembers.map((land) => {
+    const nickname = membersNicknamesByUUIDMap.get(recipientUUID)!;
+
+    const members = Object.entries(land.members).map(([uuid, { chunks }]) => ({
+      uuid, nickname, chunks, avatar: membersAvatarsMap[nickname]
     }))
 
     return {
@@ -194,12 +323,13 @@ export async function getLandsByNickname(
     }
   })
 
-  return {
-    data,
-    meta: {
-      count: data.length
-    }
+  const meta = {
+    count: data.length
   }
+
+  result = { data, meta }
+
+  return result
 }
 
 const BASE_FIELDS = [
@@ -259,7 +389,7 @@ export async function getLand(
   }
 
   async function getMembers() {
-    const avatarsMap = await skinsModel.players.getAvatar(membersRaw.map(r => r.nickname));
+    const avatarsMap = await skinsService.players.getAvatar(membersRaw.map(r => r.nickname));
 
     const data = membersRaw.map((member, idx) => ({
       uuid: member.uuid,
@@ -440,7 +570,7 @@ export async function getLands({
     };
   }
 
-  const avatarsMap = await skinsModel.players.getAvatar(nicknames);
+  const avatarsMap = await skinsService.players.getAvatar(nicknames);
 
   const data = parsedLands.map((land) => {
     const members = Object

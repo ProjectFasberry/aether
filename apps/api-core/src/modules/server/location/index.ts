@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia"
 import { defineRequiredUser } from "#/lib/define"
 import { getCustomLocation, getLocation, parseWorldName, type UserLocation } from "./location.model"
 import { withData } from "#/shared/schemas"
+import { buildRouteSummary } from "#/utils"
 
 const locationPayloadSchema = t.Object({
   world: t.String(),
@@ -39,5 +40,8 @@ export const playerLocation = new Elysia()
       200: withData(
         t.Nullable(locationPayloadSchema)
       )
+    },
+    detail: {
+      summary: buildRouteSummary("Get player location")
     }
   })

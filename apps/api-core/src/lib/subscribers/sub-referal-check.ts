@@ -6,7 +6,7 @@ import { validateReferal } from "#/utils/server/validate-referal";
 import type { Msg, NatsConnection } from "@nats-io/nats-core";
 
 async function handleReferalCheck(msg: Msg) {
-  const nickname: string = new TextDecoder().decode(msg.data)
+  const nickname = msg.string();
   if (!nickname) return;
 
   try {

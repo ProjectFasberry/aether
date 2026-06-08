@@ -53,9 +53,10 @@ export interface AdminActivityLog {
 
 export interface ApiKeys {
   created_at: Generated<Timestamp>;
+  description: string | null;
+  duration: Generated<number | null>;
   id: Generated<number>;
   key: string;
-  nickname: string;
 }
 
 export interface AUTH {

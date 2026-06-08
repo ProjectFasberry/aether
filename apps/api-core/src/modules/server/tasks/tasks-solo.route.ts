@@ -3,6 +3,7 @@ import * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { taskPayload } from "./tasks.model";
+import { buildRouteSummary } from "#/utils";
 
 async function getTask(id: number) {
   const query = await general
@@ -34,5 +35,8 @@ export const tasksSolo = new Elysia()
     }),
     response: {
       200: withData(taskPayload)
+    },
+    detail: {
+      summary: buildRouteSummary("Get task by id")
     }
   })

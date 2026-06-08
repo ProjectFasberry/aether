@@ -1,11 +1,12 @@
 import { validatePermission } from "#/lib/validators";
-import { Permissions } from "#/shared/constants/permissions";
+import { permissions } from "#/shared/constants/permissions";
 import { withData } from "#/shared/schemas";
 import Elysia from "elysia";
 import { getPermissions, permissionsPayloadSchema } from "./permissions.model";
+import { buildRouteSummary } from "#/utils";
 
 export const permissionsListAll = new Elysia()
-  .use(validatePermission(Permissions.get("PERMISSIONS.READ")))
+  .use(validatePermission(permissions.get("PERMISSIONS.READ")))
   .get("/list/all", async () => {
     const data = await getPermissions();
     return { data }
@@ -14,5 +15,8 @@ export const permissionsListAll = new Elysia()
       200: withData(
         permissionsPayloadSchema
       )
-    }
+    },
+    detail: {
+      summary: buildRouteSummary("List all permissions")
+    },
   })

@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { defineBearer } from "#/lib/define";
-import { wrapError } from "#/utils";
+import { buildRouteSummary, wrapError } from "#/utils";
 import { cronTasks } from "#/shared/cron/init";
 import { checkDatabasesHealth, type HealthCheckResult } from "@repo/core/utils/database";
 import { DATABASES_FOR_CHECK } from "#/shared/database";
@@ -45,6 +45,9 @@ export const health = new Elysia()
     }), {
       response: {
         200: withData(healthPayloadSchema)
+      },
+      detail: {
+        summary: buildRouteSummary("Get health")
       }
     })
     .use(defineBearer())
@@ -78,7 +81,10 @@ export const health = new Elysia()
           t.UnionEnum(["DB_CONNECTION_FAILED", "UNKNOWN"])
         )
       },
-      tags: ["authorized"]
+      tags: ["authorized"],
+      detail: {
+        summary: buildRouteSummary("Get ready")
+      }
     })
   )
 
@@ -101,6 +107,10 @@ export const service = new Elysia()
             })
           )
         )
+      },
+      tags: ["authorized"],
+      detail: {
+        summary: buildRouteSummary("Get cron tasks")
       }
     })
   );

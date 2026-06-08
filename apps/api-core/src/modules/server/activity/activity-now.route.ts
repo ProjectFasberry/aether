@@ -1,5 +1,6 @@
 import Elysia, { t } from "elysia";
 import { getPlayerStatus } from "./activity.model";
+import { buildRouteSummary } from "#/utils";
 
 export type PlayerActivityPayload =
   | {
@@ -22,4 +23,7 @@ export const activityNow = new Elysia()
     // response: {
     //   200: "activity-now"
     // }
+    detail: {
+      summary: buildRouteSummary("Get activity now")
+    }
   })
