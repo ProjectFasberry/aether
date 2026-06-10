@@ -16,5 +16,5 @@ fi
 exec infisical run \
   --projectId "$INFISICAL_PROJECT_ID" \
   --env "$STAGE" \
-  --path /panel \
+  --path /glaux \
   -- bun run ./dist/index.js

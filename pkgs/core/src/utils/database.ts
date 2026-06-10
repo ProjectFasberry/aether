@@ -1,10 +1,10 @@
-import consola from "consola";
 import { Kysely, MysqlDialect, PostgresDialect } from "kysely";
 import { MariadbDialect } from "kysely-mariadb";
 import { type PoolConfig as PostgresPoolConfig, Pool as PGPool } from "pg";
 import { type PoolOptions as MysqlPoolConfig, type Pool as MySQLPool, createPool as createMysqlPool, } from "mysql2";
 import { type PoolConfig as MariadbPoolConfig, type Pool as MariadbPool, createPool as createMariadbPool } from "mariadb";
 import type { SupportedPools, SupportedDialects } from "@repo/shared/utils/index"
+import { ConsolaInstance, logger ,  } from "../constants/logger";
 
 type DialectTarget = "postgresql" | "mysql" | "mariadb";
 
@@ -14,7 +14,7 @@ type CreateDatabaseOptions<T> = {
 };
 
 function getPoolOptions(name: string) {
-  const dbLogger = consola.withTag("database").withTag(name.toLowerCase());
+  const dbLogger = logger.withTag("database").withTag(name.toLowerCase());
 
   return {
     dbLogger,
@@ -25,10 +25,10 @@ function getPoolOptions(name: string) {
   };
 };
 
-function createLogger(dbLogger: typeof consola) {
+function createLogger(logger: ConsolaInstance) {
   return (event: any) => {
     if (event.level === "error") {
-      dbLogger.error("Query failed : ", {
+      logger.error("Query failed : ", {
         durationMs: event.queryDurationMillis,
         error: event.error,
         sql: event.query.sql
@@ -204,7 +204,7 @@ export async function checkDatabasesHealth({
   verbose?: boolean
 }): Promise<void> {
   const results: HealthCheckResult[] = [];
-  const dbLogger = (name: string) => consola.withTag("database").withTag(name)
+  const dbLogger = (name: string) => logger.withTag("database").withTag(name)
 
   try {
     for (const [name, { pool, dialect }] of Object.entries(databases)) {
@@ -244,7 +244,7 @@ export async function checkDatabasesHealth({
 }
 
 export const printDatabases = (
-  logger: typeof consola,
+  logger: ConsolaInstance,
   results: HealthCheckResult[]
 ) => {
   const dbsStr = results.map((r) => `${r.name} (${r.dialect})`).join("\n")

@@ -67,7 +67,7 @@
 			}
 		},
 		{
-			"includes": ["apps/api-core/**"],
+			"includes": ["apps/thunderbird/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"
 			},
@@ -101,7 +101,7 @@
 			}
 		},
 		{
-			"includes": ["apps/api-panel/**"],
+			"includes": ["apps/glaux/**"],
 			"javascript": {
 				"jsxRuntime": "transparent"
 			},

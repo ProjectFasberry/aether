@@ -1,6 +1,5 @@
-# @repo/api-core
-
-Core API service for the Fasberry platform. Responsible for backend logic, storage management, database connections, Minecraft server interactions, and core system integrations.
+Core API service for the Fasberry platform. 
+Responsible for backend logic, storage management, database connections, Minecraft server interactions, and core system integrations.
 
 ## Core Stack & Key Libraries
 

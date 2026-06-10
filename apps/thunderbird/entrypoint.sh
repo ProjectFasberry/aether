@@ -16,5 +16,5 @@ fi
 exec infisical run \
   --projectId "$INFISICAL_PROJECT_ID" \
   --env "$STAGE" \
-  --path /backend \
+  --path /thunderbird \
   -- bun run ./dist/index.js

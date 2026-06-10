@@ -1,6 +1,5 @@
-# @repo/api-panel
-
-Panel API service for the Fasberry platform. Responsible for management and admin workflows, dashboard integrations, and Telegram bot notification services.
+Panel API service for the Fasberry platform. 
+Responsible for management and admin workflows, dashboard integrations, and Telegram bot notification services.
 
 ## Core Stack & Key Libraries
 

@@ -1,16 +1,20 @@
 import { BUCKETS as REQUIRED_BUCKETS } from "@repo/shared/constants/buckets";
 import { invariant } from "@repo/shared/lib/utils";
-import logger from "consola";
 import * as Minio from "minio";
+import { logger } from "../../constants/logger";
 
-export const createMinioModel = (
+type CreateMinioSharedParams = {
+  onSuccess?: () => void;
+  onError?: (e: unknown) => void;
+};
+
+let instance: Minio.Client | null = null;
+let currentBucketsList: string[] = [];
+
+export const createMinioService = (
   { config }: { config: Minio.ClientOptions, }
 ) => {
-  let instance: Minio.Client | null = null;
-  let currentBucketsList: string[] = [];
-
   return {
-    logger: logger.withTag("minio"),
     currentBucketsList,
     getInstance(): Minio.Client {
       invariant(instance, "Minio is not inited");
@@ -19,27 +23,33 @@ export const createMinioModel = (
     _init() {
       try {
         instance = new Minio.Client(config);
-        this.logger.success(`Connected to ${config.endPoint}:${config.port}`);
       } catch (e) {
-        this.logger.error(`Connection error`, e);
         process.exit(1);
       }
     },
-    async _printBuckets() {
+    async _printBuckets({ onError }: Pick<CreateMinioSharedParams, "onError"> = {}) {
       const instance = this.getInstance();
 
       try {
         const buckets = await instance.listBuckets();
+
         const lines = buckets
           .map((b) => `${b.name} - ${b.creationDate?.toISOString() ?? "unknown date"}`)
           .join("\n");
 
-        this.logger.box(`Buckets:\n${lines}`);
+        logger.box({
+          title: " Buckets ",
+          message: lines
+        })
       } catch (e) {
-        this.logger.error(e);
+        if (onError) {
+          onError(e);
+        } else {
+          throw e
+        }
       }
     },
-    async _initBuckets() {
+    async _initBuckets(): Promise<void> {
       const instance = this.getInstance();
       const bucketsList = Object.values(REQUIRED_BUCKETS);
 
@@ -52,12 +62,12 @@ export const createMinioModel = (
           if (!isExists) {
             await instance.makeBucket(bucketName, "us-east-1");
             this.currentBucketsList.push(bucketName);
-            this.logger.log(`Bucket "${bucketName}" created`);
+            console.log(`Bucket "${bucketName}" created`);
           } else {
-            this.logger.log(`Bucket "${bucketName}" already exists`);
+            console.log(`Bucket "${bucketName}" already exists`);
           }
         } catch (e) {
-          this.logger.error(`Error ensuring bucket "${bucketName}"`, e);
+          console.error(`Error ensuring bucket "${bucketName}"`, e);
         }
       }));
     },

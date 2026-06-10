@@ -1,6 +1,6 @@
 import { invariant } from "@repo/shared/lib/utils";
 import { createUrlsService } from "../urls";
-import { client as rootClient } from "../../lib/api/root";
+import { createClient as rootClient } from "../../lib/api/root";
 import { DB } from "@repo/shared/types/db/general";
 import { Kysely } from "kysely";
 
@@ -12,7 +12,7 @@ export const getPanelClient = ({
   const panelHost = createUrlsService({ generalDb }).getData().get("panel");
   invariant(panelHost, "Panel host is not defined");
 
-  return rootClient.extend((opts) => ({
+  return rootClient().extend((opts) => ({
     ...opts,
     baseUrl: `https://${panelHost}`
   }));

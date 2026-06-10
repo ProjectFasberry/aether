@@ -1,4 +1,4 @@
-import consola from "consola";
+import { logger } from "../constants/logger";
 
 export type BootstrapStep = {
   name: string;
@@ -11,7 +11,7 @@ export const createBootstrap = (
   return {
     async start() {
       const start = Date.now();
-      const bootstrapLogger = consola.withTag("bootstrap")
+      const bootstrapLogger = logger.withTag("bootstrap")
 
       for (const step of pipeline) {
         bootstrapLogger.log(`Executing: ${step.name}`);

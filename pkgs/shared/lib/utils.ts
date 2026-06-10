@@ -2,9 +2,9 @@ import consola, { createConsola } from "consola";
 
 const logger = createConsola();
 
-export function showRoutes<T extends { routes: { path: string; method: string }[] }>({ routes, logger }: T & { logger?: typeof consola }) {
+export function showRoutes<T extends { routes: { path: string; method: string, hooks: { detail?: { summary?: string, tags?: string[] }} }[] }>({ routes, logger }: T & { logger?: typeof consola }) {
   const routesList = routes
-    .map(({ path, method }) => `${path} - ${method}`)
+    .map(({ path, method, hooks }) => `${path} - ${method} ${hooks.detail?.summary ?? ""} ${hooks.detail?.tags?.join(", ") ?? ""}`)
     .join('\n');
 
   if (logger) {

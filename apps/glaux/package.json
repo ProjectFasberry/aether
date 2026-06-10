@@ -5,10 +5,10 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"dev": "infisical run --env=dev --path=/panel -- bun --env-file=.env.local run --watch ./src/index.ts",
+		"dev": "infisical run --env=dev --path=/glaux -- bun --env-file=.env.local run --watch ./src/index.ts",
 		"build": "STAGE=staging bun run ./scripts/build.ts",
 		"build:prod": "STAGE=prod bun run ./scripts/build.ts",
-		"start:dev": "infisical run --env=dev --path=/panel -- bun run ./dist/index.js",
+		"start:dev": "infisical run --env=dev --path=/glaux -- bun run ./dist/index.js",
 		"start:prod": "infisical run --env=prod --path=/backend -- bun run ./dist/index.js",
 		"----------------": "",
 		"lint": "bunx biome lint",

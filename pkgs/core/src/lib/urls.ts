@@ -1,7 +1,11 @@
-import consola from "consola"
 import { invariant } from "@repo/shared/lib/utils";
 import type { DB } from "@repo/shared/types/db/general";
 import type { Kysely } from "kysely";
+
+type CreateUrlsSharedParams = {
+  onFinish?: (data: Map<string, string>) => Awaitable<void>,
+  onError?: (e: unknown) => void
+}
 
 let data: Map<string, string> | null = null;
 
@@ -10,19 +14,24 @@ export const createUrlsService = ({
 }: {
   generalDb: Kysely<DB>
 }) => {
-  return {
-    async _getUrlsQuery() {
-      return await generalDb
-        .selectFrom("ip_list")
-        .select(["ip", "name"])
-        .execute();
-    },
-    getWhitelistIpList(): string[] {
-      const WHITELIST_PREFIX = "_wl";
+  const WHITELIST_PREFIX = "_wl";
 
+  async function fetchAndSetData(): Promise<Map<string, string>> {
+    const query = await generalDb
+      .selectFrom("ip_list")
+      .select(["ip", "name"])
+      .execute();
+
+    data = new Map(query.map(({ name, ip }) => [name, ip]));
+    return data;
+  }
+
+  return {
+    getWhitelistIpList(): string[] {
+      const currentData = this.getData();
       const result: string[] = [];
 
-      for (const [key, value] of this.getData()) {
+      for (const [key, value] of currentData) {
         if (key.startsWith(WHITELIST_PREFIX)) {
           result.push(value);
         }
@@ -30,44 +39,42 @@ export const createUrlsService = ({
 
       return result;
     },
-    getData() {
-      invariant(data, "Urls is not defined");
+    getData(): Map<string, string> {
+      invariant(data, "Urls cache is not initialized");
 
       if (data.size === 0) {
-        console.warn("URLS is empty")
+        console.warn("URLS cache is empty");
       }
 
       return data;
     },
-    async init(
-      { onFinish, onError }: { onFinish?: () => Awaitable<void>, onError?: () => void } = {}
-    ) {
+    async init({ onFinish, onError }: CreateUrlsSharedParams = {}): Promise<void> {
       try {
-        const query = await this._getUrlsQuery();
-        data = new Map(query.map(({ name, ip }) => [name, ip]));
-
-        const dataStr = query.map((value) => `${value.name}: ${value.ip}`).join("\n");
-        consola.box({ title: ` Urls `, message: dataStr })
-
-        await onFinish?.()
+        const freshData = await fetchAndSetData();
+        await onFinish?.(freshData);
       } catch (e) {
-        onError?.() ?? consola.error("Init error", e)
+        if (onError) {
+          onError(e);
+        } else {
+          throw e;
+        }
       }
     },
-    async revalidate(
-      { onError }: { onError?: () => void } = {}
-    ): Promise<
-      { ok: true; data: { upd: number; prev: number } } | { ok: false; error: unknown | Error }
+    async revalidate({ onError }: Pick<CreateUrlsSharedParams, "onError"> = {}): Promise<
+      { ok: true; data: { upd: number; prev: number } } | { ok: false; error: unknown }
     > {
       const prev = data?.size ?? 0;
 
       try {
-        const query = await this._getUrlsQuery();
-        data = new Map(query.map(({ name, ip }) => [name, ip]));
-        return { ok: true, data: { prev, upd: data.size ?? 0 } };
-      } catch (e) {
-        onError?.() ?? consola.error("Revalidation error", e)
-        return { ok: false, error: e };
+        const freshData = await fetchAndSetData();
+
+        return {
+          ok: true,
+          data: { prev, upd: freshData.size }
+        };
+      } catch (error) {
+        onError?.(error);
+        return { ok: false, error };
       }
     },
   };
