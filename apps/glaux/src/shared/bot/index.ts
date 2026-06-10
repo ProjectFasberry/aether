@@ -8,7 +8,7 @@ import { chats } from "./chats";
 let instance: Bot | null = null;
 
 export const bot = {
-	logger: logger.withTag("bot"),
+	logger: logger.child("bot"),
 	getInstance(): Bot {
 		invariant(instance, "Bot is not defined");
 		return instance;
@@ -19,8 +19,8 @@ export const bot = {
 
 		const conn = new Bot(token)
 			.onStart(async (ctx) => {
-				this.logger.success("Started");
-				this.logger.log(ctx.updatesFrom, ctx.plugins, ctx.info);
+				this.logger.info("Started");
+				this.logger.info(ctx.updatesFrom, ctx.plugins, ctx.info);
 			})
 			.onError((ctx) => {
 				this.logger.error("Update Error:", ctx.error);
@@ -60,7 +60,7 @@ export const bot = {
 							return;
 						});
 
-						this.logger.success(`Command "${name}" inited`);
+						this.logger.info(`Command "${name}" inited`);
 					}
 				} catch (e) {
 					this.logger.error(`Init commands error`, e);

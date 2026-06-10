@@ -1,17 +1,12 @@
-import consola, { createConsola } from "consola";
+import { logger } from "../utils/logger"
 
-const logger = createConsola();
-
-export function showRoutes<T extends { routes: { path: string; method: string, hooks: { detail?: { summary?: string, tags?: string[] }} }[] }>({ routes, logger }: T & { logger?: typeof consola }) {
+export function showRoutes<T extends { routes: { path: string; method: string, hooks: { detail?: { summary?: string, tags?: string[] }} }[] }>({ routes }: T) {
   const routesList = routes
     .map(({ path, method, hooks }) => `${path} - ${method} ${hooks.detail?.summary ?? ""} ${hooks.detail?.tags?.join(", ") ?? ""}`)
     .join('\n');
 
   if (logger) {
-    logger.box({
-      title: ` Routes (${routes.length}) `,
-      message: routesList,
-    })
+    logger.info(routesList, { title: `Routes (${routes.length})`, asBox: true })
   } else {
     console.log(`\n${routesList}\n`, routes.length)
   }

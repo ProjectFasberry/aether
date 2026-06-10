@@ -1,7 +1,6 @@
 import { bisquite } from "#/shared/database/bisquite-db";
 import { wrapMeta } from "#/utils/config/transforms";
 import { landHelpers } from "#/utils/lands/lands-helpers";
-import { getPlayerUUID } from "#/utils/player/uuid";
 import { type Static, t } from "elysia";
 import { withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
@@ -9,9 +8,10 @@ import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
 import { sql, type SelectExpression } from "kysely";
 import type { DB } from "@repo/shared/types/db/bisquite";
-import { skinsService } from "../skin/index.model";
+import { skinsService } from "../../../shared/services/skins";
 import { safeJsonParse } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
+import { playerService } from "#/shared/services/player";
 
 export const landSchema = t.Object({
   area: t.Nullable(
@@ -245,7 +245,7 @@ export async function getLandsByNickname(
   nickname: string,
   { exclude, limit }: Static<typeof landsByNicknameSchema> & { limit?: number }
 ): Promise<Static<typeof landsByPlayerSchema>> {
-  const recipientUUID = await getPlayerUUID(nickname);
+  const recipientUUID = await playerService.getUUID(nickname);
 
   let result: Static<typeof landsByPlayerSchema> = { data: [], meta: { count: 0 } }
 

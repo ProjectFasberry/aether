@@ -63,7 +63,7 @@ export function startApp() {
 		)
 		.use(main);
 
-	showRoutes({ routes: app.routes, logger: appLogger });
+	showRoutes({ routes: app.routes });
 	app.listen(env.PORT);
 
 	appLogger.success(`Server is running at ${app.server?.hostname}: ${app.server?.port}`);

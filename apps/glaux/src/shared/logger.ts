@@ -1,4 +1,5 @@
-import { createConsola } from "consola";
+import { logger, type Logger } from "@repo/shared/utils/logger";
 
-export const logger = createConsola();
-export const appLogger = logger.withTag("app");
+export const appLogger = logger.child("app");
+
+export { type Logger, logger };

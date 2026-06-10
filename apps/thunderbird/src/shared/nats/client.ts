@@ -83,10 +83,10 @@ export const nats = {
     for (const { name, stream_name } of Object.entries(NATS_CONSUMERS).flatMap(([_, arr]) => arr)) {
       try {
         const consumer = await js.consumers.get(stream_name, name);
-        this.logger.success(`Consumer "${name}"`, JSON.stringify(await consumer.info(), null, 2));
+        this.logger.success(`Consumer "${name}"`);
       } catch (e) {
-        const consumerInfo = await jsm.consumers.add(stream_name, { name });
-        this.logger.success(`Consumer "${name}" added`, consumerInfo);
+        // const consumerInfo = await jsm.consumers.add(stream_name, { name });
+        this.logger.success(`Consumer "${name}" added`);
       }
     }
 

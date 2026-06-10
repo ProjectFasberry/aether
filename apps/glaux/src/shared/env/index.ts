@@ -41,7 +41,7 @@ export function initEnv() {
 			PROD: Bun.env.NODE_ENV === "production",
 		};
 
-		logger.success("Env is fine");
+		logger.info("Env is fine");
 	} catch (e) {
 		if (e instanceof ParseError) {
 			logger.error("Env error:\n", e.errors);

@@ -6,23 +6,19 @@ import { getPermissionsByRole, permissionsByRolePayloadSchema, permissionsSchema
 import { buildRouteSummary } from "#/utils";
 
 export const permissionsListByRole = new Elysia()
-	.use(validatePermission(permissions.get("PERMISSIONS.READ"), { withExternal: true }))
-	.get(
-		"/list/:id",
-		async ({ params: { id }, query }) => {
-			const data = await getPermissionsByRole(id, query);
-			return { data };
-		},
-		{
-			query: permissionsSchema,
-			params: t.Object({
-				id: t.Number(),
-			}),
-			response: {
-				200: withData(permissionsByRolePayloadSchema),
-			},
-			detail: {
-				summary: buildRouteSummary("List permissions by role"),
-			},
-		},
-	);
+  .use(validatePermission(permissions.get("PERMISSIONS.READ"), { withExternal: true }))
+  .get("/list/:id", async ({ params: { id }, query }) => {
+    const data = await getPermissionsByRole(id, query);
+    return { data };
+  }, {
+    query: permissionsSchema,
+    params: t.Object({
+      id: t.Number(),
+    }),
+    response: {
+      200: withData(permissionsByRolePayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("List permissions by role"),
+    },
+  });

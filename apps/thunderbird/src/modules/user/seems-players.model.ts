@@ -6,7 +6,7 @@ import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
 import * as z from "zod";
-import { skinsService } from "../server/skin/index.model";
+import { skinsService } from "../../shared/services/skins";
 import { safeJsonParse } from "#/utils";
 
 export type SeemsLikePlayer = {

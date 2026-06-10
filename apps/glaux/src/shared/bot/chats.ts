@@ -22,7 +22,7 @@ export const chats = {
 
 		try {
 			const { current } = await chats.updateChatsInternal();
-			appLogger.success(`Telegram chats initialized. Loaded ${current} chats.`);
+			appLogger.info(`Telegram chats initialized. Loaded ${current} chats.`);
 		} catch (e) {
 			appLogger.error(e);
 			throw e;

@@ -1,6 +1,6 @@
 import { getStaticUrl } from "#/helpers/volume";
 import { newsSingleSchema } from "#/modules/news/news.model";
-import { skinsService } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";

@@ -3,7 +3,7 @@ import { defineOptionalUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { bannerExists } from "../../banner/banner.model";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { urlsService } from "#/shared/constants/urls";
+import { urlsService } from "#/shared/services/urls";
 import { ipPlugin } from "#/lib/plugins/index";
 import { getOption } from "#/shared/constants/options";
 import { buildRouteSummary } from "#/utils";

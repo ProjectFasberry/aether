@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { skinsService } from "../server/skin/index.model";
+import { skinsService } from "../../shared/services/skins";
 
 export async function ratePlayer({ recipient, initiator }: { initiator: string, recipient: string }) {
   const query = await general.transaction().execute(async (trx) => {

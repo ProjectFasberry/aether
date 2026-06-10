@@ -126,16 +126,16 @@ export async function revalidateUrlsCmdCb(ctx: CommandCtx) {
 		return;
 	}
 
-	const { prev, upd } = result.data;
-	const diff = upd - prev;
+	const { prev, current } = result.data;
+	const diff = current.size - (prev?.size ?? 0);
 	const diffText = diff >= 0 ? `+${diff}` : `${diff}`;
 
 	const message = format`
     ✅ <b>Urls updated</b>
 
     📊 Result:
-    before: <code>${prev}</code>
-    after: <code>${upd}</code>
+    before: <code>${Array.from(prev ?? []).map(([name, value]) => `${name}: ${value}`).join("\n")}</code>
+    after: <code>${Array.from(current).map(([name, value]) => `${name}: ${value}`).join("\n")}</code>
     changed: <code>${diffText}</code>
   `;
 
@@ -158,7 +158,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
 			nickname,
 			minio: minio.getInstance,
 			onStart() {
-				bot.logger.log(`Start updating skin for ${nickname}`);
+				bot.logger.info(`Start updating skin for ${nickname}`);
 			},
 			async onFinish() {
 				const botClient = bot.getInstance();
@@ -180,7 +180,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
 			minio: minio.getInstance,
 			nats: nats.getInstance,
 			onStart() {
-				bot.logger.log("Start updating skins all users");
+				bot.logger.info("Start updating skins all users");
 			},
 			async onSuccess(processedCount) {
 				const botClient = bot.getInstance();
@@ -192,7 +192,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
 				});
 			},
 			onSuccessPlayer(nickname) {
-				bot.logger.log(`Skin ${nickname} updated`);
+				bot.logger.info(`Skin ${nickname} updated`);
 			},
 			onError(e) {
 				bot.logger.error(`Skins updating error`, e);

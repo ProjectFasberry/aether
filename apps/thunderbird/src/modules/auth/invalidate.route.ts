@@ -1,27 +1,25 @@
 import Elysia, { t } from "elysia";
-import { SESSION_KEY, unsetCookie } from "#/utils/auth/cookie";
+import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
 import { defineRequiredSession } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { session } from "./login.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary, cookie } from "#/utils";
 
-export const invalidate = new Elysia().use(defineRequiredSession()).post(
-	"/invalidate-session",
-	async ({ cookie, session: sessionToken }) => {
-		await session.delete(sessionToken);
+export const invalidate = new Elysia()
+  .use(defineRequiredSession())
+  .post("/invalidate-session", async ({ session: sessionToken, ...ctx }) => {
+    await session.delete(sessionToken);
 
-		unsetCookie({ cookie, key: SESSION_KEY });
+    cookie.unset({ domain: getClientDomain(), key: SESSION_KEY, cookies: ctx.cookie })
 
-		return { data: "OK" };
-	},
-	{
-		response: {
-			200: withData(t.Literal("OK")),
-			500: withError(),
-			401: withError(),
-		},
-		detail: {
-			summary: buildRouteSummary("Invalidate session"),
-		},
-	},
-);
+    return { data: "OK" };
+  }, {
+    response: {
+      200: withData(t.Literal("OK")),
+      500: withError(),
+      401: withError(),
+    },
+    detail: {
+      summary: buildRouteSummary("Invalidate session"),
+    },
+  });

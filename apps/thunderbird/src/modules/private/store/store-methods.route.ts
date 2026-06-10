@@ -29,21 +29,19 @@ async function getMethods(): Promise<PrivatedMethodsPayload> {
 	}));
 }
 
-export const storeMethodsList = new Elysia().use(validatePermission(permissions.get("STORE.METHODS.READ"))).get(
-	"/list",
-	async () => {
-		const data = await getMethods();
-		return { data };
-	},
-	{
-		response: {
-			200: withData(storeMethodsPayloadSchema),
-		},
-		detail: {
-			summary: buildRouteSummary("Get store methods"),
-		},
-	},
-);
+export const storeMethodsList = new Elysia()
+  .use(validatePermission(permissions.get("STORE.METHODS.READ")))
+  .get("/list", async () => {
+    const data = await getMethods();
+    return { data };
+  }, {
+    response: {
+      200: withData(storeMethodsPayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("Get store methods"),
+    },
+  });
 
 const updateStoreMethodSchema = t.Object({
 	key: t.UnionEnum(["isAvailable", "title", "imageUrl", "value"]),
@@ -59,34 +57,32 @@ async function updateStoreMethod(method: string, { key, value }: Static<typeof u
 		.returning([key])
 		.executeTakeFirstOrThrow();
 
-	return query;
+  return query;
 }
 
-export const storeMethodsEdit = new Elysia().use(validatePermission(permissions.get("STORE.METHODS.UPDATE"))).post(
-	"/edit/:method",
-	async ({ params: { method }, body }) => {
-		const data = await updateStoreMethod(method, body);
-		return { data };
-	},
-	{
-		body: updateStoreMethodSchema,
-		afterResponse: ({ nickname: initiator, permission }) => {
-			createAdminActivityLog({ initiator, event: permission });
-		},
-		response: {
-			200: withData(
-				t.Partial(
-					t.Object({
-						imageUrl: t.String(),
-						isAvailable: t.Boolean(),
-						title: t.String(),
-						value: t.String(),
-					}),
-				),
-			),
-		},
-		detail: {
-			summary: buildRouteSummary("Edit store method"),
-		},
-	},
-);
+export const storeMethodsEdit = new Elysia()
+  .use(validatePermission(permissions.get("STORE.METHODS.UPDATE")))
+  .post("/edit/:method", async ({ params: { method }, body }) => {
+    const data = await updateStoreMethod(method, body);
+    return { data };
+  }, {
+    body: updateStoreMethodSchema,
+    afterResponse: ({ nickname: initiator, permission }) => {
+      createAdminActivityLog({ initiator, event: permission });
+    },
+    response: {
+      200: withData(
+        t.Partial(
+          t.Object({
+            imageUrl: t.String(),
+            isAvailable: t.Boolean(),
+            title: t.String(),
+            value: t.String(),
+          }),
+        ),
+      ),
+    },
+    detail: {
+      summary: buildRouteSummary("Edit store method"),
+    },
+  });

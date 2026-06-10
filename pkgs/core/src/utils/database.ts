@@ -4,7 +4,8 @@ import { type PoolConfig as PostgresPoolConfig, Pool as PGPool } from "pg";
 import { type PoolOptions as MysqlPoolConfig, type Pool as MySQLPool, createPool as createMysqlPool, } from "mysql2";
 import { type PoolConfig as MariadbPoolConfig, type Pool as MariadbPool, createPool as createMariadbPool } from "mariadb";
 import type { SupportedPools, SupportedDialects } from "@repo/shared/utils/index"
-import { ConsolaInstance, logger ,  } from "../constants/logger";
+import { type Logger, logger } from "@repo/shared/utils/logger";
+import { LogEvent } from "kysely";
 
 type DialectTarget = "postgresql" | "mysql" | "mariadb";
 
@@ -13,29 +14,33 @@ type CreateDatabaseOptions<T> = {
   config: T;
 };
 
-function getPoolOptions(name: string) {
-  const dbLogger = logger.withTag("database").withTag(name.toLowerCase());
+function getPoolOptions(name: string): { logger: Logger, hooks: Record<string, () => Promise<void>> } {
+  const localLogger = logger.child("database").child(name.toLowerCase());
 
   return {
-    dbLogger,
+    logger: localLogger,
     hooks: process.env.NODE_ENV === 'production' ? {} : {
-      onCreateConnection: async () => dbLogger.info(`New connection established`),
-      onDestroyConnection: async () => dbLogger.warn(`Connection destroyed`),
+      onCreateConnection: async () => {
+        localLogger.info(`New connection established`)
+      },
+      onDestroyConnection: async () => {
+        localLogger.warn(`Connection destroyed`)
+      },
     }
   };
 };
 
-function createLogger(logger: ConsolaInstance) {
-  return (event: any) => {
-    if (event.level === "error") {
-      logger.error("Query failed : ", {
-        durationMs: event.queryDurationMillis,
-        error: event.error,
-        sql: event.query.sql
-      });
-    }
-  };
-}
+const createLogger = (logger: Logger) => (event: LogEvent) => {
+  if (event.level === "error") {
+    const { queryDurationMillis, error, query } = event
+
+    logger.error("Query failed: ", {
+      durationMs: queryDurationMillis,
+      error: error,
+      sql: query.sql
+    });
+  }
+};
 
 type MariaDbUriConfig = {
   host: string;
@@ -101,7 +106,7 @@ export function createDatabase<TSchema>() {
           dialect: new MariadbDialect({
             mariadb: pool,
           }),
-          log: createLogger(opts.dbLogger)
+          log: createLogger(opts.logger)
         }),
         pool
       }
@@ -116,7 +121,7 @@ export function createDatabase<TSchema>() {
             pool,
             ...opts.hooks
           }),
-          log: createLogger(opts.dbLogger)
+          log: createLogger(opts.logger)
         }),
         pool
       };
@@ -131,7 +136,7 @@ export function createDatabase<TSchema>() {
             pool,
             ...opts.hooks
           }),
-          log: createLogger(opts.dbLogger)
+          log: createLogger(opts.logger)
         }),
         pool
       };
@@ -195,20 +200,21 @@ function isNetworkError(error: any): boolean {
   const msg = error?.message?.toLowerCase() || '';
   return msg.includes('connection') || msg.includes('timeout') || msg.includes('refused');
 }
-export async function checkDatabasesHealth({
-  databases, onFailure, onSuccess, verbose = false
+export async function checkDatabasesHealth(databases: Record<string, DatabaseItem>, {
+  onError: onFailure,
+  onSuccess,
+  verbose = false
 }: {
-  databases: Record<string, DatabaseItem>,
   onSuccess?: (results: HealthCheckResult[]) => void,
-  onFailure?: (error: unknown) => void,
+  onError?: (error: unknown) => void,
   verbose?: boolean
 }): Promise<void> {
   const results: HealthCheckResult[] = [];
-  const dbLogger = (name: string) => logger.withTag("database").withTag(name)
+  const dbLogger = (name: string) => logger.child("database").child(name)
 
   try {
     for (const [name, { pool, dialect }] of Object.entries(databases)) {
-      verbose && dbLogger(name).log(`Starting health check (${dialect})`)
+      verbose && dbLogger(name).info(`Starting health check (${dialect})`)
 
       const result: Omit<HealthCheckResult, "name"> = { healthy: false, dialect }
 
@@ -222,7 +228,7 @@ export async function checkDatabasesHealth({
         await cb(pool);
         result.healthy = true;
 
-        verbose && dbLogger(name).success(`Is healthy`);
+        verbose && dbLogger(name).info(`Is healthy`);
       } catch (e) {
         if (e instanceof TypeError || e instanceof ReferenceError || !isNetworkError(e)) {
           throw e;
@@ -243,14 +249,7 @@ export async function checkDatabasesHealth({
   }
 }
 
-export const printDatabases = (
-  logger: ConsolaInstance,
-  results: HealthCheckResult[]
-) => {
+export const printDatabases = (results: HealthCheckResult[]) => {
   const dbsStr = results.map((r) => `${r.name} (${r.dialect})`).join("\n")
-
-  logger.box({
-    title: ` Databases `,
-    message: dbsStr
-  })
+  logger.info(dbsStr, { asBox: true, title: "Databases" })
 }

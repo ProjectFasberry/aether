@@ -1,7 +1,6 @@
 import { defineConfig } from "drizzle-kit";
 import * as z from "zod";
 import redact from "slow-redact";
-import consola from "consola";
 
 const sanitize = redact({
 	censor: "[REDACTED]",
@@ -21,8 +20,8 @@ const databaseSchema = z.object({
 
 const { SELECTED_DATABASE, SELECTED_URL, SELECTED_DIALECT } = databaseSchema.parse(process.env);
 
-consola.box(`
-  Selected database "${SELECTED_DATABASE}" (${SELECTED_DIALECT})\n(url=${sanitize(SELECTED_URL)})
+console.log(`
+  \nSelected database "${SELECTED_DATABASE}" (${SELECTED_DIALECT})\n(url=${sanitize(SELECTED_URL)})\n
 `);
 
 export default defineConfig({

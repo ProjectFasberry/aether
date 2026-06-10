@@ -4,7 +4,7 @@ import { defineOptionalUser } from "#/lib/define";
 import { validateBannedStatus } from "#/lib/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
-import { skinsService } from "../server/skin/index.model";
+import { skinsService } from "../../shared/services/skins";
 import { buildRouteSummary } from "#/utils";
 
 export type MePayload = {

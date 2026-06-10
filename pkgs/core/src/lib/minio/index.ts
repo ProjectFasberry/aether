@@ -1,7 +1,7 @@
 import { BUCKETS as REQUIRED_BUCKETS } from "@repo/shared/constants/buckets";
 import { invariant } from "@repo/shared/lib/utils";
 import * as Minio from "minio";
-import { logger } from "../../constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 
 type CreateMinioSharedParams = {
   onSuccess?: () => void;
@@ -23,6 +23,7 @@ export const createMinioService = (
     _init() {
       try {
         instance = new Minio.Client(config);
+        return instance;
       } catch (e) {
         process.exit(1);
       }
@@ -37,10 +38,7 @@ export const createMinioService = (
           .map((b) => `${b.name} - ${b.creationDate?.toISOString() ?? "unknown date"}`)
           .join("\n");
 
-        logger.box({
-          title: " Buckets ",
-          message: lines
-        })
+        logger.info(lines, { asBox: true, title: "Buckets" })
       } catch (e) {
         if (onError) {
           onError(e);
@@ -74,16 +72,16 @@ export const createMinioService = (
     async start({
       onStart, onAfterStart, showBuckets = true
     }: Partial<{
-      showBuckets: boolean, onAfterStart: () => Awaitable<void>, onStart: () => void
+      showBuckets: boolean, onAfterStart: (client: Minio.Client) => Awaitable<void>, onStart: () => void
     }> = {}) {
       onStart?.()
 
-      this._init();
+      const client = this._init();
 
       await this._initBuckets();
       showBuckets && await this._printBuckets();
 
-      await onAfterStart?.()
+      await onAfterStart?.(client)
     },
   }
 }

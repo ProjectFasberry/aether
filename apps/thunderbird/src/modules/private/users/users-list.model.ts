@@ -1,5 +1,5 @@
 import { DateTime } from "#/helpers/typebox";
-import { skinsService } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
 import { env } from "#/shared/env";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";

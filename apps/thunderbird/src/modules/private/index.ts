@@ -15,21 +15,31 @@ import { volume } from "./volume";
 import { lands } from "./lands";
 import { api } from "./api";
 
-const infra = new Elysia().group("", (app) => app.use(api).use(permissions).use(options).use(volume));
+const infra = new Elysia()
+  .group("", app => app
+    .use(api)
+    .use(permissions)
+    .use(options)
+    .use(volume)
+  );
 
-const entities = new Elysia().group("", (app) =>
-	app
-		.use(storePrivate)
-		.use(users)
-		.use(roles)
-		.use(news)
-		.use(banners)
-		.use(modpacks)
-		.use(events)
-		.use(history)
-		.use(chat)
-		.use(dictionaries)
-		.use(lands),
-);
+const entities = new Elysia()
+  .group("", app => app
+    .use(storePrivate)
+    .use(users)
+    .use(roles)
+    .use(news)
+    .use(banners)
+    .use(modpacks)
+    .use(events)
+    .use(history)
+    .use(chat)
+    .use(dictionaries)
+    .use(lands)
+  );
 
-export const privated = new Elysia().group("/privated", (app) => app.use(entities).use(infra));
+export const privated = new Elysia()
+  .group("/privated", app => app
+    .use(entities)
+    .use(infra)
+  );

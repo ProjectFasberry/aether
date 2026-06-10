@@ -26,23 +26,25 @@ const rolesListPayloadSchema = t.Array(
 );
 
 async function getRolesList(): Promise<Static<typeof rolesListPayloadSchema>> {
-	const query = await general.selectFrom("roles").select(["id", "name"]).orderBy("id", "asc").execute();
+  const query = await general
+    .selectFrom("roles")
+    .select(["id", "name"])
+    .orderBy("id", "asc")
+    .execute();
 
 	return query;
 }
 
-export const rolesList = new Elysia().use(validatePermission(permissions.get("ROLES.READ"))).get(
-	"/list",
-	async () => {
-		const data = await getRolesList();
-		return { data };
-	},
-	{
-		response: {
-			200: withData(rolesListPayloadSchema),
-		},
-		detail: {
-			summary: buildRouteSummary("List roles"),
-		},
-	},
-);
+export const rolesList = new Elysia()
+  .use(validatePermission(permissions.get("ROLES.READ")))
+  .get("/list", async () => {
+    const data = await getRolesList();
+    return { data };
+  }, {
+    response: {
+      200: withData(rolesListPayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("List roles"),
+    },
+  });

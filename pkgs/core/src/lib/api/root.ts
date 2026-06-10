@@ -1,10 +1,10 @@
 import ky from "ky"
-import { logger } from "../../constants/logger"
+import { logger } from "@repo/shared/utils/logger"
 
 const timings = new Map<number, number>()
 let counter = 0
 
-const requestLogger = logger.withTag("request")
+const requestLogger = logger.child("request")
 const getRequestInfo = (request: Request, ...args: unknown[]) =>
   `${request.method} ${request.url} ${args.join(" ")}`
 
@@ -18,7 +18,7 @@ export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true
         timings.set(id, Date.now());
 
         if (verbose) {
-          requestLogger.withTag("start").log(getRequestInfo(request))
+          requestLogger.child("start").debug(getRequestInfo(request))
         }
       }
     ],
@@ -30,7 +30,7 @@ export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true
         const start = id ? (timings.get(Number(id)) ?? Date.now()) : Date.now()
 
         if (verbose) {
-          requestLogger.withTag("end").log(getRequestInfo(request, `${Date.now() - start}ms`))
+          requestLogger.child("end").debug(getRequestInfo(request, `${Date.now() - start}ms`))
         }
 
         if (id) {

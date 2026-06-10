@@ -1,4 +1,4 @@
-import { urlsService } from "#/shared/constants/urls";
+import { urlsService } from "#/shared/services/urls";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { getServers, serverPayloadSchema } from "./server-ip.model";

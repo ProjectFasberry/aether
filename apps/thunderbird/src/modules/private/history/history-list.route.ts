@@ -16,23 +16,25 @@ const historySchema = t.Array(
 );
 
 async function getHistoryList() {
-	const query = await general.selectFrom("admin_activity_log").selectAll().orderBy("created_at", "desc").execute();
+  const query = await general
+    .selectFrom("admin_activity_log")
+    .selectAll()
+    .orderBy("created_at", "desc")
+    .execute();
 
 	return query;
 }
 
-export const historyList = new Elysia().use(validatePermission(permissions.get("HISTORY.READ"))).get(
-	"/list",
-	async () => {
-		const data = await getHistoryList();
-		return { data };
-	},
-	{
-		response: {
-			200: withData(historySchema),
-		},
-		detail: {
-			summary: buildRouteSummary("Get history list"),
-		},
-	},
-);
+export const historyList = new Elysia()
+  .use(validatePermission(permissions.get("HISTORY.READ")))
+  .get("/list", async () => {
+    const data = await getHistoryList();
+    return { data };
+  }, {
+    response: {
+      200: withData(historySchema),
+    },
+    detail: {
+      summary: buildRouteSummary("Get history list"),
+    },
+  });

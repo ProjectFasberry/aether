@@ -32,25 +32,23 @@ async function editDict(id: number, { key, value }: Static<typeof editDictSchema
 	return query;
 }
 
-export const dictionariesEdit = new Elysia().use(validatePermission(permissions.get("DICTIONARIES.UPDATE"))).post(
-	"/:id/edit",
-	async ({ params: { id }, body }) => {
-		const data = await editDict(id, body);
-		return { data };
-	},
-	{
-		body: editDictSchema,
-		params: t.Object({
-			id: t.Number(),
-		}),
-		afterResponse: ({ permission, nickname: initiator }) => {
-			createAdminActivityLog({ initiator, event: permission });
-		},
-		response: {
-			200: withData(editDictPayloadSchema),
-		},
-		detail: {
-			summary: buildRouteSummary("Edit a dictionary entry"),
-		},
-	},
-);
+export const dictionariesEdit = new Elysia()
+  .use(validatePermission(permissions.get("DICTIONARIES.UPDATE")))
+  .post("/:id/edit", async ({ params: { id }, body }) => {
+    const data = await editDict(id, body);
+    return { data };
+  }, {
+    body: editDictSchema,
+    params: t.Object({
+      id: t.Number(),
+    }),
+    afterResponse: ({ permission, nickname: initiator }) => {
+      createAdminActivityLog({ initiator, event: permission });
+    },
+    response: {
+      200: withData(editDictPayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("Edit a dictionary entry"),
+    },
+  });

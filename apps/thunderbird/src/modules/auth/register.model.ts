@@ -13,9 +13,9 @@ import type * as z from "zod";
 import { isProduction } from "#/shared/env";
 import type { registerSchema } from "@repo/shared/schemas/auth";
 import { HTTPError } from "ky";
-import { skinsService } from "../server/skin/index.model";
-import { minio } from "#/shared/minio/client";
+import { skinsService } from "../../shared/services/skins";
 import { invariant } from "#/utils";
+import { minioService } from "#/shared/services/minio";
 
 type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
 	trx?: Transaction<DB>;
@@ -81,7 +81,7 @@ export const register = {
 			skin: () =>
 				skinsService.skin.initSkin({
 					nickname,
-					minio: minio.getInstance,
+					minio: minioService.getInstance,
 				}),
 		};
 

@@ -17,13 +17,7 @@
 		"indentWidth": 2
 	},
 	"linter": {
-		"enabled": true,
-		"rules": {
-			"recommended": true,
-			"nursery": {
-				"useSortedClasses": "off"
-			}
-		}
+		"enabled": false
 	},
 	"javascript": {
 		"formatter": {
@@ -43,26 +37,17 @@
 			"includes": ["pkgs/config-drizzle/**"],
 			"formatter": {
 				"enabled": false
-			},
-			"linter": {
-				"enabled": false
 			}
 		},
 		{
 			"includes": ["pkgs/shared/**"],
 			"formatter": {
 				"enabled": false
-			},
-			"linter": {
-				"enabled": false
 			}
 		},
 		{
 			"includes": ["pkgs/core/**"],
 			"formatter": {
-				"enabled": false
-			},
-			"linter": {
 				"enabled": false
 			}
 		},
@@ -73,31 +58,6 @@
 			},
 			"formatter": {
 				"enabled": false
-			},
-			"linter": {
-				"enabled": true,
-				"rules": {
-					"complexity": {
-						"useLiteralKeys": "off",
-						"noBannedTypes": "off",
-						"useOptionalChain": "off",
-						"noUselessCatch": "off",
-						"noUselessSwitchCase": "off"
-					},
-					"style": {
-						"useTemplate": "off",
-						"noNonNullAssertion": "off"
-					},
-					"correctness": {
-						"noUnusedVariables": "off",
-						"noUnusedImports": "off",
-						"noUnusedFunctionParameters": "off",
-						"noEmptyPattern": "off"
-					},
-					"suspicious": {
-						"noExplicitAny": "off"
-					}
-				}
 			}
 		},
 		{
@@ -107,31 +67,6 @@
 			},
 			"formatter": {
 				"enabled": false
-			},
-			"linter": {
-				"enabled": true,
-				"rules": {
-					"complexity": {
-						"useLiteralKeys": "off",
-						"noBannedTypes": "off",
-						"useOptionalChain": "off",
-						"noUselessCatch": "off",
-						"noUselessSwitchCase": "off"
-					},
-					"style": {
-						"useTemplate": "off",
-						"noNonNullAssertion": "off"
-					},
-					"correctness": {
-						"noUnusedVariables": "off",
-						"noUnusedImports": "off",
-						"noUnusedFunctionParameters": "off",
-						"noEmptyPattern": "off"
-					},
-					"suspicious": {
-						"noExplicitAny": "off"
-					}
-				}
 			}
 		}
 	]

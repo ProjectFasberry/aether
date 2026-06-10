@@ -20,11 +20,12 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",
 		"@clack/prompts": "1.2.0",
+		"@infisical/sdk": "5.0.2",
 		"@types/bun": "1.2.22",
+		"boxen": "8.0.1",
+		"winston": "3.19.0",
 		"concurrently": "9.1.2",
-		"consola": "3.4.2",
-		"lefthook": "2.1.4",
-		"@infisical/sdk": "5.0.2"
+		"lefthook": "2.1.4"
 	},
 	"workspaces": [
 		"apps/*",

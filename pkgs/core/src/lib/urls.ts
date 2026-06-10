@@ -1,10 +1,12 @@
 import { invariant } from "@repo/shared/lib/utils";
 import type { DB } from "@repo/shared/types/db/general";
 import type { Kysely } from "kysely";
+import { logger } from "@repo/shared/utils/logger";
 
 type CreateUrlsSharedParams = {
   onFinish?: (data: Map<string, string>) => Awaitable<void>,
-  onError?: (e: unknown) => void
+  onError?: (e: unknown) => void,
+  print?: boolean
 }
 
 let data: Map<string, string> | null = null;
@@ -16,14 +18,17 @@ export const createUrlsService = ({
 }) => {
   const WHITELIST_PREFIX = "_wl";
 
-  async function fetchAndSetData(): Promise<Map<string, string>> {
+  async function fetchAndSetData(): Promise<{ prev: typeof data; current: Map<string, string> }> {
+    const prev = data;
+
     const query = await generalDb
       .selectFrom("ip_list")
       .select(["ip", "name"])
       .execute();
 
     data = new Map(query.map(({ name, ip }) => [name, ip]));
-    return data;
+
+    return { prev, current: data };
   }
 
   return {
@@ -48,10 +53,20 @@ export const createUrlsService = ({
 
       return data;
     },
-    async init({ onFinish, onError }: CreateUrlsSharedParams = {}): Promise<void> {
+    async init({ onFinish, onError, print }: CreateUrlsSharedParams = { print: false }): Promise<void> {
       try {
         const freshData = await fetchAndSetData();
-        await onFinish?.(freshData);
+        await onFinish?.(freshData.current);
+
+        if (print) {
+          if (!data) {
+            logger.warn("URLS cache is empty");
+            return;
+          }
+
+          const dataStr = Array.from(data).map(([name, ip]) => `${name}: ${ip}`).join("\n");
+          logger.info(dataStr, { title: "Urls", asBox: true });
+        }
       } catch (e) {
         if (onError) {
           onError(e);
@@ -61,16 +76,14 @@ export const createUrlsService = ({
       }
     },
     async revalidate({ onError }: Pick<CreateUrlsSharedParams, "onError"> = {}): Promise<
-      { ok: true; data: { upd: number; prev: number } } | { ok: false; error: unknown }
+      { ok: true; data: { current: Map<string, string>; prev: Map<string, string> | null } } | { ok: false; error: unknown }
     > {
-      const prev = data?.size ?? 0;
-
       try {
         const freshData = await fetchAndSetData();
 
         return {
           ok: true,
-          data: { prev, upd: freshData.size }
+          data: { prev: freshData.prev, current: freshData.current }
         };
       } catch (error) {
         onError?.(error);

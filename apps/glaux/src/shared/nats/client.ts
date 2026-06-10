@@ -18,12 +18,12 @@ const config: ConnectionOptions = {
 let client: NatsConnection | null = null;
 
 export const nats = {
-	logger: logger.withTag("nats"),
+	logger: logger.child("nats"),
 	async _init(): Promise<void> {
 		try {
-			this.logger.success(`Connecting to ${config.servers}`);
+			this.logger.info(`Connecting to ${config.servers}`);
 			client = await connect(config);
-			this.logger.success(`Connected`);
+			this.logger.info(`Connected`);
 		} catch (e) {
 			this.logger.error("Connection error", isError(e) ? e.message : e);
 			process.exit(1);
@@ -41,7 +41,7 @@ export const nats = {
 
 			for (const sub of SUBSCRIBERS) {
 				sub.cb(nc);
-				this.logger.success(`Subscribed to ${sub.subject}`);
+				this.logger.info(`Subscribed to ${sub.subject}`);
 			}
 		} catch (e) {
 			this.logger.log("Subscribing error", isError(e) ? e.message : e);
@@ -52,7 +52,7 @@ export const nats = {
 
 		try {
 			await client.drain();
-			this.logger.log("Connection closed");
+			this.logger.info("Connection closed");
 		} catch (e) {
 			this.logger.error("Error closing connection", isError(e) ? e.message : e);
 			process.exit(1);

@@ -4,7 +4,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "#/utils";
 import { cartItem } from "../../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";
-import { defineGlobalPrice } from "#/utils/store/store-helpers";
+import { defineGlobalPrice } from "#/utils/store";
 import type { GameCurrency } from "@repo/shared/schemas/store/payment";
 import { withError } from "#/shared/schemas";
 import { getBalance } from "#/modules/user/balance.model";

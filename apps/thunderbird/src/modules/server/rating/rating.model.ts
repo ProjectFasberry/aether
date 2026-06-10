@@ -11,7 +11,7 @@ import { executeWithCursorPagination } from "kysely-paginate";
 import type { DB as reputationDB } from "@repo/shared/types/db/reputation";
 import { type Static, t, type TSchema } from "elysia";
 import { general } from "#/shared/database/general-db";
-import { skinsService } from "../skin/index.model";
+import { skinsService } from "../../../shared/services/skins";
 import { invariant } from "#/utils";
 
 export const ratingSchema = t.Composite([

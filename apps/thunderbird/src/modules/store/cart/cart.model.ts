@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db"
 import { withMeta } from "#/shared/schemas";
-import { definePrice, processImageUrl } from "#/utils/store/store-helpers"
+import { definePrice, processImageUrl } from "#/utils/store"
 import type { CartItem } from "@repo/shared/types/entities/store"
 import { type Static, t } from "elysia";
 

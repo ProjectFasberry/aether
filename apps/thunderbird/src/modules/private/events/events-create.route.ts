@@ -7,22 +7,20 @@ import { withData } from "#/shared/schemas";
 import { eventPayloadSchema } from "./events.model";
 import { buildRouteSummary } from "#/utils";
 
-export const eventsCreate = new Elysia().use(validatePermission(permissions.get("EVENTS.CREATE"))).post(
-	"/create",
-	async ({ body }) => {
-		const data = await createEvent(body);
-		return { data };
-	},
-	{
-		body: createEventSchema,
-		afterResponse: ({ nickname: initiator, permission }) => {
-			createAdminActivityLog({ initiator, event: permission });
-		},
-		response: {
-			200: withData(eventPayloadSchema),
-		},
-		detail: {
-			summary: buildRouteSummary("Create an event"),
-		},
-	},
-);
+export const eventsCreate = new Elysia()
+  .use(validatePermission(permissions.get("EVENTS.CREATE")))
+  .post("/create", async ({ body }) => {
+    const data = await createEvent(body);
+    return { data };
+  }, {
+    body: createEventSchema,
+    afterResponse: ({ nickname: initiator, permission }) => {
+      createAdminActivityLog({ initiator, event: permission });
+    },
+    response: {
+      200: withData(eventPayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("Create an event"),
+    },
+  });

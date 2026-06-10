@@ -45,8 +45,7 @@ export const health = new Elysia()
       try {
         let databases: HealthCheckResult[] = []
 
-        await checkDatabasesHealth({
-          databases: DATABASES_FOR_CHECK,
+        await checkDatabasesHealth(DATABASES_FOR_CHECK, {
           onSuccess: (results) => {
             databases = results
           }

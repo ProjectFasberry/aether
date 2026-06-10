@@ -1,19 +1,8 @@
 export * from "@repo/shared/constants/buckets";
 
-import type { ClientOptions } from "minio";
 import { env } from "../env";
-import { createMinioService } from "@repo/core/lib/minio/index"
 import { S3Client } from "bun";
-
-const config: ClientOptions = {
-  endPoint: env.MINIO_HOST,
-  port: env.MINIO_PORT,
-  useSSL: false,
-  accessKey: env.MINIO_ACCESS_KEY,
-  secretKey: env.MINIO_SECRET_KEY,
-};
-
-export const minio = createMinioService({ config })
+import { minioService } from "../services/minio";
 
 const S3ClientsMap = new Map<string, S3Client>()
 
@@ -24,8 +13,8 @@ const creds = {
 }
 
 export const S3 = {
-  getClient(bucket: string) {
-    if (!minio.currentBucketsList.includes(bucket)) {
+  getClient(bucket: string): S3Client {
+    if (!minioService.currentBucketsList.includes(bucket)) {
       throw new Error(`Bucket ${bucket} is not registered`)
     }
 

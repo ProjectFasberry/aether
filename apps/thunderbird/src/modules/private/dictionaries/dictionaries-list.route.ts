@@ -20,18 +20,16 @@ async function getDictList() {
 	return query;
 }
 
-export const dictionariesList = new Elysia().use(validatePermission(permissions.get("DICTIONARIES.READ"))).get(
-	"/list",
-	async (ctx) => {
-		const data = await getDictList();
-		return { data };
-	},
-	{
-		response: {
-			200: withData(dictListPayloadSchema),
-		},
-		detail: {
-			summary: buildRouteSummary("List all dictionaries"),
-		},
-	},
-);
+export const dictionariesList = new Elysia()
+  .use(validatePermission(permissions.get("DICTIONARIES.READ")))
+  .get("/list", async (ctx) => {
+    const data = await getDictList();
+    return { data };
+  }, {
+    response: {
+      200: withData(dictListPayloadSchema),
+    },
+    detail: {
+      summary: buildRouteSummary("List all dictionaries"),
+    },
+  });

@@ -6,20 +6,16 @@ import { getOptions, optionSchema } from "./options.model";
 import { buildRouteSummary } from "#/utils";
 
 export const optionsList = new Elysia()
-	.use(validatePermission(permissions.get("OPTIONS.READ"), { withExternal: true }))
-	.get(
-		"/list",
-		async () => {
-			const data = await getOptions();
-			return { data };
-		},
-		{
-			response: {
-				200: withData(t.Array(optionSchema)),
-				500: withError(),
-			},
-			detail: {
-				summary: buildRouteSummary("List all options"),
-			},
-		},
-	);
+  .use(validatePermission(permissions.get("OPTIONS.READ"), { withExternal: true }))
+  .get("/list", async () => {
+    const data = await getOptions();
+    return { data };
+  }, {
+    response: {
+      200: withData(t.Array(optionSchema)),
+      500: withError(),
+    },
+    detail: {
+      summary: buildRouteSummary("List all options"),
+    },
+  });

@@ -5,23 +5,20 @@ import { modpackPayloadSchema } from "./modpack.model";
 import { buildRouteSummary } from "#/utils";
 
 async function getModpacks() {
-	const query = await general.selectFrom("modpacks").selectAll().execute();
+  const query = await general.selectFrom("modpacks").selectAll().execute();
 
-	return query;
+  return query;
 }
 
-export const modpackList = new Elysia().get(
-	"/list",
-	async ({ set }) => {
-		const data = await getModpacks();
-		return { data };
-	},
-	{
-		response: {
-			200: withData(t.Array(modpackPayloadSchema)),
-		},
-		detail: {
-			summary: buildRouteSummary("Get modpack list"),
-		},
-	},
-);
+export const modpackList = new Elysia()
+  .get("/list", async ({ set }) => {
+    const data = await getModpacks();
+    return { data };
+  }, {
+    response: {
+      200: withData(t.Array(modpackPayloadSchema)),
+    },
+    detail: {
+      summary: buildRouteSummary("Get modpack list"),
+    },
+  });

@@ -10,22 +10,20 @@ async function deleteModpack(id: number) {
 	return await general.deleteFrom("modpacks").where("id", "=", id).returning("id").executeTakeFirstOrThrow();
 }
 
-export const modpackDelete = new Elysia().use(validatePermission(permissions.get("MODPACKS.DELETE"))).delete(
-	"/:id",
-	async ({ params: { id } }) => {
-		await deleteModpack(id);
-		return { data: "OK" };
-	},
-	{
-		params: t.Object({ id: t.Number() }),
-		afterResponse: ({ nickname: initiator, permission }) => {
-			createAdminActivityLog({ initiator, event: permission });
-		},
-		response: {
-			200: withData(t.Literal("OK")),
-		},
-		detail: {
-			summary: buildRouteSummary("Delete a modpack"),
-		},
-	},
-);
+export const modpackDelete = new Elysia()
+  .use(validatePermission(permissions.get("MODPACKS.DELETE")))
+  .delete("/:id", async ({ params: { id } }) => {
+    await deleteModpack(id);
+    return { data: "OK" };
+  }, {
+    params: t.Object({ id: t.Number() }),
+    afterResponse: ({ nickname: initiator, permission }) => {
+      createAdminActivityLog({ initiator, event: permission });
+    },
+    response: {
+      200: withData(t.Literal("OK")),
+    },
+    detail: {
+      summary: buildRouteSummary("Delete a modpack"),
+    },
+  });

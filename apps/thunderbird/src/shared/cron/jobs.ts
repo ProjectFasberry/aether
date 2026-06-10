@@ -39,7 +39,7 @@ export const CRON_JOBS: Job[] = [
     name: "warn-before-update-exchange-rates",
     cron: "0 5-59/10 * * * *",
     callback: async function () {
-      cronLogger.log(`"${this.name}" job will be started in 5 minutes`);
+      cronLogger.log(`Job "${this.name}" will be started in 5 minutes`);
     },
     immediately: true,
     schedule: true,
@@ -59,7 +59,7 @@ export const CRON_JOBS: Job[] = [
     name: "warn-before-clean-old-events",
     cron: "0 5-59/10 * * * *",
     callback: async function () {
-      cronLogger.log(`"${this.name}" job will be started in 5 minutes`);
+      cronLogger.log(`Job "${this.name}" will be started in 5 minutes`);
     },
     immediately: true,
     schedule: true,

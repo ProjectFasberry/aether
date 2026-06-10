@@ -4,25 +4,22 @@ import { sql } from "kysely";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
 
-export const fact = new Elysia().get(
-	"/random-fact",
-	async () => {
-		const data = await general
-			.selectFrom("facts")
-			.select("fact")
-			.where("id", "=", sql<number>`(SELECT FLOOR(random() * (SELECT COUNT(*) FROM facts)) + 1)`)
-			.executeTakeFirst();
+export const fact = new Elysia()
+  .get("/random-fact", async () => {
+    const data = await general
+      .selectFrom("facts")
+      .select("fact")
+      .where("id", "=", sql<number>`(SELECT FLOOR(random() * (SELECT COUNT(*) FROM facts)) + 1)`)
+      .executeTakeFirst();
 
-		if (!data) return { data: null };
+    if (!data) return { data: null };
 
-		return { data: data.fact };
-	},
-	{
-		response: {
-			200: withData(t.Nullable(t.String())),
-		},
-		detail: {
-			summary: buildRouteSummary("Get random fact"),
-		},
-	},
-);
+    return { data: data.fact };
+  }, {
+    response: {
+      200: withData(t.Nullable(t.String())),
+    },
+    detail: {
+      summary: buildRouteSummary("Get random fact"),
+    },
+  });

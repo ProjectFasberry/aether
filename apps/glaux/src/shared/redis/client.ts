@@ -15,7 +15,7 @@ const config: RedisOptions = {
 };
 
 export const redis = {
-	logger: logger.withTag("redis"),
+	logger: logger.child("redis"),
 	getInstance(): Redis {
 		invariant(instance, "Redis client is not initialized");
 		return instance;
@@ -23,7 +23,7 @@ export const redis = {
 	async init(): Promise<void> {
 		if (instance) return;
 
-		this.logger.log(`Connecting to ${config.host}:${config.port}...`);
+		this.logger.info(`Connecting to ${config.host}:${config.port}...`);
 
 		await new Promise((resolve, _) => {
 			try {
@@ -32,7 +32,7 @@ export const redis = {
 				client.on("error", (e) => this.logger.error("Runtime Error:", e));
 				client.on("connect", () => this.logger.info("Connection established"));
 				client.on("ready", () => {
-					this.logger.success("Is ready");
+					this.logger.info("Is ready");
 					instance = client;
 					resolve(client);
 				});
@@ -45,7 +45,7 @@ export const redis = {
 	},
 	async close(): Promise<void> {
 		if (instance) {
-			this.logger.log("Disconnected");
+			this.logger.info("Disconnected");
 			instance.disconnect();
 		}
 	},

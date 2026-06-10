@@ -1,7 +1,8 @@
 import { validatePermission } from "#/lib/validators";
 import { permissions } from "#/shared/constants/permissions";
-import { minio, S3 } from "#/shared/minio/client";
+import { S3 } from "#/shared/minio/client";
 import { withData } from "#/shared/schemas";
+import { minioService } from "#/shared/services/minio";
 import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia";
 
@@ -63,7 +64,7 @@ export const volume = new Elysia()
   .use(validatePermission(permissions.get("VOLUME.CONTROL")))
   .group("/volume", app => app
     .get("/buckets/list", async () => {
-      const buckets = await minio.getInstance().listBuckets()
+      const buckets = await minioService.getInstance().listBuckets()
 
       const data = buckets.map(bucket => ({
         name: bucket.name,
@@ -88,7 +89,7 @@ export const volume = new Elysia()
     })
     .group("/buckets/:bucket", app => app
       .get('/', async ({ params: { bucket } }) => {
-        const instance = minio.getInstance();
+        const instance = minioService.getInstance();
 
         const [policy, lifecycle, tagging, versioning, notification] = await Promise.all([
           instance.getBucketPolicy(bucket).catch(() => null),

@@ -1,6 +1,6 @@
 import { getServiceState } from "#/shared/constants";
 import { permissions } from "#/shared/constants/permissions";
-import { urlsService } from "#/shared/constants/urls";
+import { urlsService } from "#/shared/services/urls";
 import { CRON_JOBS } from "#/shared/cron/jobs";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import type { NatsConnection } from "@nats-io/nats-core";

@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { redis } from "#/shared/redis/client";
 import { logger } from "#/shared/constants/logger";
-import { textSets } from "#/utils/minio/load-internal-files";
+import { textSets } from "#/shared/minio/utils";
 import type { UserSessionPayload } from "./login.model";
 import { safeJsonParse } from "#/utils";
 

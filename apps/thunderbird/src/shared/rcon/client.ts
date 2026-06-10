@@ -1,5 +1,5 @@
 import { env } from "#/shared/env";
-import { urlsService } from "../constants/urls";
+import { urlsService } from "../services/urls";
 import { invariant } from "#/utils";
 import { createRconService } from "@repo/core/lib/rcon/index"
 

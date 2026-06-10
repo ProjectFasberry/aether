@@ -1,6 +1,5 @@
 import { convertChunksResult, getBuildFilesInfo } from "@repo/shared/utils/build";
 import { SERVICE_NAME } from "../src/shared/const/internal";
-import { colors } from "consola/utils";
 import { logger } from "../src/shared/logger";
 
 type Stage = "staging" | "prod";
@@ -40,8 +39,8 @@ const msg = {
 	result: convertChunksResult(outputChunks),
 };
 
-logger.box({
-	title: colors.green(" Build Success "),
+logger.info(JSON.stringify(msg, null, 2).slice(1, -1), {
+	title: "Build",
 	style: { borderColor: "green" },
-	message: JSON.stringify(msg, null, 2).slice(1, -1),
+	asBox: true
 });

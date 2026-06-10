@@ -1,7 +1,7 @@
 import { createError, withShared } from "#/helpers/error";
 import { defineRequiredUser } from "#/lib/define";
 import { landSchema } from "#/modules/server/lands/lands.model";
-import { skinsService } from "#/modules/server/skin/index.model";
+import { skinsService } from "#/shared/services/skins";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
 import { redis } from "#/shared/redis/client";

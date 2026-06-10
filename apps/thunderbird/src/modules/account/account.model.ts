@@ -4,7 +4,7 @@ import { lobby } from "#/shared/database/lobby-db";
 import { luckperms } from "#/shared/database/luckperms-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { reputation } from "#/shared/database/reputation-db";
-import { getPlayerUUIDCacheRedisKey } from "#/utils/player/uuid";
+import { getPlayerUUIDCacheRedisKey } from "@repo/core/modules/player";
 import { type Static, t } from "elysia";
 
 type Base = {

@@ -16,7 +16,7 @@ import { HTTPError } from "ky";
 import { env } from "#/shared/env";
 import { logErrorMsg, logValidators } from "#/utils/config/log-utils";
 import { libertybans } from "#/shared/database/libertybans-db";
-import { urlsService } from "#/shared/constants/urls";
+import { urlsService } from "#/shared/services/urls";
 import { safeJsonParse } from "#/utils";
 import { getOption } from "#/shared/constants/options";
 import bearer from "@elysia/bearer";

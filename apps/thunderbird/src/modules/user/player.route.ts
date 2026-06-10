@@ -3,7 +3,7 @@ import { defineOptionalUser } from "#/lib/define";
 import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";
-import { skinsService } from "../server/skin/index.model";
+import { skinsService } from "../../shared/services/skins";
 import { buildRouteSummary } from "#/utils";
 
 const playerPayload = t.Object({

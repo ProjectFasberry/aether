@@ -7,48 +7,54 @@ import { env } from "./shared/env";
 import { service } from "./modules/service";
 
 const appConfig: ElysiaConfig<string> = {
-	serve: {
-		hostname: "0.0.0.0",
-	},
-	aot: true,
+  serve: {
+    hostname: "0.0.0.0",
+  },
+  aot: true,
 };
 
 export function startApp() {
-	const app = new Elysia(appConfig)
-		.use(loggerPlugin())
-		.use(corsPlugin())
-		.use(openApiPlugin())
-		.group("", (app) => app.get("/", () => redirect("/openapi")).get("/health", ({ status }) => status(200)))
-		.group("", (app) => app.use(defineSession()).use(service))
-		.onError(({ code, error }) => {
-			let message: string | ValidationError = "Internal Server Error";
+  const app = new Elysia(appConfig)
+    .use(loggerPlugin())
+    .use(corsPlugin())
+    .use(openApiPlugin())
+    .group("", app => app
+      .get("/", () => redirect("/openapi"))
+      .get("/health", ({ status }) => status(200))
+    )
+    .group("", app => app
+      .use(defineSession())
+      .use(service)
+    )
+    .onError(({ code, error }) => {
+      let message: string | ValidationError = "Internal Server Error";
 
-			if (code === "VALIDATION") {
-				const result = safeJsonParse<ValidationError>(error.message);
-				message = result.ok ? result.value : error.message;
-				return { error: message };
-			}
+      if (code === "VALIDATION") {
+        const result = safeJsonParse<ValidationError>(error.message);
+        message = result.ok ? result.value : error.message;
+        return { error: message };
+      }
 
-			if (code === "NOT_FOUND") {
-				return { error: "Not found" };
-			}
+      if (code === "NOT_FOUND") {
+        return { error: "Not found" };
+      }
 
-			if ("response" in error) {
-				const response = error.response as { error?: string } | number;
-				appLogger.error(error, code);
+      if ("response" in error) {
+        const response = error.response as { error?: string } | number;
+        appLogger.error(error);
 
-				if (typeof response === "object" && response !== null) {
-					if (response.error) message = response.error;
-				} else {
-					message = String(response);
-				}
-			}
+        if (typeof response === "object" && response !== null) {
+          if (response.error) message = response.error;
+        } else {
+          message = String(response);
+        }
+      }
 
-			return { error: message };
-		});
+      return { error: message };
+    });
 
-	showRoutes({ routes: app.routes, logger: appLogger });
-	app.listen(env.PORT);
+  showRoutes({ routes: app.routes });
+  app.listen(env.PORT);
 
-	appLogger.success(`Server is running at ${app.server?.hostname}:${app.server?.port}`);
+  appLogger.info(`Server is running at ${app.server?.hostname}:${app.server?.port}`);
 }

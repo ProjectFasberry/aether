@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { defineGlobalPrice } from "#/utils/store/store-helpers";
+import { defineGlobalPrice } from "#/utils/store";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
 import { buildRouteSummary, wrapError } from "#/utils";
 import { withData, withError } from "#/shared/schemas";

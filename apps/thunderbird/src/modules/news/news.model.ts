@@ -9,7 +9,7 @@ import type { DB } from "@repo/shared/types/db/general";
 import { type Static, t } from "elysia";
 import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
-import { skinsService } from "../server/skin/index.model";
+import { skinsService } from "../../shared/services/skins";
 import { env } from "#/shared/env";
 import { DateTime } from "#/helpers/typebox";
 

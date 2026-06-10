@@ -1,7 +1,6 @@
 import { skins } from "#/shared/database/skins-db";
 import { getAvatarName } from "#/helpers/volume";
-import { getPlayerUUID } from "#/utils/player/uuid";
-import { minio, BUCKETS } from "#/shared/minio/client";
+import { BUCKETS } from "#/shared/minio/client";
 import { isProduction, env } from "#/shared/env";
 import * as z from "zod";
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
@@ -14,7 +13,9 @@ import { wrapError } from "#/utils";
 import type { KyInstance } from "ky";
 import type { Context } from "elysia";
 import { nanoid } from "nanoid";
-import { skinsService } from "./index.model";
+import { skinsService } from "../../../shared/services/skins";
+import { playerService } from "#/shared/services/player";
+import { minioService } from "#/shared/services/minio";
 
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
@@ -678,7 +679,7 @@ export async function deleteOldSkins({
         .execute()
     ])
 
-    const client = minio.getInstance();
+    const client = minioService.getInstance();
 
     for (const identifier of ids) {
       await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
@@ -725,7 +726,7 @@ export async function upload(
     }
   }
 
-  const uuid = await getPlayerUUID(nickname);
+  const uuid = await playerService.getUUID(nickname);
   const name = `sr-${nickname}-${nanoid(4)}`
 
   const { signature, value } = skin.texture.data
@@ -824,7 +825,7 @@ export async function upload(
 
   skinsService.skin.initSkin({
     nickname,
-    minio: minio.getInstance,
+    minio: minioService.getInstance,
   })
 
   const payload = {

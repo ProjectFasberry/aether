@@ -4,9 +4,9 @@ import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/utils";
 import { skinsHistorySchema } from "@repo/core/modules/skins/index"
-import { skinsService } from "./index.model";
-import { minio } from "#/shared/minio/client";
+import { skinsService } from "../../../shared/services/skins";
 import { buildRouteSummary } from "#/utils";
+import { minioService } from "#/shared/services/minio";
 
 const history = new Elysia()
   .get("/history/:nickname", async ({ params: { nickname } }) => {
@@ -24,7 +24,7 @@ const history = new Elysia()
 const set = new Elysia()
   .use(defineRequiredUser())
   .get("/set", async ({ query, nickname, status }) => {
-    const result = await skinsService.skin.setSkin(nickname, query.id, minio.getInstance)
+    const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
     if (!result) throw status(500, wrapError("THIRDPARTY_ERROR"))
 
     return { data: "OK" }

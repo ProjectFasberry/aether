@@ -4,6 +4,10 @@ import { newsDeleteRoute } from "./news-delete.route";
 import { newsUpdateRoute } from "./news-update.route";
 import { newsList } from "./news-list.route";
 
-export const news = new Elysia().group("/news", (app) =>
-	app.use(newsList).use(newsCreateRoute).use(newsDeleteRoute).use(newsUpdateRoute),
-);
+export const news = new Elysia()
+  .group("/news", app => app
+    .use(newsList)
+    .use(newsCreateRoute)
+    .use(newsDeleteRoute)
+    .use(newsUpdateRoute)
+  );
