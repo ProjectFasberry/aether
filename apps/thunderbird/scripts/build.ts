@@ -13,7 +13,7 @@ const opts: Record<Stage, Partial<Bun.BuildConfig> & { metafile: boolean }> = {
 	},
 	prod: {
 		minify: true,
-		sourcemap: false,
+		sourcemap: true,
 		metafile: false,
 	},
 };

@@ -400,8 +400,9 @@ export interface Tasks {
 }
 
 export interface TgLogsChats {
-  chat_id: string;
+  chat_id: Int8;
   id: Generated<number>;
+  target: string;
 }
 
 export interface VotedUsers {

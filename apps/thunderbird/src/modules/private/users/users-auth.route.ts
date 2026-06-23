@@ -10,6 +10,7 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
+import { nanoid } from "nanoid";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = nats.getInstance()
@@ -19,12 +20,15 @@ const getWrappedData = <T>(value?: any): T | null => value ? value?.data ?? null
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())
-  .post("/register", async ({ ip, body: { nickname, password, hash } }) => {
-    const query = await register.create({ nickname, ip, password, hash });
-    return { data: query }
+  .post("/register", async ({ ip, body: { nickname, password } }) => {
+    const data = await register.create({
+      nickname, ip, password, hash: nanoid(12)
+    });
+
+    return { data }
   }, {
     body: registerSchema.pick({
-      nickname: true, password: true, hash: true
+      nickname: true, password: true
     }),
     afterResponse: ({ responseValue }) => {
       const res = getWrappedData<{ nickname: string, created_at: Date }>(responseValue)

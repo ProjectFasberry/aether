@@ -22,8 +22,8 @@ export const SUBSCRIBERS: Sub[] = [
 
 					const json = msg.json();
 
-					for (const chat of chats.getData()) {
-						const payload = { chat_id: chat, text: JSON.stringify(json) };
+					for (const [chat_id, target] of chats.getData()) {
+						const payload = { chat_id, text: JSON.stringify(json) };
 
 						bot
 							.getInstance()

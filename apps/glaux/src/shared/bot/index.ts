@@ -18,9 +18,9 @@ export const bot = {
 		if (!token) throw new Error("BOT_GUARD_TOKEN is not defined");
 
 		const conn = new Bot(token)
-			.onStart(async (ctx) => {
-				this.logger.info("Started");
-				this.logger.info(ctx.updatesFrom, ctx.plugins, ctx.info);
+			.onStart(async ({ updatesFrom, plugins, info }) => {
+        this.logger.info("Started");
+				console.log({ updatesFrom, plugins, info })
 			})
 			.onError((ctx) => {
 				this.logger.error("Update Error:", ctx.error);
@@ -40,7 +40,7 @@ export const bot = {
 				.catch((e) => this.logger.error(e));
 
 			const initCommands = () => {
-				const validateChatId = (chatId: string | number) => chats.getData().includes(chatId.toString());
+				const validateChatId = (chatId: string | number) => chats.getData().has(chatId.toString());
 
 				try {
 					for (const { name, handlers } of GUARD_COMMANDS) {

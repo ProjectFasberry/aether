@@ -1,10 +1,11 @@
-import Elysia, { redirect, type ElysiaConfig, type ValidationError } from "elysia";
+import Elysia, { t, type ElysiaConfig, type ValidationError } from "elysia";
 import { appLogger } from "./shared/logger";
 import { corsPlugin, loggerPlugin, openApiPlugin } from "./lib/plugins";
 import { defineSession } from "./lib/define";
 import { safeJsonParse, showRoutes } from "@repo/shared/lib/utils";
 import { env } from "./shared/env";
 import { service } from "./modules/service";
+import { html } from '@elysia/html'
 
 const appConfig: ElysiaConfig<string> = {
   serve: {
@@ -19,15 +20,63 @@ export function startApp() {
     .use(corsPlugin())
     .use(openApiPlugin())
     .group("", app => app
-      .get("/", () => redirect("/openapi"))
-      .get("/health", ({ status }) => status(200))
+      .use(html())
+      .get('/', () => `
+        <html lang='en'>
+          <head>
+            <title>Glaux API</title>
+          </head>
+          <body>
+            <a href="/openapi">Docs</a>
+          </body>
+          <style>
+            html {
+              font-family: sans-serif;
+            }
+            body {
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              max-height: 100vh;
+              overflow: hidden;
+              background-color: #3D3D3D;
+            }
+            a {
+              text-decoration: none;
+              color: #fff;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              border-radius: 1rem;
+              background-color: #000000;
+              padding: 0.5rem 1rem;
+            }
+          </style>
+        </html>`, {
+        detail: {
+          summary: "Return static welcome HTML"
+        }
+      })
+      .get("/favicon.ico", () => "")
+      .get("/health", ({ status }) => status(200, "OK"), {
+        response: {
+          200: t.Literal("OK"),
+          500: t.Object({
+            error: t.Literal("INTERNAL_SERVER_ERROR")
+          }),
+        },
+        detail: {
+          summary: "Healthcheck"
+        },
+      })
     )
     .group("", app => app
       .use(defineSession())
       .use(service)
     )
     .onError(({ code, error }) => {
-      let message: string | ValidationError = "Internal Server Error";
+      let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
       if (code === "VALIDATION") {
         const result = safeJsonParse<ValidationError>(error.message);

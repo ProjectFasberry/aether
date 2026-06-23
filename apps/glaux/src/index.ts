@@ -34,17 +34,18 @@ const pipeline: BootstrapStep[] = [
     },
   },
   {
-    name: "chats",
-    run: () => chats.init(),
-  },
-  {
-    name: "urls",
-    run: () => urlsService.init({
-      onError: (e) => {
-        logger.error("Urls error", e);
-      },
-      print: true
-    }),
+    name: "shared-modules",
+    critical: true,
+    run: async () => {
+      await chats.init();
+
+      await urlsService.init({
+        onError: (e) => {
+          logger.error("Urls error", e);
+        },
+        print: true
+      })
+    }
   },
   {
     name: "redis",
@@ -69,14 +70,16 @@ const pipeline: BootstrapStep[] = [
     name: "minio",
     run: () => minio.start(),
   },
+  {
+    name: "bot",
+    run: () => bot.start()
+  }
 ];
 
 const boot = createBootstrap(pipeline);
 
 try {
   await boot.start();
-
-  await bot.start();
 
   const { startApp } = await import("./app");
   startApp();

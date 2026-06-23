@@ -18,6 +18,10 @@ export const logger = createLogger({
         });
       }
 
+      if (typeof message === 'object') {
+        return `${timestamp} ${level}: ${JSON.stringify(message, null, 2)}`;
+      }
+
       return `${timestamp} ${level}: ${message}`;
     })
   ),

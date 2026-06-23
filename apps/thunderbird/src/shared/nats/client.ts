@@ -85,7 +85,7 @@ export const nats = {
         const consumer = await js.consumers.get(stream_name, name);
         this.logger.success(`Consumer "${name}"`);
       } catch (e) {
-        // const consumerInfo = await jsm.consumers.add(stream_name, { name });
+        const consumerInfo = await jsm.consumers.add(stream_name, { name });
         this.logger.success(`Consumer "${name}" added`);
       }
     }

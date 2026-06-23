@@ -33,7 +33,7 @@ export async function getDatabaseUrl(databaseName: string, mode: "dev" | "prod")
 			expandSecretReferences: true,
 			viewSecretValue: true,
 			includeImports: true,
-			secretPath: "/backend",
+			secretPath: "/thunderbird",
 		});
 
 		return singleSecret.secretValue;

@@ -10,6 +10,7 @@ import {
 	updateSkinCmdCb,
 	forceUpdateWatchtower,
 	statusCmdCb,
+  chatsCmdCb,
 } from "./lib";
 
 export type CommandCtx = Parameters<Parameters<Bot["command"]>[1]>[0];
@@ -38,6 +39,13 @@ export const GUARD_COMMANDS: GuardCommand[] = [
 		handlers: {
 			private: statusCmdCb,
 		},
+  },
+  {
+    name: "chats",
+    description: "Chats control",
+    handlers: {
+      private: chatsCmdCb,
+    }
 	},
 	{
 		name: "updateskin",
