@@ -76,12 +76,13 @@ const MAX_USERS_PER_IP = 3;
 const MOJANG_API_URL = "https://api.ashcon.app";
 
 export const register = {
-	async registrationEvents({ nickname }: { nickname: string }) {
+  async registrationEvents({ nickname, uuid }: { nickname: string, uuid: string }) {
 		const REGISTRATION_EVENTS = {
 			skin: () =>
 				skinsService.skin.initSkin({
 					nickname,
-					minio: minioService.getInstance,
+          minio: minioService.getInstance,
+          uuid
 				}),
 		};
 
@@ -99,8 +100,10 @@ export const register = {
 		const { trx, ip, nickname, password, hash } = args;
 		const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
+    const uuid = await this.getUserUUID(nickname);
+
 		const base = {
-			uuid: await this.getUserUUID(nickname),
+			uuid,
 			regDateMs: Date.now(),
 			lowerCaseNickname: nickname.toLowerCase(),
 		};
@@ -155,7 +158,7 @@ export const register = {
 			const result = await register();
 
 			if (isProduction) {
-				await this.registrationEvents({ nickname });
+				await this.registrationEvents({ nickname, uuid });
 			}
 
 			if (isProduction) {
@@ -193,8 +196,12 @@ export const register = {
 					console.log(result);
 				},
 				custom: async () => {
-					const val = await trx.insertInto("findout").values({ nickname, value: findout }).executeTakeFirstOrThrow();
-					console.log(val);
+          const val = await trx
+            .insertInto("findout")
+            .values({ nickname, value: findout })
+            .executeTakeFirstOrThrow();
+
+          console.log(val);
 				},
 			};
 

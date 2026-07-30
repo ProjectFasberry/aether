@@ -165,27 +165,35 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
      * Initializes a skin for a given nickname
      */
     async initSkin({
-      nickname, minio, onFinish, onStart, onError,
+      nickname, minio, onFinish, onStart, onError, uuid
     }: {
       nickname: string,
       minio: () => MinioClient,
       onFinish?: () => void,
       onStart?: () => void,
       onError?: (e: unknown) => void,
+      uuid?: string
     }): Promise<boolean> {
       try {
         onStart?.()
 
-        const payload = await this._loadHistoryFromDB(nickname, minio)
+        const payload = await this._loadHistoryFromDB(nickname, minio, uuid)
+          .then(r => {
+            console.log("Loaded skin history from DB", r)
+            return r
+          })
+          .catch(e => {
+            console.error("Failed to load skin history from DB", e);
+            throw e
+          })
 
-        await redis().set(
-          getSkinsHistoryCacheRedisKey(nickname), JSON.stringify(payload)
-        )
+        const key = getSkinsHistoryCacheRedisKey(nickname)
+        await redis().set(key, JSON.stringify(payload))
 
         onFinish?.()
         return true
       } catch (e) {
-        onError?.(e)
+        onError?.(e) ?? console.error(e);
         return false
       }
     },
@@ -228,7 +236,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       identifier: string,
       minio: () => MinioClient,
     ) {
-      const uuid = await playerService.getUUID(nickname);
+      const uuid = await playerService.getUuid(nickname);
 
       const result = await skinsDb.transaction().execute(async (trx) => {
         const query = await trx
@@ -341,12 +349,12 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
     },
     async _loadHistoryFromDB(
       nickname: string,
-      minio: () => MinioClient
+      minio: () => MinioClient,
+      uuidOpt?: string
     ): Promise<SkinsHistory> {
-      const uuid = await playerService.getUUID(nickname);
-      const scope = this;
+      const uuid = uuidOpt ?? await playerService.getUuid(nickname);
 
-      async function resolveCurrentSkin(uuid: string): Promise<PlayerSkinPayload> {
+      const resolveCurrentSkin = async (uuid: string): Promise<PlayerSkinPayload> => {
         const row = await skinsDb
           .selectFrom("sr_players")
           .select("skin_identifier")
@@ -356,8 +364,9 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         const id = row?.skin_identifier
 
         if (!id) {
+          const defaultSkin = await this.getDefaultSkin({ skinsDb });
           return {
-            ...await scope.getDefaultSkin({ skinsDb }),
+            ...defaultSkin,
             timestamp: 10000000
           }
         }
@@ -393,14 +402,16 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         if (resolved) return resolved
 
+        const defaultSkin = await this.getDefaultSkin({ skinsDb });
+
         return {
-          ...await scope.getDefaultSkin({ skinsDb }),
+          ...defaultSkin,
           timestamp: 10000000
         }
       }
 
       const [current, history] = await Promise.all([
-        resolveCurrentSkin(uuid), scope._getSkinsHistory(uuid)
+        resolveCurrentSkin(uuid), this._getSkinsHistory(uuid)
       ])
 
       const prevIds = history
@@ -418,7 +429,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         }
       }
 
-      async function getCustomSkins(ids: string[]) {
+      const getCustomSkins = async (ids: string[]) => {
         if (ids.length === 0) return []
 
         return await skinsDb
@@ -434,7 +445,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
           .execute()
       }
 
-      async function getDefaultSkins(ids: string[]) {
+      const getDefaultSkins = async (ids: string[]) => {
         if (ids.length === 0) return []
 
         return await skinsDb
@@ -449,12 +460,14 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
           .execute()
       }
 
-      const getSkinsData = [
-        ...(await getCustomSkins(customIds)),
-        ...(await getDefaultSkins(defaultIds))
-      ]
+      const [customSkins, defaultSkins] = await Promise.all([
+        getCustomSkins(customIds),
+        getDefaultSkins(defaultIds)
+      ])
 
-      const previousSkins = prevIds.length === 0 ? [] : getSkinsData
+      const skinsData = [...customSkins, ...defaultSkins]
+
+      const previousSkins = prevIds.length === 0 ? [] : skinsData
       const unique = new Map<string, PlayerSkinPayload & { skin: Skin }>()
 
       for (const entry of [current, ...previousSkins]) {

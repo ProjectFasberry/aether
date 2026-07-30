@@ -245,7 +245,7 @@ export async function getLandsByNickname(
   nickname: string,
   { exclude, limit }: Static<typeof landsByNicknameSchema> & { limit?: number }
 ): Promise<Static<typeof landsByPlayerSchema>> {
-  const recipientUUID = await playerService.getUUID(nickname);
+  const recipientUUID = await playerService.getUuid(nickname);
 
   let result: Static<typeof landsByPlayerSchema> = { data: [], meta: { count: 0 } }
 

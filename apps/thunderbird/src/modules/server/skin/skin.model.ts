@@ -726,7 +726,7 @@ export async function upload(
     }
   }
 
-  const uuid = await playerService.getUUID(nickname);
+  const uuid = await playerService.getUuid(nickname);
   const name = `sr-${nickname}-${nanoid(4)}`
 
   const { signature, value } = skin.texture.data

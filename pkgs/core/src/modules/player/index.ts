@@ -17,28 +17,24 @@ export const createPlayerService = ({
   redis, generalDb
 }: PlayerService) => {
   return {
-    async getUUID(nickname: string): Promise<string> {
-      const playerUUIDKey = getPlayerUUIDCacheRedisKey(nickname);
-      const playerUUID = await redis().get(playerUUIDKey)
+    async getUuid(nickname: string): Promise<string> {
+      const cacheKey = getPlayerUUIDCacheRedisKey(nickname);
+      const cache = await redis().get(cacheKey)
 
-      if (!playerUUID) {
+      if (!cache) {
         const { UUID } = await generalDb
           .selectFrom("AUTH")
           .select("UUID")
           .where("NICKNAME", "=", nickname)
+          .$narrowType<{ UUID: string }>()
           .executeTakeFirstOrThrow()
 
-        if (!UUID) {
-          throw new Error("UUID is not found")
-        }
-
-        await redis().set(playerUUIDKey, UUID)
-        console.log("UUID cached updated for", nickname)
+        await redis().set(cacheKey, UUID)
 
         return UUID;
       }
 
-      return playerUUID
+      return cache
     }
   }
 }

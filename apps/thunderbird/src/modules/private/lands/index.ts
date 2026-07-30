@@ -68,7 +68,7 @@ async function createLand(
 		if (!defaults) throw createLandError.raise("NO_DEFAULTS");
 		//
 
-		const uuid = await playerService.getUUID(initiator);
+		const uuid = await playerService.getUuid(initiator);
 
 		// initial members
 		const members = JSON.stringify({
@@ -130,7 +130,7 @@ async function deleteLand(ulid: string, initiator: string): Promise<void> {
 
 		if (!land) throw deleteLandError.raise("NOT_FOUND");
 
-		const initiatorUuid = await playerService.getUUID(initiator);
+		const initiatorUuid = await playerService.getUuid(initiator);
 
 		const members = safeJsonParse<{ [uuid: string]: { chunks: number } }>(land.members);
 		if (!members.ok) throw deleteLandError.raise("INTERNAL_UNKNOWN");
