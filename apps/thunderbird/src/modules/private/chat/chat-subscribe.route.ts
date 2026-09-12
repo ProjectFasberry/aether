@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { defineRequiredUser } from "#/lib/define";
 import { nats } from "#/shared/nats/client";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import {
   chatCreateMessageSchema,

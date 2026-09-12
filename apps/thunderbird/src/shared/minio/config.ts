@@ -1,10 +1,10 @@
 import type { ClientOptions } from "minio";
-import { env } from "../env";
+import { getEnv } from "../env";
 
 export const config: ClientOptions = {
-  endPoint: env.MINIO_HOST,
-  port: env.MINIO_PORT,
-  useSSL: false,
-  accessKey: env.MINIO_ACCESS_KEY,
-  secretKey: env.MINIO_SECRET_KEY,
+  endPoint: getEnv().MINIO_HOST,
+  port: getEnv().MINIO_PORT,
+  useSSL: Bun.env.NODE_ENV === 'production',
+  accessKey: getEnv().MINIO_ACCESS_KEY,
+  secretKey: getEnv().MINIO_SECRET_KEY,
 };

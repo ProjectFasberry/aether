@@ -1,4 +1,4 @@
-import { env } from "./shared/env";
+import { getEnv } from "./shared/env";
 import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
 import { openApiPlugin } from "./lib/plugins/openapi";
@@ -11,64 +11,70 @@ import { logging } from "./shared/constants";
 import { safeJsonParse, showRoutes } from "./utils";
 
 const appConfig: ElysiaConfig<string> = {
-	serve: {
-		hostname: "0.0.0.0",
-	},
-	aot: true,
+  serve: {
+    hostname: "0.0.0.0",
+  },
+  aot: true,
 };
 
-export function startApp() {
-	const app = new Elysia(appConfig)
-		.use(openApiPlugin())
-		.use(serverTimingPlugin())
-		.use(ipPlugin())
-		.use(corsPlugin())
-		.use(loggerPlugin())
-		.onError((payload) => {
-			const { error, code } = payload;
-			if (logging.globalError) appLogger.error(error, code);
+const app = new Elysia(appConfig)
+  .use(openApiPlugin())
+  .use(serverTimingPlugin())
+  .use(ipPlugin())
+  .use(corsPlugin())
+  .use(loggerPlugin())
+  .onError((payload) => {
+    const { error, code } = payload;
 
-			let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
+    if (logging.globalError) {
+      appLogger.error({ error, code })
+    };
 
-			if (code === "VALIDATION") {
-				const result = safeJsonParse<ValidationError>(error.message);
-				message = result.ok ? result.value : error.message;
-				return { error: message };
-			}
+    let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
-			if (code === "NOT_FOUND") return { error: code };
+    if (code === "VALIDATION") {
+      const result = safeJsonParse<ValidationError>(error.message);
+      message = result.ok ? result.value : error.message;
+      return { error: message };
+    }
 
-			if ("response" in error) {
-				const response = error.response as { error?: string } | number;
+    if (code === "NOT_FOUND") return { error: code };
 
-				if (typeof response === "object" && response !== null) {
-					if (response.error) {
-						message = response.error;
-					}
-				} else {
-					message = String(response);
-				}
-			}
+    if ("response" in error) {
+      const res = error.response as { error?: string } | number;
 
-			if (error instanceof Error) {
-				return { error: error.message };
-			}
+      if (typeof res === "object" && res !== null) {
+        if (res.error) {
+          message = res.error;
+        }
+      } else {
+        message = String(res);
+      }
+    }
 
-			return { error: message };
-		})
-		.use(root)
-		.use(defineOptionalSession())
-		.onBeforeHandle(
-			async ({ cookie, session: sessionToken }) => await session.updateSession(sessionToken ?? null, cookie),
-		)
-		.use(main);
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
 
-	showRoutes({ routes: app.routes });
-	app.listen(env.PORT);
+    return { error: message };
+  })
+  .use(root)
+  .use(defineOptionalSession())
+  .onBeforeHandle(async (ctx) => session.updateSession(ctx.session, ctx.cookie))
+  .use(main);
 
-	appLogger.success(`Server is running at ${app.server?.hostname}: ${app.server?.port}`);
+export function startApp({ verbose }: { verbose?: boolean }) {
+  if (verbose) {
+    showRoutes({ routes: app.routes });
+  }
 
-	return app;
+  app.listen(getEnv().PORT);
+
+  appLogger.child({ name: "server" }).info(
+    `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`
+  );
+
+  return app;
 }
 
 export type App = Awaited<ReturnType<typeof startApp>>;

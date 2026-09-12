@@ -1,5 +1,5 @@
 import { luckperms } from "#/shared/database/luckperms-db"
-import { env } from "#/shared/env"
+import { getEnv } from "#/shared/env"
 import { type Static, t } from "elysia"
 
 export const achievementsMetaPayloadSchema = t.Object({
@@ -50,7 +50,7 @@ export const ACHIEVEMENTS_RAW: Record<string, AchievementDetails> = {
 async function getAchievementDetails(achievement: string) {
   const v = ACHIEVEMENTS_RAW[achievement]
 
-  const publicImage = `${env.VOLUME_URL}/static/achievements/${v.img}`
+  const publicImage = `${getEnv().VOLUME_URL}/static/achievements/${v.img}`
 
   return { ...v, img: publicImage }
 }

@@ -15,6 +15,7 @@ export const createMinioService = (
   { config }: { config: Minio.ClientOptions, }
 ) => {
   return {
+    logger: logger.child({ name: "minio" }),
     currentBucketsList,
     getInstance(): Minio.Client {
       invariant(instance, "Minio is not inited");
@@ -51,21 +52,21 @@ export const createMinioService = (
       const instance = this.getInstance();
       const bucketsList = Object.values(REQUIRED_BUCKETS);
 
+      this.currentBucketsList = bucketsList
+
       await Promise.all(bucketsList.map(async (bucketName) => {
         try {
           const isExists = await instance.bucketExists(bucketName);
 
-          this.currentBucketsList = bucketsList
-
           if (!isExists) {
             await instance.makeBucket(bucketName, "us-east-1");
             this.currentBucketsList.push(bucketName);
-            console.log(`Bucket "${bucketName}" created`);
+            this.logger.info(`Bucket "${bucketName}" created`);
           } else {
-            console.log(`Bucket "${bucketName}" already exists`);
+            this.logger.info(`Bucket "${bucketName}" already exists`);
           }
         } catch (e) {
-          console.error(`Error ensuring bucket "${bucketName}"`, e);
+          this.logger.error(`Error ensuring bucket "${bucketName}"`, e);
         }
       }));
     },
@@ -79,7 +80,10 @@ export const createMinioService = (
       const client = this._init();
 
       await this._initBuckets();
-      showBuckets && await this._printBuckets();
+
+      if (showBuckets) {
+        await this._printBuckets();
+      }
 
       await onAfterStart?.(client)
     },

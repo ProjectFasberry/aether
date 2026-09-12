@@ -8,7 +8,7 @@ export async function handleProcessOnEvent(sub: string, {
 }: {
   error: Error | unknown, kill?: boolean
 }) {
-  appLogger.error(handleProcessOnEvent.name, sub, error);
+  appLogger.error({ name: handleProcessOnEvent.name, sub, error });
 
   //#region todo: impl logging/alerting using fluentbit + grafana
   const nc = nats.getInstance()

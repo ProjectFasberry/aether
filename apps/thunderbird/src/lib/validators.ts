@@ -13,7 +13,7 @@ import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { HTTPError } from "ky";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import { logErrorMsg, logValidators } from "#/utils/config/log-utils";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { urlsService } from "#/shared/services/urls";
@@ -132,7 +132,7 @@ export const validateBannedStatus = () =>
 
 const capClient = client.extend((opts) => ({
 	...opts,
-	baseUrl: `${env.CAP_URL}/${env.CAP_SITE_KEY}`,
+	baseUrl: `${getEnv().CAP_URL}/${getEnv().CAP_SITE_KEY}`,
 }));
 
 const ERRORS: Record<string, string> = {
@@ -140,7 +140,7 @@ const ERRORS: Record<string, string> = {
 };
 
 async function verifyRequest(token: string): Promise<{ ok: boolean; error?: string }> {
-	const json = { secret: env.CAP_SECRET, response: token };
+	const json = { secret: getEnv().CAP_SECRET, response: token };
 
 	try {
 		const result = await capClient.post("siteverify", { json, retry: 1, timeout: 4000 });

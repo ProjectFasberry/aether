@@ -1,11 +1,11 @@
 import { general } from "#/shared/database/general-db";
 import { redis } from "#/shared/redis/client";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import { textSets } from "#/shared/minio/utils";
 import type { UserSessionPayload } from "./login.model";
 import { safeJsonParse } from "#/utils";
 
-export const authLogger = logger.withTag("Auth");
+export const authLogger = logger.child({ name: "auth" });
 
 export const auth = {
 	getSessionKey: (token: string) => `session:${token}`,

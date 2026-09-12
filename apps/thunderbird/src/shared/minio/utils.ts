@@ -1,5 +1,5 @@
 import { nodeToWebStream } from "#/helpers/streams";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import { BUCKETS } from "#/shared/minio/client";
 import type { Client } from "minio";
 import { extname } from "node:path";
@@ -45,6 +45,8 @@ export async function loadInternalFiles(client: Client, entries: FileEntry[]) {
 
     callback(filename, content);
 
-    logger.withTag("minio").success(`Loaded ${filename} (${ext || "no extension"}) — type: ${typeof content}`);
+    logger
+      .child({ name: "minio" })
+      .info(`Loaded ${filename} (${ext || "no extension"}) — type: ${typeof content}`);
   }
 }

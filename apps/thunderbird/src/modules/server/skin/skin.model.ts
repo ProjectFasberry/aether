@@ -1,7 +1,7 @@
 import { skins } from "#/shared/database/skins-db";
 import { getAvatarName } from "#/helpers/volume";
 import { BUCKETS } from "#/shared/minio/client";
-import { isProduction, env } from "#/shared/env";
+import { isProduction, getEnv } from "#/shared/env";
 import * as z from "zod";
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
@@ -409,9 +409,9 @@ function getMineSkinErrorMessage(response: MineSkinGenericResponse): string {
 }
 
 function getMineSkinClient(): KyInstance {
-  if (!env.MINESKIN_API_KEY) throw new ConfigurationError("MineSkin API key is not configured")
+  if (!getEnv().MINESKIN_API_KEY) throw new ConfigurationError("MineSkin API key is not configured")
 
-  const keyT = env.MINESKIN_API_KEY.trim()
+  const keyT = getEnv().MINESKIN_API_KEY.trim()
   if (!keyT) throw new ConfigurationError("MineSkin API key is empty")
 
   const client = inheritClient.extend((opts) => ({
@@ -492,12 +492,12 @@ function ensureHttpsTextureUrl(url?: string | null): string | undefined {
 
 function encryptMineSkinUuid(uuid: string): string {
   function getAesSecretKey(): Buffer {
-    if (!env.MINESKIN_AES_SECRET_KEY) {
+    if (!getEnv().MINESKIN_AES_SECRET_KEY) {
       throw new ConfigurationError("AES_SECRET_KEY environment variable is not set");
     }
 
     // Use SHA-256 to derive a 32-byte key
-    return createHash("sha256").update(env.MINESKIN_AES_SECRET_KEY).digest();
+    return createHash("sha256").update(getEnv().MINESKIN_AES_SECRET_KEY).digest();
   }
 
   const key = getAesSecretKey();

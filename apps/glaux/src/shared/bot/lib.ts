@@ -5,13 +5,14 @@ import { Keyboard } from "gramio";
 import { chats } from "./chats";
 import { urlsService } from "./urls";
 import { rcon } from "../rcon/client";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { wrapError } from "@repo/shared/lib/utils";
 import { createSkinsService } from "@repo/core/modules/skins/index";
-import { general as generalDb, skins as skinsDb } from "../database";
+import { general as generalDb } from "../database/general-db";
+import { skins as skinsDb } from "../database/skins-db";
 import { nats } from "../nats/client";
 import { redis } from "../redis/client";
-import { minio } from "../minio/client";
+import { minioService } from "../minio/client";
 import { createServerStatusService } from "@repo/core/modules/status/index";
 import { logger } from "../logger";
 
@@ -21,7 +22,7 @@ const skinsService = createSkinsService({
     skins: skinsDb,
   },
   config: {
-    VOLUME_URL: env.VOLUME_URL,
+    VOLUME_URL: getEnv().VOLUME_URL,
   },
   redis: redis.getInstance,
 });
@@ -29,7 +30,7 @@ const skinsService = createSkinsService({
 const serverStatusService = createServerStatusService({
   generalDb,
   config: {
-    VOLUME_URL: env.VOLUME_URL,
+    VOLUME_URL: getEnv().VOLUME_URL,
   },
 });
 
@@ -156,7 +157,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
   const singleCb = () =>
     skinsService.skin.initSkin({
       nickname,
-      minio: minio.getInstance,
+      minio: minioService.getInstance,
       onStart() {
         bot.logger.info(`Start updating skin for ${nickname}`);
       },
@@ -177,7 +178,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
   const multiCb = () =>
     skinsService.skin.updateSkins({
       ...opts,
-      minio: minio.getInstance,
+      minio: minioService.getInstance,
       nats: nats.getInstance,
       onStart() {
         bot.logger.info("Start updating skins all users");
@@ -325,12 +326,12 @@ export async function publicStartCmdCb(ctx: CommandCtx) {
 
 export async function forceUpdateWatchtower(ctx: CommandCtx) {
   try {
-    const url = `http://${env.WATCHTOWER_HOST}:${env.WATCHTOWER_PORT}/v1/update`;
+    const url = `http://${getEnv().WATCHTOWER_HOST}:${getEnv().WATCHTOWER_PORT}/v1/update`;
 
     const res = await fetch(url, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${env.WATCHTOWER_API_TOKEN}`,
+        Authorization: `Bearer ${getEnv().WATCHTOWER_API_TOKEN}`,
       },
       tls: {
         rejectUnauthorized: false,

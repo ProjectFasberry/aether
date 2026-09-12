@@ -6,17 +6,17 @@ export async function psubscribe() {
   const rsClient = redis.getBridgeInstance()
   await rsClient.psubscribe('__keyevent@0__:expired');
 
-  const psubcribeLogger = redis.logger.withTag("psubscribe");
+  const psubcribeLogger = redis.logger.child({ name: "psubscribe" });
 
   SUBSCRIBERS.forEach((subscriber) => {
-    psubcribeLogger.success(`Subscribed to "${subscriber.key}"`)
+    psubcribeLogger.info(`Subscribed to "${subscriber.key}"`)
   })
 
   rsClient.on('pmessage', (pattern, channel, msg) => {
     if (!msg) return;
 
     if (!isProduction) {
-     psubcribeLogger.log(pattern, channel, msg)
+     psubcribeLogger.info(pattern, channel, msg)
     }
 
     for (const subscriber of SUBSCRIBERS) {

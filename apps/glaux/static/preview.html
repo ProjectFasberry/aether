@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+
+  <title>Glaux API</title>
+
+  <style>
+    :root {
+      --bg: #090909;
+      --surface: #101010;
+      --surface-hover: #151515;
+      --border: #242424;
+      --border-hover: #383838;
+      --text: #f1f1f1;
+      --muted: #888;
+      --muted-light: #aaa;
+      --accent: #d6d6d6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 20px;
+
+      background:
+        radial-gradient(
+          circle at 50% 0%,
+          rgba(255, 255, 255, 0.055),
+          transparent 38%
+        ),
+        var(--bg);
+
+      color: var(--text);
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 760px;
+    }
+
+    .header {
+      margin-bottom: 36px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      margin-bottom: 18px;
+    }
+
+    .logo {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+
+      border: 1px solid #303030;
+      border-radius: 10px;
+
+      background: linear-gradient(
+        145deg,
+        #1d1d1d,
+        #0d0d0d
+      );
+
+      color: #eee;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 8px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .brand-name {
+      font-size: 18px;
+      font-weight: 650;
+      letter-spacing: -0.025em;
+    }
+
+    .eyebrow {
+      margin-bottom: 9px;
+
+      color: #777;
+      font-size: 11px;
+      font-weight: 650;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+
+      font-size: clamp(34px, 6vw, 48px);
+      line-height: 1.05;
+      letter-spacing: -0.045em;
+      font-weight: 700;
+    }
+
+    .description {
+      max-width: 570px;
+      margin: 14px 0 0;
+
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      min-height: 210px;
+      padding: 22px;
+
+      color: inherit;
+      text-decoration: none;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.035),
+          rgba(255, 255, 255, 0.008)
+        ),
+        var(--surface);
+
+      border: 1px solid var(--border);
+      border-radius: 14px;
+
+      transition:
+        background 160ms ease,
+        border-color 160ms ease,
+        transform 160ms ease;
+    }
+
+    .card:hover {
+      background: var(--surface-hover);
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+    }
+
+    .card:focus-visible {
+      outline: 2px solid #777;
+      outline-offset: 3px;
+    }
+
+    .icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      margin-bottom: 26px;
+
+      border: 1px solid #292929;
+      border-radius: 10px;
+
+      background: #151515;
+      color: #bdbdbd;
+    }
+
+    .icon svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .card-title {
+      margin-bottom: 7px;
+
+      font-size: 16px;
+      font-weight: 620;
+      letter-spacing: -0.015em;
+    }
+
+    .card-description {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .path {
+      margin-top: auto;
+      padding-top: 25px;
+
+      color: #707070;
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+      font-size: 12px;
+    }
+
+    .arrow {
+      position: absolute;
+      top: 23px;
+      right: 22px;
+
+      color: #555;
+      font-size: 17px;
+
+      transition:
+        color 160ms ease,
+        transform 160ms ease;
+    }
+
+    .card:hover .arrow {
+      color: #aaa;
+      transform: translate(2px, -2px);
+    }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-top: 24px;
+
+      color: #555;
+      font-size: 11px;
+    }
+
+    .status {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #777;
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.025);
+    }
+
+    @media (max-width: 600px) {
+      body {
+        align-items: flex-start;
+        padding-top: 70px;
+      }
+
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        min-height: 185px;
+      }
+
+      .header {
+        margin-bottom: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <header class="header">
+      <div class="brand">
+        <div class="logo">G</div>
+        <div class="brand-name">glaux</div>
+      </div>
+
+      <div class="eyebrow">API Reference</div>
+
+      <h1>Glaux API</h1>
+
+      <p class="description">
+        Explore the API documentation or access the raw OpenAPI specification.
+      </p>
+    </header>
+
+    <section class="cards">
+      <a class="card" href="/openapi">
+        <span class="arrow">↗</span>
+
+        <div class="icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 5h16" />
+            <path d="M4 12h10" />
+            <path d="M4 19h7" />
+            <path d="M17 14v6" />
+            <path d="M14 17h6" />
+          </svg>
+        </div>
+
+        <div class="card-title">API Documentation</div>
+
+        <div class="card-description">
+          Interactive API reference with endpoints, schemas and request details.
+        </div>
+
+        <div class="path">/openapi</div>
+      </a>
+
+      <a class="card" href="/openapi/json">
+        <span class="arrow">↗</span>
+
+        <div class="icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M8 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+            <path d="M14 4h6v6" />
+            <path d="M20 4l-9 9" />
+          </svg>
+        </div>
+
+        <div class="card-title">OpenAPI JSON</div>
+
+        <div class="card-description">
+          Raw OpenAPI specification in JSON format for tooling and integrations.
+        </div>
+
+        <div class="path">/openapi/json</div>
+      </a>
+    </section>
+
+    <footer class="footer">
+      <span class="status"></span>
+      <span>glaux API</span>
+    </footer>
+  </main>
+</body>
+</html>

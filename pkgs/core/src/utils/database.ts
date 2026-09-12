@@ -15,7 +15,7 @@ type CreateDatabaseOptions<T> = {
 };
 
 function getPoolOptions(name: string): { logger: Logger, hooks: Record<string, () => Promise<void>> } {
-  const localLogger = logger.child("database").child(name.toLowerCase());
+  const localLogger = logger.child({ name: ["db", name.toLowerCase()] });
 
   return {
     logger: localLogger,
@@ -210,7 +210,7 @@ export async function checkDatabasesHealth(databases: Record<string, DatabaseIte
   verbose?: boolean
 }): Promise<void> {
   const results: HealthCheckResult[] = [];
-  const dbLogger = (name: string) => logger.child("database").child(name)
+  const dbLogger = (name: string) => logger.child({ name: ["db", name] })
 
   try {
     for (const [name, { pool, dialect }] of Object.entries(databases)) {

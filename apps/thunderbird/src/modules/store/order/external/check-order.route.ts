@@ -4,7 +4,7 @@ import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
 import { redis } from "#/shared/redis/client";
 import { getOrderKey } from "./create-crypto-order";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { general } from "#/shared/database/general-db";
 import { safeJsonParse, invariant } from "#/utils";
@@ -17,7 +17,7 @@ type CheckOrderBody = {
 }
 
 function validateSignatureCryptoPay(body: string, resSignature: string) {
-  const secret = createHash('sha256').update(env.CRYPTO_PAY_TESTNET_TOKEN).digest()
+  const secret = createHash('sha256').update(getEnv().CRYPTO_PAY_TESTNET_TOKEN).digest()
   const hmac = createHmac('sha256', secret).update(body).digest('hex')
   return hmac === resSignature
 }

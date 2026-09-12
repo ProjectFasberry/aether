@@ -3,37 +3,47 @@ import { SUBJECTS } from "./subjects";
 import { bot } from "../bot";
 import { chats } from "../bot/chats";
 import { nats } from "./client";
+import { isError } from "@repo/shared/lib/helpers";
 
 type Sub = {
-	cb: (nc: NatsConnection) => Subscription;
-	subject: string;
+  cb: (nc: NatsConnection) => Subscription;
+  subject: string;
 };
 
 export const SUBSCRIBERS: Sub[] = [
-	{
-		subject: SUBJECTS.INTERNAL.HEALTH,
-		cb(nc) {
-			const sub = nc.subscribe(this.subject, {
-				callback: (e, msg) => {
-					if (e) {
-						nats.logger.error(this.subject, e.message);
-						return;
-					}
+  {
+    subject: SUBJECTS.INTERNAL.HEALTH,
+    cb(nc) {
+      const sub = nc.subscribe(this.subject, {
+        callback: (e, msg) => {
+          if (e) {
+            nats.logger.error(this.subject, e.message);
+            return;
+          }
 
-					const json = msg.json();
+          const json = msg.json();
 
-					for (const [chat_id, target] of chats.getData()) {
-						const payload = { chat_id, text: JSON.stringify(json) };
+          try {
+            const instance = bot.getOptionalInstance();
+            if (!instance) {
+              console.warn("no bot instance available")
+              return;
+            }
 
-						bot
-							.getInstance()
-							.api.sendMessage(payload)
-							.catch((e) => nats.logger.error(this.subject, e.message));
-					}
-				},
-			});
+            for (const [chat_id, target] of chats.getData()) {
+              const payload = { chat_id, text: JSON.stringify(json) };
 
-			return sub;
-		},
-	},
+              instance
+                .api.sendMessage(payload)
+                .catch((e) => nats.logger.error(this.subject, e.message));
+            }
+          } catch (e) {
+            nats.logger.error(this.subject, isError(e) ? e.message : "unknown error")
+          }
+        },
+      });
+
+      return sub;
+    },
+  },
 ];

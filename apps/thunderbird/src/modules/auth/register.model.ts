@@ -8,7 +8,7 @@ import type { Kysely, Transaction } from "kysely";
 import { normalizeIp } from "#/helpers/normalize-ip";
 import type { DB } from "@repo/shared/types/db/general";
 import { authLogger } from "./auth.model";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import type * as z from "zod";
 import { isProduction } from "#/shared/env";
 import type { registerSchema } from "@repo/shared/schemas/auth";
@@ -21,7 +21,7 @@ type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
 	trx?: Transaction<DB>;
 };
 
-const registerLogger = authLogger.withTag("Register");
+const registerLogger = authLogger.child({ name: "register" });
 
 type CreateUser = Omit<z.infer<typeof registerSchema>, "token"> & {
 	uuid: string;
@@ -43,7 +43,7 @@ const referral = {
 			.executeTakeFirst();
 
 		if (!isExist?.nickname) {
-			logger.withTag("Referals").warn(`Referrer ${referrer} is not defined as player`);
+			logger.child({ name: "referals" }).warn(`Referrer ${referrer} is not defined as player`);
 			return;
 		}
 
@@ -54,7 +54,7 @@ const referral = {
 			.execute();
 
 		if (isValidByLimitReferrer.length >= 4) {
-			logger.withTag("Referals").warn(`Referals limit by referrer`);
+			logger.child({ name: "referals" }).warn(`Referals limit by referrer`);
 			return;
 		}
 
@@ -66,7 +66,7 @@ const referral = {
 			})
 			.executeTakeFirstOrThrow();
 
-		logger.withTag("Referals").log(`Registered new referal ${referral} of ${referrer}`);
+		logger.child({ name: "referals" }).info(`Registered new referal ${referral} of ${referrer}`);
 
 		return query;
 	},
@@ -94,7 +94,7 @@ export const register = {
 			}),
 		);
 
-		registerLogger.log(eventsExec, nickname);
+		registerLogger.debug({ eventsExec, nickname });
 	},
 	async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
 		const { trx, ip, nickname, password, hash } = args;
@@ -108,7 +108,7 @@ export const register = {
 			lowerCaseNickname: nickname.toLowerCase(),
 		};
 
-		registerLogger.log(`Starting register player ${nickname}`);
+		registerLogger.info(`Starting register player ${nickname}`);
 
 		async function registerAUTH(instance: Kysely<DB>) {
 			return instance
@@ -268,7 +268,7 @@ export const register = {
 			}
 
 			if (!("error" in license)) {
-				authLogger.log(`Player ${nickname} has a license account. UUID: ${license.uuid}`);
+				authLogger.info(`Player ${nickname} has a license account. UUID: ${license.uuid}`);
 				return license.uuid;
 			}
 		} catch (e) {
@@ -279,7 +279,7 @@ export const register = {
 		}
 
 		const offlineUuid = this.generateOfflineUUID(nickname);
-		authLogger.log(`Player ${nickname} has an offline account. UUID: ${offlineUuid}`);
+		authLogger.info(`Player ${nickname} has an offline account. UUID: ${offlineUuid}`);
 
 		return offlineUuid;
 	},
@@ -297,8 +297,8 @@ export const register = {
 		nickname: string;
 		isStrict?: boolean;
 	}): Promise<{ nickname: string }> {
-		const localLogger = authLogger.withTag("Unregister");
-		localLogger.log(`Starting unregistering player ${nickname}. Strict: ${isStrict}`);
+		const localLogger = authLogger.child({ name: "unregister" });
+		localLogger.info(`Starting unregistering player ${nickname}. Strict: ${isStrict}`);
 
 		const result = await general.transaction().execute(async (trx) => {
 			const auth = await trx
@@ -310,13 +310,13 @@ export const register = {
 				invariant(isStrict, "Error for deleting from auth");
 			}
 
-			localLogger.log(`Player ${nickname} from auth`);
+			localLogger.info(`Player ${nickname} from auth`);
 
 			if (isStrict) {
 				const players = await trx.deleteFrom("players").where("nickname", "=", nickname).executeTakeFirstOrThrow();
 
 				invariant(players.numDeletedRows, "Error for deleting from players");
-				localLogger.log(`Player ${nickname} from players`);
+				localLogger.info(`Player ${nickname} from players`);
 			}
 
 			return { nickname };

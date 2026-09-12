@@ -41,7 +41,7 @@ export const defineRequiredUser = () =>
 
 export const defineOptionalSession = () =>
 	new Elysia({ name: "defineOptionalSession" })
-		.derive(({ cookie }) => ({ session: cookie[SESSION_KEY].value as string | undefined }))
+		.derive(({ cookie }) => ({ session: cookie[SESSION_KEY].value as string | null ?? null }))
 		.as("scoped");
 
 export async function getUserRole(nickname: string) {

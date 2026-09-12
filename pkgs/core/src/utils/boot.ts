@@ -14,7 +14,7 @@ export const createBootstrap = (
     async start() {
       const start = Date.now();
 
-      for (const { run, critical = false, name } of pipeline) {
+      for (const { run, critical = true, name } of pipeline) {
         try {
           logger.info(`Executing: ${name}`);
           await run();

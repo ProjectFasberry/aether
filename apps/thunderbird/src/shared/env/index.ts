@@ -46,18 +46,23 @@ const envSchema = z.object({
   HELEKET_PAYOUT_KEY: z.string().min(1).or(z.optional(z.string().default("test"))),
 });
 
-export type Env = z.infer<typeof envSchema>;
+export type Env = z.infer<typeof envSchema> & { PROD: boolean };;
 
-export let env: Env;
+let env: Env;
+export const getEnv = () => env;
 
 export function initEnv() {
   const { success, data, error } = envSchema.safeParse(Bun.env);
 
   if (!success) {
-    appLogger.error("Env error:\n", error);
+    appLogger.error({ error });
     process.exit(1);
   }
 
-  env = data
-  appLogger.success("Env is fine");
+  env = {
+    ...data,
+    PROD: Bun.env.NODE_ENV === "production",
+  };
+
+  appLogger.info("Env is fine");
 }

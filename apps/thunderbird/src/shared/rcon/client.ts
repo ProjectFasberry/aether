@@ -1,11 +1,11 @@
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import { urlsService } from "../services/urls";
 import { invariant } from "#/utils";
 import { createRconService } from "@repo/core/lib/rcon/index"
 
 export const rcon = createRconService({
   config: {
-    RCON_PASSWORD: env.RCON_PASSWORD,
+    RCON_PASSWORD: getEnv().RCON_PASSWORD,
     RCON_IP: (): string => {
       const ip = urlsService.getData().get("server-proxy");
       invariant(ip, "Server proxy ip is not defined");

@@ -30,18 +30,19 @@ const envSchema = Type.Object({
 
 export type Env = Static<typeof envSchema> & { PROD: boolean };
 
-export let env: Env;
+let env: Env;
+export const getEnv = () => env;
 
 export function initEnv() {
 	try {
-		const result = Schema.Parse(envSchema, Bun.env);
+		const data = Schema.Parse(envSchema, Bun.env);
 
 		env = {
-			...result,
+			...data,
 			PROD: Bun.env.NODE_ENV === "production",
 		};
 
-		logger.info("Env is fine");
+    logger.info("Env is fine");
 	} catch (e) {
 		if (e instanceof ParseError) {
 			logger.error("Env error:\n", e.errors);

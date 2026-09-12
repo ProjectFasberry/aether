@@ -3,9 +3,10 @@ import { appLogger } from "./shared/logger";
 import { corsPlugin, loggerPlugin, openApiPlugin } from "./lib/plugins";
 import { defineSession } from "./lib/define";
 import { safeJsonParse, showRoutes } from "@repo/shared/lib/utils";
-import { env } from "./shared/env";
+import { getEnv } from "./shared/env";
 import { service } from "./modules/service";
-import { html } from '@elysia/html'
+import { html } from '@elysia/html';
+import previewHtml from "../static/preview.html" with { type: "text" }
 
 const appConfig: ElysiaConfig<string> = {
   serve: {
@@ -14,96 +15,75 @@ const appConfig: ElysiaConfig<string> = {
   aot: true,
 };
 
-export function startApp() {
-  const app = new Elysia(appConfig)
-    .use(loggerPlugin())
-    .use(corsPlugin())
-    .use(openApiPlugin())
-    .group("", app => app
-      .use(html())
-      .get('/', () => `
-        <html lang='en'>
-          <head>
-            <title>Glaux API</title>
-          </head>
-          <body>
-            <a href="/openapi">Docs</a>
-          </body>
-          <style>
-            html {
-              font-family: sans-serif;
-            }
-            body {
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              max-height: 100vh;
-              overflow: hidden;
-              background-color: #3D3D3D;
-            }
-            a {
-              text-decoration: none;
-              color: #fff;
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              border-radius: 1rem;
-              background-color: #000000;
-              padding: 0.5rem 1rem;
-            }
-          </style>
-        </html>`, {
-        detail: {
-          summary: "Return static welcome HTML"
-        }
-      })
-      .get("/favicon.ico", () => "")
-      .get("/health", ({ status }) => status(200, "OK"), {
-        response: {
-          200: t.Literal("OK"),
-          500: t.Object({
-            error: t.Literal("INTERNAL_SERVER_ERROR")
-          }),
-        },
-        detail: {
-          summary: "Healthcheck"
-        },
-      })
-    )
-    .group("", app => app
-      .use(defineSession())
-      .use(service)
-    )
-    .onError(({ code, error }) => {
-      let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
-
-      if (code === "VALIDATION") {
-        const result = safeJsonParse<ValidationError>(error.message);
-        message = result.ok ? result.value : error.message;
-        return { error: message };
+const root = new Elysia()
+  .group("", app => app
+    .use(html())
+    // @ts-expect-error
+    .get('/', ({ html }) => html(previewHtml), {
+      detail: {
+        summary: "Return static welcome HTML"
       }
+    })
+    .get("/favicon.ico", () => "")
+    .get("/health", ({ status }) => status(200, "OK"), {
+      response: {
+        200: t.Literal("OK"),
+        500: t.Object({
+          error: t.Literal("INTERNAL_SERVER_ERROR")
+        }),
+      },
+      detail: {
+        summary: "Healthcheck"
+      },
+    })
+  )
+  .group("", app => app
+    .use(defineSession())
+    .use(service)
+  )
 
-      if (code === "NOT_FOUND") {
-        return { error: "Not found" };
-      }
+const app = new Elysia(appConfig)
+  .use(loggerPlugin())
+  .use(corsPlugin())
+  .use(openApiPlugin())
+  .use(root)
+  .onError(({ code, error }) => {
+    let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
-      if ("response" in error) {
-        const response = error.response as { error?: string } | number;
-        appLogger.error(error);
-
-        if (typeof response === "object" && response !== null) {
-          if (response.error) message = response.error;
-        } else {
-          message = String(response);
-        }
-      }
-
+    if (code === "VALIDATION") {
+      const result = safeJsonParse<ValidationError>(error.message);
+      message = result.ok ? result.value : error.message;
       return { error: message };
-    });
+    }
 
-  showRoutes({ routes: app.routes });
-  app.listen(env.PORT);
+    if (code === "NOT_FOUND") {
+      return { error: "Not found" };
+    }
 
-  appLogger.info(`Server is running at ${app.server?.hostname}:${app.server?.port}`);
+    if ("response" in error) {
+      const res = error.response as { error?: string } | number;
+      appLogger.error(error);
+
+      if (typeof res === "object" && res !== null) {
+        if (res.error) {
+          message = res.error;
+        }
+      } else {
+        message = String(res);
+      }
+    }
+
+    return { error: message };
+  });
+
+export function startApp({ verbose }: { verbose: boolean }) {
+  if (verbose) {
+    showRoutes({ routes: app.routes });
+  }
+
+  app.listen(getEnv().PORT);
+
+  appLogger.info(
+    `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`
+  );
 }

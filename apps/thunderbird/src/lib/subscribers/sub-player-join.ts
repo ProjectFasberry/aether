@@ -4,7 +4,7 @@ import * as z from "zod";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from "#/shared/database/general-db";
 import type { NatsConnection } from "@nats-io/nats-core";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 
 const userJoinSchema = z.object({
 	date: z.string(),

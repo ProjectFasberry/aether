@@ -56,7 +56,7 @@ export function startJobs() {
 
 		const cronJob = new Cron(job.cron, config, async () => await job.callback());
 
-		cronLogger.log(`Job "${job.name}" will be started at ${cronJob.nextRun()?.toISOString()}`);
+		cronLogger.info(`Job "${job.name}" will be started at ${cronJob.nextRun()?.toISOString()}`);
 	}
 
 	immediatelyJobs.forEach((fn) => {

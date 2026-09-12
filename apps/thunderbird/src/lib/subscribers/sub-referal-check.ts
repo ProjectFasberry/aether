@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import { callServerCommand } from "#/utils/server/call-command";
 import { validateReferal } from "#/utils/server/validate-referal";
 import type { Msg, NatsConnection } from "@nats-io/nats-core";
@@ -28,7 +28,7 @@ async function handleReferalCheck(msg: Msg) {
 				.where((eb) => eb.and([eb("referrer", "=", result.initiator), eb("referral", "=", result.recipient)]))
 				.executeTakeFirstOrThrow();
 
-			logger.log(update.numUpdatedRows > 0 ? "updated" : "not updated");
+			logger.info(update.numUpdatedRows > 0 ? "updated" : "not updated");
 		});
 	} catch (e) {
 		logErrorMsg(e);

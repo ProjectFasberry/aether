@@ -1,7 +1,7 @@
-import { env } from "#/shared/env"
+import { getEnv } from "#/shared/env"
 import { type Static, t } from "elysia"
 
-const getServerMapUrl = (v: string) => env.MAP_URL.replace("[X]", v)
+const getServerMapUrl = (v: string) => getEnv().MAP_URL.replace("[X]", v)
 
 export const serverPayloadSchema = t.Array(
   t.Object({

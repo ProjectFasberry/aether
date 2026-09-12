@@ -1,6 +1,6 @@
 # APIs
 
-[![License](https://img.shields.io/github/license/ProjectFasberry/fasberry-api?style=for-the-badge)](./LICENSE)
+[![License](https://img.shields.io/github/license/ProjectFasberry/aether?style=for-the-badge)](./LICENSE)
 ---
 
 ## 11. License

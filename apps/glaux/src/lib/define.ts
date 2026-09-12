@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { general } from "../shared/database";
+import { general } from "../shared/database/general-db";
 import { bearer } from "@elysia/bearer";
 
 export const getUserKey = (token: string) => `session:${token}`;

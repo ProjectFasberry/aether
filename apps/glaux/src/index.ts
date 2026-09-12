@@ -3,33 +3,32 @@ import "./assign";
 import { redis } from "./shared/redis/client";
 import { chats } from "./shared/bot/chats";
 import { bot } from "./shared/bot";
-import { rcon } from "./shared/rcon/client";
 import { urlsService } from "./shared/bot/urls";
 import { handleProcessOnEvent } from "./shared/utils/handle-log";
 import { nats } from "./shared/nats/client";
-import { env } from "./shared/env";
-import { minio } from "./shared/minio/client";
+import { getEnv } from "./shared/env";
+import { minioService } from "./shared/minio/client";
 import { createBootstrap, type BootstrapStep } from "@repo/core/utils/boot";
 import { isError } from "@repo/shared/lib/helpers";
 import { appLogger, logger } from "./shared/logger";
 import { checkDatabasesHealth, printDatabases } from "@repo/core/utils/database";
 import { DATABASES_FOR_CHECK } from "./shared/database";
+import { taskWithTimeout } from "@repo/core/utils";
+import { defineVerbose } from "@repo/core/utils";
+
+const verbose = defineVerbose();
 
 const pipeline: BootstrapStep[] = [
   {
     name: "db-health",
     critical: true,
     run: async () => {
-      const logger = appLogger.child("db-health");
+      const logger = appLogger.child({ name: "db-health" });
 
       await checkDatabasesHealth(DATABASES_FOR_CHECK, {
-        onSuccess: (results) => {
-          printDatabases(results);
-        },
-        verbose: !env.PROD,
-        onError: (e) => {
-          logger.error(e);
-        },
+        onSuccess: (results) => printDatabases(results),
+        verbose,
+        onError: (e) => logger.error(e),
       });
     },
   },
@@ -40,9 +39,7 @@ const pipeline: BootstrapStep[] = [
       await chats.init();
 
       await urlsService.init({
-        onError: (e) => {
-          logger.error("Urls error", e);
-        },
+        onError: (error) => logger.error({ message: "Urls error", error }),
         print: true
       })
     }
@@ -52,27 +49,24 @@ const pipeline: BootstrapStep[] = [
     run: () => redis.init(),
   },
   {
-    name: "rcon",
-    run: () => rcon.connect({
-      onSuccess: () => {
-        logger.info(`Connected`);
-      },
-      onError: (e) => {
-        logger.error("RCON error", e);
-      },
-    }),
-  },
-  {
     name: "nats",
     run: () => nats.start(),
   },
   {
     name: "minio",
-    run: () => minio.start(),
+    run: () => taskWithTimeout(() => minioService.start(), {
+      timeout: 5000
+    }),
+    critical: false
   },
   {
     name: "bot",
-    run: () => bot.start()
+    run: () => taskWithTimeout(() => bot.start(), {
+      timeout: 3000,
+      fallback: () => {
+        logger.error({ message: "Bot start timeout" });
+      }
+    })
   }
 ];
 
@@ -82,8 +76,11 @@ try {
   await boot.start();
 
   const { startApp } = await import("./app");
-  startApp();
+  startApp({ verbose });
 } catch (e) {
+  if (!getEnv().PROD) {
+    console.error(e)
+  }
   Promise.reject(isError(e) ? e : new Error("UNKNOWN"));
 }
 
@@ -91,7 +88,10 @@ const shutdown = async (signal: string) => {
   appLogger.info(`Received ${signal}. Starting graceful shutdown...`);
   setTimeout(() => process.exit(1), 10000).unref();
 
-  await Promise.allSettled([nats.close(), redis.close(), rcon.disconnect()]);
+  await Promise.allSettled([
+    nats.close(),
+    redis.close(),
+  ]);
 
   appLogger.info("All connections closed. Bye!");
   process.exit(0);

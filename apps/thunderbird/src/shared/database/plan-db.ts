@@ -1,10 +1,10 @@
-import { env } from "../env";
+import { getEnv } from "../env";
 import type { PoolOptions } from "mysql2";
 import type { DB } from "@repo/shared/types/db/plan";
 import { createDatabase } from "@repo/core/utils/database";
 
 export const config: PoolOptions = {
-	uri: env.PLAN_MYSQL_URI,
+	uri: getEnv().PLAN_MYSQL_URI,
 	connectionLimit: 10,
 };
 const database = createDatabase<DB>()({

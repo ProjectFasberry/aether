@@ -14,8 +14,8 @@ import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
 import { DateTime } from "#/helpers/typebox";
 import { cookie } from "#/utils";
 
-export const loginLogger = authLogger.withTag("Login");
-export const qrLogger = loginLogger.withTag("QR");
+export const loginLogger = authLogger.child({ name: "login" });
+export const qrLogger = loginLogger.child({ name: "qr" });
 
 type CreateSession = {
   nickname: string;
@@ -229,7 +229,7 @@ export const session = {
     }
 
     if (!isProduction) {
-      loginLogger.log(`Session created for ${nickname} ${expires_at.getDate()}`);
+      loginLogger.info(`Session created for ${nickname} ${expires_at.getDate()}`);
     }
 
     return { token, expires_at };
@@ -252,13 +252,13 @@ export const session = {
 
     deleteSessionResult.forEach(([err, result]) => {
       if (!isProduction) {
-        loginLogger.log(`deleteSessionResult`, { err, result });
+        loginLogger.info(`deleteSessionResult`, { err, result });
       }
       if (err) throw err;
     });
 
     if (!isProduction) {
-      loginLogger.log(`Session deleted for ${nickname}`);
+      loginLogger.info(`Session deleted for ${nickname}`);
     }
   },
   async get({

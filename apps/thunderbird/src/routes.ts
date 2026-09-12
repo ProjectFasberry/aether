@@ -20,6 +20,8 @@ import { banner } from "./modules/banner";
 import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { misc } from "./modules/misc";
+import { html } from '@elysia/html';
+import previewHtml from "../static/preview.html" with { type: "text" }
 
 export const main = new Elysia()
   .group("", app => app
@@ -50,7 +52,16 @@ const privatedGroup = new Elysia()
   )
 
 export const root = new Elysia()
-  .get("/", ({ redirect }) => redirect(`/openapi`))
+  .group("", app => app
+    .use(html())
+    // @ts-expect-error
+    .get('/', ({ html }) => html(previewHtml), {
+      detail: {
+        summary: "Return static welcome HTML"
+      }
+    })
+    .get("/favicon.ico", () => "")
+  )
   .use(health)
   .use(appGroup)
   .use(validateGroup)

@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { general } from "../database";
+import { general } from "../database/general-db";
 import { appLogger, logger } from "../logger";
 import { invariant } from "@repo/shared/lib/utils";
 

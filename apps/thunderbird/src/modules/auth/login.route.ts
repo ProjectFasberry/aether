@@ -11,7 +11,7 @@ import { ipPlugin } from "#/lib/plugins/index";
 import { defineRequiredUser } from "#/lib/define";
 import Bowser from "bowser";
 import { nats } from "#/shared/nats/client";
-import { logger } from "#/shared/constants/logger";
+import { logger } from "@repo/shared/utils/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth";
 import { isProduction } from "#/shared/env";
@@ -159,7 +159,7 @@ export const withQR = new Elysia()
       await loginQR.deleteToken(token);
 
       if (!isProduction) {
-        qrLogger.log(`Client closed. Code: ${code}; Reason: ${reason}`);
+        qrLogger.info(`Client closed. Code: ${code}; Reason: ${reason}`);
       }
     },
     detail: {

@@ -2,7 +2,7 @@ import { createSkinsService } from "@repo/core/modules/skins/index"
 import { general as generalDb } from "#/shared/database/general-db";
 import { skins as skinsDb } from "#/shared/database/skins-db";
 import { redis } from "#/shared/redis/client";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 
 export const skinsService = createSkinsService({
   databases: {
@@ -11,6 +11,6 @@ export const skinsService = createSkinsService({
   },
   redis: redis.getInstance,
   config: {
-    VOLUME_URL: env.VOLUME_URL
+    VOLUME_URL: getEnv().VOLUME_URL
   }
 })

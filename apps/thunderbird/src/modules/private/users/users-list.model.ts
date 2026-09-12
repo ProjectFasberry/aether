@@ -1,7 +1,7 @@
 import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
@@ -81,7 +81,7 @@ async function process(nicknames: string[]) {
 
     return {
       player: id ? { id } : null,
-      avatar: skin?.[0].skin_head_url ?? DEFAULT_HEAD(env.VOLUME_URL),
+      avatar: skin?.[0].skin_head_url ?? DEFAULT_HEAD(getEnv().VOLUME_URL),
       skin,
       role: role_id ? {
         id: role_id,

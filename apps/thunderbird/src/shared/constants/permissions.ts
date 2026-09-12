@@ -30,7 +30,7 @@ export const permissions = {
 
     const stats = analyzePermissions(PERMISSIONS);
 
-    appLogger.success(
+    appLogger.info(
       `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
     );
   },

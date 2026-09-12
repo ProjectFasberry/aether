@@ -1,5 +1,4 @@
-import { createConsola } from "consola";
+import { logger } from "@repo/shared/utils/logger";
 
-export const logger = createConsola()
-export const appLogger = logger.withTag("app")
-export const validateLogger = logger.withTag("validation")
+export const appLogger = logger.child({ name: "app" });
+export const validateLogger = logger.child({ name: "validation" });

@@ -1,5 +1,5 @@
 import { Bot } from "gramio";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { invariant } from "@repo/shared/lib/utils";
 import { GUARD_COMMANDS } from "./cmds";
 import { logger } from "../logger";
@@ -8,19 +8,21 @@ import { chats } from "./chats";
 let instance: Bot | null = null;
 
 export const bot = {
-	logger: logger.child("bot"),
+  logger: logger.child({ name: "bot" }),
+  getOptionalInstance(): Bot | null {
+    return instance;
+  },
 	getInstance(): Bot {
 		invariant(instance, "Bot is not defined");
 		return instance;
 	},
 	async start(): Promise<void> {
-		const token = env.PROD ? env.BOT_GUARD_TOKEN : env.BOT_GUARD_TOKEN_DEV;
+		const token = getEnv().PROD ? getEnv().BOT_GUARD_TOKEN : getEnv().BOT_GUARD_TOKEN_DEV;
 		if (!token) throw new Error("BOT_GUARD_TOKEN is not defined");
 
 		const conn = new Bot(token)
 			.onStart(async ({ updatesFrom, plugins, info }) => {
-        this.logger.info("Started");
-				console.log({ updatesFrom, plugins, info })
+				this.logger.debug({ updatesFrom, plugins, info })
 			})
 			.onError((ctx) => {
 				this.logger.error("Update Error:", ctx.error);

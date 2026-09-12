@@ -1,6 +1,6 @@
-import { logger } from "#/shared/constants/logger";
 import { convertChunksResult, getBuildFilesInfo } from "@repo/shared/utils/build";
 import { SERVICE_NAME } from "#/shared/constants/internal";
+import { logger } from "@repo/shared/utils/logger";
 
 type Stage = "staging" | "prod";
 const STAGE = Bun.env["STAGE"] as Stage | undefined;
@@ -39,8 +39,7 @@ const msg = {
 	result: convertChunksResult(outputChunks),
 };
 
-logger.box({
-	title: " Build ",
-	style: { borderColor: "green" },
-	message: JSON.stringify(msg, null, 2).slice(1, -1),
+logger.info(JSON.stringify(msg, null, 2).slice(1, -1), {
+  asBox: true,
+	title: " Build "
 });

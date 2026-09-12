@@ -58,6 +58,7 @@
       "dependencies": {
         "@elysia/bearer": "1.4.4",
         "@elysia/cors": "1.4.2",
+        "@elysia/html": "^1.4.1",
         "@elysia/openapi": "1.4.15",
         "@elysia/server-timing": "1.4.1",
         "@napi-rs/canvas": "0.1.97",
@@ -77,7 +78,6 @@
         "@tqman/nice-logger": "1.1.1",
         "bcryptjs": "3.0.2",
         "bowser": "2.13.1",
-        "consola": "3.4.2",
         "croner": "9.1.0",
         "dayjs": "1.11.11",
         "elysia": "1.4.28",
@@ -783,8 +783,6 @@
     "concat-map": ["concat-map@0.0.1", "", {}, "sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg=="],
 
     "concurrently": ["concurrently@9.1.2", "", { "dependencies": { "chalk": "^4.1.2", "lodash": "^4.17.21", "rxjs": "^7.8.1", "shell-quote": "^1.8.1", "supports-color": "^8.1.1", "tree-kill": "^1.2.2", "yargs": "^17.7.2" }, "bin": { "conc": "dist/bin/concurrently.js", "concurrently": "dist/bin/concurrently.js" } }, "sha512-H9MWcoPsYddwbOGM6difjVwVZHl63nwMEwDJG/L7VGtuaJhb12h2caPG2tVPWs7emuYix252iGfqOyrz1GczTQ=="],
-
-    "consola": ["consola@3.4.2", "", {}, "sha512-5IKcdX0nnYavi6G7TtOhwkYzyjfJlatbjMjuLSfE2kYT5pMDOilZ4OvMhi637CcDICTmz3wARPoyhqyX1Y+XvA=="],
 
     "cookie": ["cookie@1.1.1", "", {}, "sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ=="],
 

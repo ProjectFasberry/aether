@@ -4,7 +4,7 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { sql } from "kysely";
 import type { PlayerActivityPayload } from "./activity-now.route";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import { serverStatusService } from "../status/index.model";
 import { invariant } from "#/utils";
 
@@ -48,8 +48,8 @@ export async function getPlayerStatus(nickname: string): Promise<PlayerActivityP
   try {
     const playerStatus = await serverStatusService.getPlayerStatusGlobal({
       nickname,
-      panelPassword: env.PANEL_PASSWORD,
-      panelUser: env.PANEL_USER,
+      panelPassword: getEnv().PANEL_PASSWORD,
+      panelUser: getEnv().PANEL_USER,
     })
 
     if (playerStatus) {

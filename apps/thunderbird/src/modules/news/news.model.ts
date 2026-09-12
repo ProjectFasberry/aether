@@ -10,7 +10,7 @@ import { type Static, t } from "elysia";
 import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { skinsService } from "../../shared/services/skins";
-import { env } from "#/shared/env";
+import { getEnv } from "#/shared/env";
 import { DateTime } from "#/helpers/typebox";
 
 export const newsSingleSchema = t.Object({
@@ -118,7 +118,7 @@ export async function getNewsList({
 		created_at: news.created_at,
 		creator: {
 			nickname: news.creator,
-			avatar: DEFAULT_HEAD(env.VOLUME_URL),
+			avatar: DEFAULT_HEAD(getEnv().VOLUME_URL),
 		},
 		imageUrl: getUrl(news.imageUrl),
 	}));

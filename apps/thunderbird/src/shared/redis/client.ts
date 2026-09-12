@@ -1,7 +1,7 @@
 import Redis, { type RedisOptions } from "ioredis";
-import { logger } from "#/shared/constants/logger";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { invariant } from "#/utils";
+import { logger } from "@repo/shared/utils/logger";
 
 const instances: { main: Redis | null; bridge: Redis | null } = {
 	main: null,
@@ -9,15 +9,15 @@ const instances: { main: Redis | null; bridge: Redis | null } = {
 };
 
 export const config: RedisOptions = {
-	host: env.REDIS_HOST,
-	port: env.REDIS_PORT,
-	password: env.REDIS_PASSWORD,
-	username: env.REDIS_USER,
+	host: getEnv().REDIS_HOST,
+	port: getEnv().REDIS_PORT,
+	password: getEnv().REDIS_PASSWORD,
+	username: getEnv().REDIS_USER,
 	maxRetriesPerRequest: 3,
 };
 
 export const redis = {
-  logger: logger.withTag("redis"),
+  logger: logger.child({ name: "redis" }),
 	getInstance(): Redis {
 		invariant(instances.main, "Redis main client is not initialized.");
 		return instances.main;
@@ -41,20 +41,20 @@ export const redis = {
 		return instances.bridge;
 	},
 	async _createClient(label: keyof typeof instances) {
-		this.logger.log(`Connecting to ${config.host}:${config.port}...`);
+		this.logger.info(`Connecting to ${config.host}:${config.port}...`);
 
 		return new Promise<Redis>((resolve, reject) => {
 			try {
 				const client = new Redis(config);
 
 				client.on("error", (e) => {
-					this.logger.withTag(label).error(`Runtime Error:`, e);
+					this.logger.child({ name: label }).error(`Runtime Error:`, e);
 				});
 
-				client.on("connect", () => this.logger.withTag(label).info(`Connection established`));
+				client.on("connect", () => this.logger.child({ name: label }).info(`Connection established`));
 
 				client.once("ready", () => {
-					this.logger.withTag(label).success(`Is ready`);
+					this.logger.child({ name: label }).info(`Is ready`);
 					resolve(client);
 				});
 
@@ -72,7 +72,7 @@ export const redis = {
 	async close() {
 		for (const [label, instance] of Object.entries(instances)) {
 			if (instance) {
-				this.logger.withTag(label).log("Disconnected")
+				this.logger.child({ name: label }).info("Disconnected")
 				instance.disconnect()
 			}
 		}

@@ -2,14 +2,14 @@ import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
 import { invariant } from "@repo/shared/lib/utils";
 import { logger } from "../logger";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { SUBSCRIBERS } from "./subs";
 import { isError } from "@repo/shared/lib/helpers";
 
 const config: ConnectionOptions = {
-	servers: [`nats://${env.NATS_HOST}`],
-	user: env.NATS_USER,
-	pass: env.NATS_PASSWORD,
+	servers: [`nats://${getEnv().NATS_HOST}`],
+	user: getEnv().NATS_USER,
+	pass: getEnv().NATS_PASSWORD,
 	reconnect: true,
 	maxReconnectAttempts: -1,
 	reconnectTimeWait: 2000,
@@ -18,7 +18,7 @@ const config: ConnectionOptions = {
 let client: NatsConnection | null = null;
 
 export const nats = {
-	logger: logger.child("nats"),
+	logger: logger.child({ name: "nats" }),
 	async _init(): Promise<void> {
 		try {
 			this.logger.info(`Connecting to ${config.servers}`);

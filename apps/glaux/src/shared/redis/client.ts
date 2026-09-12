@@ -1,21 +1,21 @@
 import Redis, { type RedisOptions } from "ioredis";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { invariant } from "@repo/shared/lib/utils";
 import { logger } from "../logger";
 
 let instance: Redis | null = null;
 
 const config: RedisOptions = {
-	host: env.REDIS_HOST,
+	host: getEnv().REDIS_HOST,
 	// @ts-expect-error
-	port: env.REDIS_PORT,
-	password: env.REDIS_PASSWORD,
-	username: env.REDIS_USER,
+	port: getEnv().REDIS_PORT,
+	password: getEnv().REDIS_PASSWORD,
+	username: getEnv().REDIS_USER,
 	maxRetriesPerRequest: 3,
 };
 
 export const redis = {
-	logger: logger.child("redis"),
+	logger: logger.child({ name: "redis" }),
 	getInstance(): Redis {
 		invariant(instance, "Redis client is not initialized");
 		return instance;

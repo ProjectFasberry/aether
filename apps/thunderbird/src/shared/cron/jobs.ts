@@ -1,7 +1,7 @@
 import { cleanOldEvents } from "#/modules/server/events/events.model";
 import { updateExchangeRates } from "#/modules/store/order/external/cryptobot.model";
 import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
-import { env } from "../env";
+import { getEnv } from "../env";
 import { redis } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { cronLogger } from ".";
@@ -18,7 +18,7 @@ type Job = {
 async function wrapJobCb(name: string, fn: () => Promise<void>) {
   try {
     await fn()
-    cronLogger.success(`Job "${name}"`);
+    cronLogger.info(`Job "${name}"`);
   } catch (e) {
     cronLogger.error(`Job "${name}"`, e);
   }
@@ -39,7 +39,7 @@ export const CRON_JOBS: Job[] = [
     name: "warn-before-update-exchange-rates",
     cron: "0 5-59/10 * * * *",
     callback: async function () {
-      cronLogger.log(`Job "${this.name}" will be started in 5 minutes`);
+      cronLogger.info(`Job "${this.name}" will be started in 5 minutes`);
     },
     immediately: true,
     schedule: true,
@@ -59,7 +59,7 @@ export const CRON_JOBS: Job[] = [
     name: "warn-before-clean-old-events",
     cron: "0 5-59/10 * * * *",
     callback: async function () {
-      cronLogger.log(`Job "${this.name}" will be started in 5 minutes`);
+      cronLogger.info(`Job "${this.name}" will be started in 5 minutes`);
     },
     immediately: true,
     schedule: true,
@@ -70,8 +70,8 @@ export const CRON_JOBS: Job[] = [
     cron: "* * * * *",
     callback: async function () {
       await wrapJobCb(this.name, () => serverStatusService.updateServerStatus({
-        panelPassword: env.PANEL_PASSWORD,
-        panelUser: env.PANEL_USER,
+        panelPassword: getEnv().PANEL_PASSWORD,
+        panelUser: getEnv().PANEL_USER,
         redis: redis.getInstance
       }))
     },
