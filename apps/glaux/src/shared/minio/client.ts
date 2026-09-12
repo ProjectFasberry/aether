@@ -6,7 +6,7 @@ const config: ClientOptions = {
 	endPoint: getEnv().MINIO_HOST,
 	// @ts-expect-error
 	port: getEnv().MINIO_PORT,
-	useSSL: Bun.env.NODE_ENV === 'production',
+	useSSL: getEnv().PROD,
 	accessKey: getEnv().MINIO_ACCESS_KEY,
 	secretKey: getEnv().MINIO_SECRET_KEY,
 };

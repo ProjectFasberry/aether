@@ -1,4 +1,9 @@
 {
 	"files": [],
-	"references": [{ "path": "./apps/thunderbird" }, { "path": "./apps/glaux" }, { "path": "./pkgs/shared" }]
+	"references": [
+		{ "path": "./apps/thunderbird" },
+		{ "path": "./apps/glaux" },
+		{ "path": "./pkgs/shared" },
+		{ "path": "./pkgs/core" }
+	]
 }

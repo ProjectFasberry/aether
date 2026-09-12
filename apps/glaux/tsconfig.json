@@ -18,7 +18,6 @@
 		"emitDeclarationOnly": true,
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
-		"strict": true,
 		"outDir": "dist",
 		"skipLibCheck": true,
 		"noEmit": true,

@@ -5,7 +5,6 @@
 		"module": "ESNext",
 		"moduleResolution": "bundler",
 		"skipLibCheck": true,
-		"strict": true,
 		"composite": true,
 		"emitDeclarationOnly": true,
 		"noUncheckedIndexedAccess": false,
