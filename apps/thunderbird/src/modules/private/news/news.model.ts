@@ -10,7 +10,11 @@ import type { Selectable } from "kysely";
 import type * as z from "zod";
 
 export async function deleteNews(id: number) {
-	return await general.deleteFrom("news").where("id", "=", id).returning(["id"]).executeTakeFirstOrThrow();
+  return await general
+    .deleteFrom("news")
+    .where("id", "=", id)
+    .returning(["id"])
+    .executeTakeFirstOrThrow();
 }
 
 export const newsSingleExtendedSchema = t.Pick(newsSingleSchema, [

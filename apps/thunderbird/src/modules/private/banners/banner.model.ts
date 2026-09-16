@@ -82,7 +82,11 @@ export const banner = {
 		return query;
 	},
 	async delete(id: number): Promise<{ id: number } | null> {
-		const query = await general.deleteFrom("banners").where("id", "=", id).returning(["id"]).executeTakeFirst();
+    const query = await general
+      .deleteFrom("banners")
+      .where("id", "=", id)
+      .returning(["id"])
+      .executeTakeFirst();
 
 		return query ?? null;
 	},

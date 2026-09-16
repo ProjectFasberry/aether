@@ -38,13 +38,18 @@ export async function updateOptions(
 }
 
 export async function getDynamicOptions(): Promise<Option[]> {
-	const query = await general.selectFrom("options").select(["name", "value", "title"]).execute();
+  const query = await general
+    .selectFrom("options")
+    .select(["name", "value", "title"])
+    .execute();
 
 	return query;
 }
 
 type DescriptionMap<T> = {
-	[K in keyof T]: T[K] extends boolean ? string : T[K] extends object ? DescriptionMap<T[K]> : never;
+  [K in keyof T]: T[K] extends boolean
+  ? string : T[K] extends object ? DescriptionMap<T[K]>
+  : never;
 };
 
 function get(state: any, descriptions: any, path = ""): Option[] {

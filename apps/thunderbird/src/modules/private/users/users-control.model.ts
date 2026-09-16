@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db"
-import { rcon } from "#/shared/rcon/client";
+// import { rcon } from "#/shared/rcon/client";
 import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 
@@ -107,35 +107,37 @@ const CONTROL_EVENTS: Record<UserControlSchema["type"], (t: Nicknames) => Promis
 async function execCmd({
   type, nicknames, args: rawArgs
 }: ExecCmdArgs & { nicknames: UserControlSchema["nicknames"] }): Promise<string[]> {
-  const client = rcon.getInstance()
+  throw new Error("this feature is not implemented")
+  // const client = rcon.getInstance()
 
-  function stripMinecraftColors(text: string): string {
-    return text.replace(/§./g, '');
-  }
+  // function stripMinecraftColors(text: string): string {
+  //   return text.replace(/§./g, '');
+  // }
 
-  const obj = rawArgs ?? {};
-  const args = Object.fromEntries(
-    Object.entries(obj).filter(([, v]) => v !== undefined)
-  );
+  // const obj = rawArgs ?? {};
+  // const args = Object.fromEntries(
+  //   Object.entries(obj).filter(([, v]) => v !== undefined)
+  // );
 
-  const exec = EXEC_CMDS[type]
+  // const exec = EXEC_CMDS[type]
 
-  const tasks = nicknames.map(async nickname => {
-    const payload = { ...args, nickname };
-    const toExec = exec(payload);
-    const cmd = await client.send(toExec);
-    return stripMinecraftColors(cmd.toString());
-  });
+  // const tasks = nicknames.map(async nickname => {
+  //   const payload = { ...args, nickname };
+  //   const toExec = exec(payload);
+  //   const cmd = await client.send(toExec);
+  //   return stripMinecraftColors(cmd.toString());
+  // });
 
-  const result: string[] = await Promise.all(tasks)
-  invariant(nicknames.length === result.length, "Not updated")
-  return result
+  // const result: string[] = await Promise.all(tasks)
+  // invariant(nicknames.length === result.length, "Not updated")
+  // return result
 }
 
 type Nicknames = Static<typeof nicknamesSchema>
 
 async function alert(msg: string) {
-  await rcon.getInstance().send(`alert ${msg}`)
+  throw new Error("this feature is not implemented")
+  // await rcon.getInstance().send(`alert ${msg}`)
 }
 
 export async function changeRoleUsers(

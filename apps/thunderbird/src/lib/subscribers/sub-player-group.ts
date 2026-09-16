@@ -18,6 +18,10 @@ export type LuckpermsLogContent = {
 
 type LuckpermsUpdatePayload = {
 	id: string;
-} & ({ type: "userupdate"; content: LuckpermsUpdateContent } | { type: "log"; content: LuckpermsLogContent });
+} & (
+    { type: "userupdate"; content: LuckpermsUpdateContent }|{
+      type: "log"; content: LuckpermsLogContent
+    }
+  );
 
 type ActionType = "set" | "unset";

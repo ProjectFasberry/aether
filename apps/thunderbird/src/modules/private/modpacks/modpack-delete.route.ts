@@ -7,7 +7,11 @@ import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
 
 async function deleteModpack(id: number) {
-	return await general.deleteFrom("modpacks").where("id", "=", id).returning("id").executeTakeFirstOrThrow();
+  return await general
+    .deleteFrom("modpacks")
+    .where("id", "=", id)
+    .returning("id")
+    .executeTakeFirstOrThrow();
 }
 
 export const modpackDelete = new Elysia()

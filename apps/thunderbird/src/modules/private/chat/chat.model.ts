@@ -96,7 +96,11 @@ export const chat = {
 		return data;
 	},
 	async createMsg(nickname: string, message: string) {
-		return general.insertInto("privated_chat").values({ message, nickname }).returningAll().executeTakeFirstOrThrow();
+    return general
+      .insertInto("privated_chat")
+      .values({ message, nickname })
+      .returningAll()
+      .executeTakeFirstOrThrow();
 	},
 	async editMsg(nickname: string, id: number, newMessage: string) {
 		return general
@@ -123,7 +127,12 @@ export const chat = {
 		return query;
 	},
 	async getViews(id: number, { endCursor }: Static<typeof chatMessageViewsSchema>) {
-		const views = await general.selectFrom("chat_views").select("id").where("message_id", "=", id).limit(64).execute();
+    const views = await general
+      .selectFrom("chat_views")
+      .select("id")
+      .where("message_id", "=", id)
+      .limit(64)
+      .execute();
 
 		if (views.length >= 64) {
 			return { data: views, meta: wrapMeta({ hasNextPage: false, hasPrevPage: false }) };

@@ -20,8 +20,8 @@
 	},
 	"dependencies": {
 		"@elysia/bearer": "1.4.4",
-		"@elysia/html": "1.4.1",
 		"@elysia/cors": "1.4.2",
+		"@elysia/html": "1.4.1",
 		"@elysia/openapi": "1.4.15",
 		"@elysia/server-timing": "1.4.1",
 		"@napi-rs/canvas": "0.1.97",
@@ -51,7 +51,6 @@
 		"kysely-mariadb": "0.1.2",
 		"kysely-paginate": "0.3.1",
 		"minio": "8.0.7",
-		"modern-rcon": "1.0.3",
 		"mysql2": "3.14.1",
 		"nanoid": "5.1.5",
 		"p-limit": "7.1.1",

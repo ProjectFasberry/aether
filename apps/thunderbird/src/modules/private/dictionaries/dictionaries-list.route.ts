@@ -15,7 +15,10 @@ const dictListPayloadSchema = t.Array(
 	}),
 );
 async function getDictList() {
-	const query = await general.selectFrom("dictionaries").selectAll().execute();
+  const query = await general
+    .selectFrom("dictionaries")
+    .selectAll()
+    .execute();
 
 	return query;
 }

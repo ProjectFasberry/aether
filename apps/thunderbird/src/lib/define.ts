@@ -6,9 +6,15 @@ import { bearer } from "@elysia/bearer";
 import { logValidators } from "#/utils/config/log-utils";
 
 export async function handleByBearer(bearer: string): Promise<boolean> {
-	const hash = new Bun.CryptoHasher("sha256").update(bearer).digest("hex");
+  const hash = new Bun.CryptoHasher("sha256")
+    .update(bearer)
+    .digest("hex");
 
-	const query = await general.selectFrom("api_keys").select("id").where("key", "=", hash).executeTakeFirst();
+  const query = await general
+    .selectFrom("api_keys")
+    .select("id")
+    .where("key", "=", hash)
+    .executeTakeFirst();
 
 	return Boolean(query?.id);
 }

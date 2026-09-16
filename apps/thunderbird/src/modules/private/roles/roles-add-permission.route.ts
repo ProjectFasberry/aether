@@ -12,7 +12,10 @@ async function addPermissionForRole(roleId: number, { permissions }: Static<type
     permission_id: p,
   }));
 
-  const query = await general.insertInto("role_permissions").values(values).executeTakeFirstOrThrow();
+  const query = await general
+    .insertInto("role_permissions")
+    .values(values)
+    .executeTakeFirstOrThrow();
 
   const result = query.numInsertedOrUpdatedRows;
 

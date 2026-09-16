@@ -7,7 +7,11 @@ import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
 
 async function deleteDict(id: number) {
-	return await general.deleteFrom("dictionaries").where("id", "=", id).returning("id").executeTakeFirstOrThrow();
+  return await general
+    .deleteFrom("dictionaries")
+    .where("id", "=", id)
+    .returning("id")
+    .executeTakeFirstOrThrow();
 }
 
 export const dictionariesDelete = new Elysia()

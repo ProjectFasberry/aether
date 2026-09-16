@@ -13,11 +13,16 @@ async function handleGiveBalance(msg: Msg) {
 			.where(
 				"uuid",
 				"=",
-				playerpoints.selectFrom("playerpoints_username_cache").select("uuid").where("username", "=", nickname),
+        playerpoints
+          .selectFrom("playerpoints_username_cache")
+          .select("uuid")
+          .where("username", "=", nickname),
 			)
 			.executeTakeFirstOrThrow();
 
-		const payload = res.numUpdatedRows ? JSON.stringify({ result: "ok" }) : JSON.stringify({ error: "not updated" });
+    const payload = res.numUpdatedRows
+      ? JSON.stringify({ result: "ok" })
+      : JSON.stringify({ error: "not updated" });
 
 		msg.respond(payload);
 	} catch (e) {

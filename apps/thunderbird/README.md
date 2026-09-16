@@ -8,7 +8,6 @@ Responsible for backend logic, storage management, database connections, Minecra
 - **Caching**: `ioredis` (Redis client)
 - **Messaging**: `@nats-io/nats-core` + `@nats-io/jetstream` (NATS message broker)
 - **Storage**: `minio` (S3 object storage helper)
-- **Server Control**: `modern-rcon` (Minecraft RCON protocol connection)
 - **Validation**: `zod` + `@sinclair/typebox` (Schema declaration and type verification)
 - **Auth & Crypto**: `bcryptjs` + `@oslojs/crypto` + `@oslojs/encoding` (Secure password hashing and encoding utilities)
 - **Image Generation**: `@napi-rs/canvas` (High-performance canvas rendering)

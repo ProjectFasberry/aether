@@ -14,7 +14,8 @@ const swaggerConfig: ElysiaOpenAPIConfig = {
 	},
 };
 
-export const openApiPlugin = () => new Elysia({ name: "openApiPlugin" }).use(openapi(swaggerConfig));
+export const openApiPlugin = () => new Elysia({ name: "openApiPlugin" })
+  .use(openapi(swaggerConfig));
 
 export const hideOpenApiConfig = {
 	detail: { hide: true },

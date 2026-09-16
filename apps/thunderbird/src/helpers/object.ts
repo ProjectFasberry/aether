@@ -27,4 +27,5 @@ export function hasKeyDeep(obj: Record<string, any>, path: string): boolean {
 		}, obj as any) !== undefined
 	);
 }
-export const getDeepValue = (obj: any, path: string) => path.split(".").reduce((acc, part) => acc && acc[part], obj);
+export const getDeepValue = (obj: any, path: string) =>
+  path.split(".").reduce((acc, part) => acc && acc[part], obj);

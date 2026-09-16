@@ -12,4 +12,9 @@ export const corsPlugin = () =>
 
 export const loggerPlugin = () => logger();
 
-export const ipPlugin = () => new Elysia({ name: "ipPlugin" }).use(ip({ checkHeaders: ["X-Forwarded-For"] }));
+export const ipPlugin = () => new Elysia({ name: "ipPlugin" })
+  .use(
+    ip({
+      checkHeaders: ["X-Forwarded-For"]
+    })
+  );

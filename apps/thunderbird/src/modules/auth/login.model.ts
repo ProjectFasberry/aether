@@ -126,11 +126,14 @@ export const session = {
 
       invariant(refreshSessionResult, "Transaction failed");
 
-      refreshSessionResult.forEach(([err, result]) => {
+      refreshSessionResult.forEach(([error, result]) => {
         if (!isProduction) {
-          loginLogger.log("refreshSessionResult", { err, result });
+          loginLogger.log("refreshSessionResult", { error, result });
         }
-        if (err) throw err;
+
+        if (error) {
+          throw error;
+        }
       });
 
       return {
@@ -160,7 +163,7 @@ export const session = {
     })
 
     if (!isProduction) {
-      loginLogger.info(`Session updated for ${nickname} ${expires_at.getDate()}`);
+      loginLogger.debug(`Session updated for ${nickname} ${expires_at.getDate()}`);
     }
   },
   generateSessionToken(): string {
@@ -186,7 +189,10 @@ export const session = {
         const oldestToken = oldestSessions[0];
         const userSessionKey = auth.getSessionKey(oldestToken);
 
-        const removalPipeline = redisClient.multi().zrem(userSessionsKey, oldestToken).del(userSessionKey);
+        const removalPipeline = redisClient
+          .multi()
+          .zrem(userSessionsKey, oldestToken)
+          .del(userSessionKey);
 
         await removalPipeline.exec();
       }
@@ -215,11 +221,14 @@ export const session = {
 
     invariant(createUserSessionResult, "Transaction failed");
 
-    createUserSessionResult.forEach(([err, result]) => {
+    createUserSessionResult.forEach(([error, result]) => {
       if (!isProduction) {
-        loginLogger.log(`createUserSessionResult`, { err, result });
+        loginLogger.debug(`createUserSessionResult`, { error, result });
       }
-      if (err) throw err;
+
+      if (error) {
+        throw error;
+      }
     });
 
     const expires_at = new Date(Date.now() + SESSION_EXPIRE_MS);
@@ -229,7 +238,7 @@ export const session = {
     }
 
     if (!isProduction) {
-      loginLogger.info(`Session created for ${nickname} ${expires_at.getDate()}`);
+      loginLogger.debug(`Session created for ${nickname} ${expires_at.getDate()}`);
     }
 
     return { token, expires_at };
@@ -250,15 +259,18 @@ export const session = {
 
     invariant(deleteSessionResult, "Transaction failed");
 
-    deleteSessionResult.forEach(([err, result]) => {
+    deleteSessionResult.forEach(([error, result]) => {
       if (!isProduction) {
-        loginLogger.info(`deleteSessionResult`, { err, result });
+        loginLogger.debug(`deleteSessionResult`, { error, result });
       }
-      if (err) throw err;
+
+      if (error) {
+        throw error;
+      }
     });
 
     if (!isProduction) {
-      loginLogger.info(`Session deleted for ${nickname}`);
+      loginLogger.debug(`Session deleted for ${nickname}`);
     }
   },
   async get({
@@ -280,7 +292,9 @@ export const session = {
     if (!dataRowStr) return null;
 
     const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(dataRowStr);
-    if (!dataRow.ok) throw dataRow.error;
+    if (dataRow.ok === false) {
+      throw dataRow.error;
+    }
 
     return {
       ...dataRow.value,
@@ -303,7 +317,10 @@ async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParse
 
   return dataRowsStrFiltered.map((v) => {
     const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(v);
-    if (!dataRow.ok) throw dataRow.error;
+    if (dataRow.ok === false) {
+      throw dataRow.error;
+    }
+
     return {
       ...dataRow.value,
       browser: JSON.parse(dataRow.value.browser),
@@ -358,9 +375,9 @@ export const sessions = {
 
     invariant(deleteResult, "Transaction failed");
 
-    deleteResult.forEach(([err, result]) => {
+    deleteResult.forEach(([error, result]) => {
       if (!isProduction) {
-        authLogger.log("deleteAllSessionsResult", { err, result });
+        authLogger.debug("deleteAllSessionsResult", { error, result });
       }
     });
   },
@@ -392,13 +409,17 @@ export const sessions = {
 
     const targetKeyToDelete = auth.getSessionKey(targetToken);
 
-    const deleteResult = await redisClient.multi().del(targetKeyToDelete).zrem(sessionsListKey, targetToken).exec();
+    const deleteResult = await redisClient
+      .multi()
+      .del(targetKeyToDelete)
+      .zrem(sessionsListKey, targetToken)
+      .exec();
 
     invariant(deleteResult, "Transaction failed");
 
-    deleteResult.forEach(([err, result]) => {
+    deleteResult.forEach(([error, result]) => {
       if (!isProduction) {
-        authLogger.log("deleteSessionByIdResult", { err, result });
+        authLogger.debug("deleteSessionByIdResult", { error, result });
       }
     });
   },
@@ -434,7 +455,9 @@ export const loginQR = {
   getQRSubject: (token: string) => `auth.qr.*.${token}`,
   createQRSubject: (type: QREventsEvent, token: string) => `auth.qr.${type}.${token}`,
   _afterEvents(type: QREventsEvent, token: string) {
-    nats.getInstance().publish(this.createQRSubject(type, token), JSON.stringify({ data: token }));
+    nats
+      .getInstance()
+      .publish(this.createQRSubject(type, token), JSON.stringify({ data: token }));
   },
   async generate({ visitorId, ip, userAgentStr }: LoginQRGenerateParams): Promise<QRGeneratePayload> {
     const token = nanoid(12);
@@ -448,15 +471,22 @@ export const loginQR = {
       status: "pending",
     };
 
-    const createQRResult = await redisClient.pipeline().hset(key, payload).expire(key, QR_VERIFY_TIMEOUT_S).exec();
+    const createQRResult = await redisClient
+      .pipeline()
+      .hset(key, payload)
+      .expire(key, QR_VERIFY_TIMEOUT_S)
+      .exec();
 
     invariant(createQRResult, "Pipeline failed");
 
-    createQRResult.forEach(([err, result]) => {
+    createQRResult.forEach(([error, result]) => {
       if (!isProduction) {
-        qrLogger.log(`createQRResult`, { err, result });
+        qrLogger.debug(`createQRResult`, { error, result });
       }
-      if (err) throw err;
+
+      if (error) {
+        throw error;
+      }
     });
 
     return { token };
@@ -497,7 +527,9 @@ export const loginQR = {
     const key = this.getQRTokenKey(token);
 
     const data = await redisClient.hgetall(key);
-    if (!data || Object.keys(data).length === 0) throw new Error("Token is expired or not found");
+    if (!data || Object.keys(data).length === 0) {
+      throw new Error("Token is expired or not found")
+    };
 
     return {
       ...(data as unknown as LoginQRKeyPayload),
@@ -530,11 +562,14 @@ export const loginQR = {
 
     invariant(createSessionQRResult, "Pipeline failed");
 
-    createSessionQRResult.forEach(([err, result]) => {
+    createSessionQRResult.forEach(([error, result]) => {
       if (!isProduction) {
-        qrLogger.log("createSessionQRResult", { err, result });
+        qrLogger.debug("createSessionQRResult", { error, result });
       }
-      if (err) throw err;
+
+      if (error) {
+        throw error;
+      }
     });
   },
 } as const;
