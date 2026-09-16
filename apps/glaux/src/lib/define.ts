@@ -6,11 +6,13 @@ export const getUserKey = (token: string) => `session:${token}`;
 export const SESSION_KEY = "session";
 
 export const defineSession = () => new Elysia({ name: "defineSession" })
-  .derive(({ cookie }) => ({ session: cookie[SESSION_KEY]?.value as string | undefined }))
+  .derive(({ cookie }) => ({ session: cookie[SESSION_KEY]?.value as string | null ?? null }))
   .as("global");
 
 export async function handleUser(bearer: string): Promise<boolean> {
-  const hash = new Bun.CryptoHasher("sha256").update(bearer).digest("hex");
+  const hash = new Bun.CryptoHasher("sha256")
+    .update(bearer)
+    .digest("hex");
 
   const query = await general
     .selectFrom("api_keys")

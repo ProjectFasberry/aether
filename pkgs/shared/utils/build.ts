@@ -31,9 +31,7 @@ export async function getBuildFilesInfo(output: Bun.BuildOutput) {
     processArtifact(target);
   }
 
-  // @ts-expect-error
   if (output.metafile) {
-    // @ts-expect-error
     await Bun.write("./dist/meta.json", JSON.stringify(output.metafile));
   }
 

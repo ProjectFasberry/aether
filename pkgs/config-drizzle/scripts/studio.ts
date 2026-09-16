@@ -1,6 +1,6 @@
 import * as p from "@clack/prompts";
 import { baseOpts, portOpts } from "./index";
-import { defineSelectedDatabase } from "./utils";
+import { defineEnv } from "./utils";
 
 const { mode, target, port } = await p.group(
 	{ ...baseOpts, ...portOpts },
@@ -13,7 +13,7 @@ const s = Bun.spawn({
 	cmd: ["bun", "run", "drizzle-kit", "studio", "--verbose", "--port", `${Number(port)}`],
 	stdout: "inherit",
 	stderr: "inherit",
-	env: await defineSelectedDatabase(target, mode),
+	env: await defineEnv(target, mode),
 });
 
 await s.exited;

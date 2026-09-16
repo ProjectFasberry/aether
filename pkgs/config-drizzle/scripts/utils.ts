@@ -56,7 +56,7 @@ export function getDatabase(name: keyof typeof DATABASES) {
 
 export const getDatabasesList = () => Object.keys(DATABASES)
 
-export async function defineSelectedDatabase(databaseName: string, mode: "dev" | "prod") {
+async function defineSelectedDatabase(databaseName: string, mode: "dev" | "prod") {
 	const url = await getDatabaseUrl(databaseName, mode);
 	const dialect = getDatabase(databaseName).dialect;
 
@@ -66,3 +66,10 @@ export async function defineSelectedDatabase(databaseName: string, mode: "dev" |
 		SELECTED_DIALECT: dialect,
 	};
 }
+
+export async function defineEnv(databaseName: string, mode: "dev" | "prod") {
+  return {
+    ...process.env,
+    ...await defineSelectedDatabase(databaseName, mode)
+  }
+};

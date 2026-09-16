@@ -10,6 +10,7 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"declaration": true,
 		"types": ["bun-types"],
+		"strict": true,
 		"declarationMap": true,
 		"incremental": true,
 		"outDir": "dist"

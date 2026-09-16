@@ -4,7 +4,6 @@ import { type CommandCtx, GUARD_COMMANDS } from "./cmds";
 import { Keyboard } from "gramio";
 import { chats } from "./chats";
 import { urlsService } from "./urls";
-import { rcon } from "../rcon/client";
 import { getEnv } from "../env";
 import { wrapError } from "@repo/shared/lib/utils";
 import { createSkinsService } from "@repo/core/modules/skins/index";
@@ -275,16 +274,17 @@ export async function serverAlertCmdCb(ctx: CommandCtx) {
   }
 
   try {
-    const rconClient = rcon.getInstance();
-    const result = await rconClient.send(`alert ${alertMsg}`);
+    throw new Error("this feature is not implemented")
+    // const rconClient = rcon.getInstance();
+    // const result = await rconClient.send(`alert ${alertMsg}`);
 
-    const report = format`
-      📢 <b>Broadcast will be sent on the server</b>
-      📝 Text: <code>${alertMsg}</code>
-      🖥 Response: <code>${result || "ok"}</code>
-    `;
+    // const report = format`
+    //   📢 <b>Broadcast will be sent on the server</b>
+    //   📝 Text: <code>${alertMsg}</code>
+    //   🖥 Response: <code>${result || "ok"}</code>
+    // `;
 
-    await ctx.send(report, { parse_mode: "HTML" });
+    // await ctx.send(report, { parse_mode: "HTML" });
   } catch (e) {
     console.error(e);
     await ctx.send(`<b>Error RCON:</b> <code>${String(e)}</code>`, { parse_mode: "HTML" });

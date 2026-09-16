@@ -16,4 +16,4 @@ Shared core domain module library in the Fasberry monorepo. It centralizes reusa
 - **Database**: `kysely` + `kysely-mariadb` (Type-safe SQL querying)
 - **Messaging**: `@nats-io/nats-core` + `@nats-io/jetstream`
 - **Image Generation**: `@napi-rs/canvas`
-- **Storage & Helpers**: `minio`, `modern-rcon`, `ioredis`, `zod`, `ky`
+- **Storage & Helpers**: `minio`, `ioredis`, `zod`, `ky`

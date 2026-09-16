@@ -9,5 +9,4 @@ Responsible for management and admin workflows, dashboard integrations, and Tele
 - **Messaging**: `@nats-io/nats-core` + `@nats-io/jetstream` (NATS client & JetStream queues)
 - **Caching**: `ioredis` (Redis cache connection)
 - **Storage**: `minio` (S3 storage integration)
-- **Server Control**: `modern-rcon` (Minecraft console control)
 - **Validation**: `@sinclair/typebox` + `typebox` (Runtime validation and OpenAPI generation)

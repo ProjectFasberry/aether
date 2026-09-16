@@ -11,7 +11,7 @@
 		"includes": ["**"]
 	},
 	"formatter": {
-		"enabled": true,
+		"enabled": false,
 		"lineWidth": 120,
 		"indentStyle": "tab",
 		"indentWidth": 2

@@ -10,6 +10,7 @@
 		"noUncheckedIndexedAccess": false,
 		"noPropertyAccessFromIndexSignature": true,
 		"declaration": true,
+		"strict": true,
 		"types": ["bun-types"],
 		"declarationMap": true,
 		"incremental": true,

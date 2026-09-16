@@ -11,6 +11,7 @@
 		"declaration": true,
 		"types": ["bun-types"],
 		"declarationMap": true,
+		"strict": true,
 		"incremental": true,
 		"outDir": "dist"
 	},
