@@ -63,8 +63,8 @@ const app = new Elysia(appConfig)
   .onBeforeHandle(async (ctx) => session.updateSession(ctx.session, ctx.cookie))
   .use(main);
 
-export function startApp({ verbose }: { verbose?: boolean }) {
-  if (verbose) {
+export function startApp() {
+  if (getEnv().verbose) {
     showRoutes({ routes: app.routes });
   }
 

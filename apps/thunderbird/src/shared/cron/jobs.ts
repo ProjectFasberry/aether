@@ -2,7 +2,7 @@ import { cleanOldEvents } from "#/modules/server/events/events.model";
 import { updateExchangeRates } from "#/modules/store/order/external/cryptobot.model";
 import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
 import { getEnv } from "../env";
-import { redis } from "../redis/client";
+import { redisService } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { cronLogger } from ".";
 
@@ -72,7 +72,7 @@ export const CRON_JOBS: Job[] = [
       await wrapJobCb(this.name, () => serverStatusService.updateServerStatus({
         panelPassword: getEnv().PANEL_PASSWORD,
         panelUser: getEnv().PANEL_USER,
-        redis: redis.getInstance
+        redis: redisService.getInstance
       }))
     },
     immediately: true,

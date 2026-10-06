@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import { wrapError } from "#/utils";
 import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { getOrderKey } from "./create-crypto-order";
 import { getEnv } from "#/shared/env";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
@@ -31,7 +31,7 @@ export const checkOrderRoute = new Elysia()
     const isValid = validateSignatureCryptoPay(text, signature);
     if (!isValid) throw status(400, wrapError("INVALID_SIGNATURE"))
 
-    const redisClient = redis.getInstance();
+    const redisClient = redisService.getInstance();
 
     const bodyResult = safeJsonParse<CheckOrderBody>(text)
     if (!bodyResult.ok) throw status(500, wrapError("INCORRECT_BODY"))

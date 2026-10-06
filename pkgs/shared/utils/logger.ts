@@ -59,6 +59,9 @@ export const logger = createLogger({
 
 const originalChild = logger.child;
 
+/*
+  Use only through 'name' parameter as it is the only reliable way to get the child logger
+*/
 logger.child = function (this: ScopedLogger, meta: LoggerMeta = {}) {
   const parentName = this._name ?? [];
 

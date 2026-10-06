@@ -1,4 +1,4 @@
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 
 export type UserLocation = {
@@ -12,7 +12,7 @@ export type UserLocation = {
 };
 
 export async function getLocation(nickname: string) {
-	const nc = nats.getInstance()
+	const nc = natsService.getInstance()
 
 	const payload = { event: SUBJECTS.SERVER.EVENTS.USER.GET_LOCATION, nickname };
 

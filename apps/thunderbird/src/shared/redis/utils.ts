@@ -1,12 +1,12 @@
 import { isProduction } from "../env";
-import { redis } from "./client";
+import { redisService } from "./client";
 import { SUBSCRIBERS } from "./subscribers";
 
 export async function psubscribe() {
-  const rsClient = redis.getBridgeInstance()
+  const rsClient = redisService.getBridgeInstance()
   await rsClient.psubscribe('__keyevent@0__:expired');
 
-  const psubcribeLogger = redis.logger.child({ name: "psubscribe" });
+  const psubcribeLogger = redisService.logger.child({ name: "psubscribe" });
 
   SUBSCRIBERS.forEach((subscriber) => {
     psubcribeLogger.info(`Subscribed to "${subscriber.key}"`)

@@ -93,7 +93,10 @@ export const misc = new Elysia()
       }
 
       if (target.variant === "static") {
-        const data = await S3.getClient("static").file(`misc/${target.content}`).arrayBuffer();
+        const data = await S3
+          .getClient("static")
+          .file(`misc/${target.content}`)
+          .arrayBuffer();
 
         set.headers["Content-Type"] = "application/pdf";
 

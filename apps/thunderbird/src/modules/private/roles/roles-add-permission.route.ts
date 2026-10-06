@@ -1,5 +1,5 @@
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
@@ -27,7 +27,7 @@ const rolesAddPermissionForRoleSchema = t.Object({
 });
 
 export const rolesAddPermissionForRole = new Elysia()
-  .use(validatePermission(permissions.get("ROLES.UPDATE")))
+  .use(validatePermission(permissionsService.get("ROLES.UPDATE")))
   .post("/:id/permission/add", async ({ params: { id }, body }) => {
     const data = await addPermissionForRole(id, body);
     return { data };

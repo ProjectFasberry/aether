@@ -1,13 +1,13 @@
 import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { statusQuerySchema, statusSchema } from "@repo/core/modules/status/index"
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { serverStatusService } from "./index.model";
 import { buildRouteSummary } from "#/utils";
 
 export const status = new Elysia()
 	.get("/status", async ({ query }) => {
-    const data = await serverStatusService.getData({ query, redis: redis.getInstance });
+    const data = await serverStatusService.getData({ query, redis: redisService.getInstance });
 		return { data };
 	}, {
 		response: {

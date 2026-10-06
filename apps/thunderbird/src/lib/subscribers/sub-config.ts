@@ -1,5 +1,5 @@
 import { getServiceState } from "#/shared/constants";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { urlsService } from "#/shared/services/urls";
 import { CRON_JOBS } from "#/shared/cron/jobs";
 import { logErrorMsg } from "#/utils/config/log-utils";
@@ -11,7 +11,7 @@ const targetsSchema = z.enum(["permissions", "urls", "jobs", "global-state"]);
 
 const targetEvents: Record<z.infer<typeof targetsSchema>, () => Record<string, unknown>> = {
 	urls: () => Object.fromEntries(urlsService.getData()),
-	permissions: () => permissions.getList(),
+	permissions: () => permissionsService.getList(),
 	jobs: () => Object.fromEntries(CRON_JOBS.map(({ callback, ...job }) => [job.name, job])),
 	"global-state": () => getServiceState(),
 };

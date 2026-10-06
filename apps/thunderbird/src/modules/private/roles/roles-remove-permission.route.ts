@@ -1,5 +1,5 @@
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
@@ -26,7 +26,7 @@ const rolesRemovePermissionForRoleSchema = t.Object({
 });
 
 export const rolesRemovePermissionForRole = new Elysia()
-  .use(validatePermission(permissions.get("ROLES.UPDATE")))
+  .use(validatePermission(permissionsService.get("ROLES.UPDATE")))
   .delete("/:id/permission/remove", async ({ params: { id }, body }) => {
     await removePermissionForRole(id, body);
     return { data: "OK" };

@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { storeItemCreateSchema } from "@repo/shared/schemas/store";
 import { buildRouteSummary } from "#/utils";
@@ -18,7 +18,7 @@ async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
 }
 
 export const storeItemCreate = new Elysia()
-  .use(validatePermission(permissions.get("STORE.ITEM.CREATE")))
+  .use(validatePermission(permissionsService.get("STORE.ITEM.CREATE")))
   .post("/create", async ({ body }) => {
     const data = await createStoreItem(body);
     return { data };

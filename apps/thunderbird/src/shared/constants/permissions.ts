@@ -3,7 +3,7 @@ import { general } from "../database/general-db";
 
 let PERMISSIONS: Record<string, any> = {}
 
-export const permissions = {
+export const permissionsService = {
   get(path: string): string | null {
     try {
       const result = path

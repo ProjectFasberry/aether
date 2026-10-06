@@ -1,5 +1,5 @@
 import Elysia, { sse, t } from "elysia";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { logger } from "@repo/shared/utils/logger";
 import { orderEventPayloadSchema } from "@repo/shared/schemas/store/payment";
 import { externalOrders } from "./external-order.model";
@@ -20,7 +20,7 @@ export const orderEvents = new Elysia()
       return;
     }
 
-    const nc = nats.getInstance()
+    const nc = natsService.getInstance()
     const queue: unknown[] = [];
 
     yield sse({ event: "config", data: "connected" });

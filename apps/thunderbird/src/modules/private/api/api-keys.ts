@@ -1,6 +1,6 @@
 import { DateTime } from "#/helpers/typebox";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
@@ -72,7 +72,7 @@ async function getApiKeyList(): Promise<Static<typeof apiKeySchema>[]> {
 }
 
 const createApiKeyRoute = new Elysia()
-  .use(validatePermission(permissions.get("API.KEYS.CONTROL"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL"), { withExternal: true }))
   .post("/create", async ({ body }) => {
     const data = await createApiKey(body);
     return { data };
@@ -88,7 +88,7 @@ const createApiKeyRoute = new Elysia()
   });
 
 const listApiKeyRoute = new Elysia()
-  .use(validatePermission(permissions.get("API.KEYS.LIST"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.LIST"), { withExternal: true }))
   .get("/list", async ({ query }) => {
     const data = await getApiKeyList();
     return { data };
@@ -105,7 +105,7 @@ const listApiKeyRoute = new Elysia()
   });
 
 const deleteApiKeyRoute = new Elysia()
-  .use(validatePermission(permissions.get("API.KEYS.CONTROL"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL"), { withExternal: true }))
   .delete("/:id", async ({ params: { id } }) => {
     await general.deleteFrom("api_keys").where("id", "=", id).execute();
     return { data: "OK" };

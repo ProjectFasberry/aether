@@ -2,7 +2,7 @@ import type { NatsConnection, Subscription } from "@nats-io/nats-core";
 import { SUBJECTS } from "./subjects";
 import { bot } from "../bot";
 import { chats } from "../bot/chats";
-import { nats } from "./client";
+import { natsService } from "./client";
 import { isError } from "@repo/shared/lib/helpers";
 
 type Sub = {
@@ -17,7 +17,7 @@ export const SUBSCRIBERS: Sub[] = [
       const sub = nc.subscribe(this.subject, {
         callback: (e, msg) => {
           if (e) {
-            nats.logger.error(this.subject, e.message);
+            natsService.logger.error(this.subject, e.message);
             return;
           }
 
@@ -35,10 +35,10 @@ export const SUBSCRIBERS: Sub[] = [
 
               instance
                 .api.sendMessage(payload)
-                .catch((e) => nats.logger.error(this.subject, e.message));
+                .catch((e) => natsService.logger.error(this.subject, e.message));
             }
           } catch (e) {
-            nats.logger.error(this.subject, isError(e) ? e.message : "unknown error")
+            natsService.logger.error(this.subject, isError(e) ? e.message : "unknown error")
           }
         },
       });

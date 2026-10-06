@@ -1,4 +1,4 @@
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
 import { appLogger } from "../../shared/constants/logger";
 import { SERVICE_NAME } from "#/shared/constants/internal";
@@ -11,7 +11,7 @@ export async function handleProcessOnEvent(sub: string, {
   appLogger.error({ name: handleProcessOnEvent.name, sub, error });
 
   //#region todo: impl logging/alerting using fluentbit + grafana
-  const nc = nats.getInstance()
+  const nc = natsService.getInstance()
   const msg = error instanceof Error ? error.message : `UNKNOWN: ${error}`;
 
   try {

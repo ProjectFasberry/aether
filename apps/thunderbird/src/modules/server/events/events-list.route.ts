@@ -1,4 +1,4 @@
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import Elysia, { type Static, t } from "elysia";
 import { eventPayload, EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY, eventTypeSchema } from "./events.model";
 import { metaSchema, withData } from "#/shared/schemas";
@@ -15,7 +15,7 @@ const eventsListSchema = t.Composite([
 async function getEvents(
   { type, limit }: Static<typeof eventsListSchema>
 ): Promise<EventPayload[]> {
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
 
   async function getObjects(keys: string[]): Promise<EventPayload[]> {
     if (keys.length === 0) return [];

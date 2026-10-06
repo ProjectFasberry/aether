@@ -1,14 +1,14 @@
 import { createNewsSchema } from "@repo/shared/schemas/news";
 import Elysia from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { createNews, newsSingleExtendedSchema } from "./news.model";
 import { buildRouteSummary } from "#/utils";
 
 export const newsCreateRoute = new Elysia()
-  .use(validatePermission(permissions.get("NEWS.CREATE")))
+  .use(validatePermission(permissionsService.get("NEWS.CREATE")))
   .post("/create", async ({ body, nickname }) => {
     const data = await createNews(body, nickname);
     return { data };

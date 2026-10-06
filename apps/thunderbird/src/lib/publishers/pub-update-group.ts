@@ -1,4 +1,4 @@
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { nanoid } from "nanoid";
 import type { LuckpermsLogContent } from "../subscribers/sub-player-group";
@@ -9,7 +9,7 @@ type PublishUpdateGroup = {
 };
 
 export function publishUpdateGroup({ nickname, permission }: PublishUpdateGroup) {
-	const nc = nats.getInstance();
+	const nc = natsService.getInstance();
 	const id = nanoid(6);
 
 	const payload: {

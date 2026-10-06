@@ -1,6 +1,6 @@
 import { DateTime } from "#/helpers/typebox";
 import { EVENTS_ALL_KEY, EVENTS_TARGET_KEY, EVENTS_TYPE_KEY } from "#/modules/server/events/events.model";
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 
@@ -17,7 +17,7 @@ export const eventPayloadSchema = t.Object({
 export type EventPayload = Static<typeof eventPayloadSchema>;
 
 export async function deleteEvent(id: string) {
-	const redisClient = redis.getInstance();
+	const redisClient = redisService.getInstance();
 
 	const eventStr = await redisClient.get(EVENTS_TARGET_KEY(id));
 	if (!eventStr) return null;

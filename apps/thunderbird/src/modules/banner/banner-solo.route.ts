@@ -6,7 +6,9 @@ import { buildRouteSummary } from "#/utils";
 
 type Banner = Static<typeof bannerSingleSchema>;
 
-const baseQuery = general.selectFrom("banners").select(["id", "title", "description", "href_title", "href_value"]);
+const baseQuery = general
+  .selectFrom("banners")
+  .select(["id", "title", "description", "href_title", "href_value"]);
 
 async function getLatestBanner(): Promise<Banner | null> {
   const query = await baseQuery.orderBy("created_at", "desc").executeTakeFirst();

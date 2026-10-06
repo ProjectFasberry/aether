@@ -1,6 +1,6 @@
 import { DateTime } from "#/helpers/typebox";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
@@ -26,7 +26,7 @@ async function getHistoryList() {
 }
 
 export const historyList = new Elysia()
-  .use(validatePermission(permissions.get("HISTORY.READ")))
+  .use(validatePermission(permissionsService.get("HISTORY.READ")))
   .get("/list", async () => {
     const data = await getHistoryList();
     return { data };

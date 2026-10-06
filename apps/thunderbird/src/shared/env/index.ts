@@ -44,6 +44,7 @@ const envSchema = z.object({
   HELEKET_MERCHANT_KEY: z.string().min(1).or(z.optional(z.string().default("test"))),
   HELEKET_PAYMENT_KEY: z.string().min(1).or(z.optional(z.string().default("test"))),
   HELEKET_PAYOUT_KEY: z.string().min(1).or(z.optional(z.string().default("test"))),
+  verbose: z.boolean().optional().default(false)
 });
 
 export type Env = z.infer<typeof envSchema> & { PROD: boolean };;

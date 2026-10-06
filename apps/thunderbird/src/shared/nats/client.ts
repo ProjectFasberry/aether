@@ -21,7 +21,7 @@ const config: ConnectionOptions = {
 
 let client: NatsConnection | null = null;
 
-export const nats = {
+export const natsService = {
   logger: logger.child({ name: "nats" }),
   async _init(): Promise<void> {
     try {

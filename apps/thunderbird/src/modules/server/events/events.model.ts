@@ -1,6 +1,6 @@
 import { getRedisKey } from "#/helpers/redis"
 import type { EventPayload } from "#/modules/private/events/events.model"
-import { redis } from "#/shared/redis/client"
+import { redisService } from "#/shared/redis/client"
 import { type Static, t } from "elysia"
 import { nanoid } from "nanoid"
 
@@ -38,7 +38,7 @@ export const createEventSchema = t.Object({
 export async function createEvent(
   { title, type, initiator, description }: Static<typeof createEventSchema>
 ) {
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
 
   const event: EventPayload = {
     id: nanoid(8),
@@ -74,7 +74,7 @@ export async function createEvent(
 }
 
 export async function cleanOldEvents(bs = 100) {
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
   const types = eventTypeSchema.enum
 
   for (const type of types) {
@@ -117,7 +117,7 @@ export async function cleanOldEvents(bs = 100) {
 }
 
 export async function getEvent(id: string): Promise<EventPayload | null> {
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
 
   const eventStr = await redisClient.get(EVENTS_TARGET_KEY(id));
   if (!eventStr) return null;

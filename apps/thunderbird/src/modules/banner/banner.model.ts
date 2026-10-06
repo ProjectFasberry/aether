@@ -81,7 +81,13 @@ export async function getBanners({
 	});
 
 	const data = {
-		data: result.rows.map((banner) => ({ ...banner, href: { title: banner.href_title, value: banner.href_value } })),
+    data: result.rows.map((banner) => ({
+      ...banner,
+      href: {
+        title: banner.href_title,
+        value: banner.href_value
+      }
+    })),
 		meta: wrapMeta(result),
 	};
 

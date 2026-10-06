@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import * as z from "zod";
 import { defineBearer } from "#/lib/define";
 import { skinsService } from "#/shared/services/skins";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { minioService } from "#/shared/services/minio";
 
 export const forceSkinInit = new Elysia()
@@ -17,7 +17,7 @@ export const forceSkinInit = new Elysia()
     }
 
     if (query.type === "all") {
-      skinsService.skin.updateSkins({ minio: minioService.getInstance, nats: nats.getInstance });
+      skinsService.skin.updateSkins({ minio: minioService.getInstance, nats: natsService.getInstance });
     }
 
     return { data: "started" };

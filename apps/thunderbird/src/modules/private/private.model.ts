@@ -1,6 +1,6 @@
 import { getOption } from "#/shared/constants/options";
 import { general } from "#/shared/database/general-db";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
 
 export async function createAdminActivityLog({
@@ -19,5 +19,5 @@ export async function createAdminActivityLog({
 		.returningAll()
 		.executeTakeFirstOrThrow();
 
-	nats.getInstance().publish(SUBJECTS.ADMIN.ACTIVITY.LOG, JSON.stringify(query));
+	natsService.getInstance().publish(SUBJECTS.ADMIN.ACTIVITY.LOG, JSON.stringify(query));
 }

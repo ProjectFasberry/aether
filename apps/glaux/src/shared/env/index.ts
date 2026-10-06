@@ -25,7 +25,8 @@ const envSchema = Type.Object({
 	MINIO_HOST: Type.String(),
 	MINIO_PORT: CoerceNumber,
 	MINIO_ACCESS_KEY: Type.String(),
-	MINIO_SECRET_KEY: Type.String(),
+  MINIO_SECRET_KEY: Type.String(),
+	verbose: Type.Optional(Type.Boolean())
 });
 
 export type Env = Static<typeof envSchema> & { PROD: boolean };

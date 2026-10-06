@@ -1,11 +1,11 @@
 import { loginQR } from "#/modules/auth/login.model";
-import { nats } from "../nats/client";
+import { natsService } from "../nats/client";
 
 export const SUBSCRIBERS: { key: string, cb: (msg: string) => void }[] = [
   {
     key: "auth:qr:",
     cb: (msg: string) => {
-      const nsClient = nats.getInstance();
+      const nsClient = natsService.getInstance();
       const [, , qrToken] = msg.split(':');
       if (!qrToken) return;
 

@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { sql } from "kysely";
@@ -43,7 +43,7 @@ async function getUserLastVisitTime(nickname: string) {
 }
 
 export async function getPlayerStatus(nickname: string): Promise<PlayerActivityPayload> {
-  const nc = nats.getInstance()
+  const nc = natsService.getInstance()
 
   try {
     const playerStatus = await serverStatusService.getPlayerStatusGlobal({

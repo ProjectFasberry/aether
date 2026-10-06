@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { deleteEvent } from "./events.model";
 import { withData, withError } from "#/shared/schemas";
@@ -8,7 +8,7 @@ import { wrapError } from "@repo/shared/lib/utils";
 import { buildRouteSummary } from "#/utils";
 
 export const eventsDelete = new Elysia()
-  .use(validatePermission(permissions.get("EVENTS.DELETE")))
+  .use(validatePermission(permissionsService.get("EVENTS.DELETE")))
   .delete("/:id", async ({ params: { id }, status }) => {
     const data = await deleteEvent(id);
     if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));

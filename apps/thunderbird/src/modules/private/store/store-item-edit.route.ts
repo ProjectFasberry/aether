@@ -3,14 +3,14 @@ import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import type { StoreItems } from "@repo/shared/types/db/general";
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
 import type { Selectable } from "kysely";
 import { buildUpdates } from "#/utils/config/transforms";
 import { buildRouteSummary } from "#/utils";
 
-const PERMISSION = permissions.get("STORE.ITEM.UPDATE");
+const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
   const updates = buildUpdates<Selectable<StoreItems>>(values);
@@ -44,7 +44,7 @@ const storeItemEdit = new Elysia()
   });
 
 const storeItemEditFields = new Elysia()
-  .use(validatePermission(permissions.get("STORE.ITEM.UPDATE")))
+  .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
   .get("/editable-fields", async () => ({ data: EDITABLE_FIELDS }), {
     detail: {
       summary: buildRouteSummary("Get editable store item fields"),

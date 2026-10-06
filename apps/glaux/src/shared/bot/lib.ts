@@ -9,7 +9,7 @@ import { wrapError } from "@repo/shared/lib/utils";
 import { createSkinsService } from "@repo/core/modules/skins/index";
 import { general as generalDb } from "../database/general-db";
 import { skins as skinsDb } from "../database/skins-db";
-import { nats } from "../nats/client";
+import { natsService } from "../nats/client";
 import { redis } from "../redis/client";
 import { minioService } from "../minio/client";
 import { createServerStatusService } from "@repo/core/modules/status/index";
@@ -178,7 +178,7 @@ export async function updateSkinCmdCb(ctx: CommandCtx) {
     skinsService.skin.updateSkins({
       ...opts,
       minio: minioService.getInstance,
-      nats: nats.getInstance,
+      nats: natsService.getInstance,
       onStart() {
         bot.logger.info("Start updating skins all users");
       },

@@ -10,7 +10,7 @@ import { session, loginQR, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger } from
 import { ipPlugin } from "#/lib/plugins/index";
 import { defineRequiredUser } from "#/lib/define";
 import Bowser from "bowser";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { logger } from "@repo/shared/utils/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth";
@@ -112,7 +112,7 @@ export const withQR = new Elysia()
       const intervalId = setInterval(() => ws.ping(), 30000);
       timers.set(wsId, intervalId);
 
-      const nc = nats.getInstance();
+      const nc = natsService.getInstance();
       const subject = loginQR.getQRSubject(token);
 
       const sub = nc.subscribe(subject, {

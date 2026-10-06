@@ -5,7 +5,10 @@ import { modpackPayloadSchema } from "./modpack.model";
 import { buildRouteSummary } from "#/utils";
 
 async function getModpacks() {
-  const query = await general.selectFrom("modpacks").selectAll().execute();
+  const query = await general
+    .selectFrom("modpacks")
+    .selectAll()
+    .execute();
 
   return query;
 }

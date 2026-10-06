@@ -1,6 +1,6 @@
 import { client } from "#/shared/api/client";
 import { general } from "#/shared/database/general-db";
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { createEvent } from "../server/events/events.model";
@@ -222,7 +222,7 @@ export const register = {
 			title: "Регистрация",
 		});
 
-		const nc = nats.getInstance();
+		const nc = natsService.getInstance();
 
 		nc.publish(
 			SUBJECTS.EVENTS.AUTHORIZATION.REGISTER,
@@ -284,7 +284,11 @@ export const register = {
 		return offlineUuid;
 	},
 	async validateIpRestricts(ip: string): Promise<boolean> {
-		const result = await general.selectFrom("AUTH").select("NICKNAME").where("IP", "=", ip).execute();
+    const result = await general
+      .selectFrom("AUTH")
+      .select("NICKNAME")
+      .where("IP", "=", ip)
+      .execute();
 
 		if (!result) return false;
 
@@ -313,7 +317,10 @@ export const register = {
 			localLogger.info(`Player ${nickname} from auth`);
 
 			if (isStrict) {
-				const players = await trx.deleteFrom("players").where("nickname", "=", nickname).executeTakeFirstOrThrow();
+        const players = await trx
+          .deleteFrom("players")
+          .where("nickname", "=", nickname)
+          .executeTakeFirstOrThrow();
 
 				invariant(players.numDeletedRows, "Error for deleting from players");
 				localLogger.info(`Player ${nickname} from players`);

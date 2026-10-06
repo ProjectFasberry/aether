@@ -1,7 +1,7 @@
 import { currencyCryptoSchema } from "@repo/shared/constants/currencies";
 import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLink, getOrderRateKey } from "./create-crypto-order";
 import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/store/payment";
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { cryptoPayClient } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";
@@ -13,7 +13,7 @@ import { type Static, t } from "elysia";
 
 export const exchangeRates = {
   async getList() {
-    const redisClient = redis.getInstance();
+    const redisClient = redisService.getInstance();
     return redisClient.get(EXCHANGE_RATES_KEY)
   }
 }
@@ -69,7 +69,7 @@ async function validateOrderLimit(initiator: string): Promise<boolean> {
   const ORDER_LIMIT = 64;
   const WINDOW_SECONDS = 10 * 60;
 
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
   const key = getOrderRateKey(initiator)
 
   const count = await redisClient.incr(key);
@@ -86,7 +86,7 @@ async function rollbackOrder({
 }: {
   invoiceId: number, uniqueId: string, initiator: string
 }): Promise<void> {
-  const redisClient = redis.getInstance();
+  const redisClient = redisService.getInstance();
 
   const deleteInvoice = await cryptoPayClient
     .post(`deleteInvoice`, { json: { invoice_id: invoiceId } })
@@ -117,7 +117,7 @@ async function createCryptoOrder({
   const allowed = await validateOrderLimit(initiator);
   if (!allowed) throw new Error("ORDERS_LIMIT");
 
-  const redisClient = redis.getInstance()
+  const redisClient = redisService.getInstance()
 
   const uniqueId = nanoid(10)
   const callbackUrl = getOrderLink(uniqueId)
@@ -231,7 +231,7 @@ export const EXCHANGE_RATES_KEY = getRedisKey("external", "exchange-rates:data")
 const EXCHANGE_RATES_PREVIOUS_KEY = getRedisKey("external", "exchange-rates:data:previous");
 
 export async function updateExchangeRates() {
-  const redisClient = redis.getInstance()
+  const redisClient = redisService.getInstance()
 
   try {
     const data = await cryptoPayClient

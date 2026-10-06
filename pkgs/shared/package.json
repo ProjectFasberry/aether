@@ -9,9 +9,12 @@
 		"types:gen:db": "bun run ./scripts/db/types-generate.ts"
 	},
 	"dependencies": {
+		"@usebruno/converters": "^0.24.0",
+		"@usebruno/filestore": "^0.13.0",
 		"clsx": "2.1.1",
-		"kysely": "0.28.2",
 		"elysia": "1.4.28",
+		"kysely": "0.28.2",
+		"listr2": "^11.1.1",
 		"tailwind-merge": "3.5.0",
 		"zod": "4.2.1"
 	},

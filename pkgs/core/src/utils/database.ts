@@ -3,9 +3,12 @@ import { MariadbDialect } from "kysely-mariadb";
 import { type PoolConfig as PostgresPoolConfig, Pool as PGPool } from "pg";
 import { type PoolOptions as MysqlPoolConfig, type Pool as MySQLPool, createPool as createMysqlPool, } from "mysql2";
 import { type PoolConfig as MariadbPoolConfig, type Pool as MariadbPool, createPool as createMariadbPool } from "mariadb";
-import type { SupportedPools, SupportedDialects } from "@repo/shared/utils/index"
 import { type Logger, logger } from "@repo/shared/utils/logger";
 import { LogEvent } from "kysely";
+import type { Pool as MariaDbPool } from "mariadb";
+
+export type SupportedPools = MySQLPool | PGPool | MariaDbPool;
+export type SupportedDialects = "mysql" | "postgres" | "mariadb";
 
 type DialectTarget = "postgresql" | "mysql" | "mariadb";
 

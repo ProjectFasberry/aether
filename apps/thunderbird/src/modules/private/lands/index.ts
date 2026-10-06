@@ -4,7 +4,7 @@ import { landSchema } from "#/modules/server/lands/lands.model";
 import { skinsService } from "#/shared/services/skins";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary, safeJsonParse, wrapError } from "#/utils";
 import { createPlayerService } from "@repo/core/modules/player";
@@ -45,7 +45,7 @@ const createLandError = createError(withShared(CREATE_LAND_INTERNAL_ERRORS), "IN
 
 const playerService = createPlayerService({
 	generalDb: general,
-	redis: redis.getInstance,
+	redis: redisService.getInstance,
 });
 
 async function createLand(

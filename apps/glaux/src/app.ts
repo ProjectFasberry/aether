@@ -76,8 +76,8 @@ const app = new Elysia(appConfig)
     return { error: message };
   });
 
-export function startApp({ verbose }: { verbose: boolean }) {
-  if (verbose) {
+export function startApp() {
+  if (getEnv().verbose) {
     showRoutes({ routes: app.routes });
   }
 

@@ -1,4 +1,4 @@
-import { nats } from "#/shared/nats/client";
+import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import * as z from "zod";
 import { logErrorMsg } from "#/utils/config/log-utils";
@@ -13,7 +13,7 @@ const userJoinSchema = z.object({
 });
 
 function pushToReferral({ nickname }: { nickname: string }) {
-	const nc = nats.getInstance();
+	const nc = natsService.getInstance();
 
 	const payload = new TextEncoder().encode(nickname);
 	nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload);

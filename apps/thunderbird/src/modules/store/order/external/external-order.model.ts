@@ -1,5 +1,5 @@
 import { getOrderKey } from "./create-crypto-order";
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { general } from "#/shared/database/general-db";
 import { type Static, t } from "elysia";
 import { safeJsonParse } from "#/utils";
@@ -35,7 +35,7 @@ type OrderAsset = Static<typeof orderAssetSchema>;
 
 export const externalOrders = {
   async getCache(uniqueId: string): Promise<OrdersSingleDefault | null> {
-    const redisClient = redis.getInstance()
+    const redisClient = redisService.getInstance()
     const key = getOrderKey(uniqueId);
 
     const dataStr = await redisClient.get(key);
@@ -76,7 +76,7 @@ export const externalOrders = {
     return data;
   },
   async getCachedOrders({ initiator }: { initiator: string }): Promise<OrdersDefault[]> {
-    const redisClient = redis.getInstance()
+    const redisClient = redisService.getInstance()
     const keys = await redisClient.smembers(`index:initiator:${initiator}`);
 
     const orders: OrdersSingleDefault[] = await Promise.all(

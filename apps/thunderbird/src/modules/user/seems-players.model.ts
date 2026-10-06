@@ -1,7 +1,7 @@
 import { getRedisKey } from "#/helpers/redis";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
-import { redis } from "#/shared/redis/client";
+import { redisService } from "#/shared/redis/client";
 import { isProduction } from "elysia/error";
 import { sql } from "kysely";
 import pLimit from "p-limit";
@@ -32,7 +32,7 @@ const TTL_MS = SIX_HOURS_MS;
 const LIMIT = 32;
 
 export async function updateSeemsLikeList() {
-  const redisClient = redis.getInstance()
+  const redisClient = redisService.getInstance()
 	const BATCH_SIZE = 100;
 	const CONCURRENCY = 16;
 	const limit = pLimit(CONCURRENCY);
@@ -237,7 +237,7 @@ export async function getSeemsLikePlayersByPlayer(
 	nickname: string,
 	{ limit }: z.infer<typeof seemsPlayersSchema>,
 ): Promise<SeemsLikePlayersPayload> {
-  const redisClient = redis.getInstance()
+  const redisClient = redisService.getInstance()
 
 	const dataStr = await redisClient.get(SEEMS_LIKE_LIST_KEY(nickname));
 

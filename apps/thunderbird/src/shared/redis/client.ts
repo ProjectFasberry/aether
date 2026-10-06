@@ -16,7 +16,7 @@ export const config: RedisOptions = {
 	maxRetriesPerRequest: 3,
 };
 
-export const redis = {
+export const redisService = {
   logger: logger.child({ name: "redis" }),
 	getInstance(): Redis {
 		invariant(instances.main, "Redis main client is not initialized.");

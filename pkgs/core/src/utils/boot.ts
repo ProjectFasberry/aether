@@ -7,27 +7,36 @@ export type BootstrapStep = {
   critical?: boolean;
 }
 
-export const createBootstrap = (
-  pipeline: BootstrapStep[]
-) => {
-  return {
-    async start() {
-      const start = Date.now();
+const bootLogger = logger.child({ name: "boot" });
 
-      for (const { run, critical = true, name } of pipeline) {
-        try {
-          logger.info(`Executing: ${name}`);
-          await run();
-        } catch (e) {
-          logger.error(`Error executing: ${name} ${isError(e) ? e.message : String(e)}`);
+export function createBootstrap(pipeline: BootstrapStep[]) {
+  async function start() {
+    const start = Date.now();
 
-          if (critical) {
-            process.exit(1);
-          }
+    for (const { run, critical = true, name } of pipeline) {
+      try {
+        bootLogger.info(`Executing: ${name}`);
+        await run();
+      } catch (e) {
+        bootLogger.error(`Error executing: ${name} ${isError(e) ? e.message : String(e)}`);
+
+        if (critical) {
+          process.exit(1);
         }
       }
-
-      logger.info(`Finished in ${Date.now() - start}ms`);
     }
+
+    bootLogger.info(`Finished in ${Date.now() - start}ms`);
+  }
+
+  return {
+    start
+  }
+}
+
+export function definePipe(name: string, params: Omit<BootstrapStep, 'name'>): BootstrapStep {
+  return {
+    name,
+    ...params,
   }
 }

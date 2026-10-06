@@ -1,5 +1,5 @@
 import { validatePermission } from "#/lib/validators";
-import { permissions } from "#/shared/constants/permissions";
+import { permissionsService } from "#/shared/constants/permissions";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { general } from "#/shared/database/general-db";
@@ -33,7 +33,7 @@ async function editDict(id: number, { key, value }: Static<typeof editDictSchema
 }
 
 export const dictionariesEdit = new Elysia()
-  .use(validatePermission(permissions.get("DICTIONARIES.UPDATE")))
+  .use(validatePermission(permissionsService.get("DICTIONARIES.UPDATE")))
   .post("/:id/edit", async ({ params: { id }, body }) => {
     const data = await editDict(id, body);
     return { data };

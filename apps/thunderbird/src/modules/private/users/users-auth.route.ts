@@ -1,8 +1,8 @@
 import { validatePermission } from "#/lib/validators";
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
-import { permissions } from "#/shared/constants/permissions";
-import { nats } from "#/shared/nats/client";
+import { permissionsService } from "#/shared/constants/permissions";
+import { natsService } from "#/shared/nats/client";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import Elysia, { t } from "elysia";
 import * as z from "zod";
@@ -13,7 +13,7 @@ import { DateTime } from "#/helpers/typebox";
 import { nanoid } from "nanoid";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
-  const nc = nats.getInstance()
+  const nc = natsService.getInstance()
   nc.publish(SUBJECTS.EVENTS.AUTHORIZATION[event], JSON.stringify({ nickname, created_at }))
 }
 const getWrappedData = <T>(value?: any): T | null => value ? value?.data ?? null : null;
@@ -77,7 +77,7 @@ const playersAuthUnreg = new Elysia()
   })
 
 export const playersAuth = new Elysia()
-  .use(validatePermission(permissions.get("PLAYERS.AUTH"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("PLAYERS.AUTH"), { withExternal: true }))
   .group("/auth", app => app
     .use(playersAuthReg)
     .use(playersAuthUnreg)
