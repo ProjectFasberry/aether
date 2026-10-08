@@ -1,0 +1,21 @@
+{
+  "name": "generate-types",
+ 	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "bun run --env-file=.env.infisical src/index.ts",
+    "type-check": "tsc --build"
+  },
+  "dependencies": {
+    "kysely": "0.28.2",
+		"kysely-codegen": "0.19.0",
+		"mysql2": "3.14.1",
+		"pg": "8.13.1",
+		"@repo/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/pg": "8.11.10"
+  }
+}

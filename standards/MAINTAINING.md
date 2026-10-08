@@ -9,14 +9,15 @@ A concise developer reference for architecture, patterns, and current practices 
 The repository is structured as a **workspace-based monorepo** using **Bun** as the primary runtime, dependency manager, and task orchestrator.
 
 ```
-├── apps/                 # Runnable Services / API Endpoints
-│   ├── api-core          # Core API (Elysia, DB, Redis, NATS, RCON, MinIO)
-│   └── api-panel         # Panel API (Elysia, JetStream, Gramio/Telegram, DB)
+├── apps/                 # Runnable Services
+│   ├── minotaur          # Core 
+│   ├── workers           # Workers / Micro services
+│   └── glaux             # Panel
 ├── pkgs/                 # Shared Packages
 │   ├── config-biome      # Shared formatting and linting base configurations
 │   ├── config-drizzle    # Shared Drizzle ORM configurations
 │   ├── config-typescript # Shared base tsconfig files
-│   ├── core              # Shared backend logic (player, skins, status modules)
+│   ├── core              # Shared backend logic
 │   └── shared            # Shared constants, types, schemas, and utils
 └── standards/            # Repository standard guidelines and documentation
 ```

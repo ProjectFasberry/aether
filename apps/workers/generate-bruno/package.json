@@ -1,0 +1,18 @@
+{
+  "name": "generate-bruno",
+ 	"version": "1.0.0",
+	"private": true,
+	"license": "MIT",
+  "type": "module",
+  "scripts": {
+    "start": "bun run --env-file=.env.infisical src/index.ts",
+    "type-check": "tsc --build"
+  },
+  "dependencies": {
+    "@usebruno/converters": "^0.24.0",
+    "@usebruno/filestore": "^0.13.0",
+    "cloudflare": "^7.3.0",
+    "listr2": "^11.1.1",
+    "@repo/shared": "workspace:*"
+  }
+}

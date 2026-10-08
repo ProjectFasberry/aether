@@ -1,8 +1,11 @@
 import { Listr } from "listr2";
 import fs from "node:fs/promises";
 import path from "node:path";
+import Cloudflare from 'cloudflare';
+import { safeParseJson } from "@repo/shared/utils/index"
+import { getOrCreateClient } from "@repo/shared/lib/infisical"
 
-const outputDir = path.join(__dirname, ".tmp");
+const outputDir = path.join(import.meta.dirname, ".tmp");
 const openApiDir = `${outputDir}/openapi`;
 const brunoDir = `${outputDir}/bruno`;
 
@@ -20,7 +23,7 @@ export async function generateBrunoPipe({
 
   const proc = Bun.spawn([
     "bun", "run",
-    path.join(__dirname, "convert-from-openapi.js"), `${openApiDir}/${name}/openapi.yaml`, `${brunoDir}/${name}`,
+    path.join(import.meta.dirname, "convert-from-openapi.js"), `${openApiDir}/${name}/openapi.yaml`, `${brunoDir}/${name}`,
   ], {
     stderr: "pipe", stdout: "pipe"
   });
@@ -89,14 +92,39 @@ export async function generateOpenApiOut({
 */
 const verbose = process.argv.includes("--verbose");
 
-const services = {
-  glaux: {
-    url: "http://127.0.0.1:5105/openapi/json"
-  },
-  thunderbird: {
-    url: "http://127.0.0.1:5104/openapi/json",
-  }
-}
+const infisicalClient = await getOrCreateClient();
+
+const { secrets } = await infisicalClient.secrets().listSecrets({
+  environment: "prod",
+  projectId: process.env.INFISICAL_PROJECT_ID,
+  secretPath: "/shared",
+});
+const targets = ["CLOUDFLARE_ACCOUNT_ID", "CLOUDFLARE_NAMESPACE_ID", "CLOUDFLARE_API_KEY"] as const;
+
+const requiredSecrets = Object.fromEntries(
+  targets.map((target) => {
+    const finded = secrets
+      .map(d => ({ secretKey: d.secretKey, secretValue: d.secretValue }))
+      .find(d => d.secretKey === target);
+
+    if (!finded) throw new Error(`"${target}" is not included in the secrets list`)
+
+    return [target, finded.secretValue]
+  })
+) as Record<typeof targets[number], string>;
+
+const cloudflareClient = new Cloudflare({
+  apiToken: requiredSecrets.CLOUDFLARE_API_KEY
+});
+
+const val = await cloudflareClient.kv.namespaces.values.get('services', {
+  namespace_id: requiredSecrets.CLOUDFLARE_NAMESPACE_ID,
+  account_id: requiredSecrets.CLOUDFLARE_ACCOUNT_ID,
+});
+const result = await val.text();
+
+const { data: services, ok, err } = safeParseJson<Record<string, { url: string }>>(result)
+if (!ok) throw err;
 
 const categories = ["format-openapi", "gen-collection"] as const;
 

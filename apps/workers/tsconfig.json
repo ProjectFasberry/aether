@@ -1,0 +1,37 @@
+{
+	"compilerOptions": {
+		"isolatedModules": true,
+		"target": "esnext",
+		"lib": ["esnext"],
+		"moduleDetection": "force",
+		"module": "preserve",
+		"moduleResolution": "bundler",
+		"types": ["bun-types"],
+		"allowJs": true,
+		"verbatimModuleSyntax": false,
+		"resolveJsonModule": true,
+		"declaration": true,
+		"declarationMap": true,
+		"composite": true,
+		"incremental": true,
+		"emitDeclarationOnly": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"noEmit": true,
+		"outDir": "dist"
+	},
+	"include": [
+		"./**.d.ts"
+	],
+	"exclude": [
+	  "node_modules",
+		"dist"
+	],
+	"references": [
+		{
+			"path": "../../pkgs/shared"
+		}
+	]
+}
