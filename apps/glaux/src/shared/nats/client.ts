@@ -1,10 +1,9 @@
 import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant, isError } from "@repo/shared/utils";
 import { logger } from "../logger";
 import { getEnv } from "../env";
 import { SUBSCRIBERS } from "./subs";
-import { isError } from "@repo/shared/lib/helpers";
 
 const config: ConnectionOptions = {
 	servers: [`nats://${getEnv().NATS_HOST}`],

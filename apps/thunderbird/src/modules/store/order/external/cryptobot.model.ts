@@ -1,15 +1,27 @@
-import { currencyCryptoSchema } from "@repo/shared/constants/currencies";
 import { getEconomyByTarget, getOrderInitiatorIndexKey, getOrderKey, getOrderLink, getOrderRateKey } from "./create-crypto-order";
 import type { CreateOrderTopUpSchema, GameCurrency, OrderInputPayload, StoreExchangeRatesPayload } from "@repo/shared/schemas/store/payment";
 import { redisService } from "#/shared/redis/client";
 import { nanoid } from "nanoid";
 import { cryptoPayClient } from "#/shared/api/crypto-api";
 import type { ExchangeRate, InvoiceType } from "#/shared/types/payment/payment-types";
-import type * as z from "zod"
+import * as z from "zod"
 import { getRedisKey } from "#/helpers/redis";
 import type { OrderSingleDefault } from "@repo/shared/types/entities/store";
 import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
+
+export const currencyCryptoSchema = z.enum(["USDT", "TON", "BTC", "ETH", "LTC", "BNB", "TRX", "USDC"]);
+
+export const PAYMENT_CURRENCIES_MAPPING: Record<z.infer<typeof currencyCryptoSchema>, string> = {
+	BTC: "bitcoin",
+	ETH: "ethereum",
+	USDT: "tether",
+	TON: "the-open-network",
+	TRX: "tron",
+	USDC: "usd-coin",
+	BNB: "binancecoin",
+	LTC: "litecoin",
+};
 
 export const exchangeRates = {
   async getList() {

@@ -1,6 +1,6 @@
 import { getEnv } from "../env";
 import type { PoolOptions } from "mysql2";
-import type { DB } from "@repo/shared/types/db/plan";
+import type { DB } from "@gen/db/plan";
 import { createDatabase } from "@repo/core/utils/database";
 
 export const config: PoolOptions = {

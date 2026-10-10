@@ -4,7 +4,7 @@ import { createOrderTopUpSchema, type MethodType, type OrderInputPayload } from 
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
-import { wrapError } from "@repo/shared/lib/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 import { heleket } from "./heleket.model";
 
 const EVENTS: Partial<Record<MethodType, (pd: OrderInputPayload) => Promise<CreateOrderPayload>>> = {

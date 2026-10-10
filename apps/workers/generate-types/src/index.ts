@@ -3,22 +3,35 @@ import * as p from "@clack/prompts";
 import { getOrCreateClient } from "@repo/shared/lib/infisical";
 import path from "node:path"
 
+/*
+  todo: add the different variants of generating types
+  currently, only the "db" option exists
+*/
+const type = process.argv.find(d => d === "--type") ?? "db";
+if (!type) {
+  throw new Error(`Option "${type}" is not valid`);
+}
+
 // by default is false
 const scoped = process.argv.includes("--scoped")
 
+// naming for databases:
+// [NAME]_[DIALECT]_URI
+// where all variable with uppercase
 const DECLARED_DATABASES = {
-  general: { dialect: "postgres", envVariable: "GENERAL_POSTGRES_URI" },
-  payments: { dialect: "postgres", envVariable: "PAYMENTS_POSTGRES_URI" },
-  skins: { dialect: "mysql", envVariable: "SKINS_MYSQL_URI" },
-  bisquite: { dialect: "mysql", envVariable: "BISQUITE_MYSQL_URI" },
-  lobby: { dialect: "mysql", envVariable: "LOBBY_MYSQL_URI" },
-  luckperms: { dialect: "postgres", envVariable: "LUCKPERMS_POSTGRES_URI" },
-  libertybans: { dialect: "postgres", envVariable: "LIBERTYBANS_POSTGRES_URI" },
-  plan: { dialect: "mysql", envVariable: "PLAN_MYSQL_URI" },
-  playerpoints: { dialect: "mysql", envVariable: "PLAYERPOINTS_MYSQL_URI" },
+  general: { dialect: "postgres" },
+  payments: { dialect: "postgres" },
+  skins: { dialect: "mysql" },
+  bisquite: { dialect: "mysql" },
+  lobby: { dialect: "mysql" },
+  luckperms: { dialect: "postgres" },
+  libertybans: { dialect: "postgres" },
+  plan: { dialect: "mysql" },
+  playerpoints: { dialect: "mysql", },
+  reputation: { dialect: "mysql" }
 } as const;
 
-const outRootDir = path.join(import.meta.dirname, ".out");
+const outRootDir = path.join(new URL("../../../../pkgs/shared/.out", import.meta.url).pathname, "db");
 
 type Dbs = typeof DECLARED_DATABASES;
 
@@ -56,6 +69,8 @@ const infisicalOptions = {
   secretPath: "/shared",
 }
 
+const getEnvVar = (name: string, dialect: string) =>`${name}_${dialect}_URI`.toUpperCase();
+
 if (scoped) {
   const secrets = await client
     .secrets()
@@ -67,7 +82,7 @@ if (scoped) {
       ...v,
       // @ts-expect-error
       name,
-      dbUrl: secrets.find(d => d.secretKey === v.envVariable)?.secretValue!
+      dbUrl: secrets.find(d => d.secretKey === getEnvVar(name, v.dialect))?.secretValue!
     };
 
     console.log(`Start generation for "${name}"`)
@@ -78,7 +93,7 @@ if (scoped) {
 
   const { secretValue: dbUrl } = await client.secrets().getSecret({
     ...infisicalOptions,
-    secretName: target.envVariable,
+    secretName: getEnvVar(target.name, target.dialect),
   });
 
   await generate({ ...target, dbUrl });

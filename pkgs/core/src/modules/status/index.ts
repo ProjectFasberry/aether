@@ -1,8 +1,8 @@
-import type { DB } from "@repo/shared/types/db/general";
+import type { DB } from "@gen/db/general";
 import { t } from "elysia";
 import type Redis from "ioredis";
 import type { Selectable } from "kysely";
-import { safeJsonParse } from "@repo/shared/lib/utils";
+import { safeJsonParse } from "@repo/shared/utils";
 import { getStaticUrl } from "../../utils/url";
 import { buildRedisKey } from "../../utils/redis";
 import { getAuthHeaderWithBtoa } from "../../utils";

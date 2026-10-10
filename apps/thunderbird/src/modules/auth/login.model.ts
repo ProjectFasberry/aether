@@ -3,7 +3,7 @@ import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { authLogger, auth } from "./auth.model";
-import { invariant, safeJsonParse } from "@repo/shared/lib/utils";
+import { invariant, safeJsonParse } from "@repo/shared/utils";
 import Bowser from "bowser";
 import { redisService } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";

@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { redis } from "../../shared/redis/client";
 import { flatten, unflatten } from "../../helpers/flat";
 import { parse, stringify } from "yaml";
-import { wrapError } from "@repo/shared/lib/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 
 const ROOT_KEY = "traefik";
 

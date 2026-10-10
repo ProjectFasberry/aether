@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db"
 import Elysia, { t } from "elysia"
 import type { ExchangeRate } from "#/shared/types/payment/payment-types"
-import { wrapError } from "#/utils"
+import { wrapError } from "@repo/shared/lib/helpers";
 import { withData, withError } from "#/shared/schemas"
 import { exchangeRates, getExchangeRatesStore } from "./cryptobot.model"
 import { safeJsonParse } from "#/utils"

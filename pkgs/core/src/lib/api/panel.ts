@@ -1,7 +1,7 @@
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 import { createUrlsService } from "../urls";
 import { createClient as rootClient } from "../../lib/api/root";
-import { DB } from "@repo/shared/types/db/general";
+import { DB } from "@gen/db/general";
 import { Kysely } from "kysely";
 
 export const getPanelClient = ({

@@ -1,7 +1,7 @@
 import { createDatabase } from "@repo/core/utils/database";
 import { getEnv } from "../env";
 import type { PoolOptions as MySQLPoolConfig } from "mysql2";
-import type { DB as skinsDb } from "@repo/shared/types/db/skins";
+import type { DB as skinsDb } from "@gen/db/skins";
 
 const skinsDatabaseConfig: MySQLPoolConfig = {
 	uri: getEnv().SKINS_MYSQL_URI,

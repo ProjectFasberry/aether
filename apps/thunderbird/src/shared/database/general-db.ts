@@ -1,5 +1,5 @@
 import type pg from "pg";
-import type { DB } from "@repo/shared/types/db/general";
+import type { DB } from "@gen/db/general";
 import { getEnv } from "../env";
 import { createDatabase } from "@repo/core/utils/database";
 

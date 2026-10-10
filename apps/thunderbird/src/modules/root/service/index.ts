@@ -1,10 +1,11 @@
 import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { defineBearer } from "#/lib/define";
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
 import { cronTasks } from "#/shared/cron/init";
 import { checkDatabasesHealth, type HealthCheckResult } from "@repo/core/utils/database";
 import { DATABASES_FOR_CHECK } from "#/shared/database";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 const healthCheckResultSchema = t.Object({
   name: t.String(),

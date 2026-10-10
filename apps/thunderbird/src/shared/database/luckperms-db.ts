@@ -1,4 +1,4 @@
-import type { DB } from "@repo/shared/types/db/luckperms";
+import type { DB } from "@gen/db/luckperms";
 import type { PoolConfig } from "pg";
 import { getEnv } from '../env';
 import { createDatabase } from '@repo/core/utils/database';

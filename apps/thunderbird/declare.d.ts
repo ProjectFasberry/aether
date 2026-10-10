@@ -1,12 +1,7 @@
-declare global {
-	interface PaginatedMeta {
-		hasNextPage: boolean;
-		hasPrevPage: boolean;
-		startCursor?: string;
-		endCursor?: string;
-	}
+import "@repo/shared/declare.d.ts"
 
-	type Awaitable<T> = T | Promise<T>;
+declare global {
+  // ...
 }
 
 declare module "*.txt";

@@ -1,7 +1,7 @@
 import { DateTime } from "#/helpers/typebox";
 import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
-import type { Banners } from "@repo/shared/types/db/general";
+import type { Banners } from "@gen/db/general";
 import { type Static, t } from "elysia";
 import type { Selectable } from "kysely";
 

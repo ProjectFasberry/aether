@@ -2,7 +2,7 @@ import { getStaticUrl } from "#/helpers/volume";
 import { urlsService } from "#/shared/services/urls";
 import { S3 } from "#/shared/minio/client";
 import { withData, withError } from "#/shared/schemas";
-import { wrapError } from "#/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 import Elysia, { redirect, t } from "elysia";
 
 const MISC_FILES: Partial<Record<string, { variant: "static" | "redirect"; content: string }>> = {

@@ -1,6 +1,6 @@
 import "./assign";
 
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 import { handleProcessOnEvent } from "./shared/utils/handle-log";
 import { getEnv } from "./shared/env";
 import { boot, preboot, shutdown } from "./lifecycle";

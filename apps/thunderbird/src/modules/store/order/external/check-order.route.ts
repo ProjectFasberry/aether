@@ -1,5 +1,5 @@
 import Elysia from "elysia";
-import { wrapError } from "#/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 import type { InvoiceType } from "#/shared/types/payment/payment-types";
 import { createHmac, createHash } from 'node:crypto';
 import { redisService } from "#/shared/redis/client";

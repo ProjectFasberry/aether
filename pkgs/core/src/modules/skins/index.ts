@@ -3,15 +3,15 @@ import { sql } from "kysely";
 import { type Static, t } from "elysia";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { getStaticUrl } from "../../utils/url";
-import { safeJsonParse } from "@repo/shared/lib/utils";
+import { safeJsonParse } from "@repo/shared/utils";
 import { buildRedisKey } from "../../utils/redis";
 import { createPlayerService } from "../player";
 import { SUBJECTS } from "@repo/shared/constants/subjects"
 import { BUCKETS } from "@repo/shared/constants/buckets";
 import type RedisClient from "ioredis";
 import type { Kysely } from "kysely";
-import type { DB as generalDb } from "@repo/shared/types/db/general";
-import type { DB as skinsDb } from "@repo/shared/types/db/skins"
+import type { DB as generalDb } from "@gen/db/general";
+import type { DB as skinsDb } from "@gen/db/skins"
 import type { Client as MinioClient } from "minio"
 import type { NatsConnection } from "@nats-io/nats-core"
 

@@ -1,4 +1,4 @@
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 
 const SHARED_INTERNAL_ERRORS = {
 	INTERNAL_UNKNOWN: { msg: "Internal unknown error", code: 500 },

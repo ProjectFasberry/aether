@@ -2,7 +2,7 @@ import { natsService } from "#/shared/nats/client"
 import { NATS_CONSUMERS } from "#/shared/nats/cons";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { jetstream } from "@nats-io/jetstream";
-import { safeJsonParse } from "@repo/shared/lib/utils";
+import { safeJsonParse } from "@repo/shared/utils";
 
 type CommandType =
   | "lp" // luckperms

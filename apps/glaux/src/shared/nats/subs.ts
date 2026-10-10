@@ -3,7 +3,7 @@ import { SUBJECTS } from "./subjects";
 import { bot } from "../bot";
 import { chats } from "../bot/chats";
 import { natsService } from "./client";
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 
 type Sub = {
   cb: (nc: NatsConnection) => Subscription;

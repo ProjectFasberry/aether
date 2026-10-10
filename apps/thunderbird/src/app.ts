@@ -8,7 +8,8 @@ import { appLogger } from "./shared/constants/logger";
 import { main, root } from "./routes";
 import { corsPlugin, ipPlugin, loggerPlugin } from "./lib/plugins";
 import { logging } from "./shared/constants";
-import { safeJsonParse, showRoutes } from "./utils";
+import { safeJsonParse } from "./utils";
+import { showRoutes } from "@repo/shared/lib/helpers";
 
 const appConfig: ElysiaConfig<string> = {
   serve: {

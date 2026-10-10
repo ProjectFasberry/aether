@@ -3,7 +3,7 @@ import { bot } from "../../shared/bot";
 import { chats } from "../../shared/bot/chats";
 import { traefik } from "./traefik";
 import { defineBearer } from "../../lib/define";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 
 const watchtower = new Elysia()
   .post("/watchtower", async ({ body }) => {

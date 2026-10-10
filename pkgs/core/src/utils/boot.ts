@@ -1,5 +1,5 @@
 import { logger } from "@repo/shared/utils/logger";
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 
 export type BootstrapStep = {
   name: string;

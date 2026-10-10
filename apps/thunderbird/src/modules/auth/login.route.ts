@@ -1,7 +1,8 @@
 import Elysia, { t } from "elysia";
 import bcrypt from "bcryptjs";
-import { buildRouteSummary, cookie, wrapError } from "#/utils";
+import { buildRouteSummary, cookie } from "#/utils";
 import { auth } from "./auth.model";
+import { wrapError } from "@repo/shared/lib/helpers"
 import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";

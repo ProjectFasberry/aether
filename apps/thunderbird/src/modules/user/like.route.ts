@@ -1,10 +1,11 @@
 import Elysia, { t } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
 import { withData } from "#/shared/schemas";
 import { validateBannedStatus } from "#/lib/validators";
 import { getPlayerLikes, ratePlayer } from "./like.model";
 import { DateTime } from "#/helpers/typebox";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 const likes = new Elysia()
   .get("/list/:nickname", async ({ params: { nickname } }) => {
