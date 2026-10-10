@@ -1,4 +1,4 @@
-import type { DB } from "@repo/shared/types/db/playerpoints";
+import type { DB } from "@gen/db/playerpoints";
 import type { Pool, PoolOptions } from "mysql2";
 import { getEnv } from "../env";
 import { createDatabase } from "@repo/core/utils/database";

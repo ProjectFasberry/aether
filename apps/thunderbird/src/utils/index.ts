@@ -1,4 +1,4 @@
-export * from "@repo/shared/lib/utils";
+export * from "@repo/shared/utils";
 
 import type { Context } from "elysia";
 

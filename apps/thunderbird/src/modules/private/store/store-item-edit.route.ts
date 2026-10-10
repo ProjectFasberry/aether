@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
-import type { StoreItems } from "@repo/shared/types/db/general";
+import type { StoreItems } from "@gen/db/general";
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";

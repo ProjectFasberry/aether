@@ -4,8 +4,9 @@ import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 const modpackSchema = t.Object({
   id: t.Number(),

@@ -1,9 +1,10 @@
 import Elysia, { t } from "elysia";
 import { defineGlobalPrice } from "#/utils/store";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 const cartAddItem = new Elysia()
   .use(defineRequiredUser())

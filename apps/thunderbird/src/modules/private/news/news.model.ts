@@ -4,7 +4,7 @@ import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
 import { buildUpdates } from "#/utils/config/transforms";
 import type { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
-import type { DB } from "@repo/shared/types/db/general";
+import type { DB } from "@gen/db/general";
 import { type Static, t } from "elysia";
 import type { Selectable } from "kysely";
 import type * as z from "zod";

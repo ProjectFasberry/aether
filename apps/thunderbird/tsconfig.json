@@ -25,14 +25,14 @@
 		"paths": {
 			"#/*": ["./src/*"],
 			"@repo/shared/*": ["../../pkgs/shared/*"],
-			"@repo/core/*": ["../../pkgs/core/src/*"]
+			"@repo/core/*": ["../../pkgs/core/src/*"],
+			"@gen/*": ["../../pkgs/shared/.out/*"]
 		}
 	},
 	"include": [
-		"src/**/*",
-		"scripts/**/*",
-		"imports.ts",
-		"declare.d.ts"
+		"./src/**/*",
+		"./scripts/**/*",
+		"./declare.d.ts"
 	],
 	"exclude": [
 		"node_modules",

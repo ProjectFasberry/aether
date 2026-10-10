@@ -1,5 +1,5 @@
-import { invariant } from "@repo/shared/lib/utils";
-import type { DB } from "@repo/shared/types/db/general";
+import { invariant } from "@repo/shared/utils";
+import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { logger } from "@repo/shared/utils/logger";
 

@@ -1,5 +1,5 @@
 import { BUCKETS as REQUIRED_BUCKETS } from "@repo/shared/constants/buckets";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 import * as Minio from "minio";
 import { logger } from "@repo/shared/utils/logger";
 

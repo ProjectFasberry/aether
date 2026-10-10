@@ -1,10 +1,9 @@
-import "../imports";
 import "../declare.d.ts";
 import "./assign";
 
 // import "./shared/instrumentation"
 
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 import { boot, preboot, shutdown } from "./lifecycle";
 import { handleProcessOnEvent } from "./utils/config/handle-log";
 import { getEnv } from "./shared/env";

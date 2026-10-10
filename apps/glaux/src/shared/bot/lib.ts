@@ -5,7 +5,7 @@ import { Keyboard } from "gramio";
 import { chats } from "./chats";
 import { urlsService } from "./urls";
 import { getEnv } from "../env";
-import { wrapError } from "@repo/shared/lib/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 import { createSkinsService } from "@repo/core/modules/skins/index";
 import { general as generalDb } from "../database/general-db";
 import { skins as skinsDb } from "../database/skins-db";

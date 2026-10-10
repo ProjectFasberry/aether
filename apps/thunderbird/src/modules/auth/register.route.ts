@@ -1,6 +1,7 @@
 import Elysia, { t } from "elysia";
 import { auth } from "./auth.model";
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
+import { wrapError } from "@repo/shared/lib/helpers"
 import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";
 import { registerSchema } from "@repo/shared/schemas/auth";

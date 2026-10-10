@@ -1,4 +1,4 @@
-import type { DB } from "@repo/shared/types/db/libertybans";
+import type { DB } from "@gen/db/libertybans";
 import type { PoolConfig } from "pg";
 import { getEnv } from "../env";
 import { createDatabase } from "@repo/core/utils/database";

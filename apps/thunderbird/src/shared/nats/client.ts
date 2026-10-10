@@ -6,7 +6,7 @@ import { NATS_CONSUMERS, NATS_CONSUMERS_CB, NATS_JS_STREAMS } from "./cons";
 import { jetstream, jetstreamManager } from "@nats-io/jetstream";
 import { invariant } from "#/utils";
 import { getEnv } from "#/shared/env"
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 
 const config: ConnectionOptions = {
   servers: [

@@ -1,6 +1,6 @@
 import { Bot } from "gramio";
 import { getEnv } from "../env";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 import { GUARD_COMMANDS } from "./cmds";
 import { logger } from "../logger";
 import { chats } from "./chats";

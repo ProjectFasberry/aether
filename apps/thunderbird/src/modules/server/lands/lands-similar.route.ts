@@ -1,7 +1,8 @@
-import { buildRouteSummary, wrapError } from "#/utils";
+import { buildRouteSummary } from "#/utils";
 import Elysia, { t } from "elysia";
 import { getLandsByNickname, getRandomLands, landsByRandomSchema } from "./lands.model";
 import { withData, withError } from "#/shared/schemas";
+import { wrapError } from "@repo/shared/lib/helpers";
 
 export const landsSimilar = new Elysia()
   .get("/similar", async ({ query, status }) => {

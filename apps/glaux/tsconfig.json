@@ -25,7 +25,8 @@
 		"paths": {
 			"#/*": ["./src/*"],
 			"@repo/shared/*": ["../../pkgs/src/*"],
-			"@repo/core/*": ["../../pkgs/core/src/*"]
+			"@repo/core/*": ["../../pkgs/core/src/*"],
+			"@gen/*": ["../../pkgs/shared/.out/*"]
 		}
 	},
 	"include": ["src/**/*", "scripts/**/*"],

@@ -14,15 +14,23 @@
 		"types": ["bun-types"],
 		"declarationMap": true,
 		"incremental": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"rootDir": ".",
+		"paths": {
+			"@gen/*": ["../shared/.out/*"]
+		}
 	},
 	"exclude": [
 		"dist",
 		"node_modules"
 	],
 	"include": [
-		"./**/*.ts",
-		"./**/*.tsx",
+		"./src/**/*",
 		"./**/*.d.ts"
+	],
+	"references": [
+		{
+			"path": "../shared"
+		}
 	]
 }

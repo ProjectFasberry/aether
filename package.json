@@ -9,13 +9,8 @@
 		"type-check": "bun scripts/run type-check",
 		"circular-check": "bun run scripts/run circlular-check",
 		"postinstall": "lefthook install",
-		"--------------------------": "",
-		"docker-infra:up": "docker compose -f './infra/docker-compose.yml' up -d",
-		"docker-infra:down": "docker compose -f './infra/docker-compose.yml' down",
-		"docker:up": "docker compose up -d",
-		"docker:down": "docker compose down",
-		"docker-start": "bun run docker-infra:up && bun run docker:up",
-		"docker-down": "bun run docker-infra:down && bun run docker:down"
+		"-------": "-",
+		"gen:types:db": "cd apps/workers/generate-types && bun run db"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.2.4",

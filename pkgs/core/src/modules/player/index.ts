@@ -1,4 +1,4 @@
-import type { DB } from "@repo/shared/types/db/general"
+import type { DB } from "@gen/db/general"
 import type Redis from "ioredis"
 import { buildRedisKey } from "../../utils/redis"
 import type { Kysely } from "kysely"

@@ -1,4 +1,4 @@
-import type { DB } from "@repo/shared/types/db/bisquite";
+import type { DB } from "@gen/db/bisquite";
 import type { PoolOptions } from "mysql2";
 import { getEnv } from "../env";
 import { createDatabase } from "@repo/core/utils/database";

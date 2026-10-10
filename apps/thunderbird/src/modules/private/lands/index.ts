@@ -6,11 +6,12 @@ import { bisquite } from "#/shared/database/bisquite-db";
 import { general } from "#/shared/database/general-db";
 import { redisService } from "#/shared/redis/client";
 import { withData, withError } from "#/shared/schemas";
-import { buildRouteSummary, safeJsonParse, wrapError } from "#/utils";
+import { buildRouteSummary, safeJsonParse } from "#/utils";
 import { createPlayerService } from "@repo/core/modules/player";
 import Elysia, { type Static, t } from "elysia";
 import { sql } from "kysely";
 import { nanoid } from "nanoid";
+import { wrapError } from "@repo/shared/lib/helpers";
 
 // Fields for creating a land
 // required:

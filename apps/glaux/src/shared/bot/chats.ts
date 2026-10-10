@@ -1,7 +1,7 @@
 import { sql } from "kysely";
 import { general } from "../database/general-db";
 import { appLogger, logger } from "../logger";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 
 let CHATS = new Map<string, string>() // <chat_id, target>
 let isRefreshing = false;

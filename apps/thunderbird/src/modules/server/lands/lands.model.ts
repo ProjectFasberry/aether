@@ -7,7 +7,7 @@ import { getDirection } from "#/utils/config/paginate";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
 import { sql, type SelectExpression } from "kysely";
-import type { DB } from "@repo/shared/types/db/bisquite";
+import type { DB } from "@gen/db/bisquite";
 import { skinsService } from "../../../shared/services/skins";
 import { safeJsonParse } from "#/utils";
 import { DateTime } from "#/helpers/typebox";

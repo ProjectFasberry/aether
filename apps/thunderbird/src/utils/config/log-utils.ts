@@ -1,6 +1,6 @@
 import { logging } from "#/shared/constants";
 import { validateLogger } from "../../shared/constants/logger";
-import { isError } from "@repo/shared/lib/helpers"
+import { isError } from "@repo/shared/utils";
 import { logger } from "@repo/shared/utils/logger";
 
 export function logErrorMsg(e: unknown, { subject }: { subject?: string } = {}) {

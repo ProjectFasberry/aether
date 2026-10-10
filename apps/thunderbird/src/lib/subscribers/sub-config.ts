@@ -4,7 +4,7 @@ import { urlsService } from "#/shared/services/urls";
 import { CRON_JOBS } from "#/shared/cron/jobs";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import type { NatsConnection } from "@nats-io/nats-core";
-import { isError } from "@repo/shared/lib/helpers";
+import { isError } from "@repo/shared/utils";
 import * as z from "zod";
 
 const targetsSchema = z.enum(["permissions", "urls", "jobs", "global-state"]);

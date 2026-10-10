@@ -1,7 +1,6 @@
 import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineRequiredUser } from "#/lib/define";
-import { wrapError } from "#/utils";
 import { cartItem } from "../../cart/cart.model";
 import { createGamePaymentRecord, initialPrices, processStoreGamePurchase, updateGamePaymentRecord } from "./order-game.model";
 import { defineGlobalPrice } from "#/utils/store";
@@ -9,6 +8,7 @@ import type { GameCurrency } from "@repo/shared/schemas/store/payment";
 import { withError } from "#/shared/schemas";
 import { getBalance } from "#/modules/user/balance.model";
 import { nanoid } from "nanoid";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 const ERRORS_MAP: Record<string, string> = {
   "TIMEOUT": "Похоже игровой сервер не доступен"

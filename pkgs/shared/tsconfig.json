@@ -10,11 +10,15 @@
 		"noPropertyAccessFromIndexSignature": true,
 		"declaration": true,
 		"types": ["bun-types"],
+		"rootDir": ".",
 		"strict": true,
 		"declarationMap": true,
 		"incremental": true,
-		"outDir": "dist"
+		"outDir": "dist",
+		"paths": {
+			"@gen/*": ["./.out/*"]
+		}
 	},
 	"exclude": ["dist", "node_modules"],
-	"include": ["./**/*.ts", "./**/*.tsx"]
+	"include": ["./**/*.ts", "./**/*.tsx", "./.out/**/*.ts"]
 }

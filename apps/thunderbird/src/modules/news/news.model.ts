@@ -5,7 +5,7 @@ import { metaSchema, searchQuerySchema, createStringBoolSchema, withMeta } from 
 import { getDirection } from "#/utils/config/paginate";
 import { wrapMeta } from "#/utils/config/transforms";
 import { DEFAULT_HEAD } from "@repo/core/modules/skins";
-import type { DB } from "@repo/shared/types/db/general";
+import type { DB } from "@gen/db/general";
 import { type Static, t } from "elysia";
 import type { ReferenceExpression, SelectExpression } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";

@@ -1,9 +1,16 @@
-type SafeParseJsonOut<T> = { ok: true, data: T, err?: never } | { ok: false, data: null, err: Error }
-
-export function safeParseJson<T>(str: string): SafeParseJsonOut<T> {
+export function safeJsonParse<T>(str: string): { ok: true; value: T } | { ok: false; error: Error } {
   try {
-    return { ok: true, data: JSON.parse(str) as T };
-  } catch (e) {
-    return { ok: false, data: null, err: e instanceof Error ? e : new Error(String(e)) };
+    return { ok: true, value: JSON.parse(str) as T };
+  } catch (err) {
+    return { ok: false, error: err as Error };
   }
 }
+
+export function invariant(predicate: unknown, errorMessage: Error | string = "Assertion Failed"): asserts predicate {
+  if (!predicate) {
+    throw typeof errorMessage === "string" ? new Error(errorMessage) : errorMessage;
+  }
+}
+
+export const isError = (e: Error | unknown): e is Error => e instanceof Error
+

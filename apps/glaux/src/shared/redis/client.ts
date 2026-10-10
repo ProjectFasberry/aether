@@ -1,6 +1,6 @@
 import Redis, { type RedisOptions } from "ioredis";
 import { getEnv } from "../env";
-import { invariant } from "@repo/shared/lib/utils";
+import { invariant } from "@repo/shared/utils";
 import { logger } from "../logger";
 
 let instance: Redis | null = null;

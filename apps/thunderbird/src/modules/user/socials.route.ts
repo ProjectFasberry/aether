@@ -1,12 +1,12 @@
 import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
-import type { JsonValue } from "@repo/shared/types/db/general";
+import type { JsonValue } from "@gen/db/general";
 import { defineOptionalUser, defineRequiredUser } from "#/lib/define";
 import { redisService } from "#/shared/redis/client";
 import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
-import { wrapError } from "@repo/shared/lib/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
 

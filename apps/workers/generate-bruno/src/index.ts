@@ -2,7 +2,7 @@ import { Listr } from "listr2";
 import fs from "node:fs/promises";
 import path from "node:path";
 import Cloudflare from 'cloudflare';
-import { safeParseJson } from "@repo/shared/utils/index"
+import { safeJsonParse } from "@repo/shared/utils"
 import { getOrCreateClient } from "@repo/shared/lib/infisical"
 
 const outputDir = path.join(import.meta.dirname, ".tmp");
@@ -123,8 +123,8 @@ const val = await cloudflareClient.kv.namespaces.values.get('services', {
 });
 const result = await val.text();
 
-const { data: services, ok, err } = safeParseJson<Record<string, { url: string }>>(result)
-if (!ok) throw err;
+const parseRes = safeJsonParse<Record<string, { url: string }>>(result)
+if (!parseRes.ok) throw parseRes.error;
 
 const categories = ["format-openapi", "gen-collection"] as const;
 
@@ -145,7 +145,7 @@ const assign = (name: string, category: Result["category"], res?: Omit<Result, "
 }
 
 const tasks = new Listr(
-  Object.entries(services).map(([name, service]) => ({
+  Object.entries(parseRes.value).map(([name, service]) => ({
     title: name,
     task: async (_, task) => {
       task.output = "format-openapi";

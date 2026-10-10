@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import { createEvent } from "../server/events/events.model";
 import type { Kysely, Transaction } from "kysely";
 import { normalizeIp } from "#/helpers/normalize-ip";
-import type { DB } from "@repo/shared/types/db/general";
+import type { DB } from "@gen/db/general";
 import { authLogger } from "./auth.model";
 import { logger } from "@repo/shared/utils/logger";
 import type * as z from "zod";

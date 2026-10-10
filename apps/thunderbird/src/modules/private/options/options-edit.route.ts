@@ -4,8 +4,9 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData, withError } from "#/shared/schemas";
 import { updateOptions, updateOptionsSchema } from "./options.model";
-import { buildRouteSummary, wrapError } from "#/utils";
-import { isError } from "@repo/shared/lib/helpers";
+import { buildRouteSummary } from "#/utils";
+import { isError } from "@repo/shared/utils";
+import { wrapError } from "@repo/shared/lib/helpers"
 
 export const optionsUpdate = new Elysia()
   .use(validatePermission(permissionsService.get("OPTIONS.UPDATE"), { withExternal: true }))
