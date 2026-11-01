@@ -5,7 +5,7 @@ get wrong.
 
 ## Tooling
 
-- **Bun only.** `bun install`, `bun dev`, `bun test`; the lockfile is `bun.lock`.
+- **Bun only.** `bun install`, `bun dev`, `bun run ...`; the lockfile is `bun.lock`.
   `npm`, `yarn` and `pnpm` would produce a second lockfile - don't.
 - `bun <script>` is not a single app: `scripts/run.ts` finds every workspace whose
   `package.json` has that script and runs them concurrently. For one app, `cd`
@@ -39,8 +39,9 @@ get wrong.
   sourcemaps and does not minify, prod minifies **and keeps sourcemaps** - they
   are what makes production stack traces readable.
 - Images are per app: `Dockerfile` + `Makefile` (`make build STAGE=prod
-  NAME=thunderbird`). `Dockerfile.deploy` is the variant the deploy host builds
-  from.
+  NAME=thunderbird`); the npm token comes from `NODE_AUTH_TOKEN` as a BuildKit
+  secret. The thunderbird deploy host builds from a synced tree;
+  `scripts/deploy/thunderbird.sh` mirrors, builds and rolls out.
 - Absolute URLs must use `x-forwarded-proto`: Traefik terminates TLS and the app
   only ever sees plain HTTP.
 
