@@ -4,7 +4,6 @@ import { clientAuth } from "./client.route";
 import { invalidate } from "./invalidate.route";
 import { registerRoute } from "./register.route";
 import { validate } from "./validate.route";
-import { restore } from "./restore.route";
 import { session } from "./session.route";
 
 export const auth = new Elysia()
@@ -14,6 +13,5 @@ export const auth = new Elysia()
     .use(invalidate)
     .use(registerRoute)
     .use(validate)
-    .use(restore)
     .use(session),
   );

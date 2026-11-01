@@ -94,7 +94,7 @@ export const register = {
 		registerLogger.debug({ eventsExec, nickname });
 	},
 	async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
-		const { trx, ip, nickname, password, hash } = args;
+		const { trx, ip, nickname, password } = args;
 		const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
     const uuid = this.generateOfflineUUID(nickname);
@@ -195,12 +195,11 @@ export const register = {
 		}
 	},
 	async createUser(args: Omit<CreateUser, "uuid">): Promise<{ nickname: string; created_at: Date }> {
-		const { nickname, findout, password, ip, findoutType, hash } = args;
+		const { nickname, findout, password, ip, findoutType } = args;
 
 		return await general.transaction().execute(async (trx) => {
 			const registeredUser = await this.create({
 				trx,
-				hash,
 				nickname,
 				password,
 				ip,
