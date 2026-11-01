@@ -75,7 +75,15 @@ export const registerRoute = new Elysia()
           }),
         ),
         400: withError(
-          t.UnionEnum(["USER_EXISTS", "PASSWORD_IS_UNSAFE", "AUTHORIZATION_DISABLED", "IP_RESTRICTIONS"]),
+          t.UnionEnum([
+            "USER_EXISTS",
+            "PASSWORD_IS_UNSAFE",
+            "AUTHORIZATION_DISABLED",
+            "IP_RESTRICTIONS",
+            "TOKEN_IS_NOT_PROVIDED",
+            "TOKEN_NOT_FOUND",
+            "CAP_UNAVAILABLE",
+          ]),
         ),
         500: withError(),
       },

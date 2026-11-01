@@ -56,7 +56,15 @@ const withPassword = new Elysia()
           uuid: t.String(),
         }),
       ),
-      400: withError(t.UnionEnum(["NOT_EXISTS", "PASSWORD_OR_LOGIN_INCORRECT"])),
+      400: withError(
+        t.UnionEnum([
+          "NOT_EXISTS",
+          "PASSWORD_OR_LOGIN_INCORRECT",
+          "TOKEN_IS_NOT_PROVIDED",
+          "TOKEN_NOT_FOUND",
+          "CAP_UNAVAILABLE",
+        ]),
+      ),
       404: withError(),
     },
     detail: {
