@@ -2,7 +2,8 @@ import Elysia, { t } from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { defineOptionalBearerSession } from "#/lib/define";
 import { buildRouteSummary } from "#/utils";
-import { profileService } from "./profile.model";
+import { profileService, type AccountProfile } from "./profile.model";
+import { signaturePublicKey, texturesService } from "./textures.model";
 import { tokenService } from "./token.model";
 
 /**
@@ -26,50 +27,6 @@ const launcherRequired = { error: FORBIDDEN, errorMessage: "Launcher session req
 const sameUuid = (left: string, right: string) =>
 	left.replace(/-/g, "").toLowerCase() === right.replace(/-/g, "").toLowerCase();
 
-let cachedPublicKey: string | null = null;
-
-function toPem(der: Uint8Array): string {
-	const base64 = Buffer.from(der).toString("base64");
-	const lines = base64.match(/.{1,64}/g) ?? [];
-
-	return `-----BEGIN PUBLIC KEY-----\n${lines.join("\n")}\n-----END PUBLIC KEY-----\n`;
-}
-
-/**
- * `signaturePublickey` is part of the API metadata contract (authlib-injector
- * requires the field). We do not sign textures yet, so an ephemeral key is
- * enough; set YGGDRASIL_PUBLIC_KEY to pin a real one.
- */
-async function signaturePublicKey(): Promise<string> {
-	if (cachedPublicKey) return cachedPublicKey;
-
-	const pinned = Bun.env.YGGDRASIL_PUBLIC_KEY;
-
-	if (pinned) {
-		cachedPublicKey = pinned.includes("BEGIN PUBLIC KEY")
-			? pinned
-			: `-----BEGIN PUBLIC KEY-----\n${pinned}\n-----END PUBLIC KEY-----\n`;
-
-		return cachedPublicKey;
-	}
-
-	const pair = await crypto.subtle.generateKey(
-		{
-			name: "RSASSA-PKCS1-v1_5",
-			modulusLength: 2048,
-			publicExponent: new Uint8Array([1, 0, 1]),
-			hash: "SHA-256",
-		},
-		true,
-		["sign", "verify"],
-	);
-	const spki = new Uint8Array(await crypto.subtle.exportKey("spki", pair.publicKey));
-
-	cachedPublicKey = toPem(spki);
-
-	return cachedPublicKey;
-}
-
 const launcherSession = new Elysia()
 	.use(defineOptionalBearerSession())
 	.derive(async ({ session }) => {
@@ -78,6 +35,13 @@ const launcherSession = new Elysia()
 		return { launcher: payload?.client === "launcher" ? payload : null };
 	})
 	.as("scoped");
+
+/** Profile with our signed textures, shared by every profile endpoint. */
+async function profileWithTextures(account: AccountProfile) {
+	const textures = await texturesService.property(account.nickname, account.uuid);
+
+	return profileService.toProfile(account, textures ? [textures] : []);
+}
 
 const accessTokenBody = t.Object({
 	accessToken: t.String({ maxLength: 128 }),
@@ -91,7 +55,7 @@ export const yggdrasil = new Elysia().group("/yggdrasil", (app) =>
 				serverName: "Fasberry",
 				implementationName: "aether",
 				implementationVersion: "1.0.0",
-				signaturePublickey: await signaturePublicKey(),
+				signaturePublickey: signaturePublicKey(),
 			},
 			// authlib-injector replaces the client's texture-domain whitelist with
 			// this list, so every host a skin URL can point at must be here:
@@ -252,7 +216,7 @@ export const yggdrasil = new Elysia().group("/yggdrasil", (app) =>
 				const account = await profileService.byNickname(join.nickname);
 				if (!account) return status(204);
 
-				return profileService.toProfile(account);
+				return profileWithTextures(account);
 			},
 			{
 				query: t.Object({
@@ -270,7 +234,7 @@ export const yggdrasil = new Elysia().group("/yggdrasil", (app) =>
 			async ({ params, status }) => {
 				const account = await profileService.byId(params.id);
 
-				return account ? profileService.toProfile(account) : status(204);
+				return account ? profileWithTextures(account) : status(204);
 			},
 			{
 				detail: {
@@ -286,9 +250,7 @@ export const yggdrasil = new Elysia().group("/yggdrasil", (app) =>
 					names.map(async (name) => {
 						const account = await profileService.byNickname(name);
 
-						return account
-							? profileService.toProfile(account)
-							: null;
+						return account ? profileWithTextures(account) : null;
 					}),
 				);
 

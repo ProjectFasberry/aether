@@ -42,13 +42,14 @@ export const profileService = {
 
 		return query ?? null;
 	},
-	toProfile(account: AccountProfile): YggdrasilProfile {
+	toProfile(
+		account: AccountProfile,
+		properties: YggdrasilProfile["properties"] = [],
+	): YggdrasilProfile {
 		return {
 			id: undash(account.uuid),
 			name: account.nickname,
-			// Textures are served by SkinsRestorer today; the array stays empty
-			// until our own textures signing lands.
-			properties: [],
+			properties,
 		};
 	},
 };
