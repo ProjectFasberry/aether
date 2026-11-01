@@ -1,5 +1,6 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from "node:crypto";
 import { skinsService } from "#/shared/services/skins";
+import { minioService } from "#/shared/services/minio";
 import { undash } from "./profile.model";
 
 /**
@@ -73,14 +74,37 @@ export type TexturesProperty = {
 const isHttpUrl = (value: string | null | undefined): value is string =>
   Boolean(value) && typeof value === "string" && /^https?:\/\//i.test(value);
 
+/**
+ * Current skin of a player. The history lives in Redis (no TTL) and is filled by
+ * `initSkin` at registration and on every skin change, so a cold cache means the
+ * key was evicted or the player never went through the client: rebuild it once
+ * from the skins database instead of silently serving the default skin.
+ */
+async function currentSkin(nickname: string, uuid: string) {
+  const cached = await skinsService.skin.getCachedSkinsPayload(nickname);
+
+  if (cached?.length) return cached[0];
+
+  const warmed = await skinsService.skin.initSkin({
+    nickname,
+    uuid,
+    minio: minioService.getInstance,
+  });
+
+  if (!warmed) return null;
+
+  const fresh = await skinsService.skin.getCachedSkinsPayload(nickname);
+
+  return fresh?.[0] ?? null;
+}
+
 export const texturesService = {
   /**
    * Builds and signs the `textures` property for an account. Returns `null` when
    * the account has no usable skin, so the client falls back to the default one.
    */
   async property(nickname: string, uuid: string): Promise<TexturesProperty | null> {
-    const history = await skinsService.skin.getCachedSkinsPayload(nickname);
-    const skin = history?.[0];
+    const skin = await currentSkin(nickname, uuid);
 
     if (!skin || !isHttpUrl(skin.skin_url)) return null;
 
