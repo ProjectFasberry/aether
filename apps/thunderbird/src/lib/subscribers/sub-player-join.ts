@@ -5,6 +5,7 @@ import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from "#/shared/database/general-db";
 import type { NatsConnection } from "@nats-io/nats-core";
 import { logger } from "@repo/shared/utils/logger";
+import { subscribeGeneralPlayerJoin, subscribeGeneralPlayerQuit } from "@projectfasberry/events"
 
 const userJoinSchema = z.object({
 	date: z.string(),
@@ -71,9 +72,9 @@ async function handlePlayerJoin(payload: z.infer<typeof userJoinSchema>) {
 }
 
 export const subscribePlayerJoin = (nc: NatsConnection, subject: string) => {
-	const subscription = nc.subscribe(subject, {
-		callback: (e, msg) => {
-			if (e) {
+	const subscription = subscribeGeneralPlayerJoin(nc,
+    (msg, e) => {
+      if (e || !msg) {
 				return logErrorMsg(e, { subject });
 			}
 
@@ -85,7 +86,7 @@ export const subscribePlayerJoin = (nc: NatsConnection, subject: string) => {
 
 			handlePlayerJoin(parsed.data);
 		},
-	});
+	);
 
 	return subscription;
 };

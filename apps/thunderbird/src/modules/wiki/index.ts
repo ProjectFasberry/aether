@@ -1,7 +1,12 @@
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
+import { defineOptionalSession } from "#/lib/define";
+import { auth } from "#/modules/auth/auth.model";
 import Elysia, { t } from "elysia";
+
+/** Who may edit the wiki. A permission/role check replaces this later. */
+const WIKI_EDITORS = new Set(["distribate"]);
 
 type GroupPayload = Record<string, {
   title: string;
@@ -111,8 +116,39 @@ const wikiCategory = new Elysia()
     },
   })
 
+const wikiAccess = new Elysia()
+  .use(defineOptionalSession())
+  .get("/access", async ({ session }) => {
+    const nickname = session ? await auth.getUserNickname(session) : null;
+    const canEdit = Boolean(nickname && WIKI_EDITORS.has(nickname));
+
+    return {
+      data: {
+        canEdit,
+        id: nickname,
+        name: nickname,
+        nickname,
+      },
+    };
+  }, {
+    response: {
+      200: withData(
+        t.Object({
+          canEdit: t.Boolean(),
+          id: t.Nullable(t.String()),
+          name: t.Nullable(t.String()),
+          nickname: t.Nullable(t.String()),
+        })
+      )
+    },
+    detail: {
+      summary: buildRouteSummary("Who may edit the wiki")
+    },
+  })
+
 export const wiki = new Elysia()
   .group("/wiki", app => app
     .use(wikiCategories)
     .use(wikiCategory)
+    .use(wikiAccess)
   )

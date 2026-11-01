@@ -1,79 +1,52 @@
-# Monorepo Maintaining Summary
+# Maintaining aether
 
-A concise developer reference for architecture, patterns, and current practices in the **fasberry-api** monorepo.
+The code explains itself. This file is the short list of things that are easy to
+get wrong.
 
----
+## Tooling
 
-## 1. Monorepo Architecture
+- **Bun only.** `bun install`, `bun dev`, `bun run ...`; the lockfile is `bun.lock`.
+  `npm`, `yarn` and `pnpm` would produce a second lockfile - don't.
+- `bun <script>` is not a single app: `scripts/run.ts` finds every workspace whose
+  `package.json` has that script and runs them concurrently. For one app, `cd`
+  into it first.
+- Cross-package imports are declared as `workspace:*` dependencies (`@repo/core`,
+  `@repo/shared`), never as `../../` paths.
 
-The repository is structured as a **workspace-based monorepo** using **Bun** as the primary runtime, dependency manager, and task orchestrator.
+## Config and secrets
 
-```
-├── apps/                 # Runnable Services
-│   ├── minotaur          # Core 
-│   ├── workers           # Workers / Micro services
-│   └── glaux             # Panel
-├── pkgs/                 # Shared Packages
-│   ├── config-biome      # Shared formatting and linting base configurations
-│   ├── config-drizzle    # Shared Drizzle ORM configurations
-│   ├── config-typescript # Shared base tsconfig files
-│   ├── core              # Shared backend logic
-│   └── shared            # Shared constants, types, schemas, and utils
-└── standards/            # Repository standard guidelines and documentation
-```
+- Every environment variable is required. `apps/thunderbird/src/shared/env` is a
+  zod schema validated at boot: a missing value exits the process instead of
+  failing at the first request that needs it.
+- Secrets live in Infisical (`/thunderbird` path, `prod` / `staging` envs).
+  `infisical run` wraps both the dev command and the container entrypoint; there
+  is no `.env` fallback and nothing secret is committed.
+- Private packages (`@projectfasberry/*`) need `NODE_AUTH_TOKEN`. Docker builds
+  take it as a BuildKit secret (`npm_token`), never as `ARG` or `ENV`, otherwise
+  the token ends up baked into an image layer.
 
----
+## Types and checks
 
-## 2. Dependency & Workspace Management
+- Database types in `pkgs/shared/.out` are **generated**, not committed
+  (`bun gen:types:db`). Type-check fails in confusing ways until they exist.
+- `bun lint` (Biome), `bun type-check` (`tsc --build`), `bun circular-check`
+  (`dpdm`). Lefthook runs them on commit; the hooks call `node`, so on a machine
+  without Node a commit needs `git -c core.hooksPath=/dev/null`.
 
-- **Runtime**: [Bun](https://bun.sh/) is utilized for all operations. Do not use `npm`, `yarn`, or `pnpm`.
-- **Linking**: Core configurations and domain packages are imported as dependencies using the `workspace:*` prefix:
-  ```json
-  "@repo/core": "workspace:*",
-  "@repo/shared": "workspace:*"
-  ```
-- **Task Orchestration**: The workspace-wide scripts are dispatched concurrently via a custom TS script (`scripts/run.ts`). Running `bun <command>` (e.g., `bun dev`, `bun build`, `bun lint`) automatically discovers workspaces implementing that command and runs them together:
-  ```bash
-  bun run dev          # Concurrently start dev watchers for all apps/pkgs
-  bun run type-check   # Perform tsc builds on all projects
-  bun run lint         # Lint files across all active workspaces
-  ```
+## Build and deploy
 
----
+- Apps build through `Bun.build` in their `scripts/build.ts`: staging keeps
+  sourcemaps and does not minify, prod minifies **and keeps sourcemaps** - they
+  are what makes production stack traces readable.
+- Images are per app: `Dockerfile` + `Makefile` (`make build STAGE=prod
+  NAME=thunderbird`); the npm token comes from `NODE_AUTH_TOKEN` as a BuildKit
+  secret. The thunderbird deploy host builds from a synced tree;
+  `scripts/deploy/thunderbird.sh` mirrors, builds and rolls out.
+- Absolute URLs must use `x-forwarded-proto`: Traefik terminates TLS and the app
+  only ever sees plain HTTP.
 
-## 3. Core Tech Stack & Patterns
+## API surface
 
-- **Web Framework**: [Elysia](https://elysiajs.com/) for high-performance HTTP APIs.
-- **Database/Querying**: [Kysely](https://kysely.dev/) query builder over MariaDB/PostgreSQL, supported by `kysely-mariadb` and `kysely-paginate`.
-- **Message Broker & Queue**: NATS Core and NATS JetStream for asynchronous communication.
-- **Caching & Key-Value**: Redis (`ioredis`) for high-speed cache structures.
-- **Storage**: MinIO (`minio`) client for S3-compatible object storage.
-- **Validation**: [Zod](https://zod.dev/) and [TypeBox](https://github.com/sinclairzx81/typebox) for runtime schema and DTO validations.
-
----
-
-## 4. Current Development & Maintaining Practices
-
-### Secrets & Environment Variables
-**Infisical** is used as the single source of truth for secrets and env configuration.
-- Dev and start commands are wrapped with `infisical run`:
-  ```bash
-  infisical run --env=dev --path=/backend -- bun run --watch ./src/index.ts
-  ```
-- Avoid hardcoding API keys or DB credentials in `package.json` or code files.
-
-### Code Quality & Standards
-- **Linter & Formatter**: Managed by [Biome](https://biomejs.dev/). Standardized globally with overrides configured inside `biome.json` per package.
-- **Git Hooks**: [Lefthook](https://github.com/evilmartians/lefthook) runs pre-commit verification workflows.
-- **Type Safety**: TypeScript Project References are defined in `tsconfig.json` at root and in respective workspace `tsconfig.json` files. Run `tsc --build` for complete verification.
-- **Circular Dependencies**: Checked using `dpdm` (`bunx dpdm --no-warning ./src/index.ts`) under the `circular-check` script.
-
-### Build System
-- Apps configure a custom build runner (`scripts/build.ts`) using `Bun.build`:
-  - **Staging / Dev**: Source maps enabled, no minification.
-  - **Prod**: Minified code, sourcemaps disabled.
-- Bundles compile into local `./dist` directories.
-
-### Containerization & CI/CD
-- **Docker**: A multi-stage `Dockerfile` is present in app directories referencing dependencies from the root monorepo workspace.
-- **Makefiles**: Each app contains a `Makefile` that handles multi-platform (`linux/amd64`) image building, tagging, and pushing to the remote registry under specified `STAGE` arguments.
+- The OpenAPI document is live at `/openapi/json`. Route annotations are the
+  source of truth; the `api-contracts` repository generates Bruno collections
+  from it, so a route without proper `detail`/schemas is an undocumented route.

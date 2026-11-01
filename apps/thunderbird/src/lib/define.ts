@@ -50,6 +50,37 @@ export const defineOptionalSession = () =>
 		.derive(({ cookie }) => ({ session: cookie[SESSION_KEY].value as string | null ?? null }))
 		.as("scoped");
 
+/**
+ * Same as `defineOptionalSession`, but also accepts the token as
+ * `Authorization: Bearer <token>`. Used by the launcher, which has no cookie jar.
+ */
+export const defineOptionalBearerSession = () =>
+	new Elysia({ name: "defineOptionalBearerSession" })
+		.derive(({ cookie, headers }) => {
+			const raw = headers.authorization ?? "";
+			const [scheme, value] = raw.split(" ");
+			const bearerToken = scheme?.toLowerCase() === "bearer" && value ? value : null;
+			const cookieToken = (cookie[SESSION_KEY].value as string | null) ?? null;
+
+			return { session: bearerToken ?? cookieToken };
+		})
+		.as("scoped");
+
+export const defineRequiredClientUser = () =>
+	new Elysia({ name: "defineRequiredClientUser" })
+		.use(defineOptionalBearerSession())
+		.derive(async ({ session, status }): Promise<{ nickname: string; session: string }> => {
+			logValidators("defineRequiredClientUser");
+
+			if (!session) throw status(401);
+
+			const nickname = await auth.getUserNickname(session);
+			if (!nickname) throw status(401);
+
+			return { nickname, session };
+		})
+		.as("scoped");
+
 export async function getUserRole(nickname: string) {
 	const role = await general
 		.selectFrom("players")

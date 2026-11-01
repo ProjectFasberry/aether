@@ -21,6 +21,7 @@ type CreateSession = {
   nickname: string;
   userAgentStr?: string;
   ip: string;
+  client?: "web" | "launcher";
 };
 
 type CreateSessionPayload = {
@@ -35,6 +36,7 @@ export const sessionPayloadSchema = t.Object({
   browser: t.String(),
   platform: t.String(),
   os: t.String(),
+  client: t.Optional(t.UnionEnum(["web", "launcher"])),
 });
 
 export const sessionsPayloadSchema = t.Array(sessionPayloadSchema);
@@ -172,11 +174,16 @@ export const session = {
     return encodeBase32LowerCaseNoPadding(bytes);
   },
   _afterLoginEvents({ nickname }: { nickname: string }) {
-    natsService
-      .getInstance()
-      .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify({ created_at: dayjs().toDate(), nickname }));
+    // Publishing is best effort: a NATS hiccup must not fail the login.
+    try {
+      natsService
+        .getInstance()
+        .publish(SUBJECTS.EVENTS.AUTHORIZATION.LOGIN, JSON.stringify({ created_at: dayjs().toDate(), nickname }));
+    } catch (error) {
+      loginLogger.warn(`failed to publish login event for ${nickname}: ${String(error)}`);
+    }
   },
-  async create({ userAgentStr, ip, nickname }: CreateSession): Promise<CreateSessionPayload> {
+  async create({ userAgentStr, ip, nickname, client = "web" }: CreateSession): Promise<CreateSessionPayload> {
     const redisClient = redisService.getInstance();
 
     const userSessionsKey = sessions.getUserSessionsKey(nickname);
@@ -198,7 +205,10 @@ export const session = {
       }
     }
 
-    const ua = Bowser.parse(userAgentStr ?? "");
+    // Launcher requests have no User-Agent by default; Bowser throws on an empty string.
+    const ua = (userAgentStr?.trim()
+      ? Bowser.parse(userAgentStr)
+      : { browser: {}, engine: {}, os: {}, platform: {} }) as ReturnType<typeof Bowser.parse>;
     const { browser, engine, os, platform } = ua;
     const infoUpdated = { browser, engine, os, platform, ip };
     const processedUA = buildUA(infoUpdated);
@@ -206,6 +216,7 @@ export const session = {
     const payload: UserSessionPayload = {
       nickname,
       created_at: dayjs().toDate(),
+      client,
       ...processedUA,
     };
 
@@ -276,6 +287,42 @@ export const session = {
     if (!isProduction) {
       loginLogger.debug(`Session deleted for ${nickname}`);
     }
+  },
+  async deleteByClient(nickname: string, client: "web" | "launcher"): Promise<number> {
+    const redisClient = redisService.getInstance();
+    const userSessionsKey = sessions.getUserSessionsKey(nickname);
+
+    const tokens = await redisClient.zrange(userSessionsKey, 0, -1);
+    if (tokens.length === 0) return 0;
+
+    const sessionKeys = tokens.map(token => auth.getSessionKey(token));
+    const rows = await redisClient.mget(sessionKeys);
+
+    const pipeline = redisClient.multi();
+    let removed = 0;
+
+    rows.forEach((raw, index) => {
+      if (!raw) return;
+
+      const parsed = safeJsonParse<UserSessionPayload>(raw);
+      if (!parsed.ok) return;
+      if (parsed.value.client !== client) return;
+
+      pipeline.del(sessionKeys[index]);
+      pipeline.zrem(userSessionsKey, tokens[index]);
+      removed += 1;
+    });
+
+    if (removed > 0) {
+      const result = await pipeline.exec();
+      invariant(result, "Transaction failed");
+
+      result.forEach(([error]) => {
+        if (error) throw error;
+      });
+    }
+
+    return removed;
   },
   async get({
     nickname,

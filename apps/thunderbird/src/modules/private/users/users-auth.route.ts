@@ -10,7 +10,6 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
-import { nanoid } from "nanoid";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {
   const nc = natsService.getInstance()
@@ -22,7 +21,7 @@ const playersAuthReg = new Elysia()
   .use(ipPlugin())
   .post("/register", async ({ ip, body: { nickname, password } }) => {
     const data = await register.create({
-      nickname, ip, password, hash: nanoid(12)
+      nickname, ip, password
     });
 
     return { data }

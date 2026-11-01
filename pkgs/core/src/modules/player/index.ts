@@ -22,16 +22,15 @@ export const createPlayerService = ({
       const cache = await redis().get(cacheKey)
 
       if (!cache) {
-        const { UUID } = await generalDb
-          .selectFrom("AUTH")
-          .select("UUID")
-          .where("NICKNAME", "=", nickname)
-          .$narrowType<{ UUID: string }>()
+        const { uuid } = await generalDb
+          .selectFrom("accounts")
+          .select("uuid")
+          .where("lower_nickname", "=", nickname.toLowerCase())
           .executeTakeFirstOrThrow()
 
-        await redis().set(cacheKey, UUID)
+        await redis().set(cacheKey, uuid)
 
-        return UUID;
+        return uuid;
       }
 
       return cache

@@ -12,7 +12,6 @@ import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
-import { HTTPError } from "ky";
 import { getEnv } from "#/shared/env";
 import { logErrorMsg, logValidators } from "#/utils/config/log-utils";
 import { libertybans } from "#/shared/database/libertybans-db";
@@ -135,35 +134,32 @@ const capClient = client.extend((opts) => ({
 	baseUrl: `${getEnv().CAP_URL}/${getEnv().CAP_SITE_KEY}`,
 }));
 
-const ERRORS: Record<string, string> = {
-	"Token not found": "TOKEN_NOT_FOUND",
-};
-
+/**
+ * The CAP token is single use: a stale token makes the CAP server answer 4xx.
+ * `throwHttpErrors` stays off because on `HTTPError` ky has already consumed the
+ * body, and reading `error.response.text()` throws "Body already used".
+ */
 async function verifyRequest(token: string): Promise<{ ok: boolean; error?: string }> {
 	const json = { secret: getEnv().CAP_SECRET, response: token };
 
 	try {
-		const result = await capClient.post("siteverify", { json, retry: 1, timeout: 4000 });
-		const { success } = await result.json<{ success: boolean }>();
-		return { ok: success };
-	} catch (e) {
-		if (e instanceof HTTPError) {
-			const text = await e.response.text();
-			const parsed = safeJsonParse<{ error: string }>(text);
+		const response = await capClient.post("siteverify", {
+			json,
+			retry: 1,
+			timeout: 4000,
+			throwHttpErrors: false,
+		});
+		const parsed = safeJsonParse<{ success?: boolean; error?: string }>(await response.text());
+		const body = parsed.ok ? parsed.value : null;
 
-			if (parsed.ok) {
-				const error = parsed.value.error;
-				return { ok: false, error: ERRORS[error] ?? error };
-			}
+		// The CAP server answers 4xx for expired, reused or malformed tokens; the
+		// raw upstream text is not part of our API contract, so it stays a code.
+		if (!response.ok) return { ok: false, error: "TOKEN_NOT_FOUND" };
 
-			return { ok: false, error: text };
-		}
-
-		if (e instanceof Error) {
-			return { ok: false, error: e.message };
-		}
-
-		return { ok: false, error: "UNKNOWN_ERROR" };
+		return { ok: Boolean(body?.success), error: body?.success ? undefined : "TOKEN_NOT_FOUND" };
+	} catch {
+		// Network error, timeout, DNS: the CAP server is unreachable, not the token.
+		return { ok: false, error: "CAP_UNAVAILABLE" };
 	}
 }
 
@@ -180,17 +176,15 @@ export const botValidator = () =>
 			const isEnabled = await getOption("botCheckEnabled");
 			if (!isEnabled) return;
 
-			if (token.length <= 1) throw status(400);
+			if (!token || token.length <= 1) throw status(400, "TOKEN_IS_NOT_PROVIDED");
 
-			try {
-				if (!token) throw status(400, "TOKEN_IS_NOT_PROVIDED");
+			// Never throw `status()` from inside a try/catch: Elysia's status
+			// response is an Error, so the catch would turn a clean 400 into a 500.
+			const result = await verifyRequest(token);
 
-				const result = await verifyRequest(token);
-				if (!result.ok) throw status(400, result.error);
-			} catch (e) {
-				logErrorMsg(e);
-
-				if (e instanceof Error) throw status(500, e.message);
+			if (!result.ok) {
+				logErrorMsg(result.error ?? "CAPTCHA_FAILED", { subject: "captcha" });
+				throw status(400, result.error ?? "CAPTCHA_FAILED");
 			}
 		})
 		.as("scoped");

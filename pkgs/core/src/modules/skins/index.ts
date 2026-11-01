@@ -308,10 +308,10 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
           while (true) {
             const query = await generalDb
-              .selectFrom("AUTH")
-              .select("NICKNAME as nickname")
-              .where("NICKNAME", ">", lastNickname)
-              .orderBy("NICKNAME")
+              .selectFrom("accounts")
+              .select("nickname")
+              .where("nickname", ">", lastNickname)
+              .orderBy("nickname")
               .limit(batchSize)
               .execute();
 

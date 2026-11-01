@@ -1,4 +1,3 @@
-import { client } from "#/shared/api/client";
 import { general } from "#/shared/database/general-db";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
@@ -12,7 +11,6 @@ import { logger } from "@repo/shared/utils/logger";
 import type * as z from "zod";
 import { isProduction } from "#/shared/env";
 import type { registerSchema } from "@repo/shared/schemas/auth";
-import { HTTPError } from "ky";
 import { skinsService } from "../../shared/services/skins";
 import { invariant } from "#/utils";
 import { minioService } from "#/shared/services/minio";
@@ -73,7 +71,6 @@ const referral = {
 };
 
 const MAX_USERS_PER_IP = 3;
-const MOJANG_API_URL = "https://api.ashcon.app";
 
 export const register = {
   async registrationEvents({ nickname, uuid }: { nickname: string, uuid: string }) {
@@ -97,10 +94,10 @@ export const register = {
 		registerLogger.debug({ eventsExec, nickname });
 	},
 	async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
-		const { trx, ip, nickname, password, hash } = args;
+		const { trx, ip, nickname, password } = args;
 		const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
-    const uuid = await this.getUserUUID(nickname);
+    const uuid = this.generateOfflineUUID(nickname);
 
 		const base = {
 			uuid,
@@ -110,7 +107,32 @@ export const register = {
 
 		registerLogger.info(`Starting register player ${nickname}`);
 
-		async function registerAUTH(instance: Kysely<DB>) {
+		type Instance = Kysely<DB> | Transaction<DB>;
+
+		async function registerAccount(instance: Instance) {
+			return instance
+				.insertInto("accounts")
+				.values({
+					uuid: base.uuid,
+					nickname,
+					lower_nickname: base.lowerCaseNickname,
+				})
+				.returning(["id"])
+				.executeTakeFirstOrThrow();
+		}
+
+		async function registerCredentials(instance: Instance, accountId: number) {
+			return instance
+				.insertInto("account_credentials")
+				.values({
+					account_id: accountId,
+					password_hash: password,
+				})
+				.executeTakeFirstOrThrow();
+		}
+
+		// Legacy LimboAuth table: dual-written until the plugin is removed.
+		async function registerAUTH(instance: Instance) {
 			return instance
 				.insertInto("AUTH")
 				.values({
@@ -126,7 +148,7 @@ export const register = {
 				.executeTakeFirstOrThrow();
 		}
 
-		async function registerPlayers(instance: Kysely<DB>) {
+		async function registerPlayers(instance: Instance) {
 			return instance
 				.insertInto("players")
 				.values({
@@ -139,23 +161,21 @@ export const register = {
 		}
 
 		try {
-			async function register() {
-				if (dbInstance.isTransaction) {
-					const [players, _] = await Promise.all([registerPlayers(dbInstance), registerAUTH(dbInstance)]);
+			async function register(instance: Instance) {
+				const account = await registerAccount(instance);
 
-					return players;
-				} else {
-					const result = await dbInstance.transaction().execute(async (trx) => {
-						const [players, _] = await Promise.all([registerPlayers(dbInstance), registerAUTH(dbInstance)]);
+				const [players] = await Promise.all([
+					registerPlayers(instance),
+					registerAUTH(instance),
+					registerCredentials(instance, account.id),
+				]);
 
-						return players;
-					});
-
-					return result;
-				}
+				return players;
 			}
 
-			const result = await register();
+			const result = dbInstance.isTransaction
+				? await register(dbInstance)
+				: await dbInstance.transaction().execute(register);
 
 			if (isProduction) {
 				await this.registrationEvents({ nickname, uuid });
@@ -175,12 +195,11 @@ export const register = {
 		}
 	},
 	async createUser(args: Omit<CreateUser, "uuid">): Promise<{ nickname: string; created_at: Date }> {
-		const { nickname, findout, password, ip, findoutType, hash } = args;
+		const { nickname, findout, password, ip, findoutType } = args;
 
 		return await general.transaction().execute(async (trx) => {
 			const registeredUser = await this.create({
 				trx,
-				hash,
 				nickname,
 				password,
 				ip,
@@ -249,40 +268,6 @@ export const register = {
 
 		return raw.join("-");
 	},
-	async getUserUUID(nickname: string): Promise<string> {
-		try {
-			type MojangPayload =
-				| { uuid: string; username: string; username_history: { username: string }[] }
-				| { reason: string; error: string; code: number };
-
-			const license = await client
-				.get(`/mojang/v2/user/${nickname}`, {
-					baseUrl: MOJANG_API_URL,
-					throwHttpErrors: false,
-					timeout: 5000,
-				})
-				.json<MojangPayload>();
-
-			if (import.meta.env.DEV) {
-				registerLogger.debug(license);
-			}
-
-			if (!("error" in license)) {
-				authLogger.info(`Player ${nickname} has a license account. UUID: ${license.uuid}`);
-				return license.uuid;
-			}
-		} catch (e) {
-			if (e instanceof HTTPError) {
-				throw new Error(`Mojang API network problem: ${e.message}`);
-			}
-			throw e;
-		}
-
-		const offlineUuid = this.generateOfflineUUID(nickname);
-		authLogger.info(`Player ${nickname} has an offline account. UUID: ${offlineUuid}`);
-
-		return offlineUuid;
-	},
 	async validateIpRestricts(ip: string): Promise<boolean> {
     const result = await general
       .selectFrom("AUTH")
@@ -290,9 +275,9 @@ export const register = {
       .where("IP", "=", ip)
       .execute();
 
-		if (!result) return false;
-
-		return result.length > MAX_USERS_PER_IP;
+		// Anti multi-account heuristic for web registration: three accounts per IP,
+		// the fourth is refused.
+		return result.length >= MAX_USERS_PER_IP;
 	},
 	async unregister({
 		nickname,
@@ -314,7 +299,13 @@ export const register = {
 				invariant(isStrict, "Error for deleting from auth");
 			}
 
-			localLogger.info(`Player ${nickname} from auth`);
+			// Canonical row first: account_credentials cascades from it.
+			await trx
+				.deleteFrom("accounts")
+				.where("lower_nickname", "=", nickname.toLowerCase())
+				.executeTakeFirst();
+
+			localLogger.info(`Player ${nickname} from auth and accounts`);
 
 			if (isStrict) {
         const players = await trx

@@ -19,6 +19,17 @@ export const passwordSchema = z
 
 export const referrerSchema = z.nullable(z.string());
 
+/**
+ * Nicknames that the proxy accepts (`allowed-nickname-regex` in LimboAuth and
+ * the vanilla client): 3-16 ASCII letters, digits and underscore. Registration
+ * is strict; login keeps the lenient schema so old names never lock anybody out.
+ */
+export const registerNicknameSchema = z
+	.string()
+	.min(3, { error: "Ник должен содержать минимум 3 символа" })
+	.max(16, { error: "Ник не содержит больше 16 символов!" })
+	.regex(/^[A-Za-z0-9_]+$/, { error: "Ник может содержать только латиницу, цифры и _" });
+
 export const authSchema = z.object({
 	nickname: nicknameSchema,
 	password: z.string().min(6),
@@ -26,13 +37,13 @@ export const authSchema = z.object({
 
 export const registerSchema = z.object({
 	...authSchema.shape,
+	nickname: registerNicknameSchema,
 	...z.object({
 		findout: z.string().min(1).max(128),
 		findoutType: z.enum(["custom", "referrer"]),
-		hash: z.string(),
 	}).superRefine((data, ctx) => {
 		if (data.findoutType === "referrer") {
-			const { error, success } = nicknameSchema.safeParse(data.findout);
+			const { error, success } = registerNicknameSchema.safeParse(data.findout);
 
 			if (!success) {
 				const msg = JSON.parse(error.message)[0];

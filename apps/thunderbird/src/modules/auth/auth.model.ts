@@ -7,20 +7,49 @@ import { safeJsonParse } from "#/utils";
 
 export const authLogger = logger.child({ name: "auth" });
 
+export type Account = {
+	id: number;
+	nickname: string;
+	uuid: string;
+	hash: string;
+};
+
 export const auth = {
 	getSessionKey: (token: string) => `session:${token}`,
-	async getExistsUser(nickname: string): Promise<{ result: false; hash: null } | { result: true; hash: string }> {
-    const query = await general
-      .selectFrom("AUTH")
-      .select("HASH")
-      .where("NICKNAME", "=", nickname)
-      .executeTakeFirst();
+	/** Accounts are canonical; `AUTH` is only kept for LimboAuth until the cutover. */
+	async getAccount(nickname: string): Promise<Account | null> {
+		const query = await general
+			.selectFrom("accounts")
+			.innerJoin("account_credentials", "account_credentials.account_id", "accounts.id")
+			.select([
+				"accounts.id",
+				"accounts.nickname",
+				"accounts.uuid",
+				"account_credentials.password_hash as hash",
+			])
+			.where("accounts.lower_nickname", "=", nickname.toLowerCase())
+			.executeTakeFirst();
 
-		if (!query) return { hash: null, result: false };
-
-		return { hash: query.HASH, result: true };
+		return query ?? null;
 	},
-	async getUserNickname(token: string): Promise<string | null> {
+	/** Identity without the password hash, used for session validation. */
+	async getUserIdentity(nickname: string): Promise<{ nickname: string; uuid: string } | null> {
+		const query = await general
+			.selectFrom("accounts")
+			.select(["nickname", "uuid"])
+			.where("lower_nickname", "=", nickname.toLowerCase())
+			.executeTakeFirst();
+
+		return query ?? null;
+	},
+	async getExistsUser(nickname: string): Promise<{ result: false; hash: null } | { result: true; hash: string }> {
+		const account = await this.getAccount(nickname);
+
+		if (!account) return { hash: null, result: false };
+
+		return { hash: account.hash, result: true };
+	},
+	async getSessionPayload(token: string): Promise<UserSessionPayload | null> {
     const data = await redisService
       .getInstance()
       .get(this.getSessionKey(token));
@@ -30,7 +59,12 @@ export const auth = {
 		const result = safeJsonParse<UserSessionPayload>(data);
 		if (!result.ok) return null;
 
-		return result.value.nickname ?? null;
+		return result.value;
+	},
+	async getUserNickname(token: string): Promise<string | null> {
+		const payload = await this.getSessionPayload(token);
+
+		return payload?.nickname ?? null;
 	},
 	validatePasswordSafe(pwd: string): boolean {
 		const unsafePasswords = textSets["unsafe_passwords.txt"];

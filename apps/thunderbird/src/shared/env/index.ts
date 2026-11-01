@@ -39,6 +39,8 @@ const envSchema = z.object({
   PANEL_USER: z.string().min(1),
   PANEL_PASSWORD: z.string().min(1),
   RCON_PASSWORD: z.string().min(1),
+  /** Shared secret for the Velocity join gate; when unset, verification is off. */
+  GATE_SECRET: z.optional(z.string().min(16)),
   MINESKIN_API_KEY: z.string().min(1),
   MINESKIN_AES_SECRET_KEY: z.string().min(1),
   HELEKET_MERCHANT_KEY: z.string().min(1).or(z.optional(z.string().default("test"))),

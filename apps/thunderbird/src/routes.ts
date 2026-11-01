@@ -14,12 +14,17 @@ import { account } from "./modules/account";
 import { news } from "./modules/news";
 import { modpack } from "./modules/modpack";
 import { rules } from "./modules/rules";
-import { serverip, serversWithMap } from "./modules/server-ip";
+import { serversWithMap } from "./modules/server-ip";
+import { launcher } from "./modules/launcher";
 import { fact } from "./modules/fact";
 import { banner } from "./modules/banner";
 import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { misc } from "./modules/misc";
+import { avatars } from "./modules/avatars";
+import { contentManifest } from "./modules/content/manifest.route";
+import { releases } from "./modules/releases";
+import { yggdrasil } from "./modules/yggdrasil";
 import { html } from '@elysia/html';
 import previewHtml from "../static/preview.html" with { type: "text" }
 
@@ -28,12 +33,16 @@ export const main = new Elysia()
     .use(news)
     .use(modpack)
     .use(rules)
-    .use(serverip)
     .use(serversWithMap)
+    .use(launcher)
     .use(fact)
     .use(banner)
     .use(wiki)
     .use(misc)
+    .use(avatars)
+    .use(contentManifest)
+    .use(releases)
+    .use(yggdrasil)
   )
   .use(auth)
   .use(me)

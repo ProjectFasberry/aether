@@ -19,6 +19,7 @@ build:
 	--push \
 	--platform linux/amd64 \
 	--build-arg STAGE=$(STAGE) \
+	--secret id=npm_token,env=NODE_AUTH_TOKEN \
 	-t $(FULL_IMAGE_NAME) \
 	-f $(abspath Dockerfile) $(abspath ../..)
 

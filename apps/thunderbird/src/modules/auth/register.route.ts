@@ -35,7 +35,7 @@ export const registerRoute = new Elysia()
     .use(registerValidator())
     .use(validateAuthStatus())
     .use(ipValidator())
-    .post("/", async ({ status, body: { findout, hash: phraseHash, nickname, password: passInputPass, findoutType }, ip }) => {
+    .post("/", async ({ status, body: { findout, nickname, password: passInputPass, findoutType }, ip }) => {
       const existsUser = await auth.getExistsUser(nickname);
       if (existsUser.result) {
         throw status(400, wrapError("USER_EXISTS"));
@@ -51,18 +51,12 @@ export const registerRoute = new Elysia()
         cost: 10,
       });
 
-      const seedHash = Bun.password.hashSync(phraseHash, {
-        algorithm: "bcrypt",
-        cost: 10,
-      });
-
       const data = await register.createUser({
         nickname,
         findout,
         findoutType,
         password: passHash,
         ip,
-        hash: seedHash,
       });
 
       return { data };
@@ -75,7 +69,15 @@ export const registerRoute = new Elysia()
           }),
         ),
         400: withError(
-          t.UnionEnum(["USER_EXISTS", "PASSWORD_IS_UNSAFE", "AUTHORIZATION_DISABLED", "IP_RESTRICTIONS"]),
+          t.UnionEnum([
+            "USER_EXISTS",
+            "PASSWORD_IS_UNSAFE",
+            "AUTHORIZATION_DISABLED",
+            "IP_RESTRICTIONS",
+            "TOKEN_IS_NOT_PROVIDED",
+            "TOKEN_NOT_FOUND",
+            "CAP_UNAVAILABLE",
+          ]),
         ),
         500: withError(),
       },

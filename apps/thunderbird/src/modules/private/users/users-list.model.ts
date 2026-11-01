@@ -16,7 +16,6 @@ export const privatedUserSchema = t.Object({
   lower_case_nickname: t.String(),
   uuid: t.String(),
   created_at: t.Date(),
-  premium_uuid: t.Nullable(t.String()),
   avatar: t.String(),
   player: t.Nullable(
     t.Object({
@@ -61,8 +60,7 @@ type RawPlayer = {
   nickname: string;
   lower_case_nickname: string;
   uuid: string;
-  created_at: string | null;
-  premium_uuid: string | null;
+  created_at: Date | string | null;
   id: number | null;
   role_id: number | null;
   role_name: string | null;
@@ -74,7 +72,7 @@ async function process(nicknames: string[]) {
   const mapper = (user: RawPlayer): Static<typeof privatedUserSchema> => {
     const {
       id, role_id, role_name, nickname, uuid,
-      premium_uuid, created_at, lower_case_nickname
+      created_at, lower_case_nickname
     } = user;
 
     const skin = skins[user.nickname];
@@ -89,7 +87,6 @@ async function process(nicknames: string[]) {
       } : null,
       nickname,
       uuid,
-      premium_uuid,
       created_at: created_at ? dayjs(created_at).toDate() : dayjs().toDate(),
       lower_case_nickname,
     }
@@ -100,21 +97,19 @@ async function process(nicknames: string[]) {
 
 export async function getPlayer(nickname: string): Promise<Static<typeof privatedUserSchema> | null> {
   const query = await general
-    .selectFrom("AUTH")
-    .leftJoin("players", "players.nickname", "AUTH.NICKNAME")
+    .selectFrom("accounts")
+    .leftJoin("players", "players.lower_case_nickname", "accounts.lower_nickname")
     .leftJoin("roles", "roles.id", "players.role_id")
     .select([
-      "AUTH.NICKNAME as nickname",
-      "AUTH.REGDATE as created_at",
-      "AUTH.LOWERCASENICKNAME as lower_case_nickname",
-      "AUTH.UUID as uuid",
-      "AUTH.PREMIUMUUID as premium_uuid",
+      "accounts.nickname as nickname",
+      "accounts.created_at as created_at",
+      "accounts.lower_nickname as lower_case_nickname",
+      "accounts.uuid as uuid",
       "players.id",
       "roles.id as role_id",
       "roles.name as role_name"
     ])
-    .where("AUTH.NICKNAME", "=", nickname)
-    .$narrowType<{ uuid: string }>()
+    .where("accounts.lower_nickname", "=", nickname.toLowerCase())
     .executeTakeFirst()
 
   if (!query) return null;
@@ -130,25 +125,23 @@ export async function getPlayersList({
   asc, startCursor, searchQuery, endCursor, limit, sort
 }: Static<typeof userListSchema>): Promise<Static<typeof privatedUsersSchema>> {
   let query = general
-    .selectFrom("AUTH")
-    .leftJoin("players", "players.nickname", "AUTH.NICKNAME")
+    .selectFrom("accounts")
+    .leftJoin("players", "players.lower_case_nickname", "accounts.lower_nickname")
     .leftJoin("roles", "roles.id", "players.role_id")
     .select([
-      "AUTH.NICKNAME as nickname",
-      "AUTH.REGDATE as created_at",
-      "AUTH.LOWERCASENICKNAME as lower_case_nickname",
-      "AUTH.UUID as uuid",
-      "AUTH.PREMIUMUUID as premium_uuid",
+      "accounts.nickname as nickname",
+      "accounts.created_at as created_at",
+      "accounts.lower_nickname as lower_case_nickname",
+      "accounts.uuid as uuid",
       "players.id",
       "roles.id as role_id",
       "roles.name as role_name"
     ])
-    .$narrowType<{ uuid: string }>()
 
   if (searchQuery) {
     query = query
-      .where(sql<boolean>`"AUTH"."NICKNAME" % ${searchQuery}`)
-      .orderBy(sql`"AUTH"."NICKNAME" <-> ${searchQuery}`, "asc")
+      .where(sql<boolean>`"accounts"."nickname" % ${searchQuery}`)
+      .orderBy(sql`"accounts"."nickname" <-> ${searchQuery}`, "asc")
   }
 
   const result = await executeWithCursorPagination(query, {
@@ -159,7 +152,6 @@ export async function getPlayersList({
       { expression: EXPRESSIONS[sort ?? USER_SORT[0]], direction: getDirection(asc) },
     ],
     /* Because the input is received as a timestamp in ms, but the cursor requires it in date format */
-    // @ts-expect-error
     parseCursor: (cursor) => ({
       nickname: cursor.nickname,
       created_at: new Date(Number(cursor.created_at)),
