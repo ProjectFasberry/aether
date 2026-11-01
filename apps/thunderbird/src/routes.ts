@@ -21,6 +21,7 @@ import { banner } from "./modules/banner";
 import { wiki } from "./modules/wiki";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { misc } from "./modules/misc";
+import { avatars } from "./modules/avatars";
 import { contentManifest } from "./modules/content/manifest.route";
 import { releases } from "./modules/releases";
 import { yggdrasil } from "./modules/yggdrasil";
@@ -38,6 +39,7 @@ export const main = new Elysia()
     .use(banner)
     .use(wiki)
     .use(misc)
+    .use(avatars)
     .use(contentManifest)
     .use(releases)
     .use(yggdrasil)
