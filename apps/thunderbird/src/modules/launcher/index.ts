@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { buildRouteSummary } from "#/utils";
 import { withData } from "#/shared/schemas";
 import { urlsService } from "#/shared/services/urls";
+import { joinGate } from "./join.route";
 
 /**
  * Launcher builds live in the public bucket, but the links are kept in the
@@ -25,6 +26,7 @@ const artifactSchema = t.Object({
 });
 
 export const launcher = new Elysia()
+  .use(joinGate)
   .get(
     "/launcher",
     () => {

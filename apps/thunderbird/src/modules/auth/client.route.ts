@@ -16,37 +16,39 @@ const loginSchema = t.Object({
 
 const loginPayloadSchema = t.Object({
   nickname: t.String(),
+  uuid: t.String(),
   token: t.String(),
   expires_at: DateTime,
 });
 
 const validatePayloadSchema = t.Object({
   nickname: t.String(),
+  uuid: t.String(),
   expires_at: t.Nullable(DateTime),
 });
 
 const loginRoute = new Elysia()
   .use(ipPlugin())
   .post("/login", async ({ status, body: { nickname, password }, ip, headers }) => {
-    const { hash, result: isExist } = await auth.getExistsUser(nickname);
+    const account = await auth.getAccount(nickname);
 
-    if (!isExist || !hash) return status(400, wrapError("NOT_EXISTS"));
+    if (!account) return status(400, wrapError("NOT_EXISTS"));
 
-    if (!bcrypt.compareSync(password, hash)) {
+    if (!bcrypt.compareSync(password, account.hash)) {
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
     }
 
     // One launcher session per account. Browser sessions stay untouched.
-    await sessionService.deleteByClient(nickname, "launcher");
+    await sessionService.deleteByClient(account.nickname, "launcher");
 
     const { token, expires_at } = await sessionService.create({
-      nickname,
+      nickname: account.nickname,
       ip,
       client: "launcher",
       userAgentStr: headers["user-agent"],
     });
 
-    return { data: { nickname, token, expires_at } };
+    return { data: { nickname: account.nickname, uuid: account.uuid, token, expires_at } };
   }, {
     body: loginSchema,
     response: {
@@ -66,11 +68,15 @@ const sessionRoute = new Elysia()
     const nickname = await auth.getUserNickname(session);
     if (!nickname) return status(401, wrapError("UNAUTHORIZED"));
 
+    const identity = await auth.getUserIdentity(nickname);
+    if (!identity) return status(401, wrapError("UNAUTHORIZED"));
+
     const refreshed = await sessionService.refreshSession(session);
 
     return {
       data: {
-        nickname,
+        nickname: identity.nickname,
+        uuid: identity.uuid,
         expires_at: refreshed?.expires_at ?? null,
       },
     };

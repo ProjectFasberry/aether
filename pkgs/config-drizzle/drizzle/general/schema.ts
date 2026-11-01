@@ -957,3 +957,35 @@ export const activityHeatmap = pgTable(
 	},
 	(table) => [primaryKey({ columns: [table.date, table.hour], name: "constraint_1" })],
 );
+
+export const accounts = pgTable(
+	"accounts",
+	{
+		id: integer()
+			.primaryKey()
+			.generatedAlwaysAsIdentity({
+				name: "accounts_id_seq",
+				startWith: 1,
+				increment: 1,
+				minValue: 1,
+				maxValue: 2147483647,
+				cache: 1,
+			}),
+		uuid: uuid().notNull(),
+		nickname: text().notNull(),
+		lowerNickname: text("lower_nickname").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		uniqueIndex("idx_accounts_uuid").using("btree", table.uuid.asc().nullsLast().op("uuid_ops")),
+		uniqueIndex("idx_accounts_lower_nickname").using("btree", table.lowerNickname.asc().nullsLast().op("text_ops")),
+	],
+);
+
+export const accountCredentials = pgTable("account_credentials", {
+	accountId: integer("account_id")
+		.primaryKey()
+		.references(() => accounts.id, { onDelete: "cascade", onUpdate: "cascade" }),
+	passwordHash: text("password_hash").notNull(),
+	passwordUpdatedAt: timestamp("password_updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+});

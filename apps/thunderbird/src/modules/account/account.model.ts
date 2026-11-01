@@ -5,6 +5,8 @@ import { luckperms } from "#/shared/database/luckperms-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { reputation } from "#/shared/database/reputation-db";
 import { getPlayerUUIDCacheRedisKey } from "@repo/core/modules/player";
+import { auth, authLogger } from "#/modules/auth/auth.model";
+import bcrypt from "bcryptjs";
 import { type Static, t } from "elysia";
 
 type Base = {
@@ -60,8 +62,47 @@ export const changePasswordSchema = t.Object({
 	newPass: t.String({ minLength: 6 }),
 });
 
+export type ChangePasswordError = "NOT_FOUND" | "PASSWORD_OR_LOGIN_INCORRECT" | "PASSWORD_IS_UNSAFE";
+
+/**
+ * Changes the password of an account. `AUTH.HASH` is dual-written: LimboAuth
+ * still checks it until the proxy cutover, after which the column is dropped.
+ */
 export async function changePassword({
 	nickname,
 	currentPass,
 	newPass,
-}: Static<typeof changePasswordSchema> & { ip: string } & Base) {}
+	ip,
+}: Static<typeof changePasswordSchema> & { ip: string } & Base): Promise<{ ok: true } | { ok: false; error: ChangePasswordError }> {
+	if (!auth.validatePasswordSafe(newPass)) return { ok: false, error: "PASSWORD_IS_UNSAFE" };
+
+	const account = await auth.getAccount(nickname);
+	if (!account) return { ok: false, error: "NOT_FOUND" };
+
+	if (!bcrypt.compareSync(currentPass, account.hash)) {
+		return { ok: false, error: "PASSWORD_OR_LOGIN_INCORRECT" };
+	}
+
+	const passHash = Bun.password.hashSync(newPass, {
+		algorithm: "bcrypt",
+		cost: 10,
+	});
+
+	await general.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("account_credentials")
+			.set({ password_hash: passHash, password_updated_at: new Date() })
+			.where("account_id", "=", account.id)
+			.execute();
+
+		await trx
+			.updateTable("AUTH")
+			.set({ HASH: passHash })
+			.where("LOWERCASENICKNAME", "=", account.nickname.toLowerCase())
+			.execute();
+	});
+
+	authLogger.info(`Password changed for ${account.nickname} (ip=${ip})`);
+
+	return { ok: true };
+}

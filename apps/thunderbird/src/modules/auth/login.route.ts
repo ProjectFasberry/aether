@@ -25,15 +25,15 @@ const withPassword = new Elysia()
   .use(validateAuthStatus())
   .resolve(({ headers }) => ({ ua: headers["user-agent"] }))
   .post("/basic", async ({ status, body: { nickname, password }, ip, ua: userAgentStr, ...ctx }) => {
-    const { hash: passwordHash, result: isExist } = await auth.getExistsUser(nickname);
+    const account = await auth.getAccount(nickname);
 
-    if (!isExist) throw status(400, wrapError("NOT_EXISTS"));
+    if (!account) throw status(400, wrapError("NOT_EXISTS"));
 
-    const passIsValid = bcrypt.compareSync(password, passwordHash);
+    const passIsValid = bcrypt.compareSync(password, account.hash);
     if (!passIsValid) throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
     const { expires_at: expires, token } = await session.create({
-      nickname,
+      nickname: account.nickname,
       userAgentStr,
       ip,
     });
@@ -46,13 +46,14 @@ const withPassword = new Elysia()
       domain: getClientDomain(),
     })
 
-    return { data: { nickname } };
+    return { data: { nickname: account.nickname, uuid: account.uuid } };
   }, {
     body: loginSchema,
     response: {
       200: withData(
         t.Object({
           nickname: t.String(),
+          uuid: t.String(),
         }),
       ),
       400: withError(t.UnionEnum(["NOT_EXISTS", "PASSWORD_OR_LOGIN_INCORRECT"])),

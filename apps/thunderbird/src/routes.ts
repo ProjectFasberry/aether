@@ -23,6 +23,7 @@ import { openApiPlugin } from "./lib/plugins/openapi";
 import { misc } from "./modules/misc";
 import { contentManifest } from "./modules/content/manifest.route";
 import { releases } from "./modules/releases";
+import { yggdrasil } from "./modules/yggdrasil";
 import { html } from '@elysia/html';
 import previewHtml from "../static/preview.html" with { type: "text" }
 
@@ -39,6 +40,7 @@ export const main = new Elysia()
     .use(misc)
     .use(contentManifest)
     .use(releases)
+    .use(yggdrasil)
   )
   .use(auth)
   .use(me)
