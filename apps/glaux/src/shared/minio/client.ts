@@ -2,11 +2,12 @@ import { createMinioService } from "@repo/core/lib/minio";
 import type { ClientOptions } from "minio";
 import { getEnv } from "../env";
 
+const volume = new URL(getEnv().VOLUME_URL);
+
 const config: ClientOptions = {
-	endPoint: getEnv().MINIO_HOST,
-	// @ts-expect-error
-	port: getEnv().MINIO_PORT,
-	useSSL: getEnv().PROD,
+	endPoint: volume.hostname,
+	port: Number(volume.port || (volume.protocol === "https:" ? 443 : 80)),
+	useSSL: volume.protocol === "https:",
 	accessKey: getEnv().MINIO_ACCESS_KEY,
 	secretKey: getEnv().MINIO_SECRET_KEY,
 };

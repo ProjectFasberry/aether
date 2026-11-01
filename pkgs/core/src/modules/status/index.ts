@@ -45,10 +45,6 @@ type Player = {
   currentServer: string;
 };
 
-const INITIAL_PROXY_DATA: StatusPayload["proxy"] = {
-  status: "offline", online: 0, max: 200, players: [],
-};
-
 const SERVER_STATUS_KEY = buildRedisKey({
   name: "server-status:data",
   target: "internal",
@@ -126,12 +122,15 @@ export const createServerStatusService = ({
           generalDb.selectFrom("servers").selectAll().execute(),
         ]);
 
+        // A failed health check must not wipe the snapshot: an empty list makes
+        // every launcher think there are no servers at all.
         if (proxyStats.status !== "ok") {
-          return { proxy: INITIAL_PROXY_DATA, servers: {} };
+          return null;
         }
 
         function mapServerData(
           server: string, online: number, allPlayers: Player[], servers: Selectable<DB["servers"]>[],
+          running: boolean,
         ) {
           const rawData = servers.find((d) => d.origin === server.toLowerCase());
 
@@ -142,10 +141,10 @@ export const createServerStatusService = ({
               players: allPlayers.filter((p) => p.currentServer === server).map((p) => p.username),
               fullname: rawData?.fullname ?? "unknown",
               thumbnail: getStaticUrl(rawData?.thumbnail ?? "", config.VOLUME_URL),
-              status: "online",
+              status: running ? "online" : "offline",
               max: 200,
               description: rawData?.description,
-              available: rawData?.available ?? true,
+              available: running && (rawData?.available ?? true),
               excluded: rawData?.excluded ?? false,
             },
           ] as const;
@@ -153,9 +152,27 @@ export const createServerStatusService = ({
           return result
         }
 
-        const serverEntries = Object.entries(proxyStats.servers).map(([server, online]) =>
-          mapServerData(server, online, proxyStats.playersList.players, serversStats),
+        // Servers known to the panel or the database always stay in the list: a
+        // stopped backend is shown as unavailable instead of disappearing.
+        const liveServers = new Map(
+          Object.entries(proxyStats.servers).map(([server, online]) => [server.toLowerCase(), { server, online }]),
         );
+        const serverKeys = new Set([
+          ...liveServers.keys(),
+          ...serversStats.map((server) => server.origin.toLowerCase()),
+        ]);
+
+        const serverEntries = [...serverKeys].map((key) => {
+          const live = liveServers.get(key);
+
+          return mapServerData(
+            live?.server ?? key,
+            live?.online ?? 0,
+            proxyStats.playersList.players,
+            serversStats,
+            Boolean(live),
+          );
+        });
 
         return {
           proxy: {
@@ -177,6 +194,9 @@ export const createServerStatusService = ({
       const data = await this._getRawData({
         panelUser, panelPassword
       });
+
+      // Keep the last good snapshot while the panel is unreachable.
+      if (!data) return;
 
       await redis().set(SERVER_STATUS_KEY, JSON.stringify(data));
     },

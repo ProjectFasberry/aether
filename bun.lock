@@ -71,6 +71,7 @@
         "@opentelemetry/sdk-trace-node": "^2.7.1",
         "@oslojs/crypto": "1.0.1",
         "@oslojs/encoding": "1.1.0",
+        "@projectfasberry/events": "^1.2.1",
         "@repo/core": "workspace:*",
         "@repo/shared": "workspace:*",
         "@scure/bip39": "2.0.1",
@@ -667,6 +668,8 @@
     "@oslojs/encoding": ["@oslojs/encoding@1.1.0", "", {}, "sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ=="],
 
     "@pkgjs/parseargs": ["@pkgjs/parseargs@0.11.0", "", {}, "sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg=="],
+
+    "@projectfasberry/events": ["@projectfasberry/events@1.2.1", "https://npm.pkg.github.com/download/@projectfasberry/events/1.2.1/b2e7ffad79c73eeaf013a86ebb17f517efd00578", { "dependencies": { "@nats-io/nats-core": "^3.0.0", "@nats-io/transport-node": "^3.0.0" } }, "sha512-sBLKOfPdoQL2rXZc/rdacu9aG/A5xWSRBx1Ogsz9OMGhjs+ZJHJmxLYxbhKQAMBINpicCW5fM2qc6eiNf2rUFA=="],
 
     "@protobufjs/aspromise": ["@protobufjs/aspromise@1.1.2", "", {}, "sha512-j+gKExEuLmKwvz3OgROXtrJ2UG2x8Ch2YZUxahh+s1F2HZ+wAceUNLkvy6zKCPVRkU++ZWQrdxsUeQXmcg4uoQ=="],
 

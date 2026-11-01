@@ -25,11 +25,24 @@ const app = new Elysia(appConfig)
   .use(corsPlugin())
   .use(loggerPlugin())
   .onError((payload) => {
-    const { error, code } = payload;
+    const { error, code, set } = payload;
 
     if (logging.globalError) {
-      appLogger.error({ error, code })
+      appLogger.error({
+        code,
+        name: error instanceof Error ? error.name : typeof error,
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      })
     };
+
+    // `throw status(400, ...)` produces ElysiaCustomStatusResponse, which carries
+    // the numeric code on `error.code`. Returning a body from onError does not
+    // preserve it, so the response status must be set explicitly.
+    const customStatus = (error as { code?: unknown }).code;
+    if (typeof customStatus === "number") {
+      set.status = customStatus;
+    }
 
     let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 

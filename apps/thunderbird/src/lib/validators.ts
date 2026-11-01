@@ -180,10 +180,9 @@ export const botValidator = () =>
 			const isEnabled = await getOption("botCheckEnabled");
 			if (!isEnabled) return;
 
-			if (token.length <= 1) throw status(400);
+			if (!token || token.length <= 1) throw status(400, "TOKEN_IS_NOT_PROVIDED");
 
 			try {
-				if (!token) throw status(400, "TOKEN_IS_NOT_PROVIDED");
 
 				const result = await verifyRequest(token);
 				if (!result.ok) throw status(400, result.error);
