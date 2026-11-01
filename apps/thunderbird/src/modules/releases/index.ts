@@ -19,27 +19,44 @@ function safe(value: string | undefined): value is string {
   return Boolean(value) && SAFE_SEGMENT.test(value as string) && !value!.includes("..");
 }
 
-type Latest = {
+export type Latest = {
   version: string;
   notes: string;
   platforms: Record<string, { signature: string; url: string }>;
 };
 
+/** Newest release manifest of a channel, or `null` when it was never published. */
+export async function readLatest(channel: string): Promise<Latest | null> {
+  if (!CHANNELS.has(channel)) return null;
+
+  const bucket = S3.getClient(BUCKETS.RELEASES);
+
+  return (await bucket
+    .file(`${PREFIX}${channel}/latest.json`)
+    .json()
+    .catch(() => null)) as Latest | null;
+}
+
+/**
+ * Stored URLs point at rustfs (`/releases/fasberry/...`); hand out API links
+ * instead, without the bucket prefix the API already implies.
+ */
+export function rewritePlatforms(latest: Latest, origin: string) {
+  return Object.fromEntries(
+    Object.entries(latest.platforms).map(([platform, entry]) => {
+      const key = new URL(entry.url).pathname.split("/").slice(2).join("/");
+      const relative = key.replace(/^fasberry\//, "");
+
+      return [platform, { ...entry, url: `${origin}/releases/${relative}` }];
+    }),
+  ) as Latest["platforms"];
+}
+
 /** Shared by `/latest` (documented) and `/latest.json` (alias for tools). */
 async function latestHandler({ params, request, status }: any) {
-      if (!CHANNELS.has(params.channel)) {
-        return status(404, wrapError("NOT_FOUND"));
-      }
+      const latest = await readLatest(params.channel);
 
-      const bucket = S3.getClient(BUCKETS.RELEASES);
-      const latest = (await bucket
-        .file(`${PREFIX}${params.channel}/latest.json`)
-        .json()
-        .catch(() => null)) as Latest | null;
-
-      if (!latest) {
-        return status(404, wrapError("NOT_FOUND"));
-      }
+      if (!latest) return status(404, wrapError("NOT_FOUND"));
 
       // Behind Traefik the request is plain http; the forwarded header is the
       // only reliable source of the public scheme.
@@ -47,18 +64,7 @@ async function latestHandler({ params, request, status }: any) {
       const proto = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
       const origin = `${proto}://${url.host}`;
 
-      // Stored URLs point at rustfs (`/releases/fasberry/...`); hand out API
-      // links instead, without the bucket prefix the API already implies.
-      const platforms = Object.fromEntries(
-        Object.entries(latest.platforms).map(([platform, entry]) => {
-          const key = new URL(entry.url).pathname.split("/").slice(2).join("/");
-          const relative = key.replace(/^fasberry\//, "");
-
-          return [platform, { ...entry, url: `${origin}/releases/${relative}` }];
-        }),
-      );
-
-      return { ...latest, platforms };
+      return { ...latest, platforms: rewritePlatforms(latest, origin) };
 }
 
 export const releases = new Elysia()

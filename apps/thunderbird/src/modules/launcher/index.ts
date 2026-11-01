@@ -1,42 +1,53 @@
 import Elysia, { t } from "elysia";
 import { buildRouteSummary } from "#/utils";
 import { withData } from "#/shared/schemas";
-import { urlsService } from "#/shared/services/urls";
+import { readLatest, rewritePlatforms } from "#/modules/releases";
 import { joinGate } from "./join.route";
 
 /**
- * Launcher builds live in the public bucket, but the links are kept in the
- * `ip_list` url registry (same place as `server-proxy`), so the app never
- * hardcodes a path and a new build can be published without a redeploy.
+ * Launcher downloads are resolved from the newest `prod` release manifest, so a
+ * published build becomes downloadable without touching the app or the database.
+ * The stale `launcher-windows` / `launcher-macos` rows in `ip_list` are unused.
  */
-const PLATFORMS = [
-  { platform: "windows-x86_64", key: "launcher-windows" },
-  { platform: "darwin-aarch64", key: "launcher-macos" },
-] as const;
-
-/** `ip_list` holds either a full url or a bare host for the other entries. */
-const toUrl = (value: string | undefined) => {
-  if (!value) return null;
-  return /^https?:\/\//i.test(value) ? value : `https://${value}`;
-};
+const PLATFORMS = ["windows-x86_64", "darwin-aarch64"] as const;
 
 const artifactSchema = t.Object({
   platform: t.UnionEnum(["windows-x86_64", "darwin-aarch64"]),
   url: t.Nullable(t.String()),
 });
 
+/** Same origin trick as the release API: Traefik terminates TLS, we do not. */
+function publicOrigin(request: Request): string {
+  const url = new URL(request.url);
+  const proto = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+
+  return `${proto}://${url.host}`;
+}
+
+async function platformUrls(request: Request): Promise<Record<string, string>> {
+  const latest = await readLatest("prod");
+
+  if (!latest) return {};
+
+  const platforms = rewritePlatforms(latest, publicOrigin(request));
+
+  return Object.fromEntries(
+    Object.entries(platforms).map(([platform, entry]) => [platform, entry.url]),
+  );
+}
+
 export const launcher = new Elysia()
   .use(joinGate)
   .get(
     "/launcher",
-    () => {
-      const urls = urlsService.getData();
+    async ({ request }) => {
+      const urls = await platformUrls(request);
 
       return {
         data: {
-          artifacts: PLATFORMS.map(({ platform, key }) => ({
+          artifacts: PLATFORMS.map((platform) => ({
             platform,
-            url: toUrl(urls.get(key)),
+            url: urls[platform] ?? null,
           })),
         },
       };
@@ -52,9 +63,11 @@ export const launcher = new Elysia()
   )
   .get(
     "/launcher/:platform",
-    ({ params, set }) => {
-      const entry = PLATFORMS.find((item) => item.platform === params.platform);
-      const url = toUrl(entry ? urlsService.getData().get(entry.key) : undefined);
+    async ({ params, request, set }) => {
+      const urls = await platformUrls(request);
+      const url = PLATFORMS.includes(params.platform as (typeof PLATFORMS)[number])
+        ? urls[params.platform]
+        : undefined;
 
       if (!url) {
         set.status = 404;
