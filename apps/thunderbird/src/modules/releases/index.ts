@@ -25,9 +25,8 @@ type Latest = {
   platforms: Record<string, { signature: string; url: string }>;
 };
 
-export const releases = new Elysia()
-  .group("/releases", app => app
-    .get("/:channel/latest.json", async ({ params, request, status }) => {
+/** Shared by `/latest` (documented) and `/latest.json` (alias for tools). */
+async function latestHandler({ params, request, status }: any) {
       if (!CHANNELS.has(params.channel)) {
         return status(404, wrapError("NOT_FOUND"));
       }
@@ -60,9 +59,18 @@ export const releases = new Elysia()
       );
 
       return { ...latest, platforms };
-    }, {
+}
+
+export const releases = new Elysia()
+  .group("/releases", app => app
+    .get("/:channel/latest", latestHandler, {
       detail: {
         summary: buildRouteSummary("Latest launcher release"),
+      },
+    })
+    .get("/:channel/latest.json", latestHandler, {
+      detail: {
+        summary: buildRouteSummary("Latest launcher release (json alias)"),
       },
     })
     .get("/:channel/:version/:platform/:file", ({ params, status }) => {
