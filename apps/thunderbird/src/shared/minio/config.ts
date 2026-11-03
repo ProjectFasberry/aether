@@ -2,9 +2,8 @@ import type { ClientOptions } from "minio";
 import { getEnv } from "../env";
 
 /**
- * The bucket is served by Traefik at VOLUME_URL, while MINIO_HOST/PORT point at
- * the public hostname without TLS. Deriving host/port/ssl from VOLUME_URL keeps
- * one source of truth and works both inside the host network and from outside.
+ * The bucket is served by Traefik at VOLUME_URL; deriving host/port/ssl from it
+ * keeps one source of truth and works both inside the host network and outside.
  */
 const volume = new URL(getEnv().VOLUME_URL);
 

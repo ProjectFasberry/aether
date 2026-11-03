@@ -1,5 +1,4 @@
 import { cleanOldEvents } from "#/modules/server/events/events.model";
-import { updateExchangeRates } from "#/modules/store/order/external/cryptobot.model";
 import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
 import { getEnv } from "../env";
 import { redisService } from "../redis/client";
@@ -25,26 +24,6 @@ async function wrapJobCb(name: string, fn: () => Promise<void>) {
 }
 
 export const CRON_JOBS: Job[] = [
-  {
-    name: "update-exchange-rates",
-    cron: "0 */10 * * * *",
-    callback: async function () {
-      await wrapJobCb(this.name, updateExchangeRates)
-    },
-    immediately: true,
-    schedule: true,
-    allowIsDev: false
-  },
-  {
-    name: "warn-before-update-exchange-rates",
-    cron: "0 5-59/10 * * * *",
-    callback: async function () {
-      cronLogger.info(`Job "${this.name}" will be started in 5 minutes`);
-    },
-    immediately: true,
-    schedule: true,
-    allowIsDev: false
-  },
   {
     name: "clean-old-events",
     cron: "0 */10 * * * *",

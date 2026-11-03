@@ -1,11 +1,8 @@
 import * as z from "zod";
-import { currencyCryptoSchema, currencyFiatSchema } from "./currencies-schema";
 import type { JsonValue } from "@gen/db/general";
-import { nicknameSchema } from "../auth";
 
 export const paymentFiatMethodSchema = z.enum(["card", "sbp"]);
 export const paymentTypeSchema = z.enum(["donate", "belkoin", "charism", "item", "event"]);
-export const paymentCurrencySchema = z.union([currencyFiatSchema, currencyCryptoSchema]);
 export const paymentStatusSchema = z.enum(["created", "received", "captured", "cancelled", "failed"]);
 export const paymentValueSchema = z.union([z.number(), z.string()]);
 
@@ -39,16 +36,6 @@ export const orderDetailsSchema = z.object({
 
 export const createOrderSchema = orderDetailsSchema;
 
-export const orderEventPayloadTypeSchema = z.enum(["invoice_paid", "canceled"]);
-
-export const orderEventPayloadSchema = z.object({
-	type: orderEventPayloadTypeSchema,
-	payload: z.object({
-		id: z.string(),
-		date_at: z.union([z.string(), z.date()]),
-	}),
-});
-
 export const STORE_TYPES = ["donate", "event"] as const;
 
 export const editorFieldSchema = z
@@ -71,45 +58,3 @@ export const storeItemSchema = z.object({
 
 export const GAME_CURRENCIES = ["CHARISM", "BELKOIN"] as const;
 export type GameCurrency = (typeof GAME_CURRENCIES)[number];
-
-export const methodTypes = z.enum(["heleket", "sbp", "cryptobot"]);
-export type MethodType = z.infer<typeof methodTypes>;
-
-export const createOrderTopUpSchema = z.object({
-	target: z.enum(GAME_CURRENCIES),
-	value: z.number().min(1).max(1000000),
-	method: z.object({
-		type: methodTypes,
-		currency: paymentCurrencySchema,
-	}),
-	recipient: nicknameSchema,
-	comment: z
-		.string()
-		.min(1)
-		.transform((t) => t.trim() || null)
-		.optional(),
-});
-
-export type CreateOrderTopUpSchema = z.infer<typeof createOrderTopUpSchema>;
-
-export type OutputPayload = {
-	url: string;
-	orderId: string;
-	invoiceId: number;
-	totalPrice: number;
-	uniqueId: string;
-};
-
-export type OrderInputPayload = CreateOrderTopUpSchema & {
-	initiator: string;
-};
-
-export type StoreExchangeRatesPayload = Record<
-	GameCurrency,
-	{
-		USDT: number;
-		RUB: number;
-		UAH: number;
-		KZT: number;
-	}
->;

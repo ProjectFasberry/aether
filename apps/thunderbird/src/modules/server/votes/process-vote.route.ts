@@ -1,9 +1,11 @@
 import Elysia from "elysia";
 import { sql } from "kysely";
+import { timingSafeEqual } from "node:crypto";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { publishVoteNotify } from "#/lib/publishers/pub-vote-notify";
 import { general } from "#/shared/database/general-db";
 import { buildRouteSummary } from "#/utils";
+import { voteSites } from "./vote-sites.model";
 
 async function postVoted(nickname: string) {
   const result = await general
@@ -57,11 +59,20 @@ export const processPlayerVote = new Elysia()
       throw status(400, "NICKNAME_ERROR")
     }
 
+    const site = await voteSites.getDefault();
+
+    if (!site) {
+      throw status(503, "VOTE_SITE_NOT_CONFIGURED")
+    }
+
     const expSign = new Bun.CryptoHasher("sha1")
-      .update(nick + time + Bun.env.VOTIFIEF_SECRET_KEY)
+      .update(nick + time + site.secret)
       .digest('hex');
 
-    if (sign !== expSign) {
+    const received = Buffer.from(sign, "utf8");
+    const expected = Buffer.from(expSign, "utf8");
+
+    if (received.length !== expected.length || !timingSafeEqual(received, expected)) {
       throw status(400, "INVALID_PAYLOAD")
     }
 

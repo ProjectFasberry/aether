@@ -1,16 +1,11 @@
 import type * as z from "zod";
-import type { currencyCryptoSchema } from "../../schemas/store/currencies-schema";
 import type {
-	orderEventPayloadSchema,
-	paymentCurrencySchema,
 	paymentStatusSchema,
 	paymentTypeSchema,
 	paymentValueSchema,
 } from "../../schemas/store/payment";
 
-export type PaymentCryptoCurrency = z.infer<typeof currencyCryptoSchema>;
 export type PaymentDonateType = string;
-export type PaymentCurrency = z.infer<typeof paymentCurrencySchema>;
 export type PaymentResponseStatus = z.infer<typeof paymentStatusSchema>;
 export type PaymentType = z.infer<typeof paymentTypeSchema>;
 export type PaymentValueType = z.infer<typeof paymentValueSchema>;
@@ -32,5 +27,3 @@ export type CreateOrderRoutePayload = {
 		};
 	};
 };
-
-export type OrderEventPayload = z.infer<typeof orderEventPayloadSchema>;

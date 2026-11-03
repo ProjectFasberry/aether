@@ -1,7 +1,7 @@
-import { getEnv } from "#/shared/env"
 import { type Static, t } from "elysia"
+import { getUrlConfig } from "#/shared/services/config"
 
-const getServerMapUrl = (v: string) => getEnv().MAP_URL.replace("[X]", v)
+const mapUrl = () => getUrlConfig("map-url") ?? ""
 
 export const serverPayloadSchema = t.Array(
   t.Object({
@@ -13,6 +13,9 @@ export const serverPayloadSchema = t.Array(
 )
 
 export async function getServers(): Promise<Static<typeof serverPayloadSchema>> {
+  const template = mapUrl();
+  const getServerMapUrl = (v: string) => template.replace("[X]", v);
+
   return [
     { name: "Bisquite", value: "bisquite", href: getServerMapUrl("bisquite"), img: "" },
     { name: "Muffin", value: "muffin", href: getServerMapUrl("muffin"), img: "" },

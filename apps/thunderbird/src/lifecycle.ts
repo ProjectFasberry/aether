@@ -12,6 +12,9 @@ import { psubscribe } from "./shared/redis/utils";
 import { startJobs } from "./shared/cron/init";
 import { DATABASES_FOR_CHECK } from "./shared/database";
 import { getEnv } from "./shared/env";
+import { ensureUrlConfig } from "./shared/services/config";
+import { signingKeys } from "./modules/yggdrasil/signing-keys.model";
+import { voteSites } from "./modules/server/votes/vote-sites.model";
 
 export async function shutdown({ signal }: { signal: string }) {
   appLogger.info(`Received ${signal}. Starting graceful shutdown...`);
@@ -43,6 +46,8 @@ export const boot = createBootstrap([
     run: async () => {
       const logger = appLogger.child({ name: "urls" });
 
+      await ensureUrlConfig()
+
       await urlsService.init({
         onError: (error) => logger.error({ message: "Urls error", error }),
         print: true
@@ -53,6 +58,15 @@ export const boot = createBootstrap([
   }),
   definePipe("nats", {
     run: () => natsService.start(),
+  }),
+  definePipe("signing-keys", {
+    run: async () => {
+      await signingKeys.ensure();
+    },
+  }),
+  definePipe("vote-sites", {
+    run: () => voteSites.ensure(),
+    critical: false,
   }),
   definePipe("minio", {
     run: () => taskWithTimeout(() => minioService.start({

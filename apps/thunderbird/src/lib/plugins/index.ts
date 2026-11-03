@@ -1,8 +1,8 @@
 import Elysia from "elysia";
 import { cors } from "@elysia/cors";
 import { logger } from "@tqman/nice-logger";
-import { getEnv } from "#/shared/env";
 import { clientIp } from "#/shared/services/client-ip";
+import { getUrlConfig } from "#/shared/services/config";
 
 /**
  * Browser origins allowed to call the API with credentials.
@@ -25,16 +25,10 @@ const FIXED_ORIGINS = [
 export function allowedOrigins(): string[] {
 	const origins = new Set<string>(FIXED_ORIGINS);
 
-	try {
-		const env = getEnv();
+	// `frontend-url` may still be a template (`http://${DEV_HOST}:3006`).
+	const frontend = getUrlConfig("frontend-url");
 
-		// `FRONTEND_URL` may still be a template (`http://${DEV_HOST}:3006`).
-		for (const value of [env?.FRONTEND_URL]) {
-			if (value && !value.includes("${")) origins.add(value);
-		}
-	} catch {
-		// Environment is not initialised yet (tests/scripts): fixed list is enough.
-	}
+	if (frontend && !frontend.includes("${")) origins.add(frontend);
 
 	return [...origins];
 }
