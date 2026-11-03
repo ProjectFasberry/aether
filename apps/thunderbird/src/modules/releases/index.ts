@@ -1,7 +1,10 @@
-import Elysia from "elysia";
+import Elysia, { t } from "elysia";
 import { BUCKETS, S3, presignPath } from "#/shared/minio/client";
 import { buildRouteSummary } from "#/utils";
 import { wrapError } from "@repo/shared/lib/helpers";
+import { auth } from "#/modules/auth/auth.model";
+import { defineOptionalBearerSession, handleByBearer } from "#/lib/define";
+import { getEnv } from "#/shared/env";
 
 /**
  * Public launcher releases. Artifacts live in the private `releases` bucket, so
@@ -52,31 +55,107 @@ export function rewritePlatforms(latest: Latest, origin: string) {
   ) as Latest["platforms"];
 }
 
-/** Shared by `/latest` (documented) and `/latest.json` (alias for tools). */
+/** Channel manifest of the latest release; the launcher updater polls it. */
 async function latestHandler({ params, request, status }: any) {
-      const latest = await readLatest(params.channel);
+  const latest = await readLatest(params.channel);
 
-      if (!latest) return status(404, wrapError("NOT_FOUND"));
+  if (!latest) return status(404, wrapError("NOT_FOUND"));
 
-      // Behind Traefik the request is plain http; the forwarded header is the
-      // only reliable source of the public scheme.
-      const url = new URL(request.url);
-      const proto = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
-      const origin = `${proto}://${url.host}`;
+  // Behind Traefik the request is plain http; the forwarded header is the
+  // only reliable source of the public scheme.
+  const url = new URL(request.url);
+  const proto = request.headers.get("x-forwarded-proto") ?? url.protocol.replace(":", "");
+  const origin = `${proto}://${url.host}`;
 
-      return { ...latest, platforms: rewritePlatforms(latest, origin) };
+  return { ...latest, platforms: rewritePlatforms(latest, origin) };
 }
+
+/**
+ * The public download route carries no channel in its path, so the environment
+ * itself decides what it serves: the prod image serves `prod`, everything else
+ * (staging, local) serves `dev`. The dev artifact is not public.
+ */
+function currentChannel(): "prod" | "dev" {
+  return getEnv().STAGE === "prod" ? "prod" : "dev";
+}
+
+/** Latest artifact of a platform, resolved from the channel manifest. */
+async function latestArtifact(channel: string, platform: string) {
+  const latest = await readLatest(channel);
+  if (!latest) return null;
+
+  const entry = latest.platforms?.[platform];
+  if (!entry?.url) return null;
+
+  let file: string;
+
+  try {
+    file = decodeURIComponent(new URL(entry.url).pathname.split("/").pop() ?? "");
+  } catch {
+    return null;
+  }
+
+  if (!safe(file)) return null;
+
+  return {
+    version: latest.version,
+    key: `${PREFIX}${channel}/${latest.version}/${platform}/${file}`,
+    file,
+  };
+}
+
+/** Dev downloads are for the team only: a session or an API key is required. */
+async function canDownloadDev(headers: Record<string, string | undefined>, session: string | null) {
+  const nickname = session ? await auth.getUserNickname(session) : null;
+  if (nickname) return true;
+
+  const bearer = headers.authorization?.replace(/^Bearer\s+/i, "").trim() ?? "";
+
+  return bearer ? await handleByBearer(bearer) : false;
+}
+
+const latestDownload = new Elysia()
+  .use(defineOptionalBearerSession())
+  .get(
+    "/download/:platform",
+    async ({ params, headers, session, status }) => {
+      const channel = currentChannel();
+
+      if (channel !== "prod" && !(await canDownloadDev(headers, session))) {
+        return status(401, wrapError("UNAUTHORIZED"));
+      }
+
+      const artifact = await latestArtifact(channel, params.platform);
+
+      if (!artifact) return status(404, wrapError("NOT_FOUND"));
+
+      const url = presignPath(BUCKETS.RELEASES, artifact.key, DOWNLOAD_TTL_S);
+
+      return new Response(null, {
+        status: 302,
+        headers: {
+          location: url,
+          // A stable link may be cached briefly; the presign inside it is fresh.
+          "cache-control": channel === "prod" ? "public, max-age=300" : "no-store",
+        },
+      });
+    },
+    {
+      params: t.Object({
+        platform: t.String({ maxLength: 64 }),
+      }),
+      detail: {
+        summary: buildRouteSummary("Download the latest launcher build for a platform"),
+      },
+    },
+  );
 
 export const releases = new Elysia()
   .group("/releases", app => app
-    .get("/:channel/latest", latestHandler, {
-      detail: {
-        summary: buildRouteSummary("Latest launcher release"),
-      },
-    })
+    .use(latestDownload)
     .get("/:channel/latest.json", latestHandler, {
       detail: {
-        summary: buildRouteSummary("Latest launcher release (json alias)"),
+        summary: buildRouteSummary("Latest launcher release"),
       },
     })
     .get("/:channel/:version/:platform/:file", ({ params, status }) => {
