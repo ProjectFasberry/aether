@@ -19,7 +19,7 @@ export type Account = {
 
 export const auth = {
 	getSessionKey: (token: string) => `session:${token}`,
-	/** Accounts are canonical; `AUTH` is only kept for LimboAuth until the cutover. */
+	/** Accounts are canonical; the legacy `AUTH` table is no longer read. */
 	async getAccount(nickname: string): Promise<Account | null> {
 		const query = await general
 			.selectFrom("accounts")

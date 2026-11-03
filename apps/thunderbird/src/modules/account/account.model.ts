@@ -38,7 +38,6 @@ export async function deleteAccount({
 	await general.transaction().execute(async (trx) => {
 		await trx.deleteFrom("account_credentials").where("account_id", "=", account.id).execute();
 		await trx.deleteFrom("accounts").where("id", "=", account.id).execute();
-		await trx.deleteFrom("AUTH").where("LOWERCASENICKNAME", "=", nickname.toLowerCase()).execute();
 		await trx.deleteFrom("players").where("lower_case_nickname", "=", nickname.toLowerCase()).execute();
 	});
 
@@ -62,8 +61,8 @@ export const changePasswordSchema = t.Object({
 export type ChangePasswordError = "NOT_FOUND" | "PASSWORD_OR_LOGIN_INCORRECT" | "PASSWORD_IS_UNSAFE";
 
 /**
- * Changes the password of an account. `AUTH.HASH` is dual-written: LimboAuth
- * still checks it until the proxy cutover, after which the column is dropped.
+ * Changes the password of an account. Only `account_credentials` is written:
+ * the legacy `AUTH` table (LimboAuth) is no longer part of the login path.
  */
 export async function changePassword({
 	nickname,
@@ -85,19 +84,11 @@ export async function changePassword({
 		cost: 10,
 	});
 
-	await general.transaction().execute(async (trx) => {
-		await trx
-			.updateTable("account_credentials")
-			.set({ password_hash: passHash, password_updated_at: new Date() })
-			.where("account_id", "=", account.id)
-			.execute();
-
-		await trx
-			.updateTable("AUTH")
-			.set({ HASH: passHash })
-			.where("LOWERCASENICKNAME", "=", account.nickname.toLowerCase())
-			.execute();
-	});
+	await general
+		.updateTable("account_credentials")
+		.set({ password_hash: passHash, password_updated_at: new Date() })
+		.where("account_id", "=", account.id)
+		.execute();
 
 	// A password change ends every existing credential: launcher/web sessions and
 	// game tokens issued before it.
