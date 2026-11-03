@@ -7,6 +7,7 @@ import { signaturePublicKey, texturesService } from "./textures.model";
 import { yggdrasilLogger } from "./logger.model";
 import { allowRequest, TOO_MANY_REQUESTS } from "./rate-limit.model";
 import { tokenService } from "./token.model";
+import { clientIp } from "#/shared/services/client-ip";
 
 /**
  * Yggdrasil (`authlib-injector`) compatible auth server.
@@ -54,23 +55,7 @@ const accessTokenBody = t.Object({
   clientToken: t.Optional(t.String({ maxLength: 128 })),
 });
 
-/**
- * Client address behind Traefik: `x-real-ip` is written by the edge and wins.
- * `x-forwarded-for` is client-controlled, so only its last hop (the one our
- * proxy appended) is trusted, never the first.
- */
-const clientIp = (headers: Record<string, string | undefined>) => {
-  const real = headers["x-real-ip"]?.trim();
 
-  if (real) return real;
-
-  const chain = (headers["x-forwarded-for"] ?? "")
-    .split(",")
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  return chain.at(-1) ?? "unknown";
-};
 
 export const yggdrasil = new Elysia()
   .group("/yggdrasil", (app) => app

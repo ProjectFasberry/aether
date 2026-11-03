@@ -26,7 +26,7 @@ export const cookie = {
     cookies[key].httpOnly = true
     cookies[key].path = "/"
     cookies[key].secure = true
-    cookies[key].sameSite = "none"
+    cookies[key].sameSite = "lax"
   },
   unset({ cookies, key, domain }: Properties) {
     cookies[key].domain = domain
@@ -35,6 +35,6 @@ export const cookie = {
     cookies[key].path = "/"
     cookies[key].secure = true
     cookies[key].maxAge = 0
-    cookies[key].sameSite = "none"
+    cookies[key].sameSite = "lax"
   }
 }

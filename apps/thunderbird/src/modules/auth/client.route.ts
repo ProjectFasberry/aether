@@ -9,6 +9,7 @@ import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";
 import { changePassword } from "#/modules/account/account.model";
+import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
 
 /**
  * Head images live in a private bucket; hand the launcher an API link that it
@@ -55,6 +56,23 @@ const changePasswordSchema = t.Object({
 const loginRoute = new Elysia()
   .use(ipPlugin())
   .post("/login", async ({ status, body: { nickname, password }, ip, headers, request }) => {
+    // The launcher endpoint has no CAPTCHA: throttle before touching bcrypt so a
+    // scripted client cannot guess passwords or burn CPU.
+    if (!(await allowRequest("client-login:ip", ip, LIMITS.clientLoginIp.limit, LIMITS.clientLoginIp.window))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
+    if (
+      !(await allowRequest(
+        "client-login:nick",
+        nickname.toLowerCase(),
+        LIMITS.clientLoginNickname.limit,
+        LIMITS.clientLoginNickname.window,
+      ))
+    ) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
     const account = await auth.getAccount(nickname);
 
     if (!account) return status(400, wrapError("NOT_EXISTS"));
@@ -89,6 +107,7 @@ const loginRoute = new Elysia()
     response: {
       200: withData(loginPayloadSchema),
       400: withError(t.UnionEnum(["NOT_EXISTS", "PASSWORD_OR_LOGIN_INCORRECT"])),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
     detail: {
       summary: buildRouteSummary("Launcher login"),

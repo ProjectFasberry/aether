@@ -15,6 +15,7 @@ import { logger } from "@repo/shared/utils/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth";
 import { isProduction } from "#/shared/env";
+import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
 import { nanoid } from "nanoid";
 
 const loginSchema = authSchema;
@@ -24,6 +25,10 @@ const withPassword = new Elysia()
   .use(validateAuthStatus())
   .resolve(({ headers }) => ({ ua: headers["user-agent"] }))
   .post("/basic", async ({ status, body: { nickname, password }, ip, ua: userAgentStr, ...ctx }) => {
+    if (!(await allowRequest("web-login:ip", ip, LIMITS.webLoginIp.limit, LIMITS.webLoginIp.window))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
     const account = await auth.getAccount(nickname);
 
     if (!account) throw status(400, wrapError("NOT_EXISTS"));
@@ -65,6 +70,7 @@ const withPassword = new Elysia()
         ]),
       ),
       404: withError(),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
     detail: {
       summary: buildRouteSummary("Login"),
