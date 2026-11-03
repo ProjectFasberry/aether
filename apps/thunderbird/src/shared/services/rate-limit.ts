@@ -25,11 +25,18 @@ export async function allowRequest(
 	return hits <= limit;
 }
 
+/** `AUTH_*_LIMIT` overrides let staging raise the limits for load tests. */
+function envLimit(name: string, fallback: number): number {
+	const value = Number(Bun.env[name]);
+
+	return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 /** Limits for one endpoint, per IP and per account. */
 export const LIMITS = {
 	/** Launcher login: no CAPTCHA, so the window must be tight. */
-	clientLoginIp: { limit: 10, window: 60 },
-	clientLoginNickname: { limit: 5, window: 60 },
+	clientLoginIp: { limit: envLimit("AUTH_LOGIN_IP_LIMIT", 10), window: 60 },
+	clientLoginNickname: { limit: envLimit("AUTH_LOGIN_NICK_LIMIT", 5), window: 60 },
 	/** Web login has a CAPTCHA on top; this only stops brute CPU load. */
-	webLoginIp: { limit: 15, window: 60 },
+	webLoginIp: { limit: envLimit("AUTH_WEB_LOGIN_IP_LIMIT", 15), window: 60 },
 } as const;
