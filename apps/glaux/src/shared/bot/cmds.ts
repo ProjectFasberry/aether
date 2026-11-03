@@ -8,7 +8,6 @@ import {
 	serverAlertCmdCb,
 	startCmdCb,
 	updateSkinCmdCb,
-	forceUpdateWatchtower,
 	statusCmdCb,
   chatsCmdCb,
 } from "./lib";
@@ -87,13 +86,6 @@ export const GUARD_COMMANDS: GuardCommand[] = [
 		description: "Update urls config",
 		handlers: {
 			private: revalidateUrlsCmdCb,
-		},
-	},
-	{
-		name: "forceupdate",
-		description: "Force updating images",
-		handlers: {
-			private: forceUpdateWatchtower,
 		},
 	},
 ];

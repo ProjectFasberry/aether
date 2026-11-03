@@ -324,32 +324,6 @@ export async function publicStartCmdCb(ctx: CommandCtx) {
   await ctx.delete({ message_id: ctx.id }).catch(() => { });
 }
 
-export async function forceUpdateWatchtower(ctx: CommandCtx) {
-  try {
-    const url = `http://${getEnv().WATCHTOWER_HOST}:${getEnv().WATCHTOWER_PORT}/v1/update`;
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${getEnv().WATCHTOWER_API_TOKEN}`,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
-
-    if (res.ok) {
-      const text = await res.text();
-      await ctx.send(`Signal sent: ${text}`);
-    } else {
-      await ctx.send(`Watchtower error ${res.status}`);
-    }
-  } catch (e) {
-    bot.logger.error("Network error", e);
-    await ctx.send(`Network error`);
-  }
-}
-
 type DefineCommand = {
   ctx: CommandCtx,
   cmds: {

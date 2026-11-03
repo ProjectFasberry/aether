@@ -1,5 +1,6 @@
 import type { NatsConnection, Subscription } from "@nats-io/nats-core";
 import { SUBJECTS } from "./subjects";
+import { sendGotify } from "../notify/gotify";
 import { bot } from "../bot";
 import { chats } from "../bot/chats";
 import { natsService } from "./client";
@@ -24,6 +25,19 @@ export const SUBSCRIBERS: Sub[] = [
           const json = msg.json();
 
           try {
+            const text = JSON.stringify(json);
+
+            // Gotify does not depend on the Telegram side: a missing bot
+            // instance must not swallow the alert.
+            const source = typeof json === "object" && json !== null && "from" in json
+              ? String((json as { from?: unknown }).from ?? "fasberry")
+              : "fasberry";
+            const body = typeof json === "object" && json !== null && "data" in json
+              ? String((json as { data?: unknown }).data ?? text)
+              : text;
+
+            void sendGotify(`${source} alert`, body);
+
             const instance = bot.getOptionalInstance();
             if (!instance) {
               console.warn("no bot instance available")
@@ -31,7 +45,7 @@ export const SUBSCRIBERS: Sub[] = [
             }
 
             for (const [chat_id, target] of chats.getData()) {
-              const payload = { chat_id, text: JSON.stringify(json) };
+              const payload = { chat_id, text };
 
               instance
                 .api.sendMessage(payload)
