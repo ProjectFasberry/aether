@@ -1,6 +1,8 @@
 import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from "node:crypto";
+import { isProduction } from "#/shared/env";
 import { skinsService } from "#/shared/services/skins";
 import { minioService } from "#/shared/services/minio";
+import { yggdrasilLogger } from "./logger.model";
 import { undash } from "./profile.model";
 
 /**
@@ -17,6 +19,16 @@ import { undash } from "./profile.model";
  * already cached.
  */
 const KEY_ENV = "YGGDRASIL_PRIVATE_KEY";
+
+/**
+ * Dev-only escape hatch: with no key configured the process would sign with an
+ * ephemeral pair and every signature would break on the next boot. Production
+ * must fail at startup instead of serving unverifiable textures.
+ */
+const ALLOW_EPHEMERAL_ENV = "YGGDRASIL_ALLOW_EPHEMERAL_KEY";
+
+const allowEphemeral = () => Bun.env[ALLOW_EPHEMERAL_ENV] === "true";
+
 
 /** Yggdrasil signs the base64 value string with RSA-SHA1. */
 const SIGN_ALGORITHM = "sha1";
@@ -46,6 +58,18 @@ function loadPrivateKey(): ReturnType<typeof createPrivateKey> {
     return cachedPrivateKey;
   }
 
+  if (isProduction) {
+    throw new Error(
+      `${KEY_ENV} is not configured: Yggdrasil textures cannot be signed. ` +
+        `Set the key (or, for local dev only, ${ALLOW_EPHEMERAL_ENV}=true).`,
+    );
+  }
+
+  yggdrasilLogger.warn(
+    `${KEY_ENV} is not configured: signing textures with an ephemeral dev key, ` +
+      `signatures will break after a restart (${ALLOW_EPHEMERAL_ENV} suppresses this warning)`,
+  );
+
   // Dev fallback: ephemeral key, signatures only live while the process does.
   const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
 
@@ -53,6 +77,10 @@ function loadPrivateKey(): ReturnType<typeof createPrivateKey> {
 
   return cachedPrivateKey;
 }
+
+// Resolve the key while the module loads so a misconfigured production process
+// dies at startup instead of on the first profile request.
+loadPrivateKey();
 
 /** RSAPublicKey in SPKI PEM, served by `GET /yggdrasil`. */
 export function signaturePublicKey(): string {

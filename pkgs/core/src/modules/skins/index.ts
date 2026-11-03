@@ -214,7 +214,9 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
           "sr_url_skins.skin_variant",
         ])
         .where("sr_custom_skins.name", "=", "default")
-        .executeTakeFirstOrThrow()
+        // A skins DB without a "default" row is legal (fresh/dev installs); the
+        // caller treats a missing row as "this player has no skin".
+        .executeTakeFirst()
     },
     async _getSkinsHistory(uuid: string): Promise<Omit<PlayerSkinPayload, "value">[]> {
       return await skinsDb
@@ -354,7 +356,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
     ): Promise<SkinsHistory> {
       const uuid = uuidOpt ?? await playerService.getUuid(nickname);
 
-      const resolveCurrentSkin = async (uuid: string): Promise<PlayerSkinPayload> => {
+      const resolveCurrentSkin = async (uuid: string): Promise<PlayerSkinPayload | null> => {
         const row = await skinsDb
           .selectFrom("sr_players")
           .select("skin_identifier")
@@ -365,10 +367,8 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         if (!id) {
           const defaultSkin = await this.getDefaultSkin({ skinsDb });
-          return {
-            ...defaultSkin,
-            timestamp: 10000000
-          }
+
+          return defaultSkin ? { ...defaultSkin, timestamp: 10000000 } : null;
         }
 
         if (isCustomSkin(id)) {
@@ -404,15 +404,14 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         const defaultSkin = await this.getDefaultSkin({ skinsDb });
 
-        return {
-          ...defaultSkin,
-          timestamp: 10000000
-        }
+        return defaultSkin ? { ...defaultSkin, timestamp: 10000000 } : null;
       }
 
       const [current, history] = await Promise.all([
         resolveCurrentSkin(uuid), this._getSkinsHistory(uuid)
       ])
+
+      if (!current) return []
 
       const prevIds = history
         .map(h => h.skin_identifier)

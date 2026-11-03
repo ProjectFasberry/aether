@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import bcrypt from "bcryptjs";
 import { buildRouteSummary, cookie } from "#/utils";
 import { auth } from "./auth.model";
 import { wrapError } from "@repo/shared/lib/helpers"
@@ -29,7 +28,7 @@ const withPassword = new Elysia()
 
     if (!account) throw status(400, wrapError("NOT_EXISTS"));
 
-    const passIsValid = bcrypt.compareSync(password, account.hash);
+    const passIsValid = await Bun.password.verify(password, account.hash);
     if (!passIsValid) throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
     const { expires_at: expires, token } = await session.create({

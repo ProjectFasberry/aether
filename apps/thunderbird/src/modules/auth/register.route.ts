@@ -46,7 +46,7 @@ export const registerRoute = new Elysia()
         throw status(400, wrapError("PASSWORD_IS_UNSAFE"));
       }
 
-      const passHash = Bun.password.hashSync(passInputPass, {
+      const passHash = await Bun.password.hash(passInputPass, {
         algorithm: "bcrypt",
         cost: 10,
       });

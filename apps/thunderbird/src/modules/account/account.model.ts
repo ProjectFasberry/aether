@@ -6,7 +6,8 @@ import { playerpoints } from "#/shared/database/playerpoints-db";
 import { reputation } from "#/shared/database/reputation-db";
 import { getPlayerUUIDCacheRedisKey } from "@repo/core/modules/player";
 import { auth, authLogger } from "#/modules/auth/auth.model";
-import bcrypt from "bcryptjs";
+import { session } from "#/modules/auth/login.model";
+import { tokenService } from "#/modules/yggdrasil/token.model";
 import { type Static, t } from "elysia";
 
 type Base = {
@@ -79,11 +80,11 @@ export async function changePassword({
 	const account = await auth.getAccount(nickname);
 	if (!account) return { ok: false, error: "NOT_FOUND" };
 
-	if (!bcrypt.compareSync(currentPass, account.hash)) {
+	if (!(await Bun.password.verify(currentPass, account.hash))) {
 		return { ok: false, error: "PASSWORD_OR_LOGIN_INCORRECT" };
 	}
 
-	const passHash = Bun.password.hashSync(newPass, {
+	const passHash = await Bun.password.hash(newPass, {
 		algorithm: "bcrypt",
 		cost: 10,
 	});
@@ -102,7 +103,14 @@ export async function changePassword({
 			.execute();
 	});
 
-	authLogger.info(`Password changed for ${account.nickname} (ip=${ip})`);
+	// A password change ends every existing credential: launcher/web sessions and
+	// game tokens issued before it.
+	const revokedTokens = await tokenService.revokeAccount(account.id);
+	const revokedSessions = await session.deleteAll(account.nickname);
+
+	authLogger.info(
+		`Password changed for ${account.nickname} (ip=${ip}); revoked ${revokedTokens} game token(s), ${revokedSessions} session(s)`,
+	);
 
 	return { ok: true };
 }

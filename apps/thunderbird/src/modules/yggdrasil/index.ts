@@ -55,11 +55,22 @@ const accessTokenBody = t.Object({
 });
 
 /**
- * The `ip` derive resolves to the proxy hop inside this module, so the client
- * address is read from the header Traefik sets. One bucket per real client.
+ * Client address behind Traefik: `x-real-ip` is written by the edge and wins.
+ * `x-forwarded-for` is client-controlled, so only its last hop (the one our
+ * proxy appended) is trusted, never the first.
  */
-const clientIp = (headers: Record<string, string | undefined>) =>
-  (headers["x-forwarded-for"] ?? "").split(",")[0]?.trim() || headers["x-real-ip"] || "unknown";
+const clientIp = (headers: Record<string, string | undefined>) => {
+  const real = headers["x-real-ip"]?.trim();
+
+  if (real) return real;
+
+  const chain = (headers["x-forwarded-for"] ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  return chain.at(-1) ?? "unknown";
+};
 
 export const yggdrasil = new Elysia()
   .group("/yggdrasil", (app) => app
@@ -90,14 +101,14 @@ export const yggdrasil = new Elysia()
       },
     })
     .use(launcherSession)
-    .post("/authserver/authenticate", async ({ launcher, status, headers }) => {
+    .post("/authserver/authenticate", async ({ launcher, session, status, headers }) => {
       if (await overLimit("auth", clientIp(headers))) return status(429, TOO_MANY_REQUESTS);
-      if (!launcher) return status(403, launcherRequired);
+      if (!launcher || !session) return status(403, launcherRequired);
 
       const account = await profileService.byNickname(launcher.nickname);
       if (!account) return status(403, launcherRequired);
 
-      const { access } = await tokenService.issue(account);
+      const { access } = await tokenService.issue(account, session);
       const profile = profileService.toProfile(account);
 
       return {
@@ -123,7 +134,7 @@ export const yggdrasil = new Elysia()
 
       await tokenService.drop(body.accessToken);
 
-      const { access } = await tokenService.issue(account);
+      const { access } = await tokenService.issue(account, previous.session);
 
       return {
         accessToken: access,
@@ -160,8 +171,20 @@ export const yggdrasil = new Elysia()
         summary: buildRouteSummary("Invalidate a game token"),
       },
     })
-    .post("/authserver/signout", async ({ headers, status }) => {
+    .post("/authserver/signout", async ({ body, headers, status }) => {
       if (await overLimit("auth", clientIp(headers))) return status(429, TOO_MANY_REQUESTS);
+
+      const account = await auth.getAccount(body.username);
+
+      if (!account || !(await Bun.password.verify(body.password, account.hash))) {
+        return status(403, invalidToken);
+      }
+
+      const revoked = await tokenService.revokeAccount(account.id);
+
+      yggdrasilLogger.info(
+        `signout ${account.nickname}: ${revoked} game token(s) revoked (ip=${clientIp(headers)})`,
+      );
 
       return new Response(null, { status: 204 });
     }, {
@@ -223,18 +246,12 @@ export const yggdrasil = new Elysia()
     .get("/sessionserver/session/minecraft/hasJoined", async ({ query, status, headers }) => {
       if (await overLimit("hasJoined", clientIp(headers))) return status(429, TOO_MANY_REQUESTS);
 
-      const join = await tokenService.consumeJoin(query.serverId);
+      const join = await tokenService.consumeJoin(query.serverId, query.username);
       const callerIp = query.ip ?? clientIp(headers);
 
       if (!join) {
-        yggdrasilLogger.info(`hasJoined ${query.username} denied: no join record (ip=${callerIp})`);
-
-        return status(204);
-      }
-
-      if (join.nickname.toLowerCase() !== query.username.toLowerCase()) {
-        yggdrasilLogger.warn(
-          `hasJoined ${query.username} denied: ticket belongs to ${join.nickname}`,
+        yggdrasilLogger.info(
+          `hasJoined ${query.username} denied: no join record for this nickname (ip=${callerIp})`,
         );
 
         return status(204);
