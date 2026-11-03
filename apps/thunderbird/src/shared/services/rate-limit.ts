@@ -1,4 +1,5 @@
 import { redisService } from "#/shared/redis/client";
+import { logger } from "@repo/shared/utils/logger";
 
 /**
  * Fixed-window counters in Redis, the same shape Yggdrasil uses.
@@ -18,6 +19,8 @@ export async function allowRequest(
 
 	// A lost TTL only widens the window, it never leaves a counter forever.
 	if (hits === 1) await redis.expire(key, windowSeconds);
+
+	if (hits > limit) logger.warn(`Rate limit hit: ${bucket} ${subject} (${hits}/${limit})`);
 
 	return hits <= limit;
 }

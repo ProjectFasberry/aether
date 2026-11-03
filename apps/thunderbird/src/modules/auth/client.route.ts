@@ -78,7 +78,7 @@ const loginRoute = new Elysia()
     // Unknown account and wrong password answer the same code; the dummy verify
     // keeps the timing similar so the response cannot enumerate nicknames.
     if (!account) {
-      await Bun.password.verify(password, "\$2b\$10\$abcdefghijklmnopqrstuuJ8mZ0f2w3T5c0oXe8oQ4c7tZ0m8q0G");
+      await Bun.password.verify(password, "$2b$10$1Pk3Hp5dHx0B45pPvSlDyu9FNpFN2U84l8LYcdkcVr/oZRtRg/05K").catch(() => false);
 
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
     }
