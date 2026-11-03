@@ -2,7 +2,6 @@ import type { NatsConnection, Subscription } from "@nats-io/nats-core";
 import { SUBJECTS } from "./subjects";
 import { subscribeGiveBalance } from "#/lib/subscribers/sub-give-balance";
 import { subscribePlayerJoin } from "#/lib/subscribers/sub-player-join";
-import { subscribePlayerStats } from "#/lib/subscribers/sub-player-stats";
 import { subscribeRefferalCheck } from "#/lib/subscribers/sub-referal-check";
 import { subscribeReferalReward } from "#/lib/subscribers/sub-referal-reward";
 import { subscribeConfig } from "#/lib/subscribers/sub-config";
@@ -29,10 +28,8 @@ export const SUBSCRIBERS: Sub[] = [
 		name: "Give balance",
 		cb: (nc) => subscribeGiveBalance(nc, SUBJECTS.SERVER.EVENTS.USER.GIVE_BALANCE),
 	},
-	{
-		name: "Player stats",
-		cb: (nc) => subscribePlayerStats(nc, "todo" + ".*"),
-	},
+	// "Player stats" is not wired: the request/reply responder lives on the
+	// server side and no subject is agreed yet (sub-player-stats.ts stays).
   {
     name: "subscribeConfig",
     cb: (nc) => subscribeConfig(nc, `${SUBJECTS.CONFIG.BASE}.>`)
