@@ -44,15 +44,20 @@ export const SUBSCRIBERS: Sub[] = [
               return;
             }
 
-            for (const [chat_id, target] of chats.getData()) {
-              const payload = { chat_id, text };
+            // A Telegram failure must not swallow the alert: Gotify already has it.
+            try {
+              for (const [chat_id] of chats.getData()) {
+                const payload = { chat_id, text };
 
-              instance
-                .api.sendMessage(payload)
-                .catch((e) => natsService.logger.error(this.subject, e.message));
+                instance.api
+                  .sendMessage(payload)
+                  .catch((e) => natsService.logger.error(`${this.subject}: telegram send failed: ${e?.message ?? e}`));
+              }
+            } catch (e) {
+              natsService.logger.error(`${this.subject}: telegram fan-out failed: ${isError(e) ? e.message : String(e)}`);
             }
           } catch (e) {
-            natsService.logger.error(this.subject, isError(e) ? e.message : "unknown error")
+            natsService.logger.error(`${this.subject}: ${isError(e) ? e.message : String(e)}`)
           }
         },
       });

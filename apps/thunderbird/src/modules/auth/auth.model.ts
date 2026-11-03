@@ -1,7 +1,8 @@
 import { general } from "#/shared/database/general-db";
 import { redisService } from "#/shared/redis/client";
 import { logger } from "@repo/shared/utils/logger";
-import { textSets } from "#/shared/minio/utils";
+import { reloadInternalFiles, textSets } from "#/shared/minio/utils";
+import { minioService } from "#/shared/services/minio";
 import type { UserSessionPayload } from "./login.model";
 import { safeJsonParse } from "#/utils";
 
@@ -75,6 +76,18 @@ export const auth = {
 	},
 	validatePasswordSafe(pwd: string): boolean {
 		const unsafePasswords = textSets["unsafe_passwords.txt"];
+
+		if (!unsafePasswords) {
+			// The list is fetched from object storage on boot under a timeout; a cold
+			// start must not turn every registration into a 500.
+			authLogger.warn("unsafe passwords list is missing, reloading it in the background");
+			void reloadInternalFiles(() => minioService.getInstance()).catch((e) =>
+				authLogger.error(`unsafe passwords reload failed: ${String(e)}`),
+			);
+
+			return true;
+		}
+
 		return !unsafePasswords.has(pwd.trim());
 	},
 };

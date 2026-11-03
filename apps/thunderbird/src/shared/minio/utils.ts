@@ -50,3 +50,20 @@ export async function loadInternalFiles(client: Client, entries: FileEntry[]) {
       .info(`Loaded ${filename} (${ext || "no extension"}) — type: ${typeof content}`);
   }
 }
+
+let reloading: Promise<void> | null = null;
+
+/**
+ * Re-reads the files from object storage at most once at a time. The boot pipe
+ * runs under a timeout, so a cold S3 can leave `textSets` empty; the password
+ * policy calls this on demand instead of failing the request.
+ */
+export function reloadInternalFiles(getClient: () => Client): Promise<void> {
+	if (reloading) return reloading;
+
+	reloading = loadInternalFiles(getClient(), INTERNAl_FILES).finally(() => {
+		reloading = null;
+	});
+
+	return reloading;
+}

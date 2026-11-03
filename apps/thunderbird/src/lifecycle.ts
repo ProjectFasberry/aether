@@ -58,7 +58,7 @@ export const boot = createBootstrap([
     run: () => taskWithTimeout(() => minioService.start({
       onAfterStart: (client) => loadInternalFiles(client, INTERNAl_FILES),
     }), {
-      timeout: 5000
+      timeout: 20_000
     }),
     critical: false
   }),
