@@ -10,6 +10,7 @@ import { redisService } from "#/shared/redis/client";
 import { buildRouteSummary } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
+import { allowRequest } from "#/shared/services/rate-limit";
 
 /**
  * Join gate: the launcher asks for a one-shot ticket right before the game
@@ -66,6 +67,11 @@ const ticketRoute = new Elysia()
         return status(401, wrapError("LAUNCHER_SESSION_REQUIRED"));
       }
 
+      // A ticket is cheap but writes to Redis; keep a runaway launcher bounded.
+      if (!(await allowRequest("ticket:account", payload.nickname.toLowerCase(), 20, 60))) {
+        return status(429, wrapError("TOO_MANY_REQUESTS"));
+      }
+
       const server = body.server?.trim().toLowerCase() || null;
 
       if (server && !SERVER_ID_PATTERN.test(server)) {
@@ -92,6 +98,7 @@ const ticketRoute = new Elysia()
         200: withData(t.Object({ ticket: t.String(), expires_at: DateTime })),
         400: withError(t.String()),
         401: withError(t.String()),
+        429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
       },
       detail: {
         summary: buildRouteSummary("Issue a join ticket for the launcher"),

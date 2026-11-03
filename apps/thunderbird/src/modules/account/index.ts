@@ -10,12 +10,16 @@ export const account = new Elysia()
   .use(defineRequiredUser())
   .use(ipPlugin())
   .group("/account", app => app
-    .delete("/", async ({ nickname, ip }) => {
-      await deleteAccount({ nickname, ip });
+    .delete("/", async ({ nickname, ip, status }) => {
+      const result = await deleteAccount({ nickname, ip });
+
+      if (!result.ok) return status(404, wrapError(result.error));
+
       return { data: "OK" };
     }, {
       response: {
         200: withData(t.Literal("OK")),
+        404: withError(t.UnionEnum(["NOT_FOUND"])),
         500: withError(),
       },
       detail: {

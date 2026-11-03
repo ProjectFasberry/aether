@@ -75,7 +75,13 @@ const loginRoute = new Elysia()
 
     const account = await auth.getAccount(nickname);
 
-    if (!account) return status(400, wrapError("NOT_EXISTS"));
+    // Unknown account and wrong password answer the same code; the dummy verify
+    // keeps the timing similar so the response cannot enumerate nicknames.
+    if (!account) {
+      await Bun.password.verify(password, "\$2b\$10\$abcdefghijklmnopqrstuuJ8mZ0f2w3T5c0oXe8oQ4c7tZ0m8q0G");
+
+      return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+    }
 
     if (!(await Bun.password.verify(password, account.hash))) {
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));

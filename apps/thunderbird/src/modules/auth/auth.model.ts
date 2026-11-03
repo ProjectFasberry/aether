@@ -7,6 +7,9 @@ import { safeJsonParse } from "#/utils";
 
 export const authLogger = logger.child({ name: "auth" });
 
+/** Hard ceiling for a session, regardless of activity (sliding TTL refreshes). */
+const MAX_SESSION_AGE_MS = 90 * 24 * 60 * 60 * 1000;
+
 export type Account = {
 	id: number;
 	nickname: string;
@@ -58,6 +61,10 @@ export const auth = {
 
 		const result = safeJsonParse<UserSessionPayload>(data);
 		if (!result.ok) return null;
+
+		// Sliding TTL keeps an active session alive forever; cap the absolute age.
+		const created = new Date(result.value.created_at).getTime();
+		if (Number.isFinite(created) && Date.now() - created > MAX_SESSION_AGE_MS) return null;
 
 		return result.value;
 	},
