@@ -17,8 +17,9 @@ const FIXED_ORIGINS = [
 	"http://tauri.localhost",
 	"https://tauri.localhost",
 	"https://app.fasberry.fun",
-  "https://app.alpha.fasberry.fun",
-  "https://fasberry.fun"
+	"https://app.alpha.fasberry.fun",
+	// The landing page calls the public API from its own origin.
+	"https://fasberry.fun",
 ] as const;
 
 export function allowedOrigins(): string[] {
