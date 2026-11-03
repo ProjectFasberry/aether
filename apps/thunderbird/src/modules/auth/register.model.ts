@@ -4,7 +4,6 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import dayjs from "dayjs";
 import { createEvent } from "../server/events/events.model";
 import type { Kysely, Transaction } from "kysely";
-import { normalizeIp } from "#/helpers/normalize-ip";
 import type { DB } from "@gen/db/general";
 import { authLogger } from "./auth.model";
 import { logger } from "@repo/shared/utils/logger";
@@ -70,8 +69,6 @@ const referral = {
 	},
 };
 
-const MAX_USERS_PER_IP = 3;
-
 export const register = {
   async registrationEvents({ nickname, uuid }: { nickname: string, uuid: string }) {
 		const REGISTRATION_EVENTS = {
@@ -94,7 +91,7 @@ export const register = {
 		registerLogger.debug({ eventsExec, nickname });
 	},
 	async create(args: RegisterUser): Promise<{ nickname: string; created_at: Date }> {
-		const { trx, ip, nickname, password } = args;
+		const { trx, nickname, password } = args;
 		const dbInstance: Kysely<DB> | Transaction<DB> = trx ?? general;
 
     const uuid = this.generateOfflineUUID(nickname);
@@ -131,23 +128,6 @@ export const register = {
 				.executeTakeFirstOrThrow();
 		}
 
-		// Legacy LimboAuth table: dual-written until the plugin is removed.
-		async function registerAUTH(instance: Instance) {
-			return instance
-				.insertInto("AUTH")
-				.values({
-					NICKNAME: nickname,
-					LOWERCASENICKNAME: base.lowerCaseNickname,
-					IP: normalizeIp(ip),
-					HASH: password,
-					UUID: base.uuid,
-					REGDATE: base.regDateMs,
-				})
-				.onConflict((oc) => oc.column("LOWERCASENICKNAME").doNothing())
-				.returning(["NICKNAME", "REGDATE"])
-				.executeTakeFirstOrThrow();
-		}
-
 		async function registerPlayers(instance: Instance) {
 			return instance
 				.insertInto("players")
@@ -166,7 +146,6 @@ export const register = {
 
 				const [players] = await Promise.all([
 					registerPlayers(instance),
-					registerAUTH(instance),
 					registerCredentials(instance, account.id),
 				]);
 
@@ -268,17 +247,6 @@ export const register = {
 
 		return raw.join("-");
 	},
-	async validateIpRestricts(ip: string): Promise<boolean> {
-    const result = await general
-      .selectFrom("AUTH")
-      .select("NICKNAME")
-      .where("IP", "=", ip)
-      .execute();
-
-		// Anti multi-account heuristic for web registration: three accounts per IP,
-		// the fourth is refused.
-		return result.length >= MAX_USERS_PER_IP;
-	},
 	async unregister({
 		nickname,
 		isStrict = false,
@@ -290,22 +258,17 @@ export const register = {
 		localLogger.info(`Starting unregistering player ${nickname}. Strict: ${isStrict}`);
 
 		const result = await general.transaction().execute(async (trx) => {
-			const auth = await trx
-				.deleteFrom("AUTH")
-				.where("LOWERCASENICKNAME", "=", nickname.toLowerCase())
-				.executeTakeFirstOrThrow();
-
-			if (!auth.numDeletedRows) {
-				invariant(isStrict, "Error for deleting from auth");
-			}
-
 			// Canonical row first: account_credentials cascades from it.
-			await trx
+			const account = await trx
 				.deleteFrom("accounts")
 				.where("lower_nickname", "=", nickname.toLowerCase())
 				.executeTakeFirst();
 
-			localLogger.info(`Player ${nickname} from auth and accounts`);
+			if (!account.numDeletedRows) {
+				invariant(isStrict, "Error for deleting from accounts");
+			}
+
+			localLogger.info(`Player ${nickname} removed from accounts`);
 
 			if (isStrict) {
         const players = await trx

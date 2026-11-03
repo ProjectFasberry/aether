@@ -106,6 +106,13 @@ the immediate rollout.
 script before deploying it. The repo-level `release:prod` scripts run
 `type-check` first, which currently fails on the stale DB-types issue above.
 
+## Issue tracking
+
+Work items live in Linear (workspace `modkeep`, team `main`, project Fasberry).
+Agent-created issues get the `AI` label; API work adds `api`, and anything in
+this app adds `thunderbird`. Labels, priorities and the MCP recipe are in
+`standards/linear.md`.
+
 ## Commits
 
 Conventional commits (`.cz.toml`), short and lowercase, e.g.

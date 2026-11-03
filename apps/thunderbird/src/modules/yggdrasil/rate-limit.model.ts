@@ -12,7 +12,9 @@ export const LIMITS = {
   metadata: { limit: 600, window: 60 },
   auth: { limit: 60, window: 60 },
   join: { limit: 60, window: 60 },
-  hasJoined: { limit: 1200, window: 60 },
+  // The proxy calls this for every join from a single IP: a backend restart makes
+  // the whole population reconnect at once, so the window must fit a storm.
+  hasJoined: { limit: 3000, window: 60 },
   profile: { limit: 600, window: 60 },
   bulk: { limit: 60, window: 60 },
 } as const;

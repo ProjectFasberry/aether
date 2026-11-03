@@ -9,19 +9,23 @@
 # is never written to disk, never lands in argv and never ends up in a layer.
 #
 # Usage:
-#   scripts/deploy/thunderbird.sh                # sync, build, push, roll out
-#   scripts/deploy/thunderbird.sh --sync-only    # only mirror the source
-#   scripts/deploy/thunderbird.sh --no-rollout   # sync, build, push, stop
+#   scripts/deploy/thunderbird.sh                     # sync, build, push, roll out (prod)
+#   STAGE=staging scripts/deploy/thunderbird.sh       # same for the staging stack
+#   scripts/deploy/thunderbird.sh --sync-only         # only mirror the source
+#   scripts/deploy/thunderbird.sh --no-rollout        # sync, build, push, stop
 #
-# Overridable: DEPLOY_HOST, BUILD_TREE, COMPOSE_DIR, REGISTRY_HOST, IMAGE_NAME.
+# Overridable: STAGE, DEPLOY_HOST, BUILD_TREE, COMPOSE_DIR, COMPOSE_FILE,
+# REGISTRY_HOST, IMAGE_NAME.
 set -euo pipefail
 
+STAGE="${STAGE:-prod}"
 HOST="${DEPLOY_HOST:-i-m}"
 TREE="${BUILD_TREE:-/home/rus/build/aether}"
-COMPOSE_DIR="${COMPOSE_DIR:-/opt/main/prod}"
+COMPOSE_DIR="${COMPOSE_DIR:-/opt/main/${STAGE}}"
+COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.${STAGE}.yml}"
 REGISTRY_HOST="${REGISTRY_HOST:-registry.fasberry.fun}"
 IMAGE_NAME="${IMAGE_NAME:-thunderbird}"
-IMAGE="${REGISTRY_HOST}/prod/${IMAGE_NAME}:latest"
+IMAGE="${REGISTRY_HOST}/${STAGE}/${IMAGE_NAME}:latest"
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT"
@@ -70,7 +74,7 @@ printf '%s' "$token" | ssh "$HOST" "
   NODE_AUTH_TOKEN=\"\$token\" docker buildx build \
     --push \
     --platform linux/amd64 \
-    --build-arg STAGE=prod \
+    --build-arg STAGE='$STAGE' \
     --secret id=npm_token,env=NODE_AUTH_TOKEN \
     -t '$IMAGE' \
     -f apps/thunderbird/Dockerfile .
@@ -83,9 +87,12 @@ fi
 
 echo "==> rolling out"
 ssh "$HOST" "cd '$COMPOSE_DIR' \
-  && docker compose -f docker-compose.prod.yml pull '$IMAGE_NAME' \
-  && docker compose -f docker-compose.prod.yml up -d '$IMAGE_NAME'"
+  && docker compose -f '$COMPOSE_FILE' pull '$IMAGE_NAME' \
+  && docker compose -f '$COMPOSE_FILE' up -d '$IMAGE_NAME'"
 
 echo "==> verify"
-ssh "$HOST" "docker inspect -f '{{.Created}} {{.State.Status}} {{.Image}}' prod-app-thunderbird"
-curl -fsS -o /dev/null -w 'api status: %{http_code}\n' https://api.fasberry.fun/server/status || true
+ssh "$HOST" "docker inspect -f '{{.Created}} {{.State.Status}} {{.Image}}' '${STAGE}-app-${IMAGE_NAME}'"
+
+if [ "$STAGE" = "prod" ]; then
+  curl -fsS -o /dev/null -w 'api status: %{http_code}\n' https://api.fasberry.fun/server/status || true
+fi

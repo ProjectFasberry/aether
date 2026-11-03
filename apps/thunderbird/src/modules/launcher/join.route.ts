@@ -10,6 +10,7 @@ import { redisService } from "#/shared/redis/client";
 import { buildRouteSummary } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
+import { allowRequest } from "#/shared/services/rate-limit";
 
 /**
  * Join gate: the launcher asks for a one-shot ticket right before the game
@@ -18,6 +19,8 @@ import { DateTime } from "#/helpers/typebox";
  * no handshake parsing or client mod is needed.
  */
 const TICKET_TTL_S = 180;
+/** After a successful verify the nickname may reconnect without a new ticket. */
+const RECONNECT_TTL_S = 1800;
 /** RFC 4648 base32, lowercase, no padding: 32 random bytes -> 52 chars. */
 const TICKET_PATTERN = /^[a-z2-7]{52}$/;
 const SERVER_ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
@@ -31,6 +34,7 @@ type TicketPayload = {
 };
 
 const ticketKey = (ticket: string) => `join:ticket:${ticket}`;
+const passKey = (nickname: string) => `join:pass:${nickname.toLowerCase()}`;
 
 /** GET + DEL in one round trip so a ticket cannot be used twice. */
 const CONSUME_SCRIPT = `
@@ -66,6 +70,11 @@ const ticketRoute = new Elysia()
         return status(401, wrapError("LAUNCHER_SESSION_REQUIRED"));
       }
 
+      // A ticket is cheap but writes to Redis; keep a runaway launcher bounded.
+      if (!(await allowRequest("ticket:account", payload.nickname.toLowerCase(), 20, 60))) {
+        return status(429, wrapError("TOO_MANY_REQUESTS"));
+      }
+
       const server = body.server?.trim().toLowerCase() || null;
 
       if (server && !SERVER_ID_PATTERN.test(server)) {
@@ -92,6 +101,7 @@ const ticketRoute = new Elysia()
         200: withData(t.Object({ ticket: t.String(), expires_at: DateTime })),
         400: withError(t.String()),
         401: withError(t.String()),
+        429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
       },
       detail: {
         summary: buildRouteSummary("Issue a join ticket for the launcher"),
@@ -133,6 +143,13 @@ const verifyRoute = new Elysia().post(
       return status(403, wrapError("TICKET_SERVER_MISMATCH"));
     }
 
+    // The player is in the game now. Keep a short-lived pass so that a
+    // disconnect (title screen, network blip) does not need a fresh launcher
+    // launch: the client reconnects with the same or the plain host.
+    await redisService
+      .getInstance()
+      .set(passKey(record.nickname), JSON.stringify(record), "EX", RECONNECT_TTL_S);
+
     return { data: { nickname: record.nickname } };
   },
   {
@@ -153,4 +170,62 @@ const verifyRoute = new Elysia().post(
   },
 );
 
-export const joinGate = new Elysia().use(ticketRoute).use(verifyRoute);
+
+/**
+ * Reconnect without a fresh ticket: a player who already passed the gate keeps a
+ * short-lived pass bound to the nickname (and the backend, when one was picked).
+ * The client often reconnects to the plain `play.fasberry.fun` after quitting to
+ * the title screen or after a network blip, and demanding a new launcher launch
+ * for that is hostile.
+ */
+const reconnectRoute = new Elysia().post(
+  "/launcher/session/reconnect",
+  async ({ body, headers, status }) => {
+    if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
+
+    if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
+
+    const key = passKey(body.nickname);
+    const raw = await redisService.getInstance().get(key);
+
+    if (!raw) return status(404, wrapError("TICKET_NOT_FOUND"));
+
+    let record: TicketPayload | null = null;
+
+    try {
+      record = JSON.parse(raw) as TicketPayload;
+    } catch {
+      return status(404, wrapError("TICKET_NOT_FOUND"));
+    }
+
+    if (record.nickname.toLowerCase() !== body.nickname.toLowerCase()) {
+      return status(403, wrapError("TICKET_NICKNAME_MISMATCH"));
+    }
+
+    if (record.server && body.server && record.server !== body.server) {
+      return status(403, wrapError("TICKET_SERVER_MISMATCH"));
+    }
+
+    // Sliding window: an active player is never kicked out by the pass expiring.
+    await redisService.getInstance().expire(key, RECONNECT_TTL_S);
+
+    return { data: { nickname: record.nickname } };
+  },
+  {
+    body: t.Object({
+      nickname: t.String({ minLength: 1, maxLength: 32 }),
+      server: t.Optional(t.String({ maxLength: 32 })),
+    }),
+    response: {
+      200: withData(t.Object({ nickname: t.String() })),
+      403: withError(t.String()),
+      404: withError(t.String()),
+      503: withError(t.String()),
+    },
+    detail: {
+      summary: buildRouteSummary("Verify a reconnect pass for the proxy gate"),
+    },
+  },
+);
+
+export const joinGate = new Elysia().use(ticketRoute).use(verifyRoute).use(reconnectRoute);

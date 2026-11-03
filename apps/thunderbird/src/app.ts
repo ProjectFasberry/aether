@@ -6,7 +6,8 @@ import { defineOptionalSession } from "./lib/define";
 import { session } from "./modules/auth/login.model";
 import { appLogger } from "./shared/constants/logger";
 import { main, root } from "./routes";
-import { corsPlugin, ipPlugin, loggerPlugin } from "./lib/plugins";
+import { corsPlugin, ipPlugin, isAllowedOrigin, loggerPlugin } from "./lib/plugins";
+import { SESSION_KEY } from "./utils/auth/cookie";
 import { logging } from "./shared/constants";
 import { safeJsonParse } from "./utils";
 import { showRoutes } from "@repo/shared/lib/helpers";
@@ -23,6 +24,24 @@ const app = new Elysia(appConfig)
   .use(serverTimingPlugin())
   .use(ipPlugin())
   .use(corsPlugin())
+  // A cross-site request still reaches the server even when CORS blocks the
+  // response, so cookie-authenticated mutations need an explicit origin check.
+  .onBeforeHandle(({ request, cookie, status }) => {
+    const method = request.method.toUpperCase();
+
+    if (method === "GET" || method === "HEAD" || method === "OPTIONS") return;
+
+    const sessionCookie = cookie[SESSION_KEY]?.value;
+
+    // Bearer clients (launcher, scripts) are not CSRF-able.
+    if (!sessionCookie) return;
+
+    const origin = request.headers.get("origin");
+
+    if (!origin) return;
+
+    if (!isAllowedOrigin(origin)) throw status(403, { error: "FORBIDDEN" });
+  })
   .use(loggerPlugin())
   .onError((payload) => {
     const { error, code, set } = payload;

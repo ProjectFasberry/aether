@@ -32,7 +32,9 @@ export const registerNicknameSchema = z
 
 export const authSchema = z.object({
 	nickname: nicknameSchema,
-	password: z.string().min(6),
+	// Login stays permissive: legacy accounts may have shorter passwords than the
+	// current registration policy allows.
+	password: z.string().min(1).max(72),
 });
 
 export const registerSchema = z.object({

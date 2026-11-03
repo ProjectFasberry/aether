@@ -1,5 +1,4 @@
 import { general } from "#/shared/database/general-db"
-// import { rcon } from "#/shared/rcon/client";
 import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 

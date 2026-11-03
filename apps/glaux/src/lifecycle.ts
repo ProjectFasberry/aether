@@ -54,7 +54,9 @@ export const boot = createBootstrap([
   }),
   definePipe("bot", {
     run: () => taskWithTimeout(() => bot.start(), {
-      timeout: 3000,
+      // First start goes through the local Telegram relay, which keeps upstream
+      // connections warm but still needs a few round-trips (getMe, commands).
+      timeout: 15000,
       fallback: () => {
         logger.error({ message: "Bot start timeout" });
       }

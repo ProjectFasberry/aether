@@ -1,7 +1,8 @@
-import { createPrivateKey, createPublicKey, generateKeyPairSync, sign } from "node:crypto";
+import { createPrivateKey, createPublicKey, sign } from "node:crypto";
 import { skinsService } from "#/shared/services/skins";
 import { minioService } from "#/shared/services/minio";
 import { undash } from "./profile.model";
+import { signingKeys } from "./signing-keys.model";
 
 /**
  * `textures` property for the Yggdrasil profile.
@@ -12,11 +13,11 @@ import { undash } from "./profile.model";
  * points at the URL stored in the skins database, which is why
  * `textures.minecraft.net` stays in `skinDomains`.
  *
- * The signing key is `YGGDRASIL_PRIVATE_KEY` (PEM or base64 of the PEM). It must
- * be stable: a new key on every boot invalidates every signature the client has
+ * The key lives in `signing_keys` (see signing-keys.model.ts) and must be
+ * stable: a new key on every boot invalidates every signature the client has
  * already cached.
  */
-const KEY_ENV = "YGGDRASIL_PRIVATE_KEY";
+
 
 /** Yggdrasil signs the base64 value string with RSA-SHA1. */
 const SIGN_ALGORITHM = "sha1";
@@ -26,30 +27,10 @@ const SLIM_VARIANTS = new Set(["SLIM", "slim"]);
 let cachedPrivateKey: ReturnType<typeof createPrivateKey> | null = null;
 let cachedPublicKeyPem: string | null = null;
 
-function normalizePem(value: string): string {
-  const trimmed = value.trim();
-
-  if (trimmed.includes("BEGIN")) return trimmed.replace(/\\n/g, "\n");
-
-  // Infisical stores single-line secrets comfortably; base64 is accepted too.
-  return Buffer.from(trimmed, "base64").toString("utf8");
-}
-
 function loadPrivateKey(): ReturnType<typeof createPrivateKey> {
   if (cachedPrivateKey) return cachedPrivateKey;
 
-  const fromEnv = Bun.env[KEY_ENV];
-
-  if (fromEnv && fromEnv.trim()) {
-    cachedPrivateKey = createPrivateKey(normalizePem(fromEnv));
-
-    return cachedPrivateKey;
-  }
-
-  // Dev fallback: ephemeral key, signatures only live while the process does.
-  const { privateKey } = generateKeyPairSync("rsa", { modulusLength: 2048 });
-
-  cachedPrivateKey = privateKey;
+  cachedPrivateKey = createPrivateKey(signingKeys.get().privateKey);
 
   return cachedPrivateKey;
 }

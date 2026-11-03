@@ -324,6 +324,32 @@ export const session = {
 
     return removed;
   },
+  /** Removes every launcher/web session of the account (password change, signout all). */
+  async deleteAll(nickname: string): Promise<number> {
+    const redisClient = redisService.getInstance();
+    const userSessionsKey = sessions.getUserSessionsKey(nickname);
+
+    const tokens = await redisClient.zrange(userSessionsKey, 0, -1);
+    if (tokens.length === 0) return 0;
+
+    const pipeline = redisClient.multi();
+
+    tokens.forEach((token) => pipeline.del(auth.getSessionKey(token)));
+    pipeline.del(userSessionsKey);
+
+    const result = await pipeline.exec();
+    invariant(result, "Transaction failed");
+
+    result.forEach(([error]) => {
+      if (error) throw error;
+    });
+
+    if (!isProduction) {
+      loginLogger.debug(`Deleted ${tokens.length} session(s) for ${nickname}`);
+    }
+
+    return tokens.length;
+  },
   async get({
     nickname,
     sessionToken,

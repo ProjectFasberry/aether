@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import bcrypt from "bcryptjs";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { auth } from "./auth.model";
 import { session as sessionService } from "./login.model";
@@ -10,6 +9,7 @@ import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";
 import { changePassword } from "#/modules/account/account.model";
+import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
 
 /**
  * Head images live in a private bucket; hand the launcher an API link that it
@@ -56,11 +56,34 @@ const changePasswordSchema = t.Object({
 const loginRoute = new Elysia()
   .use(ipPlugin())
   .post("/login", async ({ status, body: { nickname, password }, ip, headers, request }) => {
+    // The launcher endpoint has no CAPTCHA: throttle before touching bcrypt so a
+    // scripted client cannot guess passwords or burn CPU.
+    if (!(await allowRequest("client-login:ip", ip, LIMITS.clientLoginIp.limit, LIMITS.clientLoginIp.window))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
+    if (
+      !(await allowRequest(
+        "client-login:nick",
+        nickname.toLowerCase(),
+        LIMITS.clientLoginNickname.limit,
+        LIMITS.clientLoginNickname.window,
+      ))
+    ) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
     const account = await auth.getAccount(nickname);
 
-    if (!account) return status(400, wrapError("NOT_EXISTS"));
+    // Unknown account and wrong password answer the same code; the dummy verify
+    // keeps the timing similar so the response cannot enumerate nicknames.
+    if (!account) {
+      await Bun.password.verify(password, "$2b$10$1Pk3Hp5dHx0B45pPvSlDyu9FNpFN2U84l8LYcdkcVr/oZRtRg/05K").catch(() => false);
 
-    if (!bcrypt.compareSync(password, account.hash)) {
+      return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+    }
+
+    if (!(await Bun.password.verify(password, account.hash))) {
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
     }
 
@@ -90,6 +113,7 @@ const loginRoute = new Elysia()
     response: {
       200: withData(loginPayloadSchema),
       400: withError(t.UnionEnum(["NOT_EXISTS", "PASSWORD_OR_LOGIN_INCORRECT"])),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
     detail: {
       summary: buildRouteSummary("Launcher login"),

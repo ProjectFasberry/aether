@@ -20,7 +20,9 @@ export const bot = {
 		const token = getEnv().PROD ? getEnv().BOT_GUARD_TOKEN : getEnv().BOT_GUARD_TOKEN_DEV;
 		if (!token) throw new Error("BOT_GUARD_TOKEN is not defined");
 
-		const conn = new Bot(token)
+		const apiBase = getEnv().TG_API_BASE;
+
+		const conn = new Bot(token, apiBase ? { api: { baseURL: apiBase } } : undefined)
 			.onStart(async ({ updatesFrom, plugins, info }) => {
 				this.logger.debug({ updatesFrom, plugins, info })
 			})
@@ -28,10 +30,12 @@ export const bot = {
 				this.logger.error("Update Error:", ctx.error);
 			});
 
-		await conn.start();
+		// Handlers must be registered before polling starts, and the instance must
+		// be visible to the alert fan-out even if `start()` is slow: the boot pipe
+		// has a timeout and would otherwise leave Telegram dead.
 		instance = conn;
-
-		await this._init(instance);
+		await this._init(conn);
+		await conn.start();
 	},
 	async _init(instance: Bot) {
 		try {

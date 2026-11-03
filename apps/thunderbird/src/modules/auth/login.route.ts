@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import bcrypt from "bcryptjs";
 import { buildRouteSummary, cookie } from "#/utils";
 import { auth } from "./auth.model";
 import { wrapError } from "@repo/shared/lib/helpers"
@@ -16,6 +15,7 @@ import { logger } from "@repo/shared/utils/logger";
 import type { Subscription } from "@nats-io/nats-core";
 import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@repo/shared/types/entities/auth";
 import { isProduction } from "#/shared/env";
+import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
 import { nanoid } from "nanoid";
 
 const loginSchema = authSchema;
@@ -25,11 +25,21 @@ const withPassword = new Elysia()
   .use(validateAuthStatus())
   .resolve(({ headers }) => ({ ua: headers["user-agent"] }))
   .post("/basic", async ({ status, body: { nickname, password }, ip, ua: userAgentStr, ...ctx }) => {
+    if (!(await allowRequest("web-login:ip", ip, LIMITS.webLoginIp.limit, LIMITS.webLoginIp.window))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
     const account = await auth.getAccount(nickname);
 
-    if (!account) throw status(400, wrapError("NOT_EXISTS"));
+    // Unknown account and wrong password answer the same code; the dummy verify
+    // keeps the timing similar so the response cannot enumerate nicknames.
+    if (!account) {
+      await Bun.password.verify(password, "$2b$10$1Pk3Hp5dHx0B45pPvSlDyu9FNpFN2U84l8LYcdkcVr/oZRtRg/05K").catch(() => false);
 
-    const passIsValid = bcrypt.compareSync(password, account.hash);
+      throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+    }
+
+    const passIsValid = await Bun.password.verify(password, account.hash);
     if (!passIsValid) throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
     const { expires_at: expires, token } = await session.create({
@@ -66,6 +76,7 @@ const withPassword = new Elysia()
         ]),
       ),
       404: withError(),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
     detail: {
       summary: buildRouteSummary("Login"),

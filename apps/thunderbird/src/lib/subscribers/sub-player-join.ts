@@ -1,17 +1,24 @@
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
-import * as z from "zod";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { general } from "#/shared/database/general-db";
 import type { NatsConnection } from "@nats-io/nats-core";
 import { logger } from "@repo/shared/utils/logger";
 import { subscribeGeneralPlayerJoin, subscribeGeneralPlayerQuit } from "@projectfasberry/events"
+import * as z from "zod";
 
-const userJoinSchema = z.object({
+/**
+ * Contract of `general.player.join` / `general.player.quit` (see
+ * `@projectfasberry/events`): the proxy publishes one join per connection and
+ * one quit per disconnect, so a server switch does not create duplicates.
+ */
+const presenceSchema = z.object({
 	date: z.string(),
-	nickname: z.string(),
-	event: z.enum(["join", "quit"]),
+	name: z.string(),
+	server: z.string(),
 });
+
+type Presence = z.infer<typeof presenceSchema>;
 
 function pushToReferral({ nickname }: { nickname: string }) {
 	const nc = natsService.getInstance();
@@ -20,73 +27,61 @@ function pushToReferral({ nickname }: { nickname: string }) {
 	nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload);
 }
 
-async function joinEvents({ nickname, date }: Omit<z.infer<typeof userJoinSchema>, "event">) {
-	pushToReferral({ nickname });
-
+async function recordActivity(nickname: string, type: "join" | "quit") {
 	const query = await general
 		.insertInto("activity_users")
 		.values({
 			event: new Date().toISOString(),
 			nickname,
-			type: "join",
+			type,
 		})
 		.executeTakeFirst();
 
-	if (Number(query.numInsertedOrUpdatedRows)) {
-		console.log("updated", query.insertId);
+	if (!Number(query.numInsertedOrUpdatedRows)) {
+		logger.warn(`Activity for ${nickname} is not recorded (${type})`);
 	}
 }
 
-async function quitEvents({ nickname, date }: Omit<z.infer<typeof userJoinSchema>, "event">) {
-	const query = await general
-		.insertInto("activity_users")
-		.values({
-			event: new Date().toISOString(),
-			nickname,
-			type: "quit",
-		})
-		.executeTakeFirst();
-
-	if (!query.numInsertedOrUpdatedRows) {
-		logger.warn(`Activity for ${nickname} is not created`);
-	}
-}
-
-async function handlePlayerJoin(payload: z.infer<typeof userJoinSchema>) {
-	if (!userJoinSchema.shape.event.options.includes(payload.event)) {
-		return;
-	}
+async function handlePresence(payload: Presence, type: "join" | "quit") {
+	const nickname = payload.name;
 
 	try {
-		switch (payload.event) {
-			case "join":
-				joinEvents(payload);
-				break;
-			case "quit":
-				quitEvents(payload);
-				break;
-		}
+		if (type === "join") pushToReferral({ nickname });
+
+		await recordActivity(nickname, type);
 	} catch (e) {
 		logErrorMsg(e);
 	}
 }
 
 export const subscribePlayerJoin = (nc: NatsConnection, subject: string) => {
-	const subscription = subscribeGeneralPlayerJoin(nc,
-    (msg, e) => {
-      if (e || !msg) {
-				return logErrorMsg(e, { subject });
-			}
+	const join = subscribeGeneralPlayerJoin(nc, (msg, e) => {
+		if (e || !msg) {
+			return logErrorMsg(e, { subject });
+		}
 
-			const parsed = userJoinSchema.safeParse(msg.json());
+		const parsed = presenceSchema.safeParse(msg.json());
 
-			if (!parsed.success) {
-				return logErrorMsg(parsed.error.issues[0].message, { subject });
-			}
+		if (!parsed.success) {
+			return logErrorMsg(parsed.error.issues[0].message, { subject });
+		}
 
-			handlePlayerJoin(parsed.data);
-		},
-	);
+		void handlePresence(parsed.data, "join");
+	});
 
-	return subscription;
+	subscribeGeneralPlayerQuit(nc, (msg, e) => {
+		if (e || !msg) {
+			return logErrorMsg(e, { subject });
+		}
+
+		const parsed = presenceSchema.safeParse(msg.json());
+
+		if (!parsed.success) {
+			return logErrorMsg(parsed.error.issues[0].message, { subject });
+		}
+
+		void handlePresence(parsed.data, "quit");
+	});
+
+	return join;
 };

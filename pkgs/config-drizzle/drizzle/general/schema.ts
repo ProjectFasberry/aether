@@ -67,30 +67,6 @@ export const libertybansScopeIds = pgSequence("libertybans_scope_ids", {
 	cycle: false,
 });
 
-export const auth = pgTable(
-	"AUTH",
-	{
-		nickname: varchar("NICKNAME", { length: 255 }).notNull(),
-		lowercasenickname: varchar("LOWERCASENICKNAME", { length: 255 }).primaryKey().notNull(),
-		hash: varchar("HASH", { length: 255 }).notNull(),
-		ip: varchar("IP", { length: 255 }),
-		totptoken: varchar("TOTPTOKEN", { length: 255 }),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-		regdate: bigint("REGDATE", { mode: "number" }),
-		uuid: varchar("UUID", { length: 255 }),
-		premiumuuid: varchar("PREMIUMUUID", { length: 255 }),
-		loginip: varchar("LOGINIP", { length: 255 }),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-		logindate: bigint("LOGINDATE", { mode: "number" }),
-		// You can use { mode: "bigint" } if numbers are exceeding js number limitations
-		issuedtime: bigint("ISSUEDTIME", { mode: "number" }),
-	},
-	(table) => [
-		index("AUTH_IP_idx").using("btree", table.ip.asc().nullsLast().op("text_ops")),
-		index("AUTH_PREMIUMUUID_idx").using("btree", table.premiumuuid.asc().nullsLast().op("text_ops")),
-	],
-);
-
 export const currencies = pgTable("currencies", {
 	id: integer()
 		.primaryKey()

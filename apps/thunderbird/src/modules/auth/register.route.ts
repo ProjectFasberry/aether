@@ -9,6 +9,7 @@ import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "./register.model";
 import { isProduction } from "#/shared/env";
 import { getOption } from "#/shared/constants/options";
+import { allowRequest } from "#/shared/services/rate-limit";
 
 const registerValidator = () => new Elysia()
   .onBeforeHandle(async ({ status }) => {
@@ -20,11 +21,13 @@ const registerValidator = () => new Elysia()
 const ipValidator = () => new Elysia()
   .use(ipPlugin())
   .onBeforeHandle(async ({ ip, status }) => {
-    if (isProduction) {
-      const isValid = await register.validateIpRestricts(ip);
-      if (isValid) {
-        throw status(400, wrapError("IP_RESTRICTIONS"));
-      }
+    if (!isProduction) return;
+
+    // Anti multi-account heuristic: three registrations per IP per day. A Redis
+    // counter replaces the old `AUTH` lookup, which disappears with the legacy
+    // table and only ever counted forever.
+    if (!(await allowRequest("register:ip", ip, 3, 24 * 60 * 60))) {
+      throw status(400, wrapError("IP_RESTRICTIONS"));
     }
   })
   .as("scoped");
@@ -46,7 +49,7 @@ export const registerRoute = new Elysia()
         throw status(400, wrapError("PASSWORD_IS_UNSAFE"));
       }
 
-      const passHash = Bun.password.hashSync(passInputPass, {
+      const passHash = await Bun.password.hash(passInputPass, {
         algorithm: "bcrypt",
         cost: 10,
       });
