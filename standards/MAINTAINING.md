@@ -40,8 +40,9 @@ get wrong.
   are what makes production stack traces readable.
 - Images are per app: `Dockerfile` + `Makefile` (`make build STAGE=prod
   NAME=thunderbird`); the npm token comes from `NODE_AUTH_TOKEN` as a BuildKit
-  secret. The thunderbird deploy host builds from a synced tree;
-  `scripts/deploy/thunderbird.sh` mirrors, builds and rolls out.
+  secret. Normal deploys are built by `.github/workflows/build-thunderbird.yml`
+  and pulled by the host on a cron timer (`scripts/deploy/pull-update.sh`);
+  `scripts/deploy/thunderbird.sh` is the manual fallback.
 - Absolute URLs must use `x-forwarded-proto`: Traefik terminates TLS and the app
   only ever sees plain HTTP.
 

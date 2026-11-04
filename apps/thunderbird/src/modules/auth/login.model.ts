@@ -44,6 +44,8 @@ export const sessionsPayloadSchema = t.Array(sessionPayloadSchema);
 export const sessionParsedPayloadSchema = t.Composite([
   t.Pick(sessionPayloadSchema, ["nickname", "ip", "created_at"]),
   t.Object({
+    /** Opaque per-session id (sha256 of the token), safe to show and to put in a URL. */
+    id: t.String(),
     browser: t.Object({
       name: t.String(),
       version: t.String(),
@@ -67,6 +69,12 @@ const SESSION_EXPIRE_MS = SESSION_EXPIRE_S * 1000;
 const MIN_SESSION_EXPIRE_S = SESSION_EXPIRE_S / 2; // 15 days
 const MIN_SESSION_EXPIRE_MS = MIN_SESSION_EXPIRE_S * 1000;
 const SESSIONS_LENGTH_LIMIT = 15; // 15 sessions per user
+/** Managing sessions (list delete) requires the acting session to be this old. */
+const SESSION_MANAGE_MIN_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+
+/** Stable opaque id for a session token; the raw token never leaves the cookie. */
+export const sessionId = (token: string): string =>
+  new Bun.CryptoHasher("sha256").update(token).digest("hex");
 
 const IP_WHITELIST = ["127.0.0.1", "::1", "localhost"] as const;
 
@@ -375,6 +383,7 @@ export const session = {
 
     return {
       ...dataRow.value,
+      id: sessionId(sessionToken),
       browser: JSON.parse(dataRow.value.browser),
       platform: JSON.parse(dataRow.value.platform),
       os: JSON.parse(dataRow.value.os),
@@ -383,29 +392,35 @@ export const session = {
   },
 };
 
-async function getSessionsRows(sessionsKeys: string[]): Promise<UserSessionParsedPayload[]> {
-  if (sessionsKeys.length === 0) return [];
+async function getSessionsRows(tokens: string[]): Promise<UserSessionParsedPayload[]> {
+  if (tokens.length === 0) return [];
 
   const redisClient = redisService.getInstance();
+  const sessionsKeys = tokens.map((token) => auth.getSessionKey(token));
 
+  // `mget` keeps the order, so a null row still maps to its token.
   const dataRowsStr = await redisClient.mget(sessionsKeys);
-  const dataRowsStrFiltered = dataRowsStr.filter((k): k is string => k !== null);
-  if (dataRowsStrFiltered.length === 0) return [];
+  const result: UserSessionParsedPayload[] = [];
 
-  return dataRowsStrFiltered.map((v) => {
-    const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(v);
+  dataRowsStr.forEach((raw, index) => {
+    if (!raw) return;
+
+    const dataRow = safeJsonParse<StringifiedUserSessionParsedPayload>(raw);
     if (dataRow.ok === false) {
       throw dataRow.error;
     }
 
-    return {
+    result.push({
       ...dataRow.value,
+      id: sessionId(tokens[index]),
       browser: JSON.parse(dataRow.value.browser),
       platform: JSON.parse(dataRow.value.platform),
       os: JSON.parse(dataRow.value.os),
       created_at: dayjs(dataRow.value.created_at).toDate(),
-    };
+    });
   });
+
+  return result;
 }
 
 export const sessions = {
@@ -418,38 +433,27 @@ export const sessions = {
     const sessionsStrArr: string[] = await redisClient.zrange(sessionsListKey, 0, -1);
     if (sessionsStrArr.length === 0) return [];
 
-    const sessionsKeys = sessionsStrArr.map((value) => auth.getSessionKey(value));
-
-    const dataRows = await getSessionsRows(sessionsKeys);
+    const dataRows = await getSessionsRows(sessionsStrArr);
     return dataRows;
   },
-  async delete({ nickname, sessionToken }: { nickname: string; sessionToken: string }) {
+  /** Deletes every session except the acting one; returns how many were removed. */
+  async delete({ nickname, sessionToken }: { nickname: string; sessionToken: string }): Promise<number> {
     const redisClient = redisService.getInstance();
-
     const sessionsListKey = sessions.getUserSessionsKey(nickname);
-    const currentSessionScore = await redisClient
-      .zscore(sessionsListKey, sessionToken);
 
-    if (currentSessionScore === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
+    await assertCanManageSessions(nickname, sessionToken);
 
-    const sessionCreationTime = Number(currentSessionScore);
-    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
-
-    if (Date.now() - sessionCreationTime < threeDaysInMs) {
-      throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
-    }
-
-    const allSessionTokens = await redisClient.zrange(sessionsListKey, 0, -1);
-    if (allSessionTokens.length <= 1) return;
-
+    const allSessionTokens: string[] = await redisClient.zrange(sessionsListKey, 0, -1);
     const tokensToDelete = allSessionTokens.filter((token) => token !== sessionToken);
-    const keysToDelete = tokensToDelete.map((token) => auth.getSessionKey(token));
 
-    const deleteResult = await redisClient
-      .multi()
-      .del(...keysToDelete)
-      .zrem(sessionsListKey, ...tokensToDelete)
-      .exec();
+    if (tokensToDelete.length === 0) return 0;
+
+    const pipeline = redisClient.multi();
+
+    tokensToDelete.forEach((token) => pipeline.del(auth.getSessionKey(token)));
+    pipeline.zrem(sessionsListKey, ...tokensToDelete);
+
+    const deleteResult = await pipeline.exec();
 
     invariant(deleteResult, "Transaction failed");
 
@@ -457,39 +461,43 @@ export const sessions = {
       if (!isProduction) {
         authLogger.debug("deleteAllSessionsResult", { error, result });
       }
+
+      if (error) throw error;
     });
+
+    return tokensToDelete.length;
   },
+  /**
+   * Deletes one session by its opaque id. The acting session must be at least
+   * `SESSION_MANAGE_MIN_AGE_MS` old, and it cannot delete itself.
+   * Returns false when the id is unknown (already deleted or expired).
+   */
   async deleteById({
     nickname,
-    targetToken,
+    targetId,
     sessionToken,
   }: {
     nickname: string;
-    targetToken: string;
+    targetId: string;
     sessionToken: string;
-  }) {
+  }): Promise<boolean> {
     const redisClient = redisService.getInstance();
-
     const sessionsListKey = sessions.getUserSessionsKey(nickname);
-    const currentSessionScore = await redisClient.zscore(sessionsListKey, sessionToken);
 
-    if (currentSessionScore === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
+    await assertCanManageSessions(nickname, sessionToken);
 
-    const sessionCreationTime = Number(currentSessionScore);
-    const threeDaysInMs = 3 * 24 * 60 * 60 * 1000;
-
-    if (Date.now() - sessionCreationTime < threeDaysInMs) {
-      throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
+    if (targetId === sessionId(sessionToken)) {
+      throw new Error("CANNOT_DELETE_CURRENT");
     }
 
-    const targetSessionScore = await redisClient.zscore(sessionsListKey, targetToken);
-    if (targetSessionScore === null) return;
+    const allSessionTokens: string[] = await redisClient.zrange(sessionsListKey, 0, -1);
+    const targetToken = allSessionTokens.find((token) => sessionId(token) === targetId);
 
-    const targetKeyToDelete = auth.getSessionKey(targetToken);
+    if (!targetToken) return false;
 
     const deleteResult = await redisClient
       .multi()
-      .del(targetKeyToDelete)
+      .del(auth.getSessionKey(targetToken))
       .zrem(sessionsListKey, targetToken)
       .exec();
 
@@ -499,9 +507,25 @@ export const sessions = {
       if (!isProduction) {
         authLogger.debug("deleteSessionByIdResult", { error, result });
       }
+
+      if (error) throw error;
     });
+
+    return true;
   },
 };
+
+/** The acting session must exist and be old enough to manage the other ones. */
+async function assertCanManageSessions(nickname: string, sessionToken: string): Promise<void> {
+  const redisClient = redisService.getInstance();
+  const score = await redisClient.zscore(sessions.getUserSessionsKey(nickname), sessionToken);
+
+  if (score === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
+
+  if (Date.now() - Number(score) < SESSION_MANAGE_MIN_AGE_MS) {
+    throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
+  }
+}
 
 type LoginQRKeyPayload = {
   ua: string;

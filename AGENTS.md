@@ -89,13 +89,21 @@ repository on `artifacts-cli.infisical.com` hangs behind the deploy network,
 which is why that path exists. Bump the CLI with
 `--build-arg INFISICAL_VERSION=<version>`.
 
-`scripts/deploy/thunderbird.sh` runs the whole path: `rsync --delete` into the
-tree, build and push `registry.fasberry.fun/prod/thunderbird:latest`, then
-`compose pull && up -d`. The npm token is read from `.env` and passed to BuildKit
-as `--secret id=npm_token,env=NODE_AUTH_TOKEN` over ssh stdin - no temp files, no
-token in argv, nothing baked into a layer. `--sync-only` mirrors without building,
-`--no-rollout` builds without the compose step. The tree is a mirror: rsync owns
-it, do not hand-edit files there.
+Normal deploys are CI-driven. `.github/workflows/build-thunderbird.yml` builds
+`linux/amd64` on push to `main` (prod) and `dev` (staging) and pushes
+`registry.fasberry.fun/<stage>/thunderbird:latest`. The deploy host runs
+`scripts/deploy/pull-update.sh` from cron every two minutes, pulls the image and
+recreates the container only when the digest changed - no SSH from the
+workstation is involved. Repo secrets needed: `REGISTRY_USERNAME`,
+`REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
+
+`scripts/deploy/thunderbird.sh` stays as the manual fallback (CI down, hotfix):
+`rsync --delete` into the tree, build and push `/<stage>/thunderbird:latest`,
+then `compose pull && up -d`. The npm token is read from `.env` and passed to
+BuildKit as `--secret id=npm_token,env=NODE_AUTH_TOKEN` over ssh stdin - no temp
+files, no token in argv, nothing baked into a layer. `--sync-only` mirrors
+without building, `--no-rollout` builds without the compose step. The tree is a
+mirror: rsync owns it, do not hand-edit files there.
 
 Verify: `docker inspect prod-app-thunderbird` (new image digest, running), container
 logs, `https://api.fasberry.fun/server/status` (200), and `/openapi/json` when the

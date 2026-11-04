@@ -14,6 +14,7 @@ import { wrapError } from "@repo/shared/lib/helpers"
 const SESSION_ERRORS_MAP = {
   INSUFFICIENT_PERMISSION_BY_TIME: 400,
   INSUFFICIENT_PERMISSION_BY_EXISTANCE: 400,
+  CANNOT_DELETE_CURRENT: 400,
 } as const;
 
 type ErrorKeys = keyof typeof SESSION_ERRORS_MAP;
@@ -76,14 +77,15 @@ export const session = new Elysia()
     })
     .delete("/:id", async ({ params: { id }, nickname, session: sessionToken, status }) => {
       try {
-        await sessions.deleteById({ nickname, targetToken: id, sessionToken });
+        await sessions.deleteById({ nickname, targetId: id, sessionToken });
         return { data: "OK" };
       } catch (e) {
         defineError(e, status);
       }
     }, {
       params: t.Object({
-        id: t.String({ minLength: 6 }),
+        /** sha256 of the session token: 64 hex chars, but keep it loose. */
+        id: t.String({ minLength: 16, maxLength: 128 }),
       }),
       response: {
         200: withData(t.Literal("OK")),
