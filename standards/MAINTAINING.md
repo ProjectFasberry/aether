@@ -41,7 +41,8 @@ get wrong.
 - Images are per app: `Dockerfile` + `Makefile` (`make build STAGE=prod
   NAME=thunderbird`); the npm token comes from `NODE_AUTH_TOKEN` as a BuildKit
   secret. Normal deploys are built by `.github/workflows/build-thunderbird.yml`
-  and pulled by the host on a cron timer (`scripts/deploy/pull-update.sh`).
+  and pulled by the host on a systemd timer (see `ProjectFasberry/infra`,
+  `scripts/pull-update.sh`).
   There is no manual deploy script and no direct host access.
 - Absolute URLs must use `x-forwarded-proto`: Traefik terminates TLS and the app
   only ever sees plain HTTP.

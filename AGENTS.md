@@ -92,10 +92,11 @@ Deploys are pull-based:
   `main` (prod) and `dev` (staging) and pushes
   `registry.fasberry.fun/<stage>/thunderbird:latest` plus `:sha-<commit>`.
   Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
-- The deploy host runs `scripts/deploy/pull-update.sh` from cron every two
-  minutes (installed as `~/.local/bin/fasberry-pull-update`). It pulls the image
-  and recreates the container only when the digest changed, so a push is the
-  whole rollout.
+- The deploy host runs the pull-update script from the infra repository
+  (`ProjectFasberry/infra`, `scripts/pull-update.sh` + its systemd timer) every
+  two minutes. It pulls the image and recreates the container only when the
+  digest changed, so a push is the whole rollout. This repository carries no host
+  scripts.
 - The Dockerfile pins `INFISICAL_VERSION` and downloads the CLI from the GitHub
   release with SHA-256 verification; the apt repository on
   `artifacts-cli.infisical.com` hangs behind the deploy network. Bump it with
