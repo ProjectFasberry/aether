@@ -40,8 +40,8 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
-      # The deploy host pulls :latest on a timer (see scripts/deploy/pull-update.sh),
-      # so pushing here is the whole rollout.
+      # The deploy host pulls :latest on a timer (ProjectFasberry/infra,
+      # scripts/pull-update.sh), so pushing here is the whole rollout.
       - uses: docker/build-push-action@v6
         with:
           context: .
