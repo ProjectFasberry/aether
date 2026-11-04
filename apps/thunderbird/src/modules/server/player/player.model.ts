@@ -114,6 +114,8 @@ type PlayerGameInfo = {
 }
 
 export async function getSkills(nickname: string): Promise<SkillsData | null> {
+  // The table belongs to the Adapt plugin: a server that never ran it has no
+  // ADAPT_DATA, and that must not turn the endpoint into a 500.
   const query = await bisquite
     .selectFrom("ADAPT_DATA")
     .innerJoin("Players", "Players.UUID", "ADAPT_DATA.UUID")
@@ -122,6 +124,15 @@ export async function getSkills(nickname: string): Promise<SkillsData | null> {
     ])
     .where("Players.Name", "=", nickname)
     .executeTakeFirst()
+    .catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error);
+
+      if (message.includes("doesn't exist") || message.includes("ER_NO_SUCH_TABLE")) {
+        return null;
+      }
+
+      throw error;
+    })
 
   if (!query) return null;
 
