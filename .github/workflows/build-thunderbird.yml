@@ -1,0 +1,59 @@
+name: Build thunderbird
+
+on:
+  push:
+    branches: [main, dev]
+    paths:
+      - "apps/thunderbird/**"
+      - "pkgs/**"
+      - "bun.lock"
+      - "package.json"
+      - "bunfig.toml"
+      - ".github/workflows/build-thunderbird.yml"
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: Image stage
+        type: choice
+        options: [prod, staging]
+        default: prod
+
+concurrency:
+  group: build-thunderbird-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      STAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'main' && 'prod' || 'staging') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: registry.fasberry.fun
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      # The deploy host pulls :latest on a timer (see scripts/deploy/pull-update.sh),
+      # so pushing here is the whole rollout.
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/thunderbird/Dockerfile
+          platforms: linux/amd64
+          push: true
+          build-args: |
+            STAGE=${{ env.STAGE }}
+          secrets: |
+            npm_token=${{ secrets.NODE_AUTH_TOKEN }}
+          tags: |
+            registry.fasberry.fun/${{ env.STAGE }}/thunderbird:latest
+            registry.fasberry.fun/${{ env.STAGE }}/thunderbird:sha-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
