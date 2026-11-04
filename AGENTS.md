@@ -21,6 +21,8 @@ rules, layout, and the deploy path.
   `npm_token`, never as `ARG`/`ENV`.
 - **Deploy only on an explicit request.** Production is not a place for
   "while I was here" changes.
+- **No direct host access.** Do not ssh/scp/docker against deploy or production
+  hosts; ship through CI and the pull-based rollout.
 - **Do not edit generated files.** DB types in `pkgs/shared/.out` and the `dist`
   build output are generated.
 
@@ -81,34 +83,27 @@ every workspace that has it. `cd` into the app for a single service.
 
 ## Deploying thunderbird
 
-The prod image is not built from this checkout: the source is mirrored to the
-unversioned build tree on `i-m` at `/home/rus/build/aether` (not a git clone) and
-built there with the repo `Dockerfile`. The Dockerfile pins `INFISICAL_VERSION`
-and downloads the CLI from the GitHub release with SHA-256 verification; the apt
-repository on `artifacts-cli.infisical.com` hangs behind the deploy network,
-which is why that path exists. Bump the CLI with
-`--build-arg INFISICAL_VERSION=<version>`.
+There is no direct access to deploy hosts and no manual deploy path from this
+workstation: do not ssh/scp/docker against `i-m` or the production host.
 
-Normal deploys are CI-driven. `.github/workflows/build-thunderbird.yml` builds
-`linux/amd64` on push to `main` (prod) and `dev` (staging) and pushes
-`registry.fasberry.fun/<stage>/thunderbird:latest`. The deploy host runs
-`scripts/deploy/pull-update.sh` from cron every two minutes, pulls the image and
-recreates the container only when the digest changed - no SSH from the
-workstation is involved. Repo secrets needed: `REGISTRY_USERNAME`,
-`REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
+Deploys are pull-based:
 
-`scripts/deploy/thunderbird.sh` stays as the manual fallback (CI down, hotfix):
-`rsync --delete` into the tree, build and push `/<stage>/thunderbird:latest`,
-then `compose pull && up -d`. The npm token is read from `.env` and passed to
-BuildKit as `--secret id=npm_token,env=NODE_AUTH_TOKEN` over ssh stdin - no temp
-files, no token in argv, nothing baked into a layer. `--sync-only` mirrors
-without building, `--no-rollout` builds without the compose step. The tree is a
-mirror: rsync owns it, do not hand-edit files there.
+- `.github/workflows/build-thunderbird.yml` builds `linux/amd64` on push to
+  `main` (prod) and `dev` (staging) and pushes
+  `registry.fasberry.fun/<stage>/thunderbird:latest` plus `:sha-<commit>`.
+  Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
+- The deploy host runs `scripts/deploy/pull-update.sh` from cron every two
+  minutes (installed as `~/.local/bin/fasberry-pull-update`). It pulls the image
+  and recreates the container only when the digest changed, so a push is the
+  whole rollout.
+- The Dockerfile pins `INFISICAL_VERSION` and downloads the CLI from the GitHub
+  release with SHA-256 verification; the apt repository on
+  `artifacts-cli.infisical.com` hangs behind the deploy network. Bump it with
+  `--build-arg INFISICAL_VERSION=<version>`.
 
-Verify: `docker inspect prod-app-thunderbird` (new image digest, running), container
-logs, `https://api.fasberry.fun/server/status` (200), and `/openapi/json` when the
-contract changed. Watchtower is enabled, but the manual `compose pull && up` is
-the immediate rollout.
+Verify from outside: `https://api.fasberry.fun/server/status` (200) and
+`/openapi/json` when the contract changed. Host-side changes (Traefik/Zot,
+compose files) belong to the infra repo, not to a deploy from this checkout.
 
 `apps/glaux` has its own `Dockerfile` and `Makefile`; check its `release:prod`
 script before deploying it. The repo-level `release:prod` scripts run
