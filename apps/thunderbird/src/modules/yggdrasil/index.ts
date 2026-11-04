@@ -8,6 +8,7 @@ import { yggdrasilLogger } from "./logger.model";
 import { allowRequest, TOO_MANY_REQUESTS } from "./rate-limit.model";
 import { tokenService } from "./token.model";
 import { clientIp } from "#/shared/services/client-ip";
+import { getEnv } from "#/shared/env";
 
 /**
  * Yggdrasil (`authlib-injector`) compatible auth server.
@@ -38,6 +39,25 @@ const launcherSession = new Elysia()
     return { launcher: payload?.client === "launcher" ? payload : null };
   })
   .as("scoped");
+
+/** Texture hosts the client may fetch skins from; infra-agnostic, env driven. */
+function skinDomains(): string[] {
+  const domains = new Set<string>();
+
+  try {
+    domains.add(new URL(getEnv().VOLUME_URL).hostname);
+  } catch {
+    // env is not initialised yet (tests/scripts)
+  }
+
+  for (const value of (Bun.env.SKIN_DOMAINS ?? "textures.minecraft.net").split(",")) {
+    const domain = value.trim();
+
+    if (domain) domains.add(domain);
+  }
+
+  return [...domains];
+}
 
 /** Profile with our signed textures, shared by every profile endpoint. */
 async function profileWithTextures(account: AccountProfile) {
@@ -70,15 +90,11 @@ export const yggdrasil = new Elysia()
           signaturePublickey: signaturePublicKey(),
         },
         // authlib-injector replaces the client's texture-domain whitelist with
-        // this list, so every host a skin URL can point at must be here:
-        // ours (planned) plus Mojang's, because SkinsRestorer still serves
+        // this list, so every host a skin URL can point at must be here: our
+        // object storage (derived from VOLUME_URL) plus anything listed in
+        // SKIN_DOMAINS, which defaults to Mojang because SkinsRestorer serves
         // textures from textures.minecraft.net.
-        skinDomains: [
-          "api.fasberry.fun",
-          "fasberry.fun",
-          "play.fasberry.fun",
-          "textures.minecraft.net",
-        ],
+        skinDomains: skinDomains(),
       };
     }, {
       detail: {

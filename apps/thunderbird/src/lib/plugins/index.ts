@@ -12,23 +12,32 @@ import { getUrlConfig } from "#/shared/services/config";
  * reflecting any origin with `credentials: true` lets any site act as the
  * logged-in user (CSRF).
  */
-const FIXED_ORIGINS = [
+/** Only the client platform is fixed here; every web origin comes from config. */
+const CLIENT_ORIGINS = [
 	"tauri://localhost",
 	"http://tauri.localhost",
 	"https://tauri.localhost",
-	"https://app.fasberry.fun",
-	"https://app.alpha.fasberry.fun",
-	// The landing page calls the public API from its own origin.
-	"https://fasberry.fun",
 ] as const;
 
 export function allowedOrigins(): string[] {
-	const origins = new Set<string>(FIXED_ORIGINS);
+	const origins = new Set<string>(CLIENT_ORIGINS);
 
 	// `frontend-url` may still be a template (`http://${DEV_HOST}:3006`).
 	const frontend = getUrlConfig("frontend-url");
 
 	if (frontend && !frontend.includes("${")) origins.add(frontend);
+
+	// Extra origins (the landing page, a preview host, ...) are runtime config,
+	// so moving to another domain is a config change, not a redeploy.
+	const extra = getUrlConfig("cors-origins");
+
+	if (extra) {
+		for (const origin of extra.split(",")) {
+			const value = origin.trim();
+
+			if (value) origins.add(value);
+		}
+	}
 
 	return [...origins];
 }
