@@ -8,18 +8,20 @@ import Elysia, { type Static, t } from "elysia";
 import { nanoid } from "nanoid";
 
 const DEFAULT_DURATION = 2592000; // 30d;
+/** `api_keys` gained description/duration after the generated DB type. */
+const db = general as any;
 
 const apiKeySchema = t.Object({
   id: t.Number(),
   description: t.Nullable(t.String()),
-  duration: t.Number(),
+  duration: t.Nullable(t.Number()),
   created_at: DateTime,
 });
 
 const createApiKeySchema = t.Composite([
   t.Object({
-    duration: t.Optional(t.Number()),
-    description: t.Optional(t.String()),
+    duration: t.Optional(t.Integer({ minimum: 60, maximum: 315_360_000 })),
+    description: t.Optional(t.String({ maxLength: 200 })),
   }),
 ]);
 
@@ -33,48 +35,44 @@ const createApiKeyPayloadSchema = t.Composite([
 
 async function createApiKey(
   args: Static<typeof createApiKeySchema>,
+  nickname: string,
 ): Promise<Static<typeof createApiKeyPayloadSchema>> {
   const { description, duration } = args;
 
   const rawKey = nanoid(32);
   const key = new Bun.CryptoHasher("sha256").update(rawKey).digest("hex");
 
-  const query = await general
+  const query = await db
     .insertInto("api_keys")
     .values({
       key,
+      nickname,
       description: description ?? null,
-      duration,
+      duration: duration ?? DEFAULT_DURATION,
     })
     .returning(["created_at", "id", "duration", "description", "key"])
     .executeTakeFirstOrThrow();
 
   return {
     ...query,
-    duration: query.duration ?? DEFAULT_DURATION,
     rawKey,
   };
 }
 
 async function getApiKeyList(): Promise<Static<typeof apiKeySchema>[]> {
-  const query = await general
+  return await db
     .selectFrom("api_keys")
     .select(["id", "duration", "created_at", "description"])
+    .orderBy("created_at", "desc")
     .limit(32)
     .execute();
-
-  const data = query.map((k) => ({
-    ...k,
-    duration: k.duration ?? DEFAULT_DURATION,
-  }));
-
-  return data;
 }
 
 const createApiKeyRoute = new Elysia()
   .use(validatePermission(permissionsService.get("API.KEYS.CONTROL"), { withExternal: true }))
-  .post("/create", async ({ body }) => {
-    const data = await createApiKey(body);
+  .post("/create", async (ctx) => {
+    const nickname = "nickname" in ctx ? String(ctx.nickname) : "api";
+    const data = await createApiKey(ctx.body, nickname);
     return { data };
   }, {
     body: createApiKeySchema,
