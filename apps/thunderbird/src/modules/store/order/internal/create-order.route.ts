@@ -2,7 +2,7 @@ import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineRequiredUser } from "#/lib/define";
 import { cartItem } from "../../cart/cart.model";
-import { initialPrices, processStoreGamePurchase } from "./order-game.model";
+import { findGameOrder, initialPrices, processStoreGamePurchase } from "./order-game.model";
 import { getWallet } from "#/modules/economy/wallet.model";
 import { charism, CHARISM_SERVERS } from "#/modules/economy/charism";
 import { t } from "elysia";
@@ -54,7 +54,23 @@ export const createOrder = new Elysia()
     }
 
     try {
-      const uniqueId = nanoid(9);
+      // A client retry reuses the key, so the server never charges twice.
+      const uniqueId = body?.idempotencyKey ?? nanoid(9);
+      const existing = await findGameOrder(uniqueId, initiator);
+
+      if (existing) {
+        const price: Record<GameCurrency, number> = {
+          BELKOIN: Number(finishPrice.BELKOIN ?? 0),
+          CHARISM: Number(finishPrice.CHARISM ?? 0),
+        };
+
+        return {
+          data: {
+            purchase: { uniqueId },
+            payload: { price },
+          } satisfies CreateOrderRoutePayload,
+        };
+      }
 
       const products = items.map(target => ({
         ...target,
@@ -95,7 +111,10 @@ export const createOrder = new Elysia()
       }
     }
   }, {
-    body: t.Optional(t.Object({ server: t.Optional(t.UnionEnum(CHARISM_SERVERS)) })),
+    body: t.Optional(t.Object({
+      server: t.Optional(t.UnionEnum(CHARISM_SERVERS)),
+      idempotencyKey: t.Optional(t.String({ minLength: 8, maxLength: 64, pattern: "^[A-Za-z0-9_-]+$" })),
+    })),
     response: {
       500: withError(),
       400: withError(),

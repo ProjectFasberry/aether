@@ -71,6 +71,18 @@ async function createGamePaymentRecord(
 		.execute();
 }
 
+/** An idempotent retry finds the earlier order and skips the whole flow. */
+export async function findGameOrder(uniqueId: string, initiator: string) {
+	const row = await general
+		.selectFrom("payments_game")
+		.select(["unique_id", "initiator"])
+		.where("unique_id", "=", uniqueId)
+		.where("initiator", "=", initiator)
+		.executeTakeFirst();
+
+	return row ?? null;
+}
+
 export async function updateGamePaymentRecord(uniqueId: string) {
 	return general
 		.updateTable("payments_game")
@@ -125,6 +137,14 @@ export async function processStoreGamePurchase({
 					metadata: { server },
 				}, trx));
 			}
+
+			// The selected cart rows are consumed by this order; a failed debit
+			// rolls the delete back with the rest of the transaction.
+			await trx
+				.deleteFrom("store_cart_items")
+				.where("initiator", "=", initiator)
+				.where("selected", "=", true)
+				.execute();
 
 			return results;
 		});

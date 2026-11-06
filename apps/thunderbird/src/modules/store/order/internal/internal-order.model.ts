@@ -10,7 +10,7 @@ export const orderGameSchema = t.Object({
   finished_at: t.Nullable(DateTime),
   status: t.Literal("succeeded")
 })
-const orderSingleGameSchema = t.Object({
+export const orderSingleGameSchema = t.Object({
   initiator: t.String(),
   unique_id: t.String(),
   created_at: DateTime,
@@ -39,6 +39,8 @@ export const internalOrders = {
         sql<OrdersGame["status"]>`'succeeded'`.as("status"),
       ])
       .where("initiator", "=", initiator)
+      .orderBy("created_at", "desc")
+      .limit(100)
       .execute();
 
     return query
