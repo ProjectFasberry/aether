@@ -152,6 +152,16 @@ export async function refundOrder({
 	adminReason: string;
 	actor: string;
 }): Promise<RefundResult[] | null> {
+	const gameDb = general as unknown as Kysely<DB & { payments_game: any }>;
+	const gameOrder = await gameDb
+		.selectFrom("payments_game")
+		.select(["refunded_at"])
+		.where("unique_id", "=", orderId)
+		.executeTakeFirst();
+
+	// The automatic rollback may have already returned the money.
+	if (gameOrder?.refunded_at) return [];
+
 	const entries = await getOrderEntries(orderId);
 	const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
 
@@ -181,11 +191,9 @@ export async function refundOrder({
 		});
 	}
 
-	const gameDb = general as unknown as Kysely<DB & { payments_game: any }>;
-
 	await gameDb
 		.updateTable("payments_game")
-		.set({ refunded_at: new Date() })
+		.set({ refunded_at: new Date(), failure_reason: "admin refund" })
 		.where("unique_id", "=", orderId)
 		.execute();
 

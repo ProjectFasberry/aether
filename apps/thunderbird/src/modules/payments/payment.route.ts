@@ -3,6 +3,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "#/modules/private/private.model";
+import { enqueueGrantJob } from "#/modules/economy/grant-jobs.model";
 import { buildRouteSummary } from "#/utils";
 import { wrapError } from "@repo/shared/lib/helpers";
 import {
@@ -219,18 +220,37 @@ export const paymentWebhook = new Elysia()
 			payload: ctx.body,
 		});
 
-		const order = await settleOrder({
-			provider: provider.name,
-			orderId: event.orderId,
-			providerPaymentId: event.providerPaymentId,
-			status: event.status,
-			amountMinor: event.amountMinor,
-			currency: event.currency,
-		});
+		try {
+			const order = await settleOrder({
+				provider: provider.name,
+				orderId: event.orderId,
+				providerPaymentId: event.providerPaymentId,
+				status: event.status,
+				amountMinor: event.amountMinor,
+				currency: event.currency,
+			});
 
-		if (!order) return status(404, wrapError("ORDER_NOT_FOUND"));
+			if (!order) return status(404, wrapError("ORDER_NOT_FOUND"));
 
-		return { data: { status: order.status } };
+			return { data: { status: order.status } };
+		} catch (error) {
+			// A transient database failure must not lose a paid invoice: retry
+			// through the outbox and let the provider retry as well.
+			await enqueueGrantJob({
+				orderId: event.orderId,
+				kind: "payment.settle",
+				payload: {
+					provider: provider.name,
+					orderId: event.orderId,
+					providerPaymentId: event.providerPaymentId,
+					status: event.status,
+					amountMinor: event.amountMinor,
+					currency: event.currency,
+				},
+			});
+
+			throw error;
+		}
 	}, {
 		detail: { summary: buildRouteSummary("Payment provider webhook") },
 	});

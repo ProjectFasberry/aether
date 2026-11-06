@@ -7,6 +7,7 @@ import type { Kysely } from "kysely";
 import { nanoid } from "nanoid";
 import { sql } from "kysely";
 import { getProvider } from "./providers";
+import { registerGrantHandler } from "#/modules/economy/grant-jobs.model";
 import { fromMinor, type PaymentProviderName, type PaymentStatus } from "./types";
 
 const db = general as unknown as Kysely<DB & { orders: any; payment_events: any }>;
@@ -351,6 +352,19 @@ export async function listAllOrders({
 		},
 	};
 }
+
+registerGrantHandler("payment.settle", async (payload) => {
+	const order = await settleOrder({
+		provider: payload.provider as PaymentProviderName,
+		orderId: String(payload.orderId),
+		providerPaymentId: String(payload.providerPaymentId),
+		status: payload.status as PaymentStatus,
+		amountMinor: typeof payload.amountMinor === "number" ? payload.amountMinor : undefined,
+		currency: typeof payload.currency === "string" ? payload.currency : undefined,
+	});
+
+	if (!order) throw new Error("ORDER_NOT_FOUND");
+});
 
 /** Pending invoices past their TTL are closed; a late callback is ignored. */
 export async function expireOrders(): Promise<number> {
