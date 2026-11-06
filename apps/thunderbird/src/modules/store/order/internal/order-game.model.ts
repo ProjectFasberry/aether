@@ -99,11 +99,13 @@ export async function processStoreGamePurchase({
 	uniqueId,
 	products,
 	finishPrice,
+	server,
 }: {
 	initiator: string;
 	uniqueId: string;
 	products: Product[];
 	finishPrice: Record<GameCurrency, number>;
+	server: string;
 }): Promise<{ error: string | null }> {
 	let applied: ApplyResult[];
 
@@ -120,6 +122,7 @@ export async function processStoreGamePurchase({
 				results.push(await debit(initiator, currency, amount, {
 					reason: `store.purchase:${currency}`,
 					orderId: uniqueId,
+					metadata: { server },
 				}, trx));
 			}
 

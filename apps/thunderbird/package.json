@@ -12,6 +12,7 @@
 		"start:prod": "infisical run --env=prod --path=/thunderbird -- bun run ./dist/index.js",
 		"-------------": "",
 		"type-check": "tsc --build",
+		"test": "bun test",
 		"lint": "bunx biome lint",
 		"circular-check": "bunx dpdm --no-warning ./src/index.ts",
 		"--------------------": "",

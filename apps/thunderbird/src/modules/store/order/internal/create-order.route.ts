@@ -4,6 +4,8 @@ import { defineRequiredUser } from "#/lib/define";
 import { cartItem } from "../../cart/cart.model";
 import { initialPrices, processStoreGamePurchase } from "./order-game.model";
 import { getWallet } from "#/modules/economy/wallet.model";
+import { charism, CHARISM_SERVERS } from "#/modules/economy/charism";
+import { t } from "elysia";
 import type { GameCurrency } from "@repo/shared/schemas/store/payment";
 import { withError } from "#/shared/schemas";
 import { nanoid } from "nanoid";
@@ -15,7 +17,14 @@ const ERRORS_MAP: Record<string, string> = {
 
 export const createOrder = new Elysia()
   .use(defineRequiredUser())
-  .post('/create', async ({ nickname: initiator, status }) => {
+  .post('/create', async ({ nickname: initiator, status, body }) => {
+    const server = body?.server ?? "bisquite";
+    const provider = charism.get(server);
+
+    if (!provider?.purchasable()) {
+      return status(400, wrapError("SERVER_NOT_PURCHASABLE"))
+    }
+
     const items = await cartItem.getList(initiator);
 
     if (items.length === 0) {
@@ -57,6 +66,7 @@ export const createOrder = new Elysia()
         uniqueId,
         products,
         finishPrice: finishPrice as Record<GameCurrency, number>,
+        server,
       });
 
       if (result.error) {
@@ -85,6 +95,7 @@ export const createOrder = new Elysia()
       }
     }
   }, {
+    body: t.Optional(t.Object({ server: t.Optional(t.UnionEnum(CHARISM_SERVERS)) })),
     response: {
       500: withError(),
       400: withError(),

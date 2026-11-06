@@ -1,18 +1,6 @@
-import { bisquite } from "#/shared/database/bisquite-db"
+import { charism } from "#/modules/economy/charism/model"
 import { getBalance as getWalletBalance } from "#/modules/economy/wallet.model"
-import type { DB as bisquiteDB } from "@gen/db/bisquite"
-import type { Kysely } from "kysely"
 import * as z from "zod"
-
-/**
- * Charisma still lives per game server. Bisquite is the only server with a
- * charisma database today; Muffin is behind the same interface and switches on
- * in MN-154 without touching callers.
- */
-const charismInstanceDb: Record<Server, Kysely<bisquiteDB> | null> = {
-  bisquite: bisquite,
-  muffin: null
-}
 
 export async function getBelkoin(nickname: string) {
   return getWalletBalance(nickname, "BELKOIN")
@@ -20,26 +8,30 @@ export async function getBelkoin(nickname: string) {
 
 type Server = z.infer<typeof balanceSchema>["server"]
 
-export async function getCharism(nickname: string, server: Server) {
-  const db = charismInstanceDb[server];
-  if (!db) return 0;
-
-  return getWalletBalance(nickname, "CHARISM")
-}
-
+/**
+ * Charisma is per server behind the `CharismProvider` contract; Belkoin is
+ * global. The response carries the server flags so the client can hide a
+ * server that has no readable balance yet.
+ */
 export async function getBalance(nickname: string, { server }: z.infer<typeof balanceSchema>): Promise<{
   CHARISM: number;
   BELKOIN: number;
   server: Server;
+  available: boolean;
+  purchasable: boolean;
 }> {
-  const [charism, belkoin] = await Promise.all([
-    getCharism(nickname, server), getBelkoin(nickname)
+  const provider = charism.get(server);
+  const [charismBalance, belkoin] = await Promise.all([
+    charism.balance(server, nickname),
+    getBelkoin(nickname),
   ])
 
   return {
-    CHARISM: Number(charism),
+    CHARISM: Number(charismBalance ?? 0),
     BELKOIN: Number(belkoin),
-    server
+    server,
+    available: Boolean(provider?.available()),
+    purchasable: Boolean(provider?.purchasable()),
   }
 }
 

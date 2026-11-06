@@ -30,12 +30,24 @@ export const cartListItemSchema = t.Object({
 
 export const cartPriceSchema = t.Object({
   CHARISM: t.Number(),
-  BELKOIN: t.Number()
+  BELKOIN: t.Number(),
+  server: t.String(),
+  available: t.Boolean(),
+  purchasable: t.Boolean()
 })
+
+export const cartMetaSchema = t.Composite([
+  withMeta,
+  t.Object({
+    server: t.String(),
+    available: t.Boolean(),
+    purchasable: t.Boolean()
+  })
+])
 
 export const cartListSchema = t.Object({
   data: t.Array(cartListItemSchema),
-  meta: withMeta
+  meta: cartMetaSchema
 });
 
 export const cartItem = {
