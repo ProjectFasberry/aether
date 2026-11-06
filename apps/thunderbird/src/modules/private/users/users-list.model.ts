@@ -1,4 +1,3 @@
-import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
 import { getEnv } from "#/shared/env";
@@ -8,8 +7,7 @@ import { wrapMeta } from "#/utils/config/transforms";
 import { DEFAULT_HEAD, skinsHistorySchema } from "@repo/core/modules/skins";
 import dayjs from "dayjs";
 import { type Static, t } from "elysia";
-import { sql } from "kysely";
-import { executeWithCursorPagination } from "kysely-paginate";
+import { sql, type RawBuilder, type SqlBool } from "kysely";
 
 export const privatedUserSchema = t.Object({
   nickname: t.String(),
@@ -48,14 +46,6 @@ export const userListSchema = t.Composite([
   })
 ])
 
-type RequestedFields = "created_at" | "nickname" | "role_id"
-
-const EXPRESSIONS: Record<Static<typeof sortSchema>, RequestedFields> = {
-  "abc": "nickname",
-  "created_at": "created_at",
-  "role": "role_id"
-}
-
 type RawPlayer = {
   nickname: string;
   lower_case_nickname: string;
@@ -64,6 +54,8 @@ type RawPlayer = {
   id: number | null;
   role_id: number | null;
   role_name: string | null;
+  /** Trigram similarity of the nickname to the search query (search only). */
+  rank?: number | null;
 }
 
 async function process(nicknames: string[]) {
@@ -118,12 +110,108 @@ export async function getPlayer(nickname: string): Promise<Static<typeof private
   return mapper(query)
 }
 
-const fallbackMeta = { hasNextPage: false, hasPrevPage: false }
-const fallbackPaginateResult = { data: [], meta: fallbackMeta }
+/**
+ * Opaque keyset cursor. `kysely-paginate` encodes the raw column values (a
+ * `Date` becomes an ISO string), which the previous parser read back as
+ * milliseconds - page two of the default sort died on an Invalid Date. The
+ * cursor is built here instead, so the payload matches what the query expects.
+ *
+ * It always carries a nickname: every order ends with `accounts.nickname`, so
+ * rows with an equal primary key are still strictly ordered.
+ */
+type UsersCursor = {
+  nickname: string;
+  created_at?: string;
+  role_sort?: number;
+  rank?: number;
+}
+
+function encodeCursor(payload: UsersCursor): string {
+  return Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
+}
+
+function decodeCursor(value: string): UsersCursor | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<UsersCursor>;
+
+    if (typeof parsed.nickname !== "string" || parsed.nickname.length === 0) return null;
+    if (parsed.created_at !== undefined && Number.isNaN(Date.parse(parsed.created_at))) return null;
+    if (parsed.role_sort !== undefined && typeof parsed.role_sort !== "number") return null;
+    if (parsed.rank !== undefined && typeof parsed.rank !== "number") return null;
+
+    return parsed as UsersCursor;
+  } catch {
+    return null;
+  }
+}
+
+function cursorFor(row: RawPlayer, sort: Static<typeof sortSchema>, searching: boolean): UsersCursor {
+  if (searching) {
+    return { rank: Number(row.rank ?? 0), nickname: row.nickname };
+  }
+
+  switch (sort) {
+    case "created_at":
+      return {
+        // pg returns timestamptz as a Date; keep the cursor value in the same
+        // shape the next query binds (a Date), not a wall-clock number.
+        created_at: new Date(row.created_at as Date | string).toISOString(),
+        nickname: row.nickname,
+      };
+    case "role":
+      return { role_sort: row.role_id ?? 0, nickname: row.nickname };
+    case "abc":
+    default:
+      return { nickname: row.nickname };
+  }
+}
+
+/**
+ * Rows that come strictly after the cursor for the active ordering.
+ *
+ * The order is always `<primary> <direction>, nickname asc`, so the condition
+ * is `(primary op value) OR (primary = value AND nickname > cursor.nickname)`.
+ * A plain tuple comparison would compare the nickname in the primary
+ * direction, which is wrong for `desc` orderings.
+ */
+function applyCursor(query: any, primary: RawBuilder<unknown>, direction: "asc" | "desc", cursor: UsersCursor) {
+  const value =
+    cursor.rank !== undefined ? cursor.rank :
+      cursor.created_at !== undefined ? new Date(cursor.created_at) :
+        cursor.role_sort !== undefined ? cursor.role_sort :
+          null;
+
+  if (value === null) {
+    return query.where("accounts.nickname", direction === "asc" ? ">" : "<", cursor.nickname);
+  }
+
+  const comparison = direction === "asc" ? sql`>` : sql`<`;
+
+  return query.where(sql<SqlBool>`(
+    ${primary} ${comparison} ${value}
+    or (${primary} = ${value} and "accounts"."nickname" > ${cursor.nickname})
+  )`);
+}
+
+const fallbackMeta = {
+  hasNextPage: false as boolean,
+  hasPrevPage: false as boolean,
+  startCursor: undefined as string | undefined,
+  endCursor: undefined as string | undefined,
+};
 
 export async function getPlayersList({
   asc, startCursor, searchQuery, endCursor, limit, sort
-}: Static<typeof userListSchema>): Promise<Static<typeof privatedUsersSchema>> {
+}: Static<typeof userListSchema>): Promise<Static<typeof privatedUsersSchema> | null> {
+  const order = sort ?? USER_SORT[0];
+  const direction = getDirection(asc);
+  const searching = Boolean(searchQuery);
+
+  // Backward pagination (`before`) is not used by the panel; only forward
+  // cursors are accepted and `startCursor` is returned for completeness.
+  const cursor = endCursor ? decodeCursor(endCursor) : null;
+  if (endCursor && !cursor) return null;
+
   let query = general
     .selectFrom("accounts")
     .leftJoin("players", "players.lower_case_nickname", "accounts.lower_nickname")
@@ -140,29 +228,62 @@ export async function getPlayersList({
 
   if (searchQuery) {
     query = query
-      .where(sql<boolean>`"accounts"."nickname" % ${searchQuery}`)
-      .orderBy(sql`"accounts"."nickname" <-> ${searchQuery}`, "asc")
+      .select(sql<number>`similarity("accounts"."nickname", ${searchQuery})`.as("rank"))
+      .where(sql<SqlBool>`"accounts"."nickname" % ${searchQuery}`)
   }
 
-  const result = await executeWithCursorPagination(query, {
-    after: endCursor,
-    before: startCursor,
-    perPage: limit,
-    fields: [
-      { expression: EXPRESSIONS[sort ?? USER_SORT[0]], direction: getDirection(asc) },
-    ],
-    /* Because the input is received as a timestamp in ms, but the cursor requires it in date format */
-    parseCursor: (cursor) => ({
-      nickname: cursor.nickname,
-      created_at: new Date(Number(cursor.created_at)),
-      role_id: Number(cursor.role_id)
-    })
-  })
+  let primary: RawBuilder<unknown>;
+  let primaryDirection: "asc" | "desc" = direction;
 
-  if (result.rows.length === 0) return fallbackPaginateResult;
+  if (searching) {
+    // Search always ranks by relevance; the sort selector would only make the
+    // result harder to predict, and the cursor must carry the rank anyway.
+    primary = sql`similarity("accounts"."nickname", ${searchQuery})`;
+    primaryDirection = "desc";
+  } else {
+    switch (order) {
+      case "created_at":
+        primary = sql`"accounts"."created_at"`;
+        break;
+      case "role":
+        // Users without a role sort first/last with a real value instead of a
+        // NULL the cursor cannot encode.
+        primary = sql`coalesce("roles"."id", 0)`;
+        break;
+      case "abc":
+      default:
+        primary = sql`"accounts"."nickname"`;
+        break;
+    }
+  }
 
-  const mapper = await process(result.rows.map(r => r.nickname))
-  const data = result.rows.map((user) => mapper(user))
+  if (cursor) {
+    query = applyCursor(query, primary, primaryDirection, cursor);
+  }
 
-  return { data, meta: wrapMeta(result) }
+  query = query.orderBy(primary, primaryDirection);
+  if (order !== "abc" || searching) {
+    query = query.orderBy("accounts.nickname", "asc");
+  }
+
+  const rows = await query.limit(limit + 1).execute() as RawPlayer[];
+  const hasNextPage = rows.length > limit;
+  if (hasNextPage) rows.pop();
+
+  if (rows.length === 0) {
+    return { data: [], meta: fallbackMeta };
+  }
+
+  const mapper = await process(rows.map(r => r.nickname))
+  const data = rows.map((user) => mapper(user))
+
+  return {
+    data,
+    meta: wrapMeta({
+      hasNextPage,
+      hasPrevPage: Boolean(cursor),
+      startCursor: encodeCursor(cursorFor(rows[0], order, searching)),
+      endCursor: encodeCursor(cursorFor(rows[rows.length - 1], order, searching)),
+    }),
+  }
 }

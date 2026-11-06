@@ -14,6 +14,7 @@ import { dictionaries } from "./dictionaries";
 import { volume } from "./volume";
 import { lands } from "./lands";
 import { api } from "./api";
+import { releases } from "./releases";
 
 const infra = new Elysia()
   .group("", app => app
@@ -36,6 +37,7 @@ const entities = new Elysia()
     .use(chat)
     .use(dictionaries)
     .use(lands)
+    .use(releases)
   );
 
 export const privated = new Elysia()
