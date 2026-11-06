@@ -4,6 +4,7 @@ import { economyLedger } from "./economy-ledger.route";
 import { economyAdjust } from "./economy-adjust.route";
 import { economyRefund } from "./economy-refund.route";
 import { economyMigrate } from "./economy-migrate.route";
+import { economyRates, economyRateAdd } from "./economy-rates.route";
 
 export const economy = new Elysia()
 	.group("/economy", (app) => app
@@ -12,4 +13,6 @@ export const economy = new Elysia()
 		.use(economyAdjust)
 		.use(economyRefund)
 		.use(economyMigrate)
+		.use(economyRates)
+		.use(economyRateAdd)
 	);

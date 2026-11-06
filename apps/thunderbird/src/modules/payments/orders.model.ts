@@ -1,0 +1,290 @@
+import { general } from "#/shared/database/general-db";
+import { belkoinFor } from "#/modules/economy/rates.model";
+import { credit, debit } from "#/modules/economy/wallet.model";
+import { getEnv } from "#/shared/env";
+import type { DB } from "@gen/db/general";
+import type { Kysely } from "kysely";
+import { nanoid } from "nanoid";
+import { getProvider } from "./providers";
+import { fromMinor, type PaymentProviderName, type PaymentStatus } from "./types";
+
+const db = general as unknown as Kysely<DB & { orders: any; payment_events: any }>;
+
+const DEFAULT_TTL_MINUTES = 15;
+
+export type OrderRow = {
+	id: number;
+	order_id: string;
+	nickname: string;
+	provider: string;
+	status: PaymentStatus;
+	amount_minor: number;
+	currency: string;
+	belkoin: number;
+	rate: number | null;
+	spread: number | null;
+	provider_payment_id: string | null;
+	pay_url: string | null;
+	metadata: unknown;
+	created_at: Date;
+	expires_at: Date;
+	paid_at: Date | null;
+	refunded_at: Date | null;
+};
+
+export type OrderView = {
+	orderId: string;
+	provider: string;
+	status: PaymentStatus;
+	amountMinor: number;
+	currency: string;
+	belkoin: number;
+	payUrl: string | null;
+	expiresAt: Date;
+};
+
+export class PaymentError extends Error {
+	constructor(public code: string) {
+		super(code);
+	}
+}
+
+function view(row: OrderRow): OrderView {
+	return {
+		orderId: row.order_id,
+		provider: row.provider,
+		status: row.status,
+		amountMinor: Number(row.amount_minor),
+		currency: row.currency,
+		belkoin: Number(row.belkoin),
+		payUrl: row.pay_url,
+		expiresAt: row.expires_at,
+	};
+}
+
+function ttlMinutes(): number {
+	return getEnv().PAYMENT_INVOICE_TTL_MINUTES ?? DEFAULT_TTL_MINUTES;
+}
+
+export async function createPaymentInvoice({
+	nickname,
+	providerName,
+	amountMinor,
+	currency,
+	origin,
+}: {
+	nickname: string;
+	providerName: PaymentProviderName;
+	amountMinor: number;
+	currency: string;
+	origin: string;
+}): Promise<OrderView> {
+	const provider = getProvider(providerName);
+	if (!provider || !provider.isConfigured()) throw new PaymentError("PROVIDER_NOT_CONFIGURED");
+	if (!provider.currencies.includes(currency)) throw new PaymentError("CURRENCY_NOT_SUPPORTED");
+
+	const major = fromMinor(amountMinor, currency);
+	const priced = await belkoinFor(major, currency);
+
+	if (!priced) throw new PaymentError("RATE_NOT_FOUND");
+	if (priced.amount < 1) throw new PaymentError("AMOUNT_TOO_SMALL");
+
+	const orderId = nanoid(12);
+	const expiresAt = new Date(Date.now() + ttlMinutes() * 60 * 1000);
+
+	const [order] = await db
+		.insertInto("orders")
+		.values({
+			order_id: orderId,
+			nickname,
+			provider: providerName,
+			amount_minor: amountMinor,
+			currency,
+			belkoin: priced.amount,
+			rate: priced.conversion.rate,
+			spread: priced.conversion.spread,
+			expires_at: expiresAt,
+		})
+		.returningAll()
+		.execute() as unknown as OrderRow[];
+
+	let invoice;
+
+	try {
+		invoice = await provider.createInvoice({ orderId, amountMinor, currency, expiresAt, origin });
+	} catch (error) {
+		await db
+			.updateTable("orders")
+			.set({ status: "failed", metadata: { error: error instanceof Error ? error.message : String(error) } })
+			.where("order_id", "=", orderId)
+			.execute();
+
+		throw new PaymentError("PROVIDER_ERROR");
+	}
+
+	await db
+		.updateTable("orders")
+		.set({ provider_payment_id: invoice.providerPaymentId, pay_url: invoice.payUrl })
+		.where("order_id", "=", orderId)
+		.execute();
+
+	return view({ ...order, provider_payment_id: invoice.providerPaymentId, pay_url: invoice.payUrl });
+}
+
+export async function getOrder(orderId: string): Promise<OrderRow | null> {
+	const row = await db
+		.selectFrom("orders")
+		.selectAll()
+		.where("order_id", "=", orderId)
+		.executeTakeFirst() as unknown as OrderRow | undefined;
+
+	return row ?? null;
+}
+
+export async function listOrders(nickname: string, limit = 50): Promise<OrderView[]> {
+	const rows = await db
+		.selectFrom("orders")
+		.selectAll()
+		.where("nickname", "=", nickname)
+		.orderBy("created_at", "desc")
+		.limit(limit)
+		.execute() as unknown as OrderRow[];
+
+	return rows.map(view);
+}
+
+/**
+ * Applies a provider event. Only a pending order changes; a repeated event (or
+ * a late one after a refund) returns the stored state instead of moving money.
+ */
+export async function settleOrder({
+	provider,
+	orderId,
+	providerPaymentId,
+	status,
+	amountMinor,
+	currency,
+}: {
+	provider: PaymentProviderName;
+	orderId: string;
+	providerPaymentId: string;
+	status: PaymentStatus;
+	amountMinor?: number;
+	currency?: string;
+}): Promise<OrderView | null> {
+	const order = await getOrder(orderId);
+	if (!order || order.provider !== provider) return null;
+
+	if (order.status !== "pending") return view(order);
+
+	if (status === "succeeded") {
+		if (
+			typeof amountMinor === "number"
+			&& amountMinor < Number(order.amount_minor)
+			&& (!currency || currency === order.currency)
+		) {
+			// Underpayment: never credit a partial invoice as if it were paid.
+			await db
+				.updateTable("orders")
+				.set({
+					status: "failed",
+					provider_payment_id: providerPaymentId,
+					metadata: { ...(order.metadata as object ?? {}), underpaidMinor: amountMinor },
+				})
+				.where("order_id", "=", orderId)
+				.execute();
+
+			return view({ ...order, status: "failed" });
+		}
+
+		await credit(order.nickname, "BELKOIN", Number(order.belkoin), {
+			reason: "payment:BELKOIN",
+			orderId,
+			actor: "system",
+			metadata: { provider, providerPaymentId, amountMinor, currency },
+		});
+	}
+
+	await db
+		.updateTable("orders")
+		.set({
+			status,
+			provider_payment_id: providerPaymentId,
+			paid_at: status === "succeeded" ? new Date() : null,
+		})
+		.where("order_id", "=", orderId)
+		.execute();
+
+	return view({ ...order, status, provider_payment_id: providerPaymentId });
+}
+
+/** Reverses a paid invoice. Throws when the player already spent the coins. */
+export async function refundPayment({
+	orderId,
+	actor,
+	adminReason,
+}: {
+	orderId: string;
+	actor: string;
+	adminReason: string;
+}): Promise<OrderView | null> {
+	const order = await getOrder(orderId);
+	if (!order || order.status !== "succeeded") return null;
+
+	await debit(order.nickname, "BELKOIN", Number(order.belkoin), {
+		reason: "payment.refund:BELKOIN",
+		orderId,
+		actor,
+		metadata: { adminReason },
+	});
+
+	await db
+		.updateTable("orders")
+		.set({ status: "refunded", refunded_at: new Date() })
+		.where("order_id", "=", orderId)
+		.execute();
+
+	return view({ ...order, status: "refunded" });
+}
+
+/** Pending invoices past their TTL are closed; a late callback is ignored. */
+export async function expireOrders(): Promise<number> {
+	const result = await db
+		.updateTable("orders")
+		.set({ status: "expired" })
+		.where("status", "=", "pending")
+		.where("expires_at", "<", new Date())
+		.executeTakeFirst();
+
+	return Number(result.numUpdatedRows ?? 0);
+}
+
+export async function recordPaymentEvent({
+	provider,
+	eventId,
+	orderId,
+	signatureValid,
+	payload,
+	error,
+}: {
+	provider: string;
+	eventId?: string;
+	orderId?: string;
+	signatureValid: boolean;
+	payload: unknown;
+	error?: string;
+}): Promise<void> {
+	await db
+		.insertInto("payment_events")
+		.values({
+			provider,
+			provider_event_id: eventId ?? null,
+			order_id: orderId ?? null,
+			signature_valid: signatureValid,
+			payload: payload ?? {},
+			error: error ?? null,
+			processed_at: error ? null : new Date(),
+		})
+		.onConflict((oc) => oc.columns(["provider", "provider_event_id"]).doNothing())
+		.execute();
+}

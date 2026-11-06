@@ -37,6 +37,7 @@ jobs:
           registry: registry.fasberry.fun
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
+          logout: false
 
       # The deploy host pulls :latest on a timer (ProjectFasberry/infra,
       # scripts/pull-update.sh), so pushing here is the whole rollout.

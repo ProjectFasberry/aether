@@ -34,6 +34,14 @@ const envSchema = z.object({
   /** Shared secret for the Velocity join gate; when unset, verification is off. */
   GATE_SECRET: z.optional(z.string().min(16)),
   MINESKIN_API_KEY: z.string().min(1),
+  /** Payments. A provider without credentials stays disabled. */
+  SBP_PROVIDER_URL: z.optional(z.url()),
+  SBP_MERCHANT_ID: z.optional(z.string().min(1)),
+  SBP_API_KEY: z.optional(z.string().min(1)),
+  HELEKET_API_URL: z.optional(z.url()),
+  HELEKET_MERCHANT_UUID: z.optional(z.string().min(1)),
+  HELEKET_API_KEY: z.optional(z.string().min(1)),
+  PAYMENT_INVOICE_TTL_MINUTES: z.optional(z.coerce.number().min(1).max(1440)),
   MINESKIN_AES_SECRET_KEY: z.string().min(1),
   verbose: z.boolean().optional().default(false)
 });

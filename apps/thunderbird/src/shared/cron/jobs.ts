@@ -5,6 +5,7 @@ import { redisService } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { cleanOldHistory } from "#/modules/private/history/history-retention";
 import { processGrantJobs } from "#/modules/economy/grant-jobs.model";
+import { expireOrders } from "#/modules/payments/orders.model";
 import { cronLogger } from ".";
 
 type Job = {
@@ -67,6 +68,19 @@ export const CRON_JOBS: Job[] = [
       await wrapJobCb(this.name, async () => {
         const { processed, failed } = await processGrantJobs();
         if (failed > 0) cronLogger.warn(`Economy outbox: ${failed} of ${processed} jobs failed permanently`);
+      })
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true
+  },
+  {
+    name: "expire-payment-orders",
+    cron: "*/5 * * * *",
+    callback: async function () {
+      await wrapJobCb(this.name, async () => {
+        const expired = await expireOrders();
+        if (expired > 0) cronLogger.info(`Payments: expired ${expired} orders`);
       })
     },
     immediately: false,
