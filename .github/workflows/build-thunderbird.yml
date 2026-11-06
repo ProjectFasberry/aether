@@ -19,8 +19,8 @@ on:
         default: prod
 
 concurrency:
-  group: build-thunderbird-${{ github.ref }}
-  cancel-in-progress: true
+  group: aether-images-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
