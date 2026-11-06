@@ -8,6 +8,7 @@ const fields = storeItemSchema.pick({
 	imageUrl: true,
 	type: true,
 	command: true,
+	refund_cmd: true,
 	value: true,
 	currency: true,
 	price: true,
@@ -50,6 +51,7 @@ export const storeItemCreateSchema = z.object({
 	currency: z.enum(GAME_CURRENCIES),
 	imageUrl: z.string().optional().nullable(),
 	command: z.string().nullable(),
+	refund_cmd: z.string().nullable().optional(),
 	content: z
 		.object({})
 		.loose()

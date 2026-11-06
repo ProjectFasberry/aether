@@ -13,11 +13,11 @@ import { buildRouteSummary } from "#/utils";
 const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
-  const updates = buildUpdates<Selectable<StoreItems>>(values);
+  const updates = buildUpdates<Selectable<StoreItems>>(values as any);
 
   const fields = values.map((o) => o.field);
 
-  const query = await general
+  const query = await (general as any)
     .updateTable("store_items")
     .set(updates)
     .where("id", "=", id)

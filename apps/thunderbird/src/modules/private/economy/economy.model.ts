@@ -7,6 +7,7 @@ import {
 	type Currency,
 	type LedgerEntry,
 } from "#/modules/economy/wallet.model";
+import { enqueueGrantJob } from "#/modules/economy/grant-jobs.model";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
@@ -155,7 +156,7 @@ export async function refundOrder({
 	const gameDb = general as unknown as Kysely<DB & { payments_game: any }>;
 	const gameOrder = await gameDb
 		.selectFrom("payments_game")
-		.select(["refunded_at"])
+		.select(["refunded_at", "finished_at"])
 		.where("unique_id", "=", orderId)
 		.executeTakeFirst();
 
@@ -204,6 +205,16 @@ export async function refundOrder({
 		.set({ refunded_at: new Date(), failure_reason: "admin refund" })
 		.where("unique_id", "=", orderId)
 		.execute();
+
+	// A delivered item needs its effect reversed as well; the item may define a
+	// refund command, otherwise a donation falls back to removing the group.
+	if (gameOrder?.finished_at) {
+		await enqueueGrantJob({
+			orderId,
+			kind: "store.revoke",
+			payload: { orderId },
+		});
+	}
 
 	return refunded;
 }

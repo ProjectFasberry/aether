@@ -50,6 +50,7 @@ export const storeItemSchema = z.object({
 	imageUrl: z.string(),
 	type: z.union([z.enum(STORE_TYPES), z.string()]),
 	command: z.string().nullable(),
+	refund_cmd: z.string().nullable(),
 	value: z.string(),
 	currency: z.string(),
 	price: z.number(),

@@ -126,7 +126,7 @@ export const cartItem = {
     return data
   },
   async getList(initiator: string) {
-    const items = await general
+    const items = await (general as any)
       .selectFrom("store_cart_items")
       .innerJoin("store_items", "store_items.id", "store_cart_items.product_id")
       .select([
@@ -136,6 +136,8 @@ export const cartItem = {
         "store_items.price",
         "store_items.type",
         "store_items.value",
+        "store_items.command",
+        "store_items.refund_cmd",
         "store_cart_items.recipient"
       ])
       .where("store_cart_items.initiator", "=", initiator)

@@ -45,7 +45,7 @@ export const storeItemsSchema = t.Object({
 
 export const store = {
   async getItem(id: number): Promise<Static<typeof storeItemsItemSchema> | null> {
-    const query = await general
+    const query = await (general as any)
       .selectFrom("store_items")
       .select([
         "id",
@@ -57,6 +57,7 @@ export const store = {
         "value",
         "currency",
         "command",
+        "refund_cmd",
         "content"
       ])
       .where("id", "=", id)

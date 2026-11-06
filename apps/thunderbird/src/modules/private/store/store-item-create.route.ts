@@ -8,7 +8,7 @@ import { storeItemCreateSchema } from "@repo/shared/schemas/store";
 import { buildRouteSummary } from "#/utils";
 
 async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
-  const query = await general
+  const query = await (general as any)
     .insertInto("store_items")
     .values(values)
     .returningAll()

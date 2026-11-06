@@ -15,6 +15,18 @@ const ERRORS_MAP: Record<string, string> = {
   "TIMEOUT": "Похоже игровой сервер не доступен"
 }
 
+type CartLine = {
+  id: number;
+  currency: string;
+  price: string;
+  type: string;
+  value: string;
+  title: string;
+  recipient: string;
+  command: string | null;
+  refund_cmd: string | null;
+};
+
 export const createOrder = new Elysia()
   .use(defineRequiredUser())
   .post('/create', async ({ nickname: initiator, status, body }) => {
@@ -57,13 +69,13 @@ export const createOrder = new Elysia()
       };
     }
 
-    const items = await cartItem.getList(initiator);
+    const items = await cartItem.getList(initiator) as CartLine[];
 
     if (items.length === 0) {
       return status(400, wrapError("items-not-found"))
     }
 
-    const finishPrice = items.reduce((acc, item) => {
+    const finishPrice = items.reduce((acc: Record<string, number>, item: CartLine) => {
       const { currency, price } = item;
       const amount = parseFloat(price);
 
@@ -86,9 +98,11 @@ export const createOrder = new Elysia()
     }
 
     try {
-      const products = items.map(target => ({
+      const products = items.map((target: CartLine) => ({
         ...target,
         recipient: target.recipient,
+        command: target.command ?? null,
+        refundCmd: target.refund_cmd ?? null,
       }));
 
       const result = await processStoreGamePurchase({
