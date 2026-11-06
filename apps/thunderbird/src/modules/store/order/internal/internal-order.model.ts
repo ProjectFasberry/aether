@@ -95,6 +95,7 @@ export const internalOrders = {
 		let query = db
 			.selectFrom("payments_game")
 			.select([
+				"payments_game.id",
 				"payments_game.unique_id",
 				"payments_game.initiator",
 				"payments_game.created_at",
