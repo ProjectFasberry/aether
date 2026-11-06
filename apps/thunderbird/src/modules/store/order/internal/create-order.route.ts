@@ -3,7 +3,7 @@ import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/paymen
 import { defineRequiredUser } from "#/lib/define";
 import { cartItem } from "../../cart/cart.model";
 import { findGameOrder, initialPrices, processStoreGamePurchase } from "./order-game.model";
-import { getWallet } from "#/modules/economy/wallet.model";
+import { getOrderEntries, getWallet } from "#/modules/economy/wallet.model";
 import { charism, CHARISM_SERVERS } from "#/modules/economy/charism";
 import { t } from "elysia";
 import type { GameCurrency } from "@repo/shared/schemas/store/payment";
@@ -23,6 +23,30 @@ export const createOrder = new Elysia()
 
     if (!provider?.purchasable()) {
       return status(400, wrapError("SERVER_NOT_PURCHASABLE"))
+    }
+
+    // A retry must find the earlier order before the cart is touched: the
+    // first attempt already removed the selected rows.
+    const uniqueId = body?.idempotencyKey ?? nanoid(9);
+    const existing = await findGameOrder(uniqueId, initiator);
+
+    if (existing) {
+      const entries = await getOrderEntries(uniqueId);
+      const price: Record<GameCurrency, number> = { BELKOIN: 0, CHARISM: 0 };
+
+      for (const entry of entries) {
+        if (!entry.reason.startsWith("store.purchase:")) continue;
+
+        const currency = entry.currency as GameCurrency;
+        if (currency in price) price[currency] += Math.abs(Number(entry.delta));
+      }
+
+      return {
+        data: {
+          purchase: { uniqueId },
+          payload: { price },
+        } satisfies CreateOrderRoutePayload,
+      };
     }
 
     const items = await cartItem.getList(initiator);
@@ -54,24 +78,6 @@ export const createOrder = new Elysia()
     }
 
     try {
-      // A client retry reuses the key, so the server never charges twice.
-      const uniqueId = body?.idempotencyKey ?? nanoid(9);
-      const existing = await findGameOrder(uniqueId, initiator);
-
-      if (existing) {
-        const price: Record<GameCurrency, number> = {
-          BELKOIN: Number(finishPrice.BELKOIN ?? 0),
-          CHARISM: Number(finishPrice.CHARISM ?? 0),
-        };
-
-        return {
-          data: {
-            purchase: { uniqueId },
-            payload: { price },
-          } satisfies CreateOrderRoutePayload,
-        };
-      }
-
       const products = items.map(target => ({
         ...target,
         recipient: target.recipient,
