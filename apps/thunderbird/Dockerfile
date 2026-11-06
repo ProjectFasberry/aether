@@ -25,16 +25,18 @@ RUN set -eu; \
 
 WORKDIR /
 
-COPY bun.lock* package.json bunfig.toml ./
-COPY apps/thunderbird ./apps/thunderbird
-COPY pkgs ./pkgs
+# Manifests first: the dependency layer must survive source changes.
+COPY --parents package.json bun.lock bunfig.toml apps/thunderbird/package.json apps/workers/*/package.json pkgs/*/package.json ./
 
 COPY apps/thunderbird/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 RUN --mount=type=secret,id=npm_token \
   sh -c 'if [ -s /run/secrets/npm_token ]; then printf "@projectfasberry:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\nalways-auth=true\n" "$(cat /run/secrets/npm_token)" > /root/.npmrc; fi' \
-  && bun install --ignore-scripts
+  && bun install --frozen-lockfile --ignore-scripts
+
+COPY apps/thunderbird ./apps/thunderbird
+COPY pkgs ./pkgs
 
 WORKDIR /apps/thunderbird
 RUN bun run build:prod
@@ -52,13 +54,11 @@ ENV STAGE=$STAGE
 
 WORKDIR /
 
-COPY --from=build /package.json /bun.lock ./
-COPY --from=build /apps/thunderbird/package.json ./apps/thunderbird/package.json
-COPY --from=build /pkgs ./pkgs
+COPY --from=build --parents /package.json /bun.lock /apps/thunderbird/package.json /apps/workers/*/package.json /pkgs/*/package.json ./
 
 RUN --mount=type=secret,id=npm_token \
   sh -c 'if [ -s /run/secrets/npm_token ]; then printf "@projectfasberry:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\nalways-auth=true\n" "$(cat /run/secrets/npm_token)" > /root/.npmrc; fi' \
-  && bun install --production --ignore-scripts
+  && bun install --frozen-lockfile --production --ignore-scripts
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh
