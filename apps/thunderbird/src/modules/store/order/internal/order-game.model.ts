@@ -55,8 +55,11 @@ async function createGamePaymentRecord(
 	uniqueId: string,
 	initiator: string,
 	products: Product[],
+	price: Record<string, number>,
 ) {
-	await trx
+	const game = trx as any;
+
+	await game
 		.insertInto("payments_game_childs")
 		.values(products.map(({ recipient, id: store_item_id }) => ({
 			recipient,
@@ -65,17 +68,17 @@ async function createGamePaymentRecord(
 		})))
 		.execute();
 
-	await trx
+	await game
 		.insertInto("payments_game")
-		.values({ unique_id: uniqueId, initiator })
+		.values({ unique_id: uniqueId, initiator, price })
 		.execute();
 }
 
 /** An idempotent retry finds the earlier order and skips the whole flow. */
 export async function findGameOrder(uniqueId: string, initiator: string) {
-	const row = await general
+	const row = await (general as any)
 		.selectFrom("payments_game")
-		.select(["unique_id", "initiator"])
+		.select(["unique_id", "initiator", "price"])
 		.where("unique_id", "=", uniqueId)
 		.where("initiator", "=", initiator)
 		.executeTakeFirst();
@@ -123,7 +126,7 @@ export async function processStoreGamePurchase({
 
 	try {
 		applied = await economyTransaction().execute(async (trx) => {
-			await createGamePaymentRecord(trx, uniqueId, initiator, products);
+			await createGamePaymentRecord(trx, uniqueId, initiator, products, finishPrice);
 
 			const results: ApplyResult[] = [];
 

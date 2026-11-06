@@ -4,6 +4,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/utils";
 import {
+	ORDER_LIST_SORTS,
 	decodeOrderCursor,
 	listAllOrders,
 } from "#/modules/payments/orders.model";
@@ -18,6 +19,8 @@ import {
 const ordersQuery = t.Object({
 	status: t.Optional(t.String({ maxLength: 16 })),
 	nickname: t.Optional(t.String({ maxLength: 32 })),
+	sort: t.Optional(t.UnionEnum(ORDER_LIST_SORTS)),
+	order: t.Optional(t.UnionEnum(["asc", "desc"])),
 	limit: t.Optional(t.String({ maxLength: 3 })),
 	endCursor: t.Optional(t.String({ maxLength: 512 })),
 });
@@ -58,6 +61,8 @@ export const economyReport = new Elysia()
 		const page = await listAllOrders({
 			status: query.status,
 			nickname: query.nickname,
+			sort: query.sort,
+			order: query.order,
 			cursor,
 			limit,
 		});

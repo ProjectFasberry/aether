@@ -248,21 +248,28 @@ export async function refundPayment({
 	return view({ ...order, status: "refunded" });
 }
 
-export type OrderListCursor = { created_at: string; id: number };
+export const ORDER_LIST_SORTS = ["date", "amount"] as const;
+export type OrderListSort = typeof ORDER_LIST_SORTS[number];
+export type OrderListCursor = { sort: OrderListSort; value: string | number; id: number };
 
-export function encodeOrderCursor(row: { created_at: Date | string; id: number }): string {
-	return Buffer.from(JSON.stringify({
-		created_at: new Date(row.created_at).toISOString(),
-		id: Number(row.id),
-	}), "utf8").toString("base64url");
+export function encodeOrderCursor(cursor: OrderListCursor): string {
+	return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
 export function decodeOrderCursor(value: string): OrderListCursor | null {
 	try {
-		const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<OrderListCursor>;
+		const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<OrderListCursor> & { created_at?: string };
 
-		if (typeof parsed.created_at !== "string" || Number.isNaN(Date.parse(parsed.created_at))) return null;
+		// Cursors issued before sorting was added carried `created_at`.
+		if (!parsed.sort && typeof parsed.created_at === "string") {
+			parsed.sort = "date";
+			parsed.value = parsed.created_at;
+		}
+
+		if (parsed.sort !== "date" && parsed.sort !== "amount") return null;
 		if (typeof parsed.id !== "number" || !Number.isInteger(parsed.id)) return null;
+		if (parsed.sort === "date" && (typeof parsed.value !== "string" || Number.isNaN(Date.parse(parsed.value)))) return null;
+		if (parsed.sort === "amount" && typeof parsed.value !== "number") return null;
 
 		return parsed as OrderListCursor;
 	} catch {
@@ -274,31 +281,39 @@ export function decodeOrderCursor(value: string): OrderListCursor | null {
 export async function listAllOrders({
 	status,
 	nickname,
+	sort = "date",
+	order = "desc",
 	cursor,
 	limit = 50,
 }: {
 	status?: string;
 	nickname?: string;
+	sort?: OrderListSort;
+	order?: "asc" | "desc";
 	cursor?: OrderListCursor | null;
 	limit?: number;
 }): Promise<{ data: Record<string, unknown>[]; meta: { hasNextPage: boolean; endCursor?: string } }> {
+	const direction = order === "asc" ? "asc" : "desc";
+	const sortColumn = sort === "amount" ? "belkoin" : "created_at";
+
 	let query = db
 		.selectFrom("orders")
 		.selectAll()
-		.orderBy("created_at", "desc")
-		.orderBy("id", "desc")
+		.orderBy(sortColumn, direction)
+		.orderBy("id", direction)
 		.limit(limit + 1);
 
 	if (status) query = query.where("status", "=", status);
 	if (nickname) query = query.where("nickname", "=", nickname);
 
 	if (cursor) {
-		const createdAt = new Date(cursor.created_at);
+		const comparator = direction === "asc" ? ">" : "<";
+		const value = sort === "date" ? new Date(cursor.value as string) : cursor.value;
 
 		query = query.where(
 			sql<boolean>`(
-				"created_at" < ${createdAt}
-				or ("created_at" = ${createdAt} and "id" < ${cursor.id})
+				${sql.ref(sortColumn)} ${sql.raw(comparator)} ${value}
+				or (${sql.ref(sortColumn)} = ${value} and "id" ${sql.raw(comparator)} ${cursor.id})
 			)`,
 		);
 	}
@@ -306,6 +321,8 @@ export async function listAllOrders({
 	const rows = await query.execute() as unknown as (OrderRow & { id: number })[];
 	const hasNextPage = rows.length > limit;
 	if (hasNextPage) rows.pop();
+
+	const last = rows[rows.length - 1];
 
 	return {
 		data: rows.map((row) => ({
@@ -324,8 +341,12 @@ export async function listAllOrders({
 		})),
 		meta: {
 			hasNextPage,
-			endCursor: rows.length > 0
-				? encodeOrderCursor(rows[rows.length - 1] as { created_at: Date | string; id: number })
+			endCursor: last
+				? encodeOrderCursor({
+					sort,
+					value: sort === "date" ? new Date(last.created_at).toISOString() : Number(last.belkoin),
+					id: Number(last.id),
+				})
 				: undefined,
 		},
 	};

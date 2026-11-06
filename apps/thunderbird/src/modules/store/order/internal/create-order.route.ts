@@ -31,14 +31,22 @@ export const createOrder = new Elysia()
     const existing = await findGameOrder(uniqueId, initiator);
 
     if (existing) {
-      const entries = await getOrderEntries(uniqueId);
-      const price: Record<GameCurrency, number> = { BELKOIN: 0, CHARISM: 0 };
+      const stored = existing.price as Record<string, number> | null;
+      const hasStored = stored && Object.keys(stored).length > 0;
+      const price: Record<GameCurrency, number> = {
+        BELKOIN: Number(stored?.BELKOIN ?? 0),
+        CHARISM: Number(stored?.CHARISM ?? 0),
+      };
 
-      for (const entry of entries) {
-        if (!entry.reason.startsWith("store.purchase:")) continue;
+      if (!hasStored) {
+        const entries = await getOrderEntries(uniqueId);
 
-        const currency = entry.currency as GameCurrency;
-        if (currency in price) price[currency] += Math.abs(Number(entry.delta));
+        for (const entry of entries) {
+          if (!entry.reason.startsWith("store.purchase:")) continue;
+
+          const currency = entry.currency as GameCurrency;
+          if (currency in price) price[currency] += Math.abs(Number(entry.delta));
+        }
       }
 
       return {
