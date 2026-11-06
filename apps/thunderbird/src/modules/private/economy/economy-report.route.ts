@@ -4,12 +4,23 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/utils";
 import {
+	decodeOrderCursor,
+	listAllOrders,
+} from "#/modules/payments/orders.model";
+import {
 	faucetSinkReport,
 	grantJobsReport,
 	paymentsReport,
 	reconcileBalances,
 	whaleReport,
 } from "#/modules/economy/reconciliation.model";
+
+const ordersQuery = t.Object({
+	status: t.Optional(t.String({ maxLength: 16 })),
+	nickname: t.Optional(t.String({ maxLength: 32 })),
+	limit: t.Optional(t.String({ maxLength: 3 })),
+	endCursor: t.Optional(t.String({ maxLength: 512 })),
+});
 
 const reportQuery = t.Object({
 	from: t.Optional(t.String({ maxLength: 64 })),
@@ -37,6 +48,25 @@ export const economyReport = new Elysia()
 	}, {
 		detail: {
 			summary: buildRouteSummary("Reconcile wallets with plugin balances"),
+		},
+	})
+	.get("/orders", async ({ query, status }) => {
+		const cursor = query.endCursor ? decodeOrderCursor(query.endCursor) : null;
+		if (query.endCursor && !cursor) return status(400, wrapError("INVALID_CURSOR"));
+
+		const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 100);
+		const page = await listAllOrders({
+			status: query.status,
+			nickname: query.nickname,
+			cursor,
+			limit,
+		});
+
+		return { data: page };
+	}, {
+		query: ordersQuery,
+		detail: {
+			summary: buildRouteSummary("List payment orders"),
 		},
 	})
 	.get("/report", async ({ query, status }) => {

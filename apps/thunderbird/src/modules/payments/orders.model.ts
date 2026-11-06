@@ -5,6 +5,7 @@ import { getEnv } from "#/shared/env";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { nanoid } from "nanoid";
+import { sql } from "kysely";
 import { getProvider } from "./providers";
 import { fromMinor, type PaymentProviderName, type PaymentStatus } from "./types";
 
@@ -245,6 +246,89 @@ export async function refundPayment({
 		.execute();
 
 	return view({ ...order, status: "refunded" });
+}
+
+export type OrderListCursor = { created_at: string; id: number };
+
+export function encodeOrderCursor(row: { created_at: Date | string; id: number }): string {
+	return Buffer.from(JSON.stringify({
+		created_at: new Date(row.created_at).toISOString(),
+		id: Number(row.id),
+	}), "utf8").toString("base64url");
+}
+
+export function decodeOrderCursor(value: string): OrderListCursor | null {
+	try {
+		const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<OrderListCursor>;
+
+		if (typeof parsed.created_at !== "string" || Number.isNaN(Date.parse(parsed.created_at))) return null;
+		if (typeof parsed.id !== "number" || !Number.isInteger(parsed.id)) return null;
+
+		return parsed as OrderListCursor;
+	} catch {
+		return null;
+	}
+}
+
+/** Admin order feed with keyset pagination. */
+export async function listAllOrders({
+	status,
+	nickname,
+	cursor,
+	limit = 50,
+}: {
+	status?: string;
+	nickname?: string;
+	cursor?: OrderListCursor | null;
+	limit?: number;
+}): Promise<{ data: Record<string, unknown>[]; meta: { hasNextPage: boolean; endCursor?: string } }> {
+	let query = db
+		.selectFrom("orders")
+		.selectAll()
+		.orderBy("created_at", "desc")
+		.orderBy("id", "desc")
+		.limit(limit + 1);
+
+	if (status) query = query.where("status", "=", status);
+	if (nickname) query = query.where("nickname", "=", nickname);
+
+	if (cursor) {
+		const createdAt = new Date(cursor.created_at);
+
+		query = query.where(
+			sql<boolean>`(
+				"created_at" < ${createdAt}
+				or ("created_at" = ${createdAt} and "id" < ${cursor.id})
+			)`,
+		);
+	}
+
+	const rows = await query.execute() as unknown as (OrderRow & { id: number })[];
+	const hasNextPage = rows.length > limit;
+	if (hasNextPage) rows.pop();
+
+	return {
+		data: rows.map((row) => ({
+			id: Number(row.id),
+			orderId: row.order_id,
+			nickname: row.nickname,
+			provider: row.provider,
+			status: row.status,
+			amountMinor: Number(row.amount_minor),
+			currency: row.currency,
+			belkoin: Number(row.belkoin),
+			createdAt: row.created_at,
+			expiresAt: row.expires_at,
+			paidAt: row.paid_at,
+			refundedAt: row.refunded_at,
+		})),
+		meta: {
+			hasNextPage,
+			endCursor: rows.length > 0
+				? encodeOrderCursor(rows[rows.length - 1] as { created_at: Date | string; id: number })
+				: undefined,
+		},
+	};
 }
 
 /** Pending invoices past their TTL are closed; a late callback is ignored. */
