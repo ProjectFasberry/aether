@@ -4,6 +4,7 @@ import { getEnv } from "../env";
 import { redisService } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { cleanOldHistory } from "#/modules/private/history/history-retention";
+import { processGrantJobs } from "#/modules/economy/grant-jobs.model";
 import { cronLogger } from ".";
 
 type Job = {
@@ -58,6 +59,19 @@ export const CRON_JOBS: Job[] = [
     immediately: true,
     schedule: false,
     allowIsDev: false
+  },
+  {
+    name: "process-grant-jobs",
+    cron: "* * * * *",
+    callback: async function () {
+      await wrapJobCb(this.name, async () => {
+        const { processed, failed } = await processGrantJobs();
+        if (failed > 0) cronLogger.warn(`Economy outbox: ${failed} of ${processed} jobs failed permanently`);
+      })
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true
   },
   {
     name: "clean-old-history",

@@ -2,8 +2,8 @@ import type { NatsConnection, Subscription } from "@nats-io/nats-core";
 import { SUBJECTS } from "./subjects";
 import { subscribeGiveBalance } from "#/lib/subscribers/sub-give-balance";
 import { subscribePlayerJoin } from "#/lib/subscribers/sub-player-join";
-import { subscribeRefferalCheck } from "#/lib/subscribers/sub-referal-check";
-import { subscribeReferalReward } from "#/lib/subscribers/sub-referal-reward";
+import { subscribeReferralCheck } from "#/lib/subscribers/sub-referals";
+import { subscribeReferralReward } from "#/lib/subscribers/sub-referals";
 import { subscribeConfig } from "#/lib/subscribers/sub-config";
 
 type Sub = {
@@ -14,7 +14,7 @@ type Sub = {
 export const SUBSCRIBERS: Sub[] = [
 	{
 		name: 'Referral check',
-		cb: (nc) => subscribeRefferalCheck(nc, SUBJECTS.USERS.REWARD_CHECK),
+		cb: (nc) => subscribeReferralCheck(nc, SUBJECTS.USERS.REWARD_CHECK),
 	},
 	{
 		name: "Player join",
@@ -22,7 +22,7 @@ export const SUBSCRIBERS: Sub[] = [
 	},
 	{
 		name: "Referral reward",
-		cb: (nc) => subscribeReferalReward(nc, SUBJECTS.USERS.REWARD),
+		cb: (nc) => subscribeReferralReward(nc, SUBJECTS.USERS.REWARD),
 	},
 	{
 		name: "Give balance",

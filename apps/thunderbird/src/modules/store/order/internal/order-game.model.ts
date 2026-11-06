@@ -1,126 +1,160 @@
 import { general } from "#/shared/database/general-db";
-import { executeSaga, type TransactionalTask } from "#/utils/config/saga";
+import { logErrorMsg } from "#/utils/config/log-utils";
 import { processDonatePayment } from "#/utils/payment/process-donate-payment";
 import { callServerCommand } from "#/utils/server/call-command";
-import { GAME_CURRENCIES } from "@repo/shared/schemas/store/payment";
-
-type TaskItem = {
-  type: string;
-  value: string;
-  recipient: string;
-};
-
-function createTasksForItem({ recipient, type, value }: TaskItem): TransactionalTask[] {
-  const tasks: TransactionalTask[] = [];
-
-  if (type === "donate") {
-    tasks.push(...processDonatePayment({ recipient, type: "donate", value }));
-  }
-
-  if (type === "event") {
-    tasks.push({
-      name: "notify-player",
-      execute: () => callServerCommand({ parent: "cmi", value: `toast ${recipient} Поздравляем с покупкой!` }),
-    });
-  }
-
-  return tasks;
-}
+import { GAME_CURRENCIES, type GameCurrency } from "@repo/shared/schemas/store/payment";
+import {
+	debit,
+	economyTransaction,
+	flushProjections,
+	type ApplyResult,
+	type EconomyTrx,
+} from "#/modules/economy/wallet.model";
+import { enqueueGrantJob, registerGrantHandler } from "#/modules/economy/grant-jobs.model";
 
 export const initialPrices: Record<string, number> = Object
-  .fromEntries(GAME_CURRENCIES.map((currency) => [currency, 0]));
+	.fromEntries(GAME_CURRENCIES.map((currency) => [currency, 0]));
 
 type Product = {
-  recipient: string;
-  id: number;
-  price: string;
-  type: string;
-  value: string;
-  currency: string;
-  title: string;
+	recipient: string;
+	id: number;
+	price: string;
+	type: string;
+	value: string;
+	currency: string;
+	title: string;
 };
 
-export async function createGamePaymentRecord(uniqueId: string, initiator: string, products: Product[]) {
-  const ids: number[] = [];
+/** Outbox kind for the non-money part of an order (groups, toasts, items). */
+const FULFILLMENT_KIND = "store.fulfillment";
 
-  const query = await general.transaction().execute(async (trx) => {
-    for (const { recipient, id: store_item_id } of products) {
-      const { id } = await trx
-        .insertInto("payments_game_childs")
-        .values({ recipient, store_item_id, order_id: uniqueId })
-        .returningAll()
-        .executeTakeFirstOrThrow();
+function createTasksForItem({ recipient, type, value }: Pick<Product, "recipient" | "type" | "value">) {
+	const tasks: Array<() => Promise<unknown>> = [];
 
-      ids.push(id);
-    }
+	if (type === "donate") {
+		tasks.push(...processDonatePayment({ recipient, type: "donate", value }).map((task) => () => task.execute(new AbortController().signal)));
+	}
 
-    const payloadOrderItemIds = ids.map((item_id) => ({
-      unique_id: uniqueId,
-      initiator,
-    }));
+	if (type === "event") {
+		tasks.push(() => callServerCommand({ parent: "cmi", value: `toast ${recipient} Поздравляем с покупкой!` }));
+	}
 
-    await trx
-      .insertInto("payments_game")
-      .values(payloadOrderItemIds)
-      .executeTakeFirstOrThrow();
-  });
+	return tasks;
+}
 
-  return query;
+async function fulfill(products: Pick<Product, "recipient" | "type" | "value">[]): Promise<void> {
+	for (const product of products) {
+		for (const task of createTasksForItem(product)) {
+			await task();
+		}
+	}
+}
+
+async function createGamePaymentRecord(
+	trx: EconomyTrx,
+	uniqueId: string,
+	initiator: string,
+	products: Product[],
+) {
+	await trx
+		.insertInto("payments_game_childs")
+		.values(products.map(({ recipient, id: store_item_id }) => ({
+			recipient,
+			store_item_id,
+			order_id: uniqueId,
+		})))
+		.execute();
+
+	await trx
+		.insertInto("payments_game")
+		.values({ unique_id: uniqueId, initiator })
+		.execute();
 }
 
 export async function updateGamePaymentRecord(uniqueId: string) {
-  return general
-    .updateTable("payments_game")
-    .set({ finished_at: new Date().toISOString() })
-    .where("unique_id", "=", uniqueId)
-    .executeTakeFirstOrThrow();
+	return general
+		.updateTable("payments_game")
+		.set({ finished_at: new Date().toISOString() })
+		.where("unique_id", "=", uniqueId)
+		.executeTakeFirstOrThrow();
 }
 
-export async function processStoreGamePurchase(
-  initiator: string,
-  finishPrice: typeof initialPrices,
-  products: Product[],
-) {
-  async function execute() {
-    const globalTasks: TransactionalTask[] = [];
+registerGrantHandler(FULFILLMENT_KIND, async (payload) => {
+	const { uniqueId, items } = payload as {
+		uniqueId: string;
+		items: Pick<Product, "recipient" | "type" | "value">[];
+	};
 
-    const { BELKOIN, CHARISM } = finishPrice;
+	await fulfill(items);
+	await updateGamePaymentRecord(uniqueId);
+});
 
-    if (BELKOIN > 0) {
-      const takeBelkoinTask: TransactionalTask = {
-        name: "take-belkoin",
-        execute: (signal) => callServerCommand({ parent: "p", value: `take ${initiator} ${BELKOIN}` }),
-        rollback: (signal) => callServerCommand({ parent: "p", value: `give ${initiator} ${BELKOIN}` }),
-      };
+/**
+ * Takes the money and writes the order in one transaction, then runs the
+ * non-money effects. The money never depends on a server command: the plugins
+ * read the projection of the wallet, which is retried through `grant_jobs`.
+ */
+export async function processStoreGamePurchase({
+	initiator,
+	uniqueId,
+	products,
+	finishPrice,
+}: {
+	initiator: string;
+	uniqueId: string;
+	products: Product[];
+	finishPrice: Record<GameCurrency, number>;
+}): Promise<{ error: string | null }> {
+	let applied: ApplyResult[];
 
-      globalTasks.push(takeBelkoinTask);
-    }
+	try {
+		applied = await economyTransaction().execute(async (trx) => {
+			await createGamePaymentRecord(trx, uniqueId, initiator, products);
 
-    if (CHARISM > 0) {
-      const takeCharismTask: TransactionalTask = {
-        name: "take-charism",
-        execute: (signal) => callServerCommand({ parent: "cmi", value: `money take ${initiator} ${CHARISM}` }),
-        rollback: (signal) => callServerCommand({ parent: "cmi", value: `money give ${initiator} ${CHARISM} ` }),
-      };
+			const results: ApplyResult[] = [];
 
-      globalTasks.push(takeCharismTask);
-    }
+			for (const currency of GAME_CURRENCIES) {
+				const amount = Number(finishPrice[currency] ?? 0);
+				if (amount <= 0) continue;
 
-    products.forEach((product) => {
-      const productTasks = createTasksForItem(product);
-      globalTasks.push(...productTasks);
-    });
+				results.push(await debit(initiator, currency, amount, {
+					reason: `store.purchase:${currency}`,
+					orderId: uniqueId,
+				}, trx));
+			}
 
-    const results = await executeSaga(globalTasks);
-    return results;
-  }
+			return results;
+		});
+	} catch (error) {
+		const message = error instanceof Error ? error.message : "Unknown error";
 
-  const result = await execute();
+		if (message === "INSUFFICIENT_FUNDS") {
+			return { error: "insufficient" };
+		}
 
-  if (result.status === "error") {
-    const error = `${result.error instanceof Error ? result.error.message : "Unknown error"}`;
-    return { data: null, error };
-  }
+		logErrorMsg(error, { subject: "store-purchase" });
+		return { error: message };
+	}
 
-  return { result };
+	await flushProjections(applied);
+
+	try {
+		await fulfill(products);
+		await updateGamePaymentRecord(uniqueId);
+	} catch (error) {
+		// The player has paid; retry the delivery instead of rolling the money
+		// back. The outbox keeps the payload serializable.
+		logErrorMsg(error, { subject: "store-fulfillment" });
+
+		await enqueueGrantJob({
+			orderId: uniqueId,
+			kind: FULFILLMENT_KIND,
+			payload: {
+				uniqueId,
+				items: products.map(({ recipient, type, value }) => ({ recipient, type, value })),
+			},
+		});
+	}
+
+	return { error: null };
 }
