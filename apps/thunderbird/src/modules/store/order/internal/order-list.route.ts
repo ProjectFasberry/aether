@@ -33,7 +33,7 @@ export const ordersList = new Elysia()
     query: t.Object({
       sort: t.Optional(t.UnionEnum(ORDER_SORTS)),
       order: t.Optional(t.UnionEnum(ORDER_DIRECTIONS)),
-      status: t.Optional(t.UnionEnum(["pending", "succeeded"])),
+      status: t.Optional(t.UnionEnum(["pending", "succeeded", "refunded"])),
       limit: t.Optional(t.String({ maxLength: 2 })),
       endCursor: t.Optional(t.String({ maxLength: 512 })),
     }),

@@ -88,7 +88,7 @@ export const internalOrders = {
 		initiator: string;
 		sort?: OrderSort;
 		order?: OrderDirection;
-		status?: "pending" | "succeeded";
+		status?: "pending" | "succeeded" | "refunded";
 		cursor?: GameOrderCursor | null;
 		limit?: number;
 	}): Promise<GameOrdersPage> {
@@ -112,10 +112,25 @@ export const internalOrders = {
 				end`.as("status"),
 			])
 			.where("payments_game.initiator", "=", initiator)
+			.where((eb: any) => eb.exists(
+				eb.selectFrom("ledger_entries as le")
+					.select("le.id")
+					.whereRef("le.order_id", "=", "payments_game.unique_id")
+					.where("le.reason", "like", "store.purchase:%"),
+			))
 			.limit(limit + 1);
 
-		if (status === "pending") query = query.where("payments_game.finished_at", "is", null);
-		if (status === "succeeded") query = query.where("payments_game.finished_at", "is not", null);
+		if (status === "pending") {
+			query = query
+				.where("payments_game.finished_at", "is", null)
+				.where("payments_game.refunded_at", "is", null);
+		}
+		if (status === "succeeded") {
+			query = query
+				.where("payments_game.finished_at", "is not", null)
+				.where("payments_game.refunded_at", "is", null);
+		}
+		if (status === "refunded") query = query.where("payments_game.refunded_at", "is not", null);
 
 		if (sort === "amount") {
 			query = query
