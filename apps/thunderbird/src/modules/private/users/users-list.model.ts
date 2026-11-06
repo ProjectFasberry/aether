@@ -71,7 +71,7 @@ async function process(nicknames: string[]) {
 
     return {
       player: id ? { id } : null,
-      avatar: skin?.[0].skin_head_url ?? DEFAULT_HEAD(getEnv().VOLUME_URL),
+      avatar: skin?.[0]?.skin_head_url ?? DEFAULT_HEAD(getEnv().VOLUME_URL),
       skin,
       role: role_id ? {
         id: role_id,
