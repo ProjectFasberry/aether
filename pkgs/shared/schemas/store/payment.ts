@@ -43,14 +43,55 @@ export const editorFieldSchema = z
 	.loose()
 	.transform((v) => v as JsonValue);
 
+export const STORE_COMMAND_PARENTS = ["lp", "sudo", "cmi", "p"] as const;
+export type StoreCommandParent = (typeof STORE_COMMAND_PARENTS)[number];
+
+/**
+ * A store command is a full console line: a supported parent and a non-empty
+ * value. Placeholders ({recipient}, {value}, ...) are allowed in the value.
+ */
+export const storeCommandSchema = z
+	.string()
+	.max(512)
+	.superRefine((value, ctx) => {
+		const [parent, ...rest] = value.trim().split(/\s+/);
+		const commandValue = rest.join(" ").trim();
+
+		if (!parent || !commandValue) {
+			ctx.addIssue({
+				code: "custom",
+				message: "У команды должно быть значение",
+			});
+			return;
+		}
+
+		if (!(STORE_COMMAND_PARENTS as readonly string[]).includes(parent)) {
+			ctx.addIssue({
+				code: "custom",
+				message: `Команда должна начинаться с ${STORE_COMMAND_PARENTS.join(", ")}`,
+			});
+		}
+	});
+
+/** Empty means "no command"; null also means "no command". */
+export const nullableStoreCommandSchema = z
+	.union([z.literal(""), storeCommandSchema])
+	.nullable();
+
+export function normalizeStoreCommand(value: string | null | undefined): string | null {
+	const normalized = value?.trim() ?? "";
+
+	return normalized.length > 0 ? normalized : null;
+}
+
 export const storeItemSchema = z.object({
 	id: z.number(),
 	title: z.string(),
 	description: z.string().nullable(),
 	imageUrl: z.string(),
 	type: z.union([z.enum(STORE_TYPES), z.string()]),
-	command: z.string().nullable(),
-	refund_cmd: z.string().nullable(),
+	command: nullableStoreCommandSchema,
+	refund_cmd: nullableStoreCommandSchema,
 	value: z.string(),
 	currency: z.string(),
 	price: z.number(),

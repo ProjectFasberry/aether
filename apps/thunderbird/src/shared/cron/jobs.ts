@@ -5,6 +5,7 @@ import { redisService } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { cleanOldHistory } from "#/modules/private/history/history-retention";
 import { processGrantJobs } from "#/modules/economy/grant-jobs.model";
+import { repairPendingGameOrders } from "#/modules/store/order/internal/order-game.model";
 import { expireOrders } from "#/modules/payments/orders.model";
 import { grantJobsReport, reconcileBalances, sendEconomyAlert } from "#/modules/economy/reconciliation.model";
 import { cronLogger } from ".";
@@ -102,6 +103,21 @@ export const CRON_JOBS: Job[] = [
         if (problems.length > 0) {
           sendEconomyAlert(`Reconciliation: ${problems.join(", ")}`);
           cronLogger.warn(`Economy reconciliation: ${problems.join(", ")}`);
+        }
+      })
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true
+  },
+  {
+    name: "repair-store-orders",
+    cron: "*/5 * * * *",
+    callback: async function () {
+      await wrapJobCb(this.name, async () => {
+        const { scanned, enqueued } = await repairPendingGameOrders();
+        if (enqueued > 0) {
+          cronLogger.warn(`Store repair: enqueued ${enqueued} of ${scanned} pending orders`);
         }
       })
     },

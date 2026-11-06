@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import type { DB } from "@gen/db/general";
-import type { Kysely } from "kysely";
+import { sql, type Kysely } from "kysely";
 
 /**
  * Outbox for work that must survive a failed attempt: projecting a wallet
@@ -15,7 +15,7 @@ export type GrantJobRow = {
 	order_id: string;
 	kind: string;
 	payload: Record<string, unknown>;
-	status: "pending" | "done" | "failed";
+	status: "pending" | "processing" | "done" | "failed";
 	attempts: number;
 	last_error: string | null;
 	run_after: Date;
@@ -34,18 +34,21 @@ export function registerGrantHandler(kind: string, handler: GrantHandler): void 
 	handlers.set(kind, handler);
 }
 
-export async function enqueueGrantJob({
-	orderId,
-	kind,
-	payload,
-	runAfter,
-}: {
-	orderId: string;
-	kind: string;
-	payload: Record<string, unknown>;
-	runAfter?: Date;
-}): Promise<void> {
-	await db
+export async function enqueueGrantJob(
+	{
+		orderId,
+		kind,
+		payload,
+		runAfter,
+	}: {
+		orderId: string;
+		kind: string;
+		payload: Record<string, unknown>;
+		runAfter?: Date;
+	},
+	executor: any = db,
+): Promise<void> {
+	await executor
 		.insertInto("grant_jobs")
 		.values({
 			order_id: orderId,
@@ -53,20 +56,39 @@ export async function enqueueGrantJob({
 			payload,
 			run_after: runAfter ?? new Date(),
 		})
-		.onConflict((oc) => oc.columns(["order_id", "kind"]).doNothing())
+		.onConflict((oc: any) => oc.columns(["order_id", "kind"]).doNothing())
 		.execute();
 }
 
 /** Retry loop for the outbox; called by the cron job every minute. */
 export async function processGrantJobs(limit = 50): Promise<{ processed: number; failed: number }> {
-	const jobs = (await db
-		.selectFrom("grant_jobs")
-		.selectAll()
-		.where("status", "=", "pending")
-		.where("run_after", "<=", new Date())
-		.orderBy("run_after", "asc")
-		.limit(limit)
-		.execute()) as unknown as GrantJobRow[];
+	// A process that died while handling a job leaves it in `processing`. The
+	// lease is 15 minutes, long enough for a plugin write, short enough to retry.
+	await db
+		.updateTable("grant_jobs")
+		.set({ status: "pending", updated_at: new Date() })
+		.where("status", "=", "processing")
+		.where("updated_at", "<", new Date(Date.now() - 15 * 60 * 1000))
+		.execute();
+
+	// Claim atomically: two cron ticks or a cron plus the post-checkout trigger
+	// must not process the same job at the same time.
+	const claimed = await sql<GrantJobRow>`
+		UPDATE "grant_jobs"
+		SET "status" = 'processing',
+		    "updated_at" = now(),
+		    "run_after" = now() + interval '15 minutes'
+		WHERE "id" IN (
+			SELECT "id" FROM "grant_jobs"
+			WHERE "status" = 'pending' AND "run_after" <= now()
+			ORDER BY "run_after" ASC
+			LIMIT ${limit}
+			FOR UPDATE SKIP LOCKED
+		)
+		RETURNING *
+	`.execute(db);
+
+	const jobs = claimed.rows as GrantJobRow[];
 
 	let failed = 0;
 
@@ -95,6 +117,19 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 			logErrorMsg(error, { subject: `grant-jobs:${job.kind}` });
 
 			if (giveUp && job.kind === "store.fulfillment") {
+				// Keep the per-child state honest before the rollback: the panel
+				// must show which items were not delivered.
+				await (db as any)
+					.updateTable("payments_game_childs")
+					.set({
+						delivery_status: "failed",
+						last_error: error instanceof Error ? error.message : String(error),
+					})
+					.where("order_id", "=", job.order_id)
+					.where("delivery_status", "in", ["pending", "failed"])
+					.execute()
+					.catch((e: unknown) => logErrorMsg(e, { subject: "store-child-failed" }));
+
 				// The money must not stay with the project when the item was never
 				// delivered: compensate through the ledger.
 				await enqueueGrantJob({

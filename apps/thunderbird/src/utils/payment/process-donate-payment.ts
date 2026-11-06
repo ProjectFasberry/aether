@@ -6,9 +6,10 @@ import { publishUpdateGroup } from "#/lib/publishers/pub-update-group";
 import { luckperms } from "#/shared/database/luckperms-db";
 
 type ProcessDonate = {
-  recipient: string, 
-  value: string, 
-  type: any
+  recipient: string,
+  value: string,
+  type: any,
+  fallbackServer?: string,
 }
 
 async function setPlayerGroup(
@@ -35,7 +36,7 @@ async function setPlayerGroup(
       }))
       .onConflict((oc) => oc
         .columns(["uuid", "permission"])
-        .doUpdateSet({ permission })
+        .doUpdateSet({ permission, value: true })
       )
       .executeTakeFirst();
 
@@ -53,6 +54,33 @@ async function setPlayerGroup(
   }
 }
 
+/**
+ * Removes the inherited group directly from LuckPerms. This mirrors the direct
+ * insert used for delivery and does not depend on the NATS command executor.
+ */
+export async function removeDonateGroup({
+  recipient,
+  value,
+}: {
+  recipient: string;
+  value: string;
+}): Promise<void> {
+  const permission = `group.${value}`;
+
+  await luckperms
+    .deleteFrom("luckperms_user_permissions")
+    .where("uuid", "=", (eb) => eb
+      .selectFrom("luckperms_players")
+      .select("uuid")
+      .where("username", "=", recipient)
+      .limit(1)
+    )
+    .where("permission", "=", permission)
+    .execute();
+
+  publishUpdateGroup({ nickname: recipient, permission });
+}
+
 async function updatePlayerGroup({ recipient, type, value }: ProcessDonate) {
   const result = await setPlayerGroup(recipient, `group.${value}`);
 
@@ -62,7 +90,7 @@ async function updatePlayerGroup({ recipient, type, value }: ProcessDonate) {
 }
 
 export function processDonatePayment(
-  { recipient, type, value }: ProcessDonate
+  { recipient, type, value, fallbackServer }: ProcessDonate
 ): TransactionalTask[] {
   const message = `Игрок ${recipient} приобрел привилегию ${DONATE_TITLE[value as keyof typeof DONATE_TITLE]}`;
 
@@ -77,9 +105,11 @@ export function processDonatePayment(
 
   const notifyTask: TransactionalTask = {
     name: "notify-player",
-    execute: () => callServerCommand(
-      { parent: "cmi", value: `toast ${recipient} Поздравляем с покупкой!` },
-    ),
+    execute: () => callServerCommand({
+      parent: "cmi",
+      value: `toast ${recipient} Поздравляем с покупкой!`,
+      meta: { recipient, fallbackServer, wait: false },
+    }),
   };
 
   const broadcastTask: TransactionalTask = {

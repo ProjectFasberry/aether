@@ -1,13 +1,16 @@
 import { general } from "#/shared/database/general-db";
+import { logErrorMsg } from "#/utils/config/log-utils";
 import {
 	CURRENCIES,
 	credit,
 	debit,
-	getOrderEntries,
+	economyTransaction,
+	flushProjections,
+	type ApplyResult,
 	type Currency,
 	type LedgerEntry,
 } from "#/modules/economy/wallet.model";
-import { enqueueGrantJob } from "#/modules/economy/grant-jobs.model";
+import { enqueueGrantJob, processGrantJobs } from "#/modules/economy/grant-jobs.model";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
@@ -153,68 +156,107 @@ export async function refundOrder({
 	adminReason: string;
 	actor: string;
 }): Promise<RefundResult[] | null> {
-	const gameDb = general as unknown as Kysely<DB & { payments_game: any }>;
-	const gameOrder = await gameDb
-		.selectFrom("payments_game")
-		.select(["refunded_at", "finished_at"])
-		.where("unique_id", "=", orderId)
-		.executeTakeFirst();
+	const result = await economyTransaction().execute(async (trx) => {
+		// Lock the order for the whole refund: the automatic rollback and a second
+		// admin click must see the first refund, not race it.
+		const gameOrder = await (trx as any)
+			.selectFrom("payments_game")
+			.select(["refunded_at"])
+			.where("unique_id", "=", orderId)
+			.forUpdate()
+			.executeTakeFirst();
 
-	// The automatic rollback may have already returned the money.
-	if (gameOrder?.refunded_at) return [];
+		if (!gameOrder) return null;
 
-	// A refunded order must not be delivered later by the outbox.
-	await (general as any)
-		.deleteFrom("grant_jobs")
-		.where("order_id", "=", orderId)
-		.where("kind", "=", "store.fulfillment")
-		.where("status", "in", ["pending", "failed"])
-		.execute();
+		const entries = await (trx as any)
+			.selectFrom("ledger_entries")
+			.selectAll()
+			.where("order_id", "=", orderId)
+			.orderBy("id", "asc")
+			.execute() as LedgerEntry[];
 
-	const entries = await getOrderEntries(orderId);
-	const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
+		const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
 
-	if (purchases.length === 0) return null;
+		if (gameOrder.refunded_at) {
+			// A retry may be the first place that sees a refund written by an
+			// older build without a revoke job.
+			await enqueueGrantJob(
+				{ orderId, kind: "store.revoke", payload: { orderId } },
+				trx,
+			);
 
-	const refunded: RefundResult[] = [];
+			// Re-sync in case a previous attempt committed the refund but died
+			// before flushing its projections.
+			return {
+				refunded: [] as RefundResult[],
+				applied: purchases.map((entry) => ({
+					entry,
+					balance: Number(entry.balance_after),
+					duplicate: true,
+				})) as ApplyResult[],
+			};
+		}
 
-	for (const entry of purchases) {
-		const currency = entry.currency as Currency;
-		if (!CURRENCIES.includes(currency)) continue;
+		if (purchases.length === 0) return null;
 
-		const amount = Math.abs(Number(entry.delta));
-		if (amount === 0) continue;
+		// A refunded order must not be delivered later by the outbox.
+		await (trx as any)
+			.deleteFrom("grant_jobs")
+			.where("order_id", "=", orderId)
+			.where("kind", "=", "store.fulfillment")
+			.where("status", "in", ["pending", "failed"])
+			.execute();
 
-		const result = await credit(entry.nickname, currency, amount, {
-			reason: `store.refund:${currency}`,
-			orderId,
-			actor,
-			metadata: { adminReason, source: "admin.refund", originalReason: entry.reason },
-		});
+		const applied: ApplyResult[] = [];
+		const refunded: RefundResult[] = [];
 
-		refunded.push({
-			currency,
-			amount,
-			balance: result.balance,
-			duplicate: result.duplicate,
-		});
-	}
+		for (const entry of purchases) {
+			const currency = entry.currency as Currency;
+			if (!CURRENCIES.includes(currency)) continue;
 
-	await gameDb
-		.updateTable("payments_game")
-		.set({ refunded_at: new Date(), failure_reason: "admin refund" })
-		.where("unique_id", "=", orderId)
-		.execute();
+			const amount = Math.abs(Number(entry.delta));
+			if (amount === 0) continue;
 
-	// A delivered item needs its effect reversed as well; the item may define a
-	// refund command, otherwise a donation falls back to removing the group.
-	if (gameOrder?.finished_at) {
-		await enqueueGrantJob({
-			orderId,
-			kind: "store.revoke",
-			payload: { orderId },
-		});
-	}
+			const credited = await credit(entry.nickname, currency, amount, {
+				reason: `store.refund:${currency}`,
+				orderId,
+				actor,
+				metadata: { adminReason, source: "admin.refund", originalReason: entry.reason },
+			}, trx);
 
-	return refunded;
+			applied.push(credited);
+			refunded.push({
+				currency,
+				amount,
+				balance: credited.balance,
+				duplicate: credited.duplicate,
+			});
+		}
+
+		await (trx as any)
+			.updateTable("payments_game")
+			.set({ refunded_at: new Date(), failure_reason: "admin refund" })
+			.where("unique_id", "=", orderId)
+			.execute();
+
+		// Reverse the delivered effect. The command is idempotent; running it for
+		// a never-delivered item is harmless and covers a partial delivery.
+		await enqueueGrantJob(
+			{ orderId, kind: "store.revoke", payload: { orderId } },
+			trx,
+		);
+
+		return { refunded, applied };
+	});
+
+	if (!result) return null;
+
+	await flushProjections(result.applied);
+
+	// Run the revoke now instead of waiting for the next cron tick.
+	void processGrantJobs(10).catch((error) => {
+		logErrorMsg(error, { subject: "store-revoke-trigger" });
+	});
+
+	return result.refunded;
 }

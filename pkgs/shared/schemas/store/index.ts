@@ -1,5 +1,10 @@
 import * as z from "zod";
-import { editorFieldSchema, GAME_CURRENCIES, storeItemSchema } from "./payment";
+import {
+	editorFieldSchema,
+	GAME_CURRENCIES,
+	nullableStoreCommandSchema,
+	storeItemSchema,
+} from "./payment";
 import type { JsonValue } from "@gen/db/general";
 
 const fields = storeItemSchema.pick({
@@ -21,13 +26,11 @@ export const storeItemEditSchema = z.array(
 	z
 		.object({
 			field: z.enum(EDITABLE_FIELDS),
-			value: z.union([z.number(), z.string(), z.stringbool(), editorFieldSchema]),
+			value: z.union([z.number(), z.string(), z.stringbool(), z.null(), editorFieldSchema]),
 		})
 		.superRefine(({ field, value }, ctx) => {
 			const validator = fields.shape[field];
 			const result = validator.safeParse(value);
-
-			console.log(result);
 
 			if (!result.success) {
 				const issue = result.error.issues[0];
@@ -50,8 +53,8 @@ export const storeItemCreateSchema = z.object({
 	value: z.string(),
 	currency: z.enum(GAME_CURRENCIES),
 	imageUrl: z.string().optional().nullable(),
-	command: z.string().nullable(),
-	refund_cmd: z.string().nullable().optional(),
+	command: nullableStoreCommandSchema,
+	refund_cmd: nullableStoreCommandSchema.optional(),
 	content: z
 		.object({})
 		.loose()

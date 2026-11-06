@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { general } from "#/shared/database/general-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { bisquite } from "#/shared/database/bisquite-db";
@@ -240,9 +241,9 @@ export async function apply(input: ApplyInput): Promise<ApplyResult> {
 	try {
 		const result = await economyTransaction().execute((trx) => applyInTransaction(trx, input));
 
-		if (!result.duplicate) {
-			await syncOrEnqueue(result.entry, orderId);
-		}
+		// A duplicate can mean the first process died before projecting; always
+		// re-sync, because the projection handler reads the current wallet anyway.
+		await syncOrEnqueue(result.entry);
 
 		return { balance: Number(result.entry.balance_after), entry: result.entry, duplicate: result.duplicate };
 	} catch (error) {
@@ -257,6 +258,7 @@ export async function apply(input: ApplyInput): Promise<ApplyResult> {
 				.executeTakeFirst() as unknown as LedgerRow | undefined;
 
 			if (existing) {
+				await syncOrEnqueue(existing);
 				return { balance: Number(existing.balance_after), entry: existing, duplicate: true };
 			}
 		}
@@ -289,79 +291,122 @@ export function debit(
 	return trx ? applyInTransaction(trx, input) : apply(input);
 }
 
-/** Writes the balance to the plugin table the game servers read. */
-async function syncProjection(nickname: string, currency: Currency, balance: number): Promise<void> {
-	if (currency === "BELKOIN") {
-		const account = await general
-			.selectFrom("accounts")
-			.select("uuid")
-			.where("lower_nickname", "=", nickname.toLowerCase())
-			.executeTakeFirst();
+/**
+ * Projections are serialized per wallet inside this process. The handler reads
+ * the current wallet row, so a job that was enqueued long ago cannot overwrite
+ * a newer balance with its old payload.
+ */
+const projectionLocks = new Map<string, Promise<void>>();
 
-		// Legacy players exist only in PlayerPoints: its own uuid cache is the
-		// fallback so their balance keeps working after the ledger takes over.
-		const cached = account
-			? null
-			: await playerpoints
-				.selectFrom("playerpoints_username_cache")
-				.select("uuid")
-				.where("username", "=", nickname)
-				.executeTakeFirst();
+async function withProjectionLock<T>(key: string, fn: () => Promise<T>): Promise<T> {
+	const previous = projectionLocks.get(key) ?? Promise.resolve();
+	let release!: () => void;
+	const current = new Promise<void>((resolve) => {
+		release = resolve;
+	});
+	const queued = previous.then(() => current);
 
-		const uuid = account?.uuid ?? cached?.uuid;
-		if (!uuid) throw new Error("ACCOUNT_NOT_FOUND");
+	projectionLocks.set(key, queued);
+	await previous;
 
-		await playerpoints
-			.insertInto("playerpoints_points")
-			.values({ uuid, points: balance })
-			.onDuplicateKeyUpdate({ points: balance })
-			.execute();
-	} else {
-		const updated = await bisquite
-			.updateTable("cmi_users")
-			.set({ Balance: balance })
-			.where("username", "=", nickname)
-			.executeTakeFirst();
+	try {
+		return await fn();
+	} finally {
+		release();
 
-		// CMI creates its row on the first join; until then the ledger keeps the
-		// balance and the outbox retries the projection.
-		if (Number(updated.numUpdatedRows ?? 0) === 0) throw new Error("CMI_PLAYER_NOT_FOUND");
+		if (projectionLocks.get(key) === queued) projectionLocks.delete(key);
 	}
 }
 
-async function syncOrEnqueue(entry: LedgerRow, orderId: string | null): Promise<void> {
+async function currentWalletBalance(nickname: string, currency: Currency): Promise<number> {
+	const wallet = await db
+		.selectFrom("wallets")
+		.select("balance")
+		.where("nickname", "=", nickname)
+		.where("currency", "=", currency)
+		.executeTakeFirst();
+
+	if (!wallet) throw new Error("WALLET_NOT_FOUND");
+
+	return Number(wallet.balance);
+}
+
+/** Writes the current wallet balance to the plugin table the servers read. */
+async function syncProjection(nickname: string, currency: Currency): Promise<void> {
+	await withProjectionLock(`${nickname}:${currency}`, async () => {
+		const balance = await currentWalletBalance(nickname, currency);
+
+		if (currency === "BELKOIN") {
+			const account = await general
+				.selectFrom("accounts")
+				.select("uuid")
+				.where("lower_nickname", "=", nickname.toLowerCase())
+				.executeTakeFirst();
+
+			// Legacy players exist only in PlayerPoints: its own uuid cache is the
+			// fallback so their balance keeps working after the ledger takes over.
+			const cached = account
+				? null
+				: await playerpoints
+					.selectFrom("playerpoints_username_cache")
+					.select("uuid")
+					.where("username", "=", nickname)
+					.executeTakeFirst();
+
+			const uuid = account?.uuid ?? cached?.uuid;
+			if (!uuid) throw new Error("ACCOUNT_NOT_FOUND");
+
+			await playerpoints
+				.insertInto("playerpoints_points")
+				.values({ uuid, points: balance })
+				.onDuplicateKeyUpdate({ points: balance })
+				.execute();
+		} else {
+			const updated = await bisquite
+				.updateTable("cmi_users")
+				.set({ Balance: balance })
+				.where("username", "=", nickname)
+				.executeTakeFirst();
+
+			// CMI creates its row on the first join; until then the ledger keeps the
+			// balance and the outbox retries the projection.
+			if (Number(updated.numUpdatedRows ?? 0) === 0) throw new Error("CMI_PLAYER_NOT_FOUND");
+		}
+	});
+}
+
+async function syncOrEnqueue(entry: LedgerRow): Promise<void> {
 	const nickname = entry.nickname;
 	const currency = entry.currency as Currency;
-	const balance = Number(entry.balance_after);
 
 	try {
-		await syncProjection(nickname, currency, balance);
+		await syncProjection(nickname, currency);
 	} catch (error) {
 		logErrorMsg(error, { subject: "wallet-projection" });
 
+		// A fresh id per failed attempt: a previously done job must not swallow
+		// this one, and every projection reads the current balance anyway.
 		await enqueueGrantJob({
-			orderId: orderId ?? `ledger:${entry.id}`,
+			orderId: `projection:${entry.id}:${randomUUID()}`,
 			kind: currency,
-			payload: { nickname, currency, balance },
+			payload: { nickname, currency },
 		});
 	}
 }
 
-/** Runs after a money transaction commits; duplicates are already projected. */
+/** Runs after a money transaction commits; duplicates are re-synced too. */
 export async function flushProjections(results: ApplyResult[]): Promise<void> {
 	for (const result of results) {
-		if (result.duplicate) continue;
-
-		await syncOrEnqueue(result.entry, result.entry.order_id);
+		await syncOrEnqueue(result.entry);
 	}
 }
 
 registerGrantHandler("BELKOIN", async (payload) => {
-	await syncProjection(payload.nickname, "BELKOIN", Number(payload.balance));
+	await syncProjection(String(payload.nickname), "BELKOIN");
 });
 
 registerGrantHandler("CHARISM", async (payload) => {
-	await syncProjection(payload.nickname, "CHARISM", Number(payload.balance));
+	await syncProjection(String(payload.nickname), "CHARISM");
 });
 
 /**

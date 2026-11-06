@@ -57,6 +57,8 @@ export const orderSingleGameSchema = t.Object({
 			store_item_id: t.Number(),
 			name: t.String(),
 			recipient: t.String(),
+			delivery_status: t.Optional(t.String()),
+			revoked_at: t.Optional(t.Nullable(DateTime)),
 		}),
 	),
 });
@@ -197,7 +199,7 @@ export const internalOrders = {
 				.executeTakeFirst(),
 			db
 				.selectFrom("payments_game_childs")
-				.select(["store_item_id", "recipient"])
+				.select(["store_item_id", "recipient", "delivery_status", "revoked_at"])
 				.where("order_id", "=", uniqueId)
 				.execute(),
 		]);
@@ -227,8 +229,10 @@ export const internalOrders = {
 			items: orderChilds.map((oc) => ({
 				id: oc.store_item_id,
 				store_item_id: oc.store_item_id,
-				name: storeItemMap.get(oc.store_item_id)!,
+				name: storeItemMap.get(oc.store_item_id) ?? "Товар удалён",
 				recipient: oc.recipient,
+				delivery_status: oc.delivery_status,
+				revoked_at: oc.revoked_at,
 			})),
 		};
 	},

@@ -6,6 +6,7 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
+import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
 import type { Selectable } from "kysely";
 import { buildUpdates } from "#/utils/config/transforms";
 import { buildRouteSummary } from "#/utils";
@@ -13,9 +14,18 @@ import { buildRouteSummary } from "#/utils";
 const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
-  const updates = buildUpdates<Selectable<StoreItems>>(values as any);
+  const normalized = values.map((entry) => {
+    if (entry.field !== "command" && entry.field !== "refund_cmd") return entry;
 
-  const fields = values.map((o) => o.field);
+    return {
+      ...entry,
+      value: normalizeStoreCommand(typeof entry.value === "string" ? entry.value : null),
+    };
+  });
+
+  const updates = buildUpdates<Selectable<StoreItems>>(normalized as any);
+
+  const fields = normalized.map((o) => o.field);
 
   const query = await (general as any)
     .updateTable("store_items")
