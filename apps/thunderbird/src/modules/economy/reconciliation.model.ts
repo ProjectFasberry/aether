@@ -101,6 +101,10 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 		const pluginBalance = plugin.get(key);
 
 		if (pluginBalance === undefined) {
+			// A zero wallet without a plugin row is normal: the player never
+			// joined the game server, so there is nothing to project.
+			if (walletBalance === 0) continue;
+
 			if (pending.has(key)) {
 				pendingProjection += 1;
 				continue;
@@ -325,12 +329,12 @@ export async function whaleReport(): Promise<WhaleReport> {
 			.executeTakeFirst() as unknown as Promise<{ amount: string } | undefined>,
 		db
 			.selectFrom("wallets")
-			.select(sql<string>`coalesce(sum(balance), 0)`.as("amount"))
+			.select("balance")
 			.where("currency", "=", "BELKOIN")
 			.where("balance", ">", 0)
 			.orderBy("balance", "desc")
 			.limit(5)
-			.executeTakeFirst() as unknown as Promise<{ amount: string } | undefined>,
+			.execute() as unknown as Promise<{ balance: string }[]>,
 		db
 			.selectFrom("wallets")
 			.select(sql<string>`count(*)`.as("count"))
@@ -340,7 +344,7 @@ export async function whaleReport(): Promise<WhaleReport> {
 	]);
 
 	const totalBelkoin = Number(total?.amount ?? 0);
-	const topAmount = Number(top?.amount ?? 0);
+	const topAmount = (top as { balance: string }[]).reduce((acc, row) => acc + Number(row.balance), 0);
 
 	return {
 		totalBelkoin,
