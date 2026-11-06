@@ -6,6 +6,7 @@ import { defineBearer } from "../../lib/define";
 import { invariant } from "@repo/shared/utils";
 
 const watchtower = new Elysia()
+  .use(defineBearer())
   .post("/watchtower", async ({ body }) => {
     const { message, title } = body;
 
@@ -42,6 +43,5 @@ const watchtower = new Elysia()
   });
 
 export const service = new Elysia()
-  .use(defineBearer())
   .use(watchtower)
   .use(traefik);
