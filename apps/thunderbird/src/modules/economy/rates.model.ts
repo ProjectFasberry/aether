@@ -93,6 +93,39 @@ export async function addRate(input: {
 	return row;
 }
 
+export async function updateRate(input: {
+	id: number;
+	rate?: number;
+	spread?: number;
+	effectiveFrom?: Date;
+}): Promise<ExchangeRate | null> {
+	const updates: Record<string, unknown> = {};
+
+	if (input.rate !== undefined) updates.rate = input.rate;
+	if (input.spread !== undefined) updates.spread = input.spread;
+	if (input.effectiveFrom !== undefined) updates.effective_from = input.effectiveFrom;
+	if (Object.keys(updates).length === 0) return null;
+
+	const row = await db
+		.updateTable("exchange_rates")
+		.set(updates)
+		.where("id", "=", input.id)
+		.returningAll()
+		.executeTakeFirst() as unknown as ExchangeRate | undefined;
+
+	return row ?? null;
+}
+
+export async function deleteRate(id: number): Promise<ExchangeRate | null> {
+	const row = await db
+		.deleteFrom("exchange_rates")
+		.where("id", "=", id)
+		.returningAll()
+		.executeTakeFirst() as unknown as ExchangeRate | undefined;
+
+	return row ?? null;
+}
+
 function buildEdges(rates: ExchangeRate[]): Edge[] {
 	const edges: Edge[] = [];
 
