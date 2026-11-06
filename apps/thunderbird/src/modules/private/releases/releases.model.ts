@@ -114,7 +114,8 @@ function groupPlatforms(channel: ReleaseChannel, version: string, objects: Liste
     if (rest.length !== 2) continue;
 
     const [platform, name] = rest;
-    if (!platform || !name) continue;
+    // The per-platform updater manifest is metadata, not a downloadable build.
+    if (!platform || !name || name === "latest.json") continue;
 
     const files = platformFiles.get(platform) ?? [];
     files.push({ name, size: object.size });
