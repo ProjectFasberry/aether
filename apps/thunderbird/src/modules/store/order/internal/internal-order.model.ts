@@ -112,12 +112,17 @@ export const internalOrders = {
 				end`.as("status"),
 			])
 			.where("payments_game.initiator", "=", initiator)
-			.where((eb: any) => eb.exists(
-				eb.selectFrom("ledger_entries as le")
-					.select("le.id")
-					.whereRef("le.order_id", "=", "payments_game.unique_id")
-					.where("le.reason", "like", "store.purchase:%"),
-			))
+			// Pre-ledger orders have an empty price and no purchase entry. Keep
+			// new free orders: they still carry the currency keys in `price`.
+			.where((eb: any) => eb.or([
+				eb("payments_game.price", "<>", sql`'{}'::jsonb`),
+				eb.exists(
+					eb.selectFrom("ledger_entries as le")
+						.select("le.id")
+						.whereRef("le.order_id", "=", "payments_game.unique_id")
+						.where("le.reason", "like", "store.purchase:%"),
+				),
+			]))
 			.limit(limit + 1);
 
 		if (status === "pending") {
