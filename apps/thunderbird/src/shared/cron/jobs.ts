@@ -6,6 +6,7 @@ import { serverStatusService } from "#/modules/server/status/index.model";
 import { cleanOldHistory } from "#/modules/private/history/history-retention";
 import { processGrantJobs } from "#/modules/economy/grant-jobs.model";
 import { expireOrders } from "#/modules/payments/orders.model";
+import { grantJobsReport, reconcileBalances, sendEconomyAlert } from "#/modules/economy/reconciliation.model";
 import { cronLogger } from ".";
 
 type Job = {
@@ -68,6 +69,40 @@ export const CRON_JOBS: Job[] = [
       await wrapJobCb(this.name, async () => {
         const { processed, failed } = await processGrantJobs();
         if (failed > 0) cronLogger.warn(`Economy outbox: ${failed} of ${processed} jobs failed permanently`);
+      })
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true
+  },
+  {
+    name: "reconcile-economy",
+    cron: "0 15 */6 * * *",
+    callback: async function () {
+      await wrapJobCb(this.name, async () => {
+        const [balances, jobs] = await Promise.all([
+          reconcileBalances(),
+          grantJobsReport(),
+        ]);
+
+        const problems: string[] = [];
+
+        if (balances.mismatchCount > 0) {
+          const sample = balances.mismatches
+            .slice(0, 5)
+            .map((item) => `${item.nickname} ${item.currency}: ledger ${item.wallet}, plugin ${item.plugin}`)
+            .join("; ");
+          problems.push(`${balances.mismatchCount} mismatches (${sample})`);
+        }
+
+        if (jobs.failed > 0) problems.push(`${jobs.failed} failed grant jobs`);
+        if (jobs.stuck > 0) problems.push(`${jobs.stuck} stuck grant jobs`);
+        if (balances.missingPlugin > 0) problems.push(`${balances.missingPlugin} wallets without a plugin row`);
+
+        if (problems.length > 0) {
+          sendEconomyAlert(`Reconciliation: ${problems.join(", ")}`);
+          cronLogger.warn(`Economy reconciliation: ${problems.join(", ")}`);
+        }
       })
     },
     immediately: false,
