@@ -28,7 +28,7 @@ jobs:
     permissions:
       contents: read
     env:
-      STAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || (github.ref_name == 'main' && 'prod' || 'staging') }}
+      STAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || 'prod' }}
     steps:
       - uses: actions/checkout@v4
 
