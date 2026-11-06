@@ -162,6 +162,14 @@ export async function refundOrder({
 	// The automatic rollback may have already returned the money.
 	if (gameOrder?.refunded_at) return [];
 
+	// A refunded order must not be delivered later by the outbox.
+	await (general as any)
+		.deleteFrom("grant_jobs")
+		.where("order_id", "=", orderId)
+		.where("kind", "=", "store.fulfillment")
+		.where("status", "in", ["pending", "failed"])
+		.execute();
+
 	const entries = await getOrderEntries(orderId);
 	const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
 

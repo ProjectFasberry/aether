@@ -117,6 +117,13 @@ export async function rollbackGameOrder(orderId: string, reason: string): Promis
 
 	if (!order || order.refunded_at) return;
 
+	await (general as any)
+		.deleteFrom("grant_jobs")
+		.where("order_id", "=", orderId)
+		.where("kind", "=", "store.fulfillment")
+		.where("status", "in", ["pending", "failed"])
+		.execute();
+
 	const entries = await getOrderEntries(orderId);
 
 	for (const entry of entries) {
