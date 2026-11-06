@@ -116,13 +116,17 @@ export const historyList = new Elysia()
     const hasNextPage = rows.length > (limit ?? 50);
     if (hasNextPage) rows.pop();
 
+    // The panel client unwraps the outer `data`, so the page (rows + meta)
+    // travels inside it, like the other paginated private routes.
     return {
-      data: rows,
-      meta: {
-        hasNextPage,
-        endCursor: rows.length > 0
-          ? encodeCursor(rows[rows.length - 1] as { created_at: Date | string; id: number })
-          : undefined,
+      data: {
+        data: rows,
+        meta: {
+          hasNextPage,
+          endCursor: rows.length > 0
+            ? encodeCursor(rows[rows.length - 1] as { created_at: Date | string; id: number })
+            : undefined,
+        },
       },
     };
   }, {
