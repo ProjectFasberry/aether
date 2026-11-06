@@ -91,7 +91,7 @@ export async function callServerCommand(
 
     const js = jetstream(nc);
 
-    const pa = await js.publish("event.b", JSON.stringify(payload))
+    const pa = await js.publish("order", JSON.stringify(payload))
 
     const stream = pa.stream;
     const seq = pa.seq;

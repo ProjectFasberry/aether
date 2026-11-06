@@ -32,7 +32,22 @@ function createTasksForItem({ recipient, type, value }: Pick<Product, "recipient
 	const tasks: Array<() => Promise<unknown>> = [];
 
 	if (type === "donate") {
-		tasks.push(...processDonatePayment({ recipient, type: "donate", value }).map((task) => () => task.execute(new AbortController().signal)));
+		for (const task of processDonatePayment({ recipient, type: "donate", value })) {
+			// The group grant is the paid effect; the toast and broadcast are
+			// best-effort and must not leave a delivered order "processing"
+			// forever when no game server is online.
+			const bestEffort = task.name === "notify-player" || task.name === "broadcast-to-server";
+
+			tasks.push(async () => {
+				try {
+					await task.execute(new AbortController().signal);
+				} catch (error) {
+					if (!bestEffort) throw error;
+
+					logErrorMsg(error, { subject: "store-fulfillment-notify" });
+				}
+			});
+		}
 	}
 
 	if (type === "event") {

@@ -85,7 +85,10 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 				.execute();
 		} catch (error) {
 			const attempts = job.attempts + 1;
-			const giveUp = attempts >= 10;
+			// Store delivery waits for the game server; keep trying much longer
+			// than a projection retry.
+			const maxAttempts = job.kind === "store.fulfillment" ? 200 : 10;
+			const giveUp = attempts >= maxAttempts;
 
 			if (giveUp) failed += 1;
 
