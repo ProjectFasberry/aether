@@ -59,6 +59,14 @@ function isUniqueViolation(error: unknown): boolean {
 	return typeof error === "object" && error !== null && (error as { code?: string }).code === "23505";
 }
 
+/**
+ * Wallets are integer units. CMI stores `Balance` as a double and float math
+ * leaves values like `2.400000000000004`, so every plugin read is rounded.
+ */
+function toWhole(value: number): number {
+	return Math.round(value);
+}
+
 async function pluginBalance(nickname: string, currency: Currency): Promise<number> {
 	if (currency === "BELKOIN") {
 		const row = await playerpoints
@@ -68,7 +76,7 @@ async function pluginBalance(nickname: string, currency: Currency): Promise<numb
 			.where("playerpoints_username_cache.username", "=", nickname)
 			.executeTakeFirst();
 
-		return Number(row?.balance ?? 0);
+		return toWhole(Number(row?.balance ?? 0));
 	}
 
 	const row = await bisquite
@@ -77,7 +85,7 @@ async function pluginBalance(nickname: string, currency: Currency): Promise<numb
 		.where("username", "=", nickname)
 		.executeTakeFirst();
 
-	return Number(row?.balance ?? 0);
+	return toWhole(Number(row?.balance ?? 0));
 }
 
 /**
@@ -361,26 +369,129 @@ registerGrantHandler("CHARISM", async (payload) => {
  * opening ledger entry. Idempotent through `migration:<nickname>:<currency>`
  * and a no-op once the wallet exists (first write seeds it automatically).
  */
-export async function migrateWallet(nickname: string, currency: Currency): Promise<ApplyResult | null> {
-	const wallet = await db
-		.selectFrom("wallets")
-		.select("balance")
-		.where("nickname", "=", nickname)
-		.where("currency", "=", currency)
-		.executeTakeFirst();
+export async function migrateWallet(
+	nickname: string,
+	currency: Currency,
+): Promise<{ balance: number } | null> {
+	return economyTransaction().execute(async (trx) => {
+		const existing = await trx
+			.selectFrom("wallets")
+			.select("balance")
+			.where("nickname", "=", nickname)
+			.where("currency", "=", currency)
+			.executeTakeFirst();
 
-	if (wallet) return null;
+		if (existing) return null;
 
-	const balance = await pluginBalance(nickname, currency);
-	if (balance === 0) return null;
+		// The seed writes the wallet and the opening ledger entry together, so
+		// the ledger sums to the balance from the first row.
+		await seedWallet(trx, nickname, currency);
 
-	return apply({
-		nickname,
-		currency,
-		delta: balance,
-		reason: "migration",
-		orderId: `migration:${nickname}:${currency}`,
-		actor: "system",
-		metadata: { source: "plugin" },
+		const created = await trx
+			.selectFrom("wallets")
+			.select("balance")
+			.where("nickname", "=", nickname)
+			.where("currency", "=", currency)
+			.executeTakeFirstOrThrow();
+
+		return { balance: Number(created.balance) };
 	});
 }
+
+export type MigrationBatch = {
+	scanned: number;
+	migrated: number;
+	skipped: number;
+	nextCursor: string | null;
+};
+
+/** Every nickname that can hold money: accounts, players and both plugins. */
+async function collectNicknames(cursor: string, limit: number): Promise<string[]> {
+	const [accounts, players, playerpointsUsers, charismUsers] = await Promise.all([
+		general
+			.selectFrom("accounts")
+			.select("nickname")
+			.where("nickname", ">", cursor)
+			.orderBy("nickname", "asc")
+			.limit(limit)
+			.execute(),
+		general
+			.selectFrom("players")
+			.select("nickname")
+			.where("nickname", ">", cursor)
+			.orderBy("nickname", "asc")
+			.limit(limit)
+			.execute(),
+		playerpoints
+			.selectFrom("playerpoints_username_cache")
+			.select("username as nickname")
+			.where("username", ">", cursor)
+			.orderBy("username", "asc")
+			.limit(limit)
+			.execute(),
+		bisquite
+			.selectFrom("cmi_users")
+			.select("username as nickname")
+			.where("username", "is not", null)
+			.where("username", ">", cursor)
+			.orderBy("username", "asc")
+			.limit(limit)
+			.execute(),
+	]);
+
+	const merged = new Set<string>();
+
+	for (const row of [...accounts, ...players, ...playerpointsUsers, ...charismUsers]) {
+		if (row.nickname) merged.add(row.nickname);
+	}
+
+	return [...merged]
+		.filter((nickname) => nickname > cursor)
+		.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))
+		.slice(0, limit);
+}
+
+/**
+ * Batched migration for the one-time switch. The caller pages with
+ * `nextCursor` until it comes back `null`; every step is idempotent, so an
+ * interrupted run is safe to repeat.
+ */
+export async function migrateBalances({
+	cursor = "",
+	limit = 200,
+}: { cursor?: string; limit?: number } = {}): Promise<MigrationBatch> {
+	const nicknames = await collectNicknames(cursor, limit);
+	let migrated = 0;
+	let skipped = 0;
+
+	for (const nickname of nicknames) {
+		for (const currency of CURRENCIES) {
+			try {
+				const result = await migrateWallet(nickname, currency);
+				if (result) migrated += 1;
+				else skipped += 1;
+			} catch (error) {
+				logErrorMsg(error, { subject: "wallet-migration" });
+				skipped += 1;
+			}
+		}
+	}
+
+	return {
+		scanned: nicknames.length,
+		migrated,
+		skipped,
+		nextCursor: nicknames.length === limit ? nicknames[nicknames.length - 1] ?? null : null,
+	};
+}
+
+/** All ledger rows of one business operation (used by refunds). */
+export async function getOrderEntries(orderId: string): Promise<LedgerEntry[]> {
+	return db
+		.selectFrom("ledger_entries")
+		.selectAll()
+		.where("order_id", "=", orderId)
+		.orderBy("id", "asc")
+		.execute() as unknown as Promise<LedgerEntry[]>;
+}
+
