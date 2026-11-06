@@ -282,6 +282,7 @@ export function decodeOrderCursor(value: string): OrderListCursor | null {
 export async function listAllOrders({
 	status,
 	nickname,
+	provider,
 	sort = "date",
 	order = "desc",
 	cursor,
@@ -289,6 +290,7 @@ export async function listAllOrders({
 }: {
 	status?: string;
 	nickname?: string;
+	provider?: string;
 	sort?: OrderListSort;
 	order?: "asc" | "desc";
 	cursor?: OrderListCursor | null;
@@ -306,6 +308,7 @@ export async function listAllOrders({
 
 	if (status) query = query.where("status", "=", status);
 	if (nickname) query = query.where("nickname", "=", nickname);
+	if (provider) query = query.where("provider", "=", provider);
 
 	if (cursor) {
 		const comparator = direction === "asc" ? ">" : "<";

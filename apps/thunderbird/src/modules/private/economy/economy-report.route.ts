@@ -19,6 +19,7 @@ import {
 const ordersQuery = t.Object({
 	status: t.Optional(t.String({ maxLength: 16 })),
 	nickname: t.Optional(t.String({ maxLength: 32 })),
+	provider: t.Optional(t.String({ maxLength: 16 })),
 	sort: t.Optional(t.UnionEnum(ORDER_LIST_SORTS)),
 	order: t.Optional(t.UnionEnum(["asc", "desc"])),
 	limit: t.Optional(t.String({ maxLength: 3 })),
@@ -61,6 +62,7 @@ export const economyReport = new Elysia()
 		const page = await listAllOrders({
 			status: query.status,
 			nickname: query.nickname,
+			provider: query.provider,
 			sort: query.sort,
 			order: query.order,
 			cursor,
