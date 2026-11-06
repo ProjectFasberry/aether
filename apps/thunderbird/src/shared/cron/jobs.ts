@@ -3,6 +3,7 @@ import { updateSeemsLikeList } from "#/modules/user/seems-players.model";
 import { getEnv } from "../env";
 import { redisService } from "../redis/client";
 import { serverStatusService } from "#/modules/server/status/index.model";
+import { cleanOldHistory } from "#/modules/private/history/history-retention";
 import { cronLogger } from ".";
 
 type Job = {
@@ -57,6 +58,19 @@ export const CRON_JOBS: Job[] = [
     immediately: true,
     schedule: false,
     allowIsDev: false
+  },
+  {
+    name: "clean-old-history",
+    cron: "0 30 4 * * *",
+    callback: async function () {
+      await wrapJobCb(this.name, async () => {
+        const removed = await cleanOldHistory();
+        if (removed > 0) cronLogger.info(`History: removed ${removed} rows older than 180 days`);
+      })
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true
   },
   {
     name: "update-seems-like",
