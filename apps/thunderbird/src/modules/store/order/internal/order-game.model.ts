@@ -4,8 +4,10 @@ import { processDonatePayment } from "#/utils/payment/process-donate-payment";
 import { callServerCommand } from "#/utils/server/call-command";
 import { GAME_CURRENCIES, type GameCurrency } from "@repo/shared/schemas/store/payment";
 import {
+	credit,
 	debit,
 	economyTransaction,
+	getOrderEntries,
 	flushProjections,
 	type ApplyResult,
 	type EconomyTrx,
@@ -100,6 +102,47 @@ export async function findGameOrder(uniqueId: string, initiator: string) {
 
 	return row ?? null;
 }
+
+/**
+ * Compensates a purchase whose delivery failed: the money goes back through
+ * the ledger and the order is marked refunded. Idempotent by the rollback
+ * reason, and a no-op once any refund (automatic or admin) was recorded.
+ */
+export async function rollbackGameOrder(orderId: string, reason: string): Promise<void> {
+	const order = await (general as any)
+		.selectFrom("payments_game")
+		.select(["refunded_at"])
+		.where("unique_id", "=", orderId)
+		.executeTakeFirst();
+
+	if (!order || order.refunded_at) return;
+
+	const entries = await getOrderEntries(orderId);
+
+	for (const entry of entries) {
+		if (!entry.reason.startsWith("store.purchase:")) continue;
+
+		const currency = entry.currency as GameCurrency;
+		if (!GAME_CURRENCIES.includes(currency)) continue;
+
+		await credit(entry.nickname, currency, Math.abs(Number(entry.delta)), {
+			reason: `store.rollback:${currency}`,
+			orderId,
+			actor: "system",
+			metadata: { reason, source: "auto-rollback" },
+		});
+	}
+
+	await (general as any)
+		.updateTable("payments_game")
+		.set({ refunded_at: new Date(), failure_reason: reason })
+		.where("unique_id", "=", orderId)
+		.execute();
+}
+
+registerGrantHandler("store.rollback", async (payload) => {
+	await rollbackGameOrder(String(payload.orderId), String(payload.reason ?? "delivery failed"));
+});
 
 export async function updateGamePaymentRecord(uniqueId: string) {
 	return general

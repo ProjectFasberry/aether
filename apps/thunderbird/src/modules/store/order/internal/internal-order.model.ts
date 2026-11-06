@@ -39,7 +39,7 @@ export const orderGameSchema = t.Object({
 	initiator: t.String(),
 	created_at: DateTime,
 	finished_at: t.Nullable(DateTime),
-	status: t.UnionEnum(["pending", "succeeded"]),
+	status: t.UnionEnum(["pending", "succeeded", "refunded"]),
 	price: t.Any(),
 	items_count: t.Number(),
 });
@@ -49,7 +49,7 @@ export const orderSingleGameSchema = t.Object({
 	unique_id: t.String(),
 	created_at: DateTime,
 	finished_at: t.Nullable(DateTime),
-	status: t.UnionEnum(["pending", "succeeded"]),
+	status: t.UnionEnum(["pending", "succeeded", "refunded"]),
 	price: t.Any(),
 	items: t.Array(
 		t.Object({
@@ -100,9 +100,14 @@ export const internalOrders = {
 				"payments_game.initiator",
 				"payments_game.created_at",
 				"payments_game.finished_at",
+				"payments_game.refunded_at",
 				"payments_game.price",
 				itemsCountExpr.as("items_count"),
-				sql<OrdersGame["status"]>`case when "payments_game"."finished_at" is null then 'pending' else 'succeeded' end`.as("status"),
+				sql<OrdersGame["status"]>`case
+					when "payments_game"."refunded_at" is not null then 'refunded'
+					when "payments_game"."finished_at" is null then 'pending'
+					else 'succeeded'
+				end`.as("status"),
 			])
 			.where("payments_game.initiator", "=", initiator)
 			.limit(limit + 1);
@@ -148,6 +153,7 @@ export const internalOrders = {
 			initiator: string;
 			created_at: Date;
 			finished_at: Date | null;
+			refunded_at: Date | null;
 			price: Record<string, number>;
 			items_count: number;
 			status: OrdersGame["status"];
@@ -186,7 +192,7 @@ export const internalOrders = {
 		const [order, orderChilds] = await Promise.all([
 			db
 				.selectFrom("payments_game")
-				.select(["unique_id", "created_at", "finished_at", "initiator", "price"])
+				.select(["unique_id", "created_at", "finished_at", "refunded_at", "initiator", "price"])
 				.where("unique_id", "=", uniqueId)
 				.executeTakeFirst(),
 			db
@@ -215,7 +221,7 @@ export const internalOrders = {
 			unique_id: order.unique_id,
 			created_at: order.created_at,
 			finished_at: order.finished_at,
-			status: order.finished_at ? "succeeded" : "pending",
+			status: order.refunded_at ? "refunded" : order.finished_at ? "succeeded" : "pending",
 			price: order.price ?? {},
 			initiator: order.initiator,
 			items: orderChilds.map((oc) => ({

@@ -87,12 +87,25 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 			const attempts = job.attempts + 1;
 			// Store delivery waits for the game server; keep trying much longer
 			// than a projection retry.
-			const maxAttempts = job.kind === "store.fulfillment" ? 200 : 10;
+			const maxAttempts = 10;
 			const giveUp = attempts >= maxAttempts;
 
 			if (giveUp) failed += 1;
 
 			logErrorMsg(error, { subject: `grant-jobs:${job.kind}` });
+
+			if (giveUp && job.kind === "store.fulfillment") {
+				// The money must not stay with the project when the item was never
+				// delivered: compensate through the ledger.
+				await enqueueGrantJob({
+					orderId: job.order_id,
+					kind: "store.rollback",
+					payload: {
+						orderId: job.order_id,
+						reason: error instanceof Error ? error.message : String(error),
+					},
+				}).catch((e) => logErrorMsg(e, { subject: "store-rollback-enqueue" }));
+			}
 
 			await db
 				.updateTable("grant_jobs")
