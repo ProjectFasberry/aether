@@ -66,10 +66,7 @@ const storeItemEditFields = new Elysia()
 const storeItemGet = new Elysia()
   .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
   .get("/:id", async ({ params: { id }, status }) => {
-    const data = await store.getItem(id) as (
-      Awaited<ReturnType<typeof store.getItem>>
-      & { refund_cmd?: string | null }
-    );
+    const data = await store.getItemForEdit(id);
 
     if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));
 

@@ -55,8 +55,6 @@ export const store = {
         "type",
         "value",
         "currency",
-        "command",
-        "refund_cmd",
         "content"
       ])
       .where("id", "=", id)
@@ -71,6 +69,17 @@ export const store = {
     }
 
     return data
+  },
+  /**
+   * Full row for the private edit form. Public routes must not expose
+   * `command`/`refund_cmd`, so they use `getItem` instead.
+   */
+  async getItemForEdit(id: number): Promise<any | null> {
+    return await (general as any)
+      .selectFrom("store_items")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst() ?? null;
   },
   async getItems(
     { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>

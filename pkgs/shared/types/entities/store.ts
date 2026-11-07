@@ -12,7 +12,6 @@ export type CartItem = {
 	description: string | null;
 	value: string;
 	type: string;
-	command: string | null;
 	currency: string;
 	content: JsonValue;
 	title: string;
