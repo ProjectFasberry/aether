@@ -274,7 +274,7 @@ export const startOrderConsumer = async (): Promise<void> => {
  * Only backends with the command executor deployed are allowed. Keep this in
  * sync with the rollout: add "lobby" after its plugin is live.
  */
-const ENABLED_COMMAND_SERVERS = ["bisquite"] as const;
+const ENABLED_COMMAND_SERVERS = ["bisquite", "lobby"] as const;
 
 /**
  * The store lives on a backend; the panel knows which backend currently hosts
