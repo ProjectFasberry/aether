@@ -1,26 +1,30 @@
 import { general } from "#/shared/database/general-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import {
-	CURRENCIES,
 	credit,
 	debit,
 	economyTransaction,
 	flushProjections,
-	type ApplyResult,
+	refundPurchasesInTransaction,
 	type Currency,
 	type LedgerEntry,
+	type RefundedPurchase,
 } from "#/modules/economy/wallet.model";
 import { enqueueGrantJob, processGrantJobs } from "#/modules/economy/grant-jobs.model";
-import type { DB } from "@gen/db/general";
-import type { Kysely } from "kysely";
 import { sql } from "kysely";
 
-/** `ledger_entries` is newer than the generated schema. */
-const db = general as unknown as Kysely<DB & { ledger_entries: any }>;
+const db = general;
 
 export type LedgerCursor = { created_at: string; id: number };
 
-export function encodeCursor(row: { created_at: Date | string; created_at_text?: string; id: number }): string {
+/** Panel shape: pg returns bigint columns as strings, the UI expects numbers. */
+export type LedgerEntryView = Omit<LedgerEntry, "id" | "delta" | "balance_after"> & {
+	id: number;
+	delta: number;
+	balance_after: number;
+};
+
+export function encodeCursor(row: { created_at: Date | string; created_at_text?: string; id: number | string }): string {
 	return Buffer.from(JSON.stringify({
 		// Keep the Postgres text when available: JS Date truncates microseconds.
 		created_at: row.created_at_text ?? String(row.created_at),
@@ -68,7 +72,7 @@ export async function listLedger({
 	nickname: string;
 	cursor?: LedgerCursor | null;
 	limit?: number;
-}): Promise<{ data: LedgerEntry[]; meta: { hasNextPage: boolean; endCursor?: string } }> {
+}): Promise<{ data: LedgerEntryView[]; meta: { hasNextPage: boolean; endCursor?: string } }> {
 	let query = db
 		.selectFrom("ledger_entries")
 		.selectAll()
@@ -89,7 +93,7 @@ export async function listLedger({
 		);
 	}
 
-	const raw = await query.execute() as unknown as (LedgerEntry & { created_at_text: string })[];
+	const raw = await query.execute();
 	const hasNextPage = raw.length > limit;
 	if (hasNextPage) raw.pop();
 
@@ -107,7 +111,7 @@ export async function listLedger({
 		meta: {
 			hasNextPage,
 			endCursor: raw.length > 0
-				? encodeCursor(raw[raw.length - 1] as { created_at: Date | string; created_at_text: string; id: number })
+				? encodeCursor(raw[raw.length - 1])
 				: undefined,
 		},
 	};
@@ -142,12 +146,7 @@ export async function adjustBalance({
 		: debit(nickname, currency, amount, options);
 }
 
-export type RefundResult = {
-	currency: Currency;
-	amount: number;
-	balance: number;
-	duplicate: boolean;
-};
+export type RefundResult = RefundedPurchase;
 
 /**
  * Reverses the money part of a game order. The refund entry reuses the order
@@ -165,7 +164,7 @@ export async function refundOrder({
 	const result = await economyTransaction().execute(async (trx) => {
 		// Lock the order for the whole refund: the automatic rollback and a second
 		// admin click must see the first refund, not race it.
-		const gameOrder = await (trx as any)
+		const gameOrder = await trx
 			.selectFrom("payments_game")
 			.select(["refunded_at"])
 			.where("unique_id", "=", orderId)
@@ -174,91 +173,33 @@ export async function refundOrder({
 
 		if (!gameOrder) return null;
 
-		const entries = await (trx as any)
-			.selectFrom("ledger_entries")
-			.selectAll()
-			.where("order_id", "=", orderId)
-			.orderBy("id", "asc")
-			.execute() as LedgerEntry[];
-
-		const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
-
-		// A duplicate skipped at delivery already refunded its own child. A
-		// later full refund must credit only the remaining net amount.
-		const partialRefunds = new Map<string, number>();
-		for (const entry of entries) {
-			if (!entry.reason.startsWith("store.partial_refund:")) continue;
-			partialRefunds.set(
-				entry.currency,
-				(partialRefunds.get(entry.currency) ?? 0) + Math.abs(Number(entry.delta)),
-			);
+		// A refunded order must not be delivered later by the outbox.
+		if (!gameOrder.refunded_at) {
+			await trx
+				.deleteFrom("grant_jobs")
+				.where("order_id", "=", orderId)
+				.where("kind", "=", "store.fulfillment")
+				.where("status", "in", ["pending", "failed"])
+				.execute();
 		}
 
-		if (gameOrder.refunded_at) {
+		const { applied, refunded } = await refundPurchasesInTransaction(trx, {
+			orderId,
+			reasonPrefix: "store.refund",
+			actor,
+			metadata: (entry) => ({ adminReason, source: "admin.refund", originalReason: entry.reason }),
 			// A retry may be the first place that sees a refund written by an
 			// older build without a revoke job.
-			await enqueueGrantJob(
-				{ orderId, kind: "store.revoke", payload: { orderId } },
-				trx,
-			);
+			resync: Boolean(gameOrder.refunded_at),
+		});
 
-			// Re-sync in case a previous attempt committed the refund but died
-			// before flushing its projections.
-			return {
-				refunded: [] as RefundResult[],
-				applied: purchases.map((entry) => ({
-					entry,
-					balance: Number(entry.balance_after),
-					duplicate: true,
-				})) as ApplyResult[],
-			};
+		if (!gameOrder.refunded_at) {
+			await trx
+				.updateTable("payments_game")
+				.set({ refunded_at: new Date(), failure_reason: "admin refund" })
+				.where("unique_id", "=", orderId)
+				.execute();
 		}
-
-		// A free order has no purchase entries but still needs a revoke: the
-		// delivered item must be reversed even though there is no money to credit.
-
-		// A refunded order must not be delivered later by the outbox.
-		await (trx as any)
-			.deleteFrom("grant_jobs")
-			.where("order_id", "=", orderId)
-			.where("kind", "=", "store.fulfillment")
-			.where("status", "in", ["pending", "failed"])
-			.execute();
-
-		const applied: ApplyResult[] = [];
-		const refunded: RefundResult[] = [];
-
-		for (const entry of purchases) {
-			const currency = entry.currency as Currency;
-			if (!CURRENCIES.includes(currency)) continue;
-
-			const alreadyRefunded = partialRefunds.get(currency) ?? 0;
-			const amount = Math.max(0, Math.abs(Number(entry.delta)) - alreadyRefunded);
-			if (amount === 0) continue;
-
-			partialRefunds.set(currency, 0);
-
-			const credited = await credit(entry.nickname, currency, amount, {
-				reason: `store.refund:${currency}`,
-				orderId,
-				actor,
-				metadata: { adminReason, source: "admin.refund", originalReason: entry.reason },
-			}, trx);
-
-			applied.push(credited);
-			refunded.push({
-				currency,
-				amount,
-				balance: credited.balance,
-				duplicate: credited.duplicate,
-			});
-		}
-
-		await (trx as any)
-			.updateTable("payments_game")
-			.set({ refunded_at: new Date(), failure_reason: "admin refund" })
-			.where("unique_id", "=", orderId)
-			.execute();
 
 		// Reverse the delivered effect. The command is idempotent; running it for
 		// a never-delivered item is harmless and covers a partial delivery.

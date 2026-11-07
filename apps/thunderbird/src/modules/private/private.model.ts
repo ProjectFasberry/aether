@@ -2,10 +2,9 @@ import { getOption } from "#/shared/constants/options";
 import { general } from "#/shared/database/general-db";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
-import type { DB } from "@gen/db/general";
-import type { Kysely } from "kysely";
+import type { JsonValue } from "@gen/db/general";
 
-const db = general as unknown as Kysely<DB & { admin_activity_log: any }>;
+const db = general;
 
 export type AdminActivityLogInput = {
 	event: string;
@@ -28,7 +27,7 @@ export async function createAdminActivityLog({
 
 	const query = await db
 		.insertInto("admin_activity_log")
-		.values({ initiator, event, metadata, severity, source })
+		.values({ initiator, event, metadata: metadata as JsonValue, severity, source })
 		.returningAll()
 		.executeTakeFirstOrThrow();
 

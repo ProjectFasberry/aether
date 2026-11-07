@@ -38,7 +38,7 @@ const REASON = {
 type ReferralPair = { referrer: string; referral: string };
 
 /** `0006` adds the payout columns; the generated schema is refreshed later. */
-const db = general as unknown as Kysely<DB & { referrals: any }>;
+const db = general;
 
 function referralKey({ referrer, referral }: ReferralPair): string {
 	return `referral:${referrer}:${referral}`;

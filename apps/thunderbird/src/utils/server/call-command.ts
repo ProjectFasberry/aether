@@ -112,7 +112,7 @@ async function markCommandResult(
   if (!Number.isInteger(childId) || childId <= 0) return;
 
   if (!ok) {
-    await (general as any)
+    await general
       .updateTable("payments_game_childs")
       .set({ last_error: error ?? "COMMAND_FAILED" })
       .where("id", "=", childId)
@@ -122,7 +122,7 @@ async function markCommandResult(
   }
 
   if (payload.kind === "revoke") {
-    await (general as any)
+    await general
       .updateTable("payments_game_childs")
       .set({
         delivery_status: "revoked",
@@ -136,7 +136,7 @@ async function markCommandResult(
   }
 
   // A revoke may have won the race while the command was in flight.
-  await (general as any)
+  await general
     .updateTable("payments_game_childs")
     .set({
       delivery_status: "delivered",
@@ -209,8 +209,6 @@ export const startOrderConsumer = async (): Promise<void> => {
 
         decoded = parsed.value;
         commandSubject = `server.${(decoded.server ?? "bisquite").toLowerCase()}.command`;
-
-        console.log(new TextDecoder().decode(payload), m.seq, m.subject);
 
         const r = await nc.request(commandSubject, payload, { timeout });
         const res = r.json<ResponseMsg>();
@@ -301,9 +299,7 @@ export async function resolveTargetServer(recipient?: string, fallback?: string)
     : ENABLED_COMMAND_SERVERS[0];
 }
 
-export async function callServerCommand(
-  { parent, value, meta }: CallServerCommand,
-): Promise<{ result: "success" }> {
+export async function callServerCommand({ parent, value, meta }: CallServerCommand): Promise<{ result: "success" }> {
   try {
     const nc = natsService.getInstance()
 
@@ -343,56 +339,13 @@ export async function callServerCommand(
     const seq = pa.seq;
     const duplicate = pa.duplicate;
 
-    console.log("pa", stream, seq, duplicate)
-
     if (waiter) {
       const result = await waiter;
-
       if (!result.ok) throw new Error(result.error);
     }
 
     return { result: "success" }
   } catch (e) {
     throw e
-  }
-}
-
-
-type SendEmailInServer = {
-  server: string,
-  msg: string
-  nickname: string
-} & (| {
-  temp?: false,
-  time?: never
-} | {
-  temp: true,
-  time: string
-})
-
-async function sendEmailInServer({ nickname, msg, server, temp, time }: SendEmailInServer) {
-  if (server !== 'bisquite') {
-    throw new Error('unsupported server')
-  }
-
-  const nc = natsService.getInstance()
-  const decoder = new TextDecoder();
-
-  let command = `send ${nickname} ${msg}`
-
-  if (temp) {
-    command = `sendtemp ${nickname} ${time} ${msg}`
-  }
-
-  const payload = {
-    event: "executeCommand",
-    command: `cmi mail ${command}`
-  }
-
-  const callCmdResult = await nc.request("event", JSON.stringify(payload))
-  const callCmdResultData = safeJsonParse<{ result: "ok" }>(decoder.decode(callCmdResult.data))
-
-  if (!callCmdResultData.ok) {
-    throw callCmdResultData.error
   }
 }

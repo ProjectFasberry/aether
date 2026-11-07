@@ -60,13 +60,10 @@ async function serverUnavailable(server: string | null): Promise<boolean> {
   return row ? !row.available : false;
 }
 
-function gateSecret(): string | null {
-  return getEnv().GATE_SECRET ?? null;
-}
+const gateSecret = (): string | null => getEnv().GATE_SECRET ?? null
 
 function secretMatches(received: string | undefined): boolean {
   const expected = gateSecret();
-
   if (!expected || !received) return false;
 
   const a = Buffer.from(received);
@@ -78,63 +75,68 @@ function secretMatches(received: string | undefined): boolean {
 const ticketRoute = new Elysia()
   .use(ipPlugin())
   .use(defineRequiredClientUser())
-  .post(
-    "/launcher/session/ticket",
-    async ({ session, body, ip, status }) => {
-      const payload = await auth.getSessionPayload(session);
+  .post("/launcher/session/ticket", async ({ session, body, ip, status }) => {
+    const payload = await auth.getSessionPayload(session);
 
-      // Only a launcher session may mint tickets: browser sessions must not.
-      if (!payload || payload.client !== "launcher") {
-        return status(401, wrapError("LAUNCHER_SESSION_REQUIRED"));
+    // Only a launcher session may mint tickets: browser sessions must not.
+    if (!payload || payload.client !== "launcher") {
+      return status(401, wrapError("LAUNCHER_SESSION_REQUIRED"));
+    }
+
+    // A ticket is cheap but writes to Redis; keep a runaway launcher bounded.
+    if (!(await allowRequest("ticket:account", payload.nickname.toLowerCase(), 20, 60))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
+    const server = body.server?.trim().toLowerCase() || null;
+
+    if (server && !SERVER_ID_PATTERN.test(server)) {
+      return status(400, wrapError("SERVER_ID_INVALID"));
+    }
+
+    if (await serverUnavailable(server)) {
+      return status(403, wrapError("SERVER_UNAVAILABLE"));
+    }
+
+    const ticket = encodeBase32LowerCaseNoPadding(crypto.getRandomValues(new Uint8Array(32)));
+    const record: TicketPayload = {
+      nickname: payload.nickname,
+      server,
+      ip,
+      created_at: Date.now(),
+    };
+
+    await redisService
+      .getInstance()
+      .set(ticketKey(ticket), JSON.stringify(record), "EX", TICKET_TTL_S);
+
+    return {
+      data: {
+        ticket,
+        expires_at: new Date(record.created_at + TICKET_TTL_S * 1000)
       }
-
-      // A ticket is cheap but writes to Redis; keep a runaway launcher bounded.
-      if (!(await allowRequest("ticket:account", payload.nickname.toLowerCase(), 20, 60))) {
-        return status(429, wrapError("TOO_MANY_REQUESTS"));
-      }
-
-      const server = body.server?.trim().toLowerCase() || null;
-
-      if (server && !SERVER_ID_PATTERN.test(server)) {
-        return status(400, wrapError("SERVER_ID_INVALID"));
-      }
-
-      if (await serverUnavailable(server)) {
-        return status(403, wrapError("SERVER_UNAVAILABLE"));
-      }
-
-      const ticket = encodeBase32LowerCaseNoPadding(crypto.getRandomValues(new Uint8Array(32)));
-      const record: TicketPayload = {
-        nickname: payload.nickname,
-        server,
-        ip,
-        created_at: Date.now(),
-      };
-
-      await redisService
-        .getInstance()
-        .set(ticketKey(ticket), JSON.stringify(record), "EX", TICKET_TTL_S);
-
-      return { data: { ticket, expires_at: new Date(record.created_at + TICKET_TTL_S * 1000) } };
+    };
+  }, {
+    body: t.Object({ server: t.Optional(t.Nullable(t.String())) }),
+    response: {
+      200: withData(
+        t.Object({
+          ticket: t.String(),
+          expires_at: DateTime
+        })
+      ),
+      400: withError(t.String()),
+      401: withError(t.String()),
+      403: withError(t.String()),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
-    {
-      body: t.Object({ server: t.Optional(t.Nullable(t.String())) }),
-      response: {
-        200: withData(t.Object({ ticket: t.String(), expires_at: DateTime })),
-        400: withError(t.String()),
-        401: withError(t.String()),
-        403: withError(t.String()),
-        429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
-      },
-      detail: {
-        summary: buildRouteSummary("Issue a join ticket for the launcher"),
-      },
+    detail: {
+      summary: buildRouteSummary("Issue a join ticket for the launcher"),
     },
-  );
+  });
 
-const verifyRoute = new Elysia().post(
-  "/launcher/session/verify",
-  async ({ body, headers, status }) => {
+const verifyRoute = new Elysia()
+  .post("/launcher/session/verify", async ({ body, headers, status }) => {
     // A missing secret must not turn the gate into an open door.
     if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
 
@@ -179,8 +181,7 @@ const verifyRoute = new Elysia().post(
       .set(passKey(record.nickname), JSON.stringify(record), "EX", RECONNECT_TTL_S);
 
     return { data: { nickname: record.nickname } };
-  },
-  {
+  }, {
     body: t.Object({
       ticket: t.String({ maxLength: 64 }),
       nickname: t.String({ minLength: 1, maxLength: 32 }),
@@ -195,9 +196,7 @@ const verifyRoute = new Elysia().post(
     detail: {
       summary: buildRouteSummary("Verify and consume a join ticket (proxy gate)"),
     },
-  },
-);
-
+  });
 
 /**
  * Reconnect without a fresh ticket: a player who already passed the gate keeps a
@@ -206,9 +205,8 @@ const verifyRoute = new Elysia().post(
  * the title screen or after a network blip, and demanding a new launcher launch
  * for that is hostile.
  */
-const reconnectRoute = new Elysia().post(
-  "/launcher/session/reconnect",
-  async ({ body, headers, status }) => {
+const reconnectRoute = new Elysia()
+  .post("/launcher/session/reconnect", async ({ body, headers, status }) => {
     if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
 
     if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
@@ -241,9 +239,12 @@ const reconnectRoute = new Elysia().post(
     // Sliding window: an active player is never kicked out by the pass expiring.
     await redisService.getInstance().expire(key, RECONNECT_TTL_S);
 
-    return { data: { nickname: record.nickname } };
-  },
-  {
+    return {
+      data: {
+        nickname: record.nickname
+      }
+    };
+  }, {
     body: t.Object({
       nickname: t.String({ minLength: 1, maxLength: 32 }),
       server: t.Optional(t.String({ maxLength: 32 })),
@@ -257,7 +258,9 @@ const reconnectRoute = new Elysia().post(
     detail: {
       summary: buildRouteSummary("Verify a reconnect pass for the proxy gate"),
     },
-  },
-);
+  });
 
-export const joinGate = new Elysia().use(ticketRoute).use(verifyRoute).use(reconnectRoute);
+export const joinGate = new Elysia()
+  .use(ticketRoute)
+  .use(verifyRoute)
+  .use(reconnectRoute);

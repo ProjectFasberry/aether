@@ -15,7 +15,11 @@ function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickna
   const nc = natsService.getInstance()
   nc.publish(SUBJECTS.EVENTS.AUTHORIZATION[event], JSON.stringify({ nickname, created_at }))
 }
-const getWrappedData = <T>(value?: any): T | null => value ? value?.data ?? null : null;
+const getWrappedData = <T>(value?: unknown): T | null => {
+  if (!value || typeof value !== "object") return null;
+
+  return (value as { data?: T }).data ?? null;
+};
 
 const playersAuthReg = new Elysia()
   .use(ipPlugin())

@@ -1,8 +1,6 @@
 import { general } from "#/shared/database/general-db";
-import type { DB } from "@gen/db/general";
-import type { Kysely } from "kysely";
 
-const db = general as unknown as Kysely<DB & { admin_activity_log: any }>;
+const db = general;
 
 /** Audit rows are hot for half a year; older ones go in bounded batches. */
 const RETENTION_DAYS = 180;

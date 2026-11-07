@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
-import { processDonatePayment, removeDonateGroup } from "#/utils/payment/process-donate-payment";
+import { callBroadcast } from "#/utils/server/call-broadcast";
+import { publishUpdateGroup } from "#/lib/publishers/pub-update-group";
+import { DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
 import { callServerCommand, type CommandMeta } from "#/utils/server/call-command";
 import {
 	GAME_CURRENCIES,
@@ -14,9 +16,9 @@ import {
 	debit,
 	economyTransaction,
 	flushProjections,
+	refundPurchasesInTransaction,
 	type ApplyResult,
 	type EconomyTrx,
-	type LedgerEntry,
 } from "#/modules/economy/wallet.model";
 import {
 	enqueueGrantJob,
@@ -28,9 +30,12 @@ import {
 	parseEffectSnapshot,
 	resolveDeliveryEffect,
 	type DeliveryCheck,
+	type DeliveryEffect,
 } from "./delivery-dedup";
 import {
+	applyDeliveryEffect,
 	checkEffectDuplicate,
+	removeDeliveryEffect,
 	withDeliveryLocks,
 } from "./delivery-dedup-db";
 
@@ -75,6 +80,17 @@ type FulfillmentProduct = Pick<Product, "id" | "recipient" | "type" | "value" | 
 /** Outbox kind for the non-money part of an order (groups, toasts, items). */
 const FULFILLMENT_KIND = "store.fulfillment";
 
+function donateDefaultEffect(value: string): DeliveryEffect {
+	return {
+		permission: `group.${value}`,
+		value: true,
+		world: "global",
+		server: "global",
+		contexts: {},
+		expiry: 0,
+	};
+}
+
 function createTasksForItem(
 	{ recipient, type, value }: Pick<Product, "recipient" | "type" | "value">,
 	{ fallbackServer }: { fallbackServer?: string } = {},
@@ -82,23 +98,36 @@ function createTasksForItem(
 	const tasks: Array<() => Promise<unknown>> = [];
 
 	if (type === "donate") {
-		const effect = resolveDeliveryEffect({ recipient, type: "donate", value });
-		for (const task of processDonatePayment({ recipient, type: "donate", value, fallbackServer, effect })) {
-			// The group grant is the paid effect; the toast and broadcast are
-			// best-effort and must not leave a delivered order "processing"
-			// forever when no game server is online.
-			const bestEffort = task.name === "notify-player" || task.name === "broadcast-to-server";
+		const effect = resolveDeliveryEffect({ recipient, type: "donate", value }) ?? donateDefaultEffect(value);
+		const message = `Игрок ${recipient} приобрел привилегию ${DONATE_TITLE[value as keyof typeof DONATE_TITLE]}`;
 
-			tasks.push(async () => {
-				try {
-					await task.execute(new AbortController().signal);
-				} catch (error) {
-					if (!bestEffort) throw error;
+		// The group grant is the paid effect; the toast and broadcast are
+		// best-effort and must not leave a delivered order "processing" forever
+		// when no game server is online.
+		tasks.push(async () => {
+			await applyDeliveryEffect(recipient, effect, { fallbackServer });
+			publishUpdateGroup({ nickname: recipient, permission: effect.permission });
+		});
 
-					logErrorMsg(error, { subject: "store-fulfillment-notify" });
-				}
-			});
-		}
+		tasks.push(async () => {
+			try {
+				await callServerCommand({
+					parent: "cmi",
+					value: `toast ${recipient} Поздравляем с покупкой!`,
+					meta: { recipient, fallbackServer, wait: false },
+				});
+			} catch (error) {
+				logErrorMsg(error, { subject: "store-fulfillment-notify" });
+			}
+		});
+
+		tasks.push(async () => {
+			try {
+				await callBroadcast({ message });
+			} catch (error) {
+				logErrorMsg(error, { subject: "store-fulfillment-notify" });
+			}
+		});
 	}
 
 	if (type === "event") {
@@ -135,7 +164,7 @@ async function runCommandLine(line: string, meta?: CommandMeta): Promise<void> {
 }
 
 async function isOrderRefunded(orderId: string): Promise<boolean> {
-	const row = await (general as any)
+	const row = await general
 		.selectFrom("payments_game")
 		.select("refunded_at")
 		.where("unique_id", "=", orderId)
@@ -145,7 +174,7 @@ async function isOrderRefunded(orderId: string): Promise<boolean> {
 }
 
 async function loadGameChildren(orderId: string): Promise<GameChild[]> {
-	return await (general as any)
+	return await general
 		.selectFrom("payments_game_childs")
 		.selectAll()
 		.where("order_id", "=", orderId)
@@ -154,7 +183,7 @@ async function loadGameChildren(orderId: string): Promise<GameChild[]> {
 }
 
 async function markChildDelivered(childId: number): Promise<void> {
-	await (general as any)
+	await general
 		.updateTable("payments_game_childs")
 		.set({
 			delivery_status: "delivered",
@@ -168,7 +197,7 @@ async function markChildDelivered(childId: number): Promise<void> {
 }
 
 async function markChildFailed(childId: number, error: unknown): Promise<void> {
-	await (general as any)
+	await general
 		.updateTable("payments_game_childs")
 		.set({
 			delivery_attempts: sql`delivery_attempts + 1`,
@@ -179,7 +208,7 @@ async function markChildFailed(childId: number, error: unknown): Promise<void> {
 }
 
 async function markChildRevoked(childId: number): Promise<void> {
-	await (general as any)
+	await general
 		.updateTable("payments_game_childs")
 		.set({
 			delivery_status: "revoked",
@@ -191,7 +220,7 @@ async function markChildRevoked(childId: number): Promise<void> {
 }
 
 async function markChildRevokeFailed(childId: number, error: unknown): Promise<void> {
-	await (general as any)
+	await general
 		.updateTable("payments_game_childs")
 		.set({
 			last_error: error instanceof Error ? error.message : String(error),
@@ -211,7 +240,7 @@ async function refundSkippedChild(
 	reason: string,
 ): Promise<void> {
 	const result = await economyTransaction().execute(async (trx) => {
-		const claimed = await (trx as any)
+		const claimed = await trx
 			.updateTable("payments_game_childs")
 			.set({
 				delivery_status: "skipped",
@@ -238,7 +267,7 @@ async function refundSkippedChild(
 				metadata: { reason, childId: child.id, source: "delivery-dedup" },
 			}, trx));
 
-			const order = await (trx as any)
+			const order = await trx
 				.selectFrom("payments_game")
 				.select("price")
 				.where("unique_id", "=", orderId)
@@ -249,7 +278,7 @@ async function refundSkippedChild(
 				const price = { ...(order.price ?? {}) };
 				price[currency] = Math.max(0, Number(price[currency] ?? 0) - amount);
 
-				await (trx as any)
+				await trx
 					.updateTable("payments_game")
 					.set({ price })
 					.where("unique_id", "=", orderId)
@@ -257,7 +286,7 @@ async function refundSkippedChild(
 			}
 		}
 
-		const remaining = await (trx as any)
+		const remaining = await trx
 			.selectFrom("payments_game_childs")
 			.select("id")
 			.where("order_id", "=", orderId)
@@ -267,7 +296,7 @@ async function refundSkippedChild(
 		// Every line was skipped: the order is fully refunded without a revoke
 		// job because nothing was delivered.
 		if (!remaining) {
-			await (trx as any)
+			await trx
 				.updateTable("payments_game")
 				.set({ refunded_at: new Date(), failure_reason: reason })
 				.where("unique_id", "=", orderId)
@@ -386,7 +415,7 @@ async function lockAndValidateCart(
 	initiator: string,
 	products: Product[],
 ): Promise<void> {
-	const locked = await (trx as any)
+	const locked = await trx
 		.selectFrom("store_cart_items")
 		.select(["product_id", "recipient", "price_snapshot"])
 		.where("initiator", "=", initiator)
@@ -423,7 +452,7 @@ async function lockAndValidateCart(
 
 	const itemIds = [...new Set(products.map((product) => product.id))];
 	const current = itemIds.length > 0
-		? await (trx as any)
+		? await trx
 			.selectFrom("store_items")
 			.select(["id", "price"])
 			.where("id", "in", itemIds)
@@ -446,7 +475,7 @@ async function createGamePaymentRecord(
 	price: Record<string, number>,
 	dedup: Map<number, DeliveryCheck>,
 ) {
-	const game = trx as any;
+	const game = trx;
 
 	const childs = await game
 		.insertInto("payments_game_childs")
@@ -484,7 +513,7 @@ async function createGamePaymentRecord(
 
 /** An idempotent retry finds the earlier order and skips the whole flow. */
 export async function findGameOrder(uniqueId: string, initiator: string) {
-	const row = await (general as any)
+	const row = await general
 		.selectFrom("payments_game")
 		.select(["unique_id", "initiator", "price"])
 		.where("unique_id", "=", uniqueId)
@@ -503,7 +532,7 @@ export async function rollbackGameOrder(orderId: string, reason: string): Promis
 	const result = await economyTransaction().execute(async (trx) => {
 		// One claim per order: an admin refund and this rollback must not both
 		// credit the same purchase.
-		const order = await (trx as any)
+		const order = await trx
 			.selectFrom("payments_game")
 			.select(["refunded_at"])
 			.where("unique_id", "=", orderId)
@@ -512,78 +541,33 @@ export async function rollbackGameOrder(orderId: string, reason: string): Promis
 
 		if (!order) return null;
 
-		const entries = await (trx as any)
-			.selectFrom("ledger_entries")
-			.selectAll()
-			.where("order_id", "=", orderId)
-			.orderBy("id", "asc")
-			.execute() as LedgerEntry[];
-
-		const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
-
-		// A delivery-time duplicate may already have refunded a single child.
-		// Do not credit that amount a second time on a later full rollback.
-		const partialRefunds = new Map<string, number>();
-		for (const entry of entries) {
-			if (!entry.reason.startsWith("store.partial_refund:")) continue;
-			partialRefunds.set(
-				entry.currency,
-				(partialRefunds.get(entry.currency) ?? 0) + Math.abs(Number(entry.delta)),
-			);
+		// A refunded order must not be delivered later by the outbox.
+		if (!order.refunded_at) {
+			await trx
+				.deleteFrom("grant_jobs")
+				.where("order_id", "=", orderId)
+				.where("kind", "=", "store.fulfillment")
+				.where("status", "in", ["pending", "failed"])
+				.execute();
 		}
 
-		if (order.refunded_at) {
+		const { applied } = await refundPurchasesInTransaction(trx, {
+			orderId,
+			reasonPrefix: "store.rollback",
+			actor: "system",
+			metadata: () => ({ reason, source: "auto-rollback" }),
 			// A retry may be the first place that sees a refund written by an
 			// older build without a revoke job.
-			await enqueueGrantJob(
-				{ orderId, kind: "store.revoke", payload: { orderId } },
-				trx,
-			);
+			resync: Boolean(order.refunded_at),
+		});
 
-			// Re-sync a refund that committed but was not projected.
-			return {
-				applied: purchases.map((entry) => ({
-					entry,
-					balance: Number(entry.balance_after),
-					duplicate: true,
-				})) as ApplyResult[],
-			};
+		if (!order.refunded_at) {
+			await trx
+				.updateTable("payments_game")
+				.set({ refunded_at: new Date(), failure_reason: reason })
+				.where("unique_id", "=", orderId)
+				.execute();
 		}
-
-		await (trx as any)
-			.deleteFrom("grant_jobs")
-			.where("order_id", "=", orderId)
-			.where("kind", "=", "store.fulfillment")
-			.where("status", "in", ["pending", "failed"])
-			.execute();
-
-		const applied: ApplyResult[] = [];
-
-		for (const entry of purchases) {
-			const currency = entry.currency as GameCurrency;
-			if (!GAME_CURRENCIES.includes(currency)) continue;
-
-			const alreadyRefunded = partialRefunds.get(currency) ?? 0;
-			const amount = Math.max(0, Math.abs(Number(entry.delta)) - alreadyRefunded);
-			if (amount === 0) continue;
-
-			partialRefunds.set(currency, 0);
-
-			const credited = await credit(entry.nickname, currency, amount, {
-				reason: `store.rollback:${currency}`,
-				orderId,
-				actor: "system",
-				metadata: { reason, source: "auto-rollback" },
-			}, trx);
-
-			applied.push(credited);
-		}
-
-		await (trx as any)
-			.updateTable("payments_game")
-			.set({ refunded_at: new Date(), failure_reason: reason })
-			.where("unique_id", "=", orderId)
-			.execute();
 
 		// A partial delivery may have delivered some items before the failure.
 		// The reversal command is idempotent, so it is safe for the rest.
@@ -610,12 +594,12 @@ registerGrantHandler("store.rollback", async (payload) => {
 
 export async function updateGamePaymentRecord(uniqueId: string): Promise<void> {
 	const [order, pending] = await Promise.all([
-		(general as any)
+		general
 			.selectFrom("payments_game")
 			.select("refunded_at")
 			.where("unique_id", "=", uniqueId)
 			.executeTakeFirst(),
-		(general as any)
+		general
 			.selectFrom("payments_game_childs")
 			.select("id")
 			.where("order_id", "=", uniqueId)
@@ -670,18 +654,18 @@ registerGrantHandler(FULFILLMENT_KIND, async (payload) => {
  */
 export async function revokeGameOrder(orderId: string): Promise<void> {
 	const [childs, items] = await Promise.all([
-		(general as any)
+		general
 			.selectFrom("payments_game_childs")
 			.selectAll()
 			.where("order_id", "=", orderId)
-			.execute() as Promise<any[]>,
-		(general as any)
+			.execute(),
+		general
 			.selectFrom("store_items")
 			.select(["id", "type", "value", "refund_cmd"])
-			.execute() as Promise<any[]>,
+			.execute(),
 	]);
 
-	const itemMap = new Map<number, any>(items.map((item) => [item.id, item]));
+	const itemMap = new Map(items.map((item) => [item.id, item]));
 	const errors: unknown[] = [];
 
 	for (const child of childs) {
@@ -698,7 +682,9 @@ export async function revokeGameOrder(orderId: string): Promise<void> {
 			if (type !== "donate" || !value) continue;
 
 			try {
-				await removeDonateGroup({ recipient: child.recipient, value, fallbackServer: "bisquite" });
+				const effect = donateDefaultEffect(value);
+				await removeDeliveryEffect(child.recipient, effect, { fallbackServer: "bisquite" });
+				publishUpdateGroup({ nickname: child.recipient, permission: effect.permission });
 				await markChildRevoked(child.id);
 			} catch (error) {
 				await markChildRevokeFailed(child.id, error);
@@ -751,20 +737,20 @@ export async function repairPendingGameOrders(limit = 20): Promise<{
 	scanned: number;
 	enqueued: number;
 }> {
-	const db = general as any;
+	const db = general;
 
 	const orders = await db
 		.selectFrom("payments_game as pg")
 		.select(["pg.unique_id", "pg.initiator"])
 		.where("pg.finished_at", "is", null)
 		.where("pg.refunded_at", "is", null)
-		.where((eb: any) => eb.exists(
+		.where((eb) => eb.exists(
 			eb.selectFrom("ledger_entries as le")
 				.select("le.id")
 				.whereRef("le.order_id", "=", "pg.unique_id")
 				.where("le.reason", "like", "store.purchase:%"),
 		))
-		.where((eb: any) => eb.not(
+		.where((eb) => eb.not(
 			eb.exists(
 				eb.selectFrom("grant_jobs as gj")
 					.select("gj.id")

@@ -9,7 +9,7 @@ import { nanoid } from "nanoid";
 
 const DEFAULT_DURATION = 2592000; // 30d;
 /** `api_keys` gained description/duration after the generated DB type. */
-const db = general as any;
+const db = general;
 
 const apiKeySchema = t.Object({
   id: t.Number(),

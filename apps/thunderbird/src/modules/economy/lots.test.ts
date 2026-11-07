@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { planLotConsumption, type SpendableLot } from "./lots";
+import { isRefundReason, lotKindFor, planLotConsumption, type SpendableLot } from "./lots";
 
 function lot(overrides: Partial<SpendableLot> & Pick<SpendableLot, "id">): SpendableLot {
 	return {
@@ -58,5 +58,22 @@ describe("lot FIFO allocation", () => {
 
 		expect(plan.allocations).toEqual([{ lotId: 3, amount: 7 }]);
 		expect(plan.remaining).toBe(0);
+	});
+});
+
+describe("ledger reason classification", () => {
+	it("treats refunds, rollbacks and partial refunds as restores", () => {
+		expect(isRefundReason("store.refund:BELKOIN")).toBe(true);
+		expect(isRefundReason("store.rollback:CHARISM")).toBe(true);
+		expect(isRefundReason("store.partial_refund:BELKOIN")).toBe(true);
+		expect(isRefundReason("store.purchase:BELKOIN")).toBe(false);
+		expect(isRefundReason("payment:BELKOIN")).toBe(false);
+	});
+
+	it("maps credits to refundable and non-refundable lot kinds", () => {
+		expect(lotKindFor("payment:BELKOIN")).toEqual({ kind: "topup", refundable: true });
+		expect(lotKindFor("admin.adjustment")).toEqual({ kind: "adjustment", refundable: false });
+		expect(lotKindFor("migration")).toEqual({ kind: "legacy", refundable: false });
+		expect(lotKindFor("referral.reward")).toEqual({ kind: "reward", refundable: false });
 	});
 });

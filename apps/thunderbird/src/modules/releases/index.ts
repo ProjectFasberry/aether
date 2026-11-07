@@ -56,7 +56,13 @@ export function rewritePlatforms(latest: Latest, origin: string) {
 }
 
 /** Channel manifest of the latest release; the launcher updater polls it. */
-async function latestHandler({ params, request, status }: any) {
+type LatestHandlerContext = {
+  params: { channel: string };
+  request: Request;
+  status: (code: number, response?: unknown) => unknown;
+};
+
+async function latestHandler({ params, request, status }: LatestHandlerContext) {
   const latest = await readLatest(params.channel);
 
   if (!latest) return status(404, wrapError("NOT_FOUND"));

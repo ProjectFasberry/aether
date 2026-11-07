@@ -1,7 +1,8 @@
 import { DateTime } from "#/helpers/typebox";
 import { general } from "#/shared/database/general-db";
 import { type Static, t } from "elysia";
-import { sql, type Kysely } from "kysely";
+import { sql } from "kysely";
+import type { JsonValue } from "@gen/db/general";
 
 export const ORDER_SORTS = ["date", "amount"] as const;
 export const ORDER_DIRECTIONS = ["asc", "desc"] as const;
@@ -69,7 +70,7 @@ export const orderSingleGameSchema = t.Object({
 type OrdersGame = Static<typeof orderGameSchema>;
 
 /** `price`/pagination columns are newer than the generated schema. */
-const db = general as unknown as Kysely<any>;
+const db = general;
 
 const amountExpr = sql<number>`coalesce(("payments_game"."price"->>'BELKOIN')::bigint, 0) + coalesce(("payments_game"."price"->>'CHARISM')::bigint, 0)`;
 const itemsCountExpr = sql<number>`(select count(*) from "payments_game_childs" c where c."order_id" = "payments_game"."unique_id")`;
@@ -118,8 +119,8 @@ export const internalOrders = {
 			.where("payments_game.initiator", "=", initiator)
 			// Pre-ledger orders have an empty price and no purchase entry. Keep
 			// new free orders: they still carry the currency keys in `price`.
-			.where((eb: any) => eb.or([
-				eb("payments_game.price", "<>", sql`'{}'::jsonb`),
+			.where((eb) => eb.or([
+				eb("payments_game.price", "<>", sql<JsonValue>`'{}'::jsonb`),
 				eb.exists(
 					eb.selectFrom("ledger_entries as le")
 						.select("le.id")

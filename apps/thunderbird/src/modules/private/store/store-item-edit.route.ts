@@ -25,11 +25,11 @@ async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSch
     };
   });
 
-  const updates = buildUpdates<Selectable<StoreItems>>(normalized as any);
+  const updates = buildUpdates<Selectable<StoreItems>>(normalized as { field: keyof Selectable<StoreItems>; value: Selectable<StoreItems>[keyof Selectable<StoreItems>] }[]);
 
   const fields = normalized.map((o) => o.field);
 
-  const query = await (general as any)
+  const query = await general
     .updateTable("store_items")
     .set(updates)
     .where("id", "=", id)

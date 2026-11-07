@@ -1,4 +1,4 @@
-export function updateInDeep<T>(obj: T, path: string, value: any): T {
+export function updateInDeep<T>(obj: T, path: string, value: unknown): T {
 	const [head, ...tail] = path.split(".");
 
 	if (obj === null || typeof obj !== "object" || !(head in (obj as object))) {
@@ -7,7 +7,7 @@ export function updateInDeep<T>(obj: T, path: string, value: any): T {
 
 	if (tail.length > 0) {
 		const subPath = tail.join(".");
-		const subObj = (obj as any)[head];
+		const subObj = (obj as Record<string, unknown>)[head];
 
 		const newSubObj = updateInDeep(subObj, subPath, value);
 
@@ -15,17 +15,28 @@ export function updateInDeep<T>(obj: T, path: string, value: any): T {
 	}
 
 	if (obj && typeof obj === "object" && Object.hasOwn(obj, head)) {
-		return { ...obj, [head]: value };
+		return { ...obj, [head]: value } as T;
 	}
 
 	return obj;
 }
-export function hasKeyDeep(obj: Record<string, any>, path: string): boolean {
+export function hasKeyDeep(obj: Record<string, unknown>, path: string): boolean {
 	return (
-		path.split(".").reduce((acc, part) => {
-			return acc && typeof acc === "object" && Object.hasOwn(acc, part) ? acc[part] : undefined;
-		}, obj as any) !== undefined
+		path.split(".").reduce<unknown>((acc, part) => {
+			if (acc && typeof acc === "object" && Object.hasOwn(acc, part)) {
+				return (acc as Record<string, unknown>)[part];
+			}
+
+			return undefined;
+		}, obj) !== undefined
 	);
 }
-export const getDeepValue = (obj: any, path: string) =>
-  path.split(".").reduce((acc, part) => acc && acc[part], obj);
+
+export const getDeepValue = (obj: unknown, path: string): unknown =>
+  path.split(".").reduce<unknown>((acc, part) => {
+    if (acc && typeof acc === "object" && Object.hasOwn(acc, part)) {
+      return (acc as Record<string, unknown>)[part];
+    }
+
+    return undefined;
+  }, obj);

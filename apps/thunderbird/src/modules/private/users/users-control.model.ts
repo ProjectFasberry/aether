@@ -63,7 +63,14 @@ type ExecCmdArgs =
   | { type: "unban", args?: never }
   | { type: "unmute", args?: never }
 
-const EXEC_CMDS: Record<UserRestrictSchema["type"], (payload: any) => string> = {
+type RestrictPayload = {
+  type: string;
+  nickname: string;
+  time?: string | number;
+  reason?: string;
+};
+
+const EXEC_CMDS: Record<UserRestrictSchema["type"], (payload: RestrictPayload) => string> = {
   ban: ({ type, nickname, time, reason }) => `${type} ${nickname} ${time} ${reason}`,
   unban: ({ type, nickname, time, reason }) => `${type} ${nickname} ${time} ${reason}`,
   mute: ({ type, nickname, reason, time }) => `${type} ${nickname} ${time} ${reason}`,
