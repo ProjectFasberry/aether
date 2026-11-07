@@ -42,7 +42,7 @@ SET
   "loader" = 'fabric',
   "loader_version" = '0.16.14',
   "java_major" = 21
-WHERE "origin" IN ('lobby', 'bisquite');
+WHERE "loader_version" IS NULL;
 
 -- Lobby is the fallback for "press Play right after login".
 UPDATE "servers" SET "is_default" = ("origin" = 'lobby');
