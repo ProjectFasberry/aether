@@ -43,8 +43,7 @@
 		"minio": "8.0.7",
 		"mysql2": "3.14.1",
 		"pg": "8.13.1",
-		"typebox": "1.1.39",
-		"yaml": "2.8.3"
+		"typebox": "1.1.39"
 	},
 	"devDependencies": {
 		"@types/pg": "8.11.10"

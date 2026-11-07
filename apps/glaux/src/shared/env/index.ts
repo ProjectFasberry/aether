@@ -19,7 +19,6 @@ const envSchema = Type.Object({
 	/** Base URL for the Telegram Bot API. Set it when the default endpoint is blocked (e.g. a local relay). */
 	TG_API_BASE: Type.Optional(Type.String({ description: "Bot API base URL, e.g. http://127.0.0.1:8081/bot" })),
 	RCON_PASSWORD: Type.String(),
-	TRAEFIK_DYNAMIC_PATH: Type.Optional(Type.String({ description: "Watched Traefik dynamic config file" })),
 	GOTIFY_URL: Type.Optional(Type.String()),
 	GOTIFY_TOKEN: Type.Optional(Type.String()),
 	NATS_USER: Type.String(),
