@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { belkoinFor } from "#/modules/economy/rates.model";
-import { credit, debit } from "#/modules/economy/wallet.model";
+import { credit, refundTopup } from "#/modules/economy/wallet.model";
 import { sendEconomyAlert } from "#/modules/economy/reconciliation.model";
 import { getEnv } from "#/shared/env";
 import type { DB } from "@gen/db/general";
@@ -11,7 +11,7 @@ import { getProvider } from "./providers";
 import { registerGrantHandler } from "#/modules/economy/grant-jobs.model";
 import { fromMinor, type PaymentProviderName, type PaymentStatus } from "./types";
 
-const db = general as unknown as Kysely<DB & { orders: any; payment_events: any }>;
+const db = general as unknown as Kysely<DB & { orders: any; payment_events: any; wallet_lots: any }>;
 
 const DEFAULT_TTL_MINUTES = 15;
 
@@ -44,6 +44,7 @@ export type OrderView = {
 	belkoin: number;
 	payUrl: string | null;
 	expiresAt: Date;
+	refundedBelkoin?: number;
 };
 
 export class PaymentError extends Error {
@@ -52,7 +53,7 @@ export class PaymentError extends Error {
 	}
 }
 
-function view(row: OrderRow): OrderView {
+function view(row: OrderRow, extra?: Pick<OrderView, "refundedBelkoin">): OrderView {
 	return {
 		orderId: row.order_id,
 		provider: row.provider,
@@ -62,6 +63,7 @@ function view(row: OrderRow): OrderView {
 		belkoin: Number(row.belkoin),
 		payUrl: row.pay_url,
 		expiresAt: row.expires_at,
+		...extra,
 	};
 }
 
@@ -153,7 +155,7 @@ export async function listOrders(nickname: string, limit = 50): Promise<OrderVie
 		.limit(limit)
 		.execute() as unknown as OrderRow[];
 
-	return rows.map(view);
+	return rows.map((row) => view(row));
 }
 
 /**
@@ -248,12 +250,10 @@ export async function refundPayment({
 	const order = await getOrder(orderId);
 	if (!order || order.status !== "succeeded") return null;
 
-	await debit(order.nickname, "BELKOIN", Number(order.belkoin), {
-		reason: "payment.refund:BELKOIN",
-		orderId,
-		actor,
-		metadata: { adminReason },
-	});
+	// Only the unspent part of this top-up is returned. Purchases made from the
+	// spent part stay in place; the lot layer prevents a spend-then-refund loop.
+	const refund = await refundTopup({ orderId, actor, adminReason });
+	if (!refund) throw new Error("NOTHING_TO_REFUND");
 
 	await db
 		.updateTable("orders")
@@ -261,7 +261,10 @@ export async function refundPayment({
 		.where("order_id", "=", orderId)
 		.execute();
 
-	return view({ ...order, status: "refunded" });
+	return view(
+		{ ...order, status: "refunded" },
+		{ refundedBelkoin: refund.amount },
+	);
 }
 
 export const ORDER_LIST_SORTS = ["date", "amount"] as const;
@@ -341,6 +344,16 @@ export async function listAllOrders({
 	const hasNextPage = rows.length > limit;
 	if (hasNextPage) rows.pop();
 
+	const lots = rows.length > 0
+		? await db
+			.selectFrom("wallet_lots")
+			.select(["source_order_id", "remaining"])
+			.where("kind", "=", "topup")
+			.where("source_order_id", "in", rows.map((row) => row.order_id))
+			.execute() as Array<{ source_order_id: string; remaining: number | string }>
+		: [];
+	const refundableByOrder = new Map(lots.map((lot) => [lot.source_order_id, Number(lot.remaining)]));
+
 	const last = rows[rows.length - 1];
 
 	return {
@@ -353,6 +366,7 @@ export async function listAllOrders({
 			amountMinor: Number(row.amount_minor),
 			currency: row.currency,
 			belkoin: Number(row.belkoin),
+			refundableBelkoin: refundableByOrder.get(row.order_id) ?? 0,
 			createdAt: row.created_at,
 			expiresAt: row.expires_at,
 			paidAt: row.paid_at,

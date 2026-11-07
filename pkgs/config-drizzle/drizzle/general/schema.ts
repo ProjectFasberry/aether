@@ -980,3 +980,41 @@ export const accountCredentials = pgTable("account_credentials", {
 	passwordHash: text("password_hash").notNull(),
 	passwordUpdatedAt: timestamp("password_updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 });
+
+export const walletLots = pgTable(
+	"wallet_lots",
+	{
+		id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+		nickname: text().notNull(),
+		currency: text().notNull(),
+		kind: text().notNull(),
+		refundable: boolean().default(false).notNull(),
+		amount: bigint({ mode: "number" }).notNull(),
+		remaining: bigint({ mode: "number" }).notNull(),
+		sourceOrderId: text("source_order_id"),
+		sourceLedgerId: bigint("source_ledger_id", { mode: "number" }),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("wallet_lots_spend_idx").using("btree", table.nickname.asc().nullsLast().op("text_ops"), table.currency.asc().nullsLast().op("text_ops"), table.remaining.asc().nullsLast().op("int8_ops"), table.createdAt.asc().nullsLast().op("timestamptz_ops"), table.id.asc().nullsLast().op("int8_ops")),
+		index("wallet_lots_source_idx").using("btree", table.sourceOrderId.asc().nullsLast().op("text_ops")).where(sql`"source_order_id" IS NOT NULL`),
+	],
+);
+
+export const lotAllocations = pgTable(
+	"lot_allocations",
+	{
+		id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+		lotId: bigint("lot_id", { mode: "number" }).notNull().references(() => walletLots.id, { onDelete: "cascade" }),
+		ledgerEntryId: bigint("ledger_entry_id", { mode: "number" }).notNull(),
+		amount: bigint({ mode: "number" }).notNull(),
+		restoredAmount: bigint("restored_amount", { mode: "number" }).default(0).notNull(),
+		direction: text().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("lot_allocations_ledger_idx").using("btree", table.ledgerEntryId.asc().nullsLast().op("int8_ops")),
+		index("lot_allocations_lot_idx").using("btree", table.lotId.asc().nullsLast().op("int8_ops")),
+	],
+);

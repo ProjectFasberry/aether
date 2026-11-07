@@ -5,8 +5,9 @@ import { bisquite } from "#/shared/database/bisquite-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { withRedisLock } from "#/shared/redis/lock";
 import type { DB } from "@gen/db/general";
-import type { Kysely, Transaction } from "kysely";
+import { sql, type Kysely, type Transaction } from "kysely";
 import { enqueueGrantJob, registerGrantHandler } from "./grant-jobs.model";
+import { planLotConsumption } from "./lots";
 
 export const CURRENCIES = ["BELKOIN", "CHARISM"] as const;
 export type Currency = typeof CURRENCIES[number];
@@ -20,6 +21,8 @@ type EconomyDB = {
 	wallets: any;
 	ledger_entries: any;
 	grant_jobs: any;
+	wallet_lots: any;
+	lot_allocations: any;
 };
 
 export type EconomyTrx = Transaction<DB & EconomyDB>;
@@ -159,6 +162,366 @@ async function seedWallet(trx: EconomyTrx, nickname: string, currency: Currency)
 		.execute();
 }
 
+type LotRow = {
+	id: number;
+	nickname: string;
+	currency: string;
+	kind: string;
+	refundable: boolean;
+	amount: number | string;
+	remaining: number | string;
+	source_order_id: string | null;
+	source_ledger_id: number | null;
+	created_at: Date;
+};
+
+function isRefundReason(reason: string): boolean {
+	return reason.startsWith("store.refund:")
+		|| reason.startsWith("store.rollback:")
+		|| reason.startsWith("store.partial_refund:");
+}
+
+/**
+ * Keeps the invariant `sum(lots.remaining) == wallets.balance` before a change.
+ * Balances created before lot tracking (or edited by hand) get one legacy lot
+ * for the uncovered part; legacy money is deliberately not refundable.
+ */
+async function ensureLots(
+	trx: EconomyTrx,
+	nickname: string,
+	currency: Currency,
+	balance: number,
+): Promise<void> {
+	const coveredRow = await trx
+		.selectFrom("wallet_lots")
+		.select(sql<string>`coalesce(sum("remaining"), 0)`.as("covered"))
+		.where("nickname", "=", nickname)
+		.where("currency", "=", currency)
+		.executeTakeFirst();
+
+	const covered = Number(coveredRow?.covered ?? 0);
+	if (covered > balance) throw new Error("LOT_IMBALANCE");
+	if (covered === balance) return;
+
+	const difference = balance - covered;
+
+	await trx
+		.insertInto("wallet_lots")
+		.values({
+			nickname,
+			currency,
+			kind: "legacy",
+			refundable: false,
+			amount: difference,
+			remaining: difference,
+			source_order_id: `legacy:${nickname}:${currency}`,
+		})
+		.execute();
+}
+
+async function consumeLot(
+	trx: EconomyTrx,
+	entry: LedgerRow,
+	lot: LotRow,
+	amount: number,
+): Promise<void> {
+	await trx
+		.updateTable("wallet_lots")
+		.set({
+			remaining: sql`"remaining" - ${amount}`,
+			updated_at: new Date(),
+		})
+		.where("id", "=", lot.id)
+		.execute();
+
+	await trx
+		.insertInto("lot_allocations")
+		.values({
+			lot_id: lot.id,
+			ledger_entry_id: entry.id,
+			amount,
+			direction: "consume",
+		})
+		.execute();
+}
+
+/**
+ * A refund of a purchase restores the exact lots that paid for it. Restores
+ * happen newest allocation first, so a partial refund undoes the last spend.
+ */
+async function restoreLots(
+	trx: EconomyTrx,
+	entry: LedgerRow,
+	nickname: string,
+	currency: Currency,
+	amount: number,
+	orderId: string | null,
+): Promise<void> {
+	let left = amount;
+
+	if (orderId) {
+		const allocations = await trx
+			.selectFrom("lot_allocations as la")
+			.select([
+				"la.id as id",
+				"la.lot_id as lot_id",
+				"la.amount as amount",
+				"la.restored_amount as restored_amount",
+			])
+			.where("la.direction", "=", "consume")
+			.where(
+				"la.ledger_entry_id",
+				"in",
+				trx.selectFrom("ledger_entries")
+					.select("id")
+					.where("order_id", "=", orderId)
+					.where("currency", "=", currency)
+					.where("reason", "like", "store.purchase:%"),
+			)
+			.orderBy("la.id", "desc")
+			.forUpdate()
+			.execute() as Array<{
+				id: number;
+				lot_id: number;
+				amount: number | string;
+				restored_amount: number | string;
+			}>;
+
+		for (const allocation of allocations) {
+			if (left <= 0) break;
+
+			const available = Number(allocation.amount) - Number(allocation.restored_amount ?? 0);
+			if (available <= 0) continue;
+
+			const restore = Math.min(available, left);
+
+			await trx
+				.updateTable("wallet_lots")
+				.set({
+					remaining: sql`"remaining" + ${restore}`,
+					updated_at: new Date(),
+				})
+				.where("id", "=", allocation.lot_id)
+				.execute();
+
+			await trx
+				.updateTable("lot_allocations")
+				.set({ restored_amount: sql`"restored_amount" + ${restore}` })
+				.where("id", "=", allocation.id)
+				.execute();
+
+			await trx
+				.insertInto("lot_allocations")
+				.values({
+					lot_id: allocation.lot_id,
+					ledger_entry_id: entry.id,
+					amount: restore,
+					direction: "restore",
+				})
+				.execute();
+
+			left -= restore;
+		}
+	}
+
+	// The original spend predates lot tracking, or the refund is larger than
+	// the original allocations. Keep the balance covered, but non-refundable.
+	if (left > 0) {
+		await trx
+			.insertInto("wallet_lots")
+			.values({
+				nickname,
+				currency,
+				kind: "legacy",
+				refundable: false,
+				amount: left,
+				remaining: left,
+				source_ledger_id: entry.id,
+			})
+			.execute();
+	}
+}
+
+async function creditLot(
+	trx: EconomyTrx,
+	entry: LedgerRow,
+	nickname: string,
+	currency: Currency,
+	amount: number,
+	reason: string,
+	orderId: string | null,
+): Promise<void> {
+	if (isRefundReason(reason)) {
+		await restoreLots(trx, entry, nickname, currency, amount, orderId);
+		return;
+	}
+
+	const kind = reason === "payment:BELKOIN"
+		? "topup"
+		: reason === "admin.adjustment"
+			? "adjustment"
+			: reason === "migration"
+				? "legacy"
+				: "reward";
+
+	await trx
+		.insertInto("wallet_lots")
+		.values({
+			nickname,
+			currency,
+			kind,
+			refundable: kind === "topup",
+			amount,
+			remaining: amount,
+			source_order_id: kind === "topup" ? orderId : null,
+			source_ledger_id: entry.id,
+		})
+		.execute();
+}
+
+async function debitLots(
+	trx: EconomyTrx,
+	entry: LedgerRow,
+	nickname: string,
+	currency: Currency,
+	amount: number,
+	metadata: Record<string, unknown>,
+): Promise<void> {
+	let left = amount;
+	const explicitLotId = Number(metadata.lotId);
+
+	// A top-up refund must consume its own lot, never another wallet source.
+	if (Number.isInteger(explicitLotId) && explicitLotId > 0) {
+		const lot = await trx
+			.selectFrom("wallet_lots")
+			.selectAll()
+			.where("id", "=", explicitLotId)
+			.forUpdate()
+			.executeTakeFirst() as LotRow | undefined;
+
+		if (!lot) throw new Error("LOT_NOT_FOUND");
+		if (Number(lot.remaining) < left) throw new Error("LOT_INSUFFICIENT");
+
+		await consumeLot(trx, entry, lot, left);
+		return;
+	}
+
+	// Top-up lots are spent first (FIFO), then rewards and adjustments. This
+	// keeps the refundable remainder aligned with what the player actually paid.
+	const lots = await trx
+		.selectFrom("wallet_lots")
+		.selectAll()
+		.where("nickname", "=", nickname)
+		.where("currency", "=", currency)
+		.where("remaining", ">", 0)
+		.orderBy(sql`case when "kind" = 'topup' then 0 else 1 end`, "asc")
+		.orderBy("created_at", "asc")
+		.orderBy("id", "asc")
+		.forUpdate()
+		.execute() as LotRow[];
+
+	const plan = planLotConsumption(lots, left);
+	const byId = new Map(lots.map((lot) => [lot.id, lot]));
+
+	for (const allocation of plan.allocations) {
+		const lot = byId.get(allocation.lotId);
+		if (!lot) continue;
+
+		await consumeLot(trx, entry, lot, allocation.amount);
+	}
+
+	if (plan.remaining > 0) throw new Error("LOT_COVERAGE_MISSING");
+}
+
+/**
+ * Refunds only the unspent part of a top-up. The fiat/provider refund is a
+ * separate concern; this function moves BELKOIN and returns the actual amount.
+ */
+export async function refundTopup({
+	orderId,
+	actor,
+	adminReason,
+}: {
+	orderId: string;
+	actor: string;
+	adminReason: string;
+}): Promise<{ applied: ApplyResult; amount: number } | null> {
+	return economyTransaction().execute(async (trx) => {
+		const existing = await trx
+			.selectFrom("ledger_entries")
+			.selectAll()
+			.where("order_id", "=", orderId)
+			.where("reason", "=", "payment.refund:BELKOIN")
+			.executeTakeFirst() as LedgerRow | undefined;
+
+		if (existing) {
+			return {
+				applied: {
+					balance: Number(existing.balance_after),
+					entry: existing,
+					duplicate: true,
+				},
+				amount: Math.abs(Number(existing.delta)),
+			};
+		}
+
+		const preview = await trx
+			.selectFrom("wallet_lots")
+			.selectAll()
+			.where("source_order_id", "=", orderId)
+			.where("kind", "=", "topup")
+			.executeTakeFirst() as LotRow | undefined;
+
+		if (!preview) return null;
+
+		// Same lock order as every money change: wallet first, then lots. The
+		// preview only tells us which wallet to lock.
+		await trx
+			.selectFrom("wallets")
+			.select("nickname")
+			.where("nickname", "=", preview.nickname)
+			.where("currency", "=", preview.currency)
+			.forUpdate()
+			.executeTakeFirst();
+
+		const lot = await trx
+			.selectFrom("wallet_lots")
+			.selectAll()
+			.where("id", "=", preview.id)
+			.forUpdate()
+			.executeTakeFirst() as LotRow | undefined;
+
+		if (!lot) return null;
+
+		const amount = Number(lot.remaining);
+		if (amount <= 0) return null;
+
+		const applied = await applyInTransaction(trx, {
+			nickname: lot.nickname,
+			currency: lot.currency as Currency,
+			delta: -amount,
+			reason: "payment.refund:BELKOIN",
+			orderId,
+			actor,
+			metadata: { adminReason, lotId: lot.id, source: "payment.refund" },
+		});
+
+		return { applied, amount };
+	});
+}
+
+export async function getRefundable(nickname: string, currency: Currency): Promise<number> {
+	const row = await db
+		.selectFrom("wallet_lots")
+		.select(sql<string>`coalesce(sum("remaining"), 0)`.as("amount"))
+		.where("nickname", "=", nickname)
+		.where("currency", "=", currency)
+		.where("refundable", "=", true)
+		.executeTakeFirst();
+
+	return Number(row?.amount ?? 0);
+}
+
 /**
  * Applies one signed change to a wallet and records it in the ledger.
  *
@@ -208,7 +571,10 @@ export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Pr
 		.forUpdate()
 		.executeTakeFirstOrThrow();
 
-	const balance = Number(wallet.balance) + delta;
+	const currentBalance = Number(wallet.balance);
+	await ensureLots(trx, nickname, currency, currentBalance);
+
+	const balance = currentBalance + delta;
 	if (balance < 0) throw new Error("INSUFFICIENT_FUNDS");
 
 	await trx
@@ -232,6 +598,12 @@ export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Pr
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow() as unknown as LedgerRow;
+
+	if (delta > 0) {
+		await creditLot(trx, entry, nickname, currency, delta, reason, orderId);
+	} else {
+		await debitLots(trx, entry, nickname, currency, Math.abs(delta), metadata);
+	}
 
 	return { balance, entry, duplicate: false };
 }

@@ -164,6 +164,10 @@ const refunds = new Elysia()
 				return status(400, wrapError("INSUFFICIENT_FUNDS"));
 			}
 
+			if (error instanceof Error && error.message === "NOTHING_TO_REFUND") {
+				return status(400, wrapError("NOTHING_TO_REFUND"));
+			}
+
 			throw error;
 		}
 	}, {
