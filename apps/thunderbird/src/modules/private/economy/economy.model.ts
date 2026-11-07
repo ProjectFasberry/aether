@@ -177,6 +177,17 @@ export async function refundOrder({
 
 		const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
 
+		// A duplicate skipped at delivery already refunded its own child. A
+		// later full refund must credit only the remaining net amount.
+		const partialRefunds = new Map<string, number>();
+		for (const entry of entries) {
+			if (!entry.reason.startsWith("store.partial_refund:")) continue;
+			partialRefunds.set(
+				entry.currency,
+				(partialRefunds.get(entry.currency) ?? 0) + Math.abs(Number(entry.delta)),
+			);
+		}
+
 		if (gameOrder.refunded_at) {
 			// A retry may be the first place that sees a refund written by an
 			// older build without a revoke job.
@@ -214,8 +225,11 @@ export async function refundOrder({
 			const currency = entry.currency as Currency;
 			if (!CURRENCIES.includes(currency)) continue;
 
-			const amount = Math.abs(Number(entry.delta));
+			const alreadyRefunded = partialRefunds.get(currency) ?? 0;
+			const amount = Math.max(0, Math.abs(Number(entry.delta)) - alreadyRefunded);
 			if (amount === 0) continue;
+
+			partialRefunds.set(currency, 0);
 
 			const credited = await credit(entry.nickname, currency, amount, {
 				reason: `store.refund:${currency}`,
