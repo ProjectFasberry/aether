@@ -6,6 +6,7 @@ import { auth } from "#/modules/auth/auth.model";
 import { defineRequiredClientUser } from "#/lib/define";
 import { ipPlugin } from "#/lib/plugins";
 import { getEnv } from "#/shared/env";
+import { general } from "#/shared/database/general-db";
 import { redisService } from "#/shared/redis/client";
 import { buildRouteSummary } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
@@ -41,6 +42,23 @@ const CONSUME_SCRIPT = `
 local value = redis.call("GET", KEYS[1])
 if value then redis.call("DEL", KEYS[1]) end
 return value`;
+
+/**
+ * The server list flag is a pre-connect block: no ticket is issued and no
+ * reconnect pass is honoured while ops disabled the backend.
+ */
+async function serverUnavailable(server: string | null): Promise<boolean> {
+  if (!server) return false;
+
+  const row = await general
+    .selectFrom("servers")
+    .select(["available"])
+    .where("origin", "=", server.toLowerCase())
+    .executeTakeFirst();
+
+  // Unknown ids are left to the proxy routing/forced-hosts check.
+  return row ? !row.available : false;
+}
 
 function gateSecret(): string | null {
   return getEnv().GATE_SECRET ?? null;
@@ -81,6 +99,10 @@ const ticketRoute = new Elysia()
         return status(400, wrapError("SERVER_ID_INVALID"));
       }
 
+      if (await serverUnavailable(server)) {
+        return status(403, wrapError("SERVER_UNAVAILABLE"));
+      }
+
       const ticket = encodeBase32LowerCaseNoPadding(crypto.getRandomValues(new Uint8Array(32)));
       const record: TicketPayload = {
         nickname: payload.nickname,
@@ -101,6 +123,7 @@ const ticketRoute = new Elysia()
         200: withData(t.Object({ ticket: t.String(), expires_at: DateTime })),
         400: withError(t.String()),
         401: withError(t.String()),
+        403: withError(t.String()),
         429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
       },
       detail: {
@@ -141,6 +164,11 @@ const verifyRoute = new Elysia().post(
     // for one server cannot be replayed against another.
     if (record.server && body.server && record.server !== body.server) {
       return status(403, wrapError("TICKET_SERVER_MISMATCH"));
+    }
+
+    // The flag can flip between issuing and consuming a ticket.
+    if (await serverUnavailable(record.server)) {
+      return status(403, wrapError("SERVER_UNAVAILABLE"));
     }
 
     // The player is in the game now. Keep a short-lived pass so that a
@@ -204,6 +232,10 @@ const reconnectRoute = new Elysia().post(
 
     if (record.server && body.server && record.server !== body.server) {
       return status(403, wrapError("TICKET_SERVER_MISMATCH"));
+    }
+
+    if (await serverUnavailable(record.server)) {
+      return status(403, wrapError("SERVER_UNAVAILABLE"));
     }
 
     // Sliding window: an active player is never kicked out by the pass expiring.
