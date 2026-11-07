@@ -468,9 +468,10 @@ export const sessions = {
     return tokensToDelete.length;
   },
   /**
-   * Deletes one session by its opaque id. The acting session must be at least
-   * `SESSION_MANAGE_MIN_AGE_MS` old, and it cannot delete itself.
-   * Returns false when the id is unknown (already deleted or expired).
+   * Deletes one session by its opaque id. A freshly logged-in session may
+   * revoke a stolen one immediately; only the mass logout keeps the age gate.
+   * The acting session cannot delete itself. Returns false when the id is
+   * unknown (already deleted or expired).
    */
   async deleteById({
     nickname,
@@ -484,7 +485,7 @@ export const sessions = {
     const redisClient = redisService.getInstance();
     const sessionsListKey = sessions.getUserSessionsKey(nickname);
 
-    await assertCanManageSessions(nickname, sessionToken);
+    await assertCanManageSessions(nickname, sessionToken, { requireAge: false });
 
     if (targetId === sessionId(sessionToken)) {
       throw new Error("CANNOT_DELETE_CURRENT");
@@ -515,14 +516,21 @@ export const sessions = {
   },
 };
 
-/** The acting session must exist and be old enough to manage the other ones. */
-async function assertCanManageSessions(nickname: string, sessionToken: string): Promise<void> {
+/**
+ * The acting session must exist. Revoking one other session is allowed right
+ * after login; deleting every other session keeps the age gate.
+ */
+async function assertCanManageSessions(
+  nickname: string,
+  sessionToken: string,
+  { requireAge = true }: { requireAge?: boolean } = {},
+): Promise<void> {
   const redisClient = redisService.getInstance();
   const score = await redisClient.zscore(sessions.getUserSessionsKey(nickname), sessionToken);
 
   if (score === null) throw new Error("INSUFFICIENT_PERMISSION_BY_EXISTANCE");
 
-  if (Date.now() - Number(score) < SESSION_MANAGE_MIN_AGE_MS) {
+  if (requireAge && Date.now() - Number(score) < SESSION_MANAGE_MIN_AGE_MS) {
     throw new Error("INSUFFICIENT_PERMISSION_BY_TIME");
   }
 }

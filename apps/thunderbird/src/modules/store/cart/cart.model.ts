@@ -19,23 +19,36 @@ export const cartListItemSchema = t.Object({
   description: t.Nullable(t.String()),
   imageUrl: t.String(),
   price: t.Number(),
+  priceSnapshot: t.Number(),
+  priceChanged: t.Boolean(),
   recipient: t.String(),
   selected: t.Boolean(),
   quantity: t.Number(),
   value: t.String(),
   type: t.String(),
-  command: t.Nullable(t.String()),
   currency: t.String(),
 })
 
 export const cartPriceSchema = t.Object({
   CHARISM: t.Number(),
-  BELKOIN: t.Number()
+  BELKOIN: t.Number(),
+  server: t.String(),
+  available: t.Boolean(),
+  purchasable: t.Boolean()
 })
+
+export const cartMetaSchema = t.Composite([
+  withMeta,
+  t.Object({
+    server: t.String(),
+    available: t.Boolean(),
+    purchasable: t.Boolean()
+  })
+])
 
 export const cartListSchema = t.Object({
   data: t.Array(cartListItemSchema),
-  meta: withMeta
+  meta: cartMetaSchema
 });
 
 export const cartItem = {
@@ -114,7 +127,7 @@ export const cartItem = {
     return data
   },
   async getList(initiator: string) {
-    const items = await general
+    const items = await (general as any)
       .selectFrom("store_cart_items")
       .innerJoin("store_items", "store_items.id", "store_cart_items.product_id")
       .select([
@@ -124,7 +137,10 @@ export const cartItem = {
         "store_items.price",
         "store_items.type",
         "store_items.value",
-        "store_cart_items.recipient"
+        "store_items.command",
+        "store_items.refund_cmd",
+        "store_cart_items.recipient",
+        "store_cart_items.price_snapshot"
       ])
       .where("store_cart_items.initiator", "=", initiator)
       .where("store_cart_items.selected", "=", true)
@@ -140,13 +156,13 @@ export const cartItem = {
         "store_items.id",
         "store_items.title",
         "store_items.description",
-        "store_items.command",
         "store_items.currency",
         "store_items.type",
         "store_items.imageUrl",
         "store_items.content",
         "store_items.value",
         "store_items.price",
+        "store_cart_items.price_snapshot",
         "store_cart_items.selected",
         "store_cart_items.recipient",
         "store_cart_items.quantity",
@@ -156,24 +172,31 @@ export const cartItem = {
         "store_items.id",
         "store_items.title",
         "store_items.description",
-        "store_items.command",
         "store_items.currency",
         "store_items.type",
         "store_items.content",
         "store_items.imageUrl",
         "store_items.value",
         "store_items.price",
+        "store_cart_items.price_snapshot",
         "store_cart_items.selected",
         "store_cart_items.recipient",
         "store_cart_items.quantity",
       ])
       .execute()
 
-    const products = query.map((item) => ({
-      ...item,
-      imageUrl: processImageUrl(item.imageUrl),
-      price: definePrice(item.currency, item.price)
-    }))
+    const products = query.map((item) => {
+      const price = definePrice(item.currency, item.price);
+      const priceSnapshot = definePrice(item.currency, item.price_snapshot);
+
+      return {
+        ...item,
+        imageUrl: processImageUrl(item.imageUrl),
+        price,
+        priceSnapshot,
+        priceChanged: price !== priceSnapshot,
+      };
+    })
 
     return products
   }

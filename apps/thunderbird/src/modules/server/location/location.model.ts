@@ -17,13 +17,15 @@ export async function getLocation(nickname: string) {
 	const payload = { event: SUBJECTS.SERVER.EVENTS.USER.GET_LOCATION, nickname };
 
 	try {
-		const res = await nc.request(SUBJECTS.SERVER.EVENTS.USER.EVENT, JSON.stringify(payload), { timeout: 1000 });
+		const res = await nc.request(SUBJECTS.SERVER.EVENTS.USER.EVENT, JSON.stringify(payload), { timeout: 1500 });
 		if (!res) return null;
 
 		const data = res.json<Omit<UserLocation, "customLocation">>();
 		return data;
-	} catch (e) {
-		throw e;
+	} catch {
+		// No backend answered: the player is offline or no server bridge is
+		// listening. The route treats this as "location unknown", not an error.
+		return null;
 	}
 }
 

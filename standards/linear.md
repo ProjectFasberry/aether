@@ -22,6 +22,7 @@ exactly the backend surface.
 |---|---|---|
 | `AI` | `7a671200-4b24-4682-9eaf-c21f2d8619b3` | every agent-created issue |
 | `api` | `c83659bd-200d-482b-89d0-828a59769c80` | public API: routes, auth, payments, integrations |
+| `economy` | `91094981-9447-4539-8e00-7c2462a75e88` | currencies, ledger, rates, store, payment rails |
 | `thunderbird` | `44e038e2-f8ac-41c9-be9c-726fc6f6de0d` | anything inside `apps/thunderbird` |
 | `Infra` | `8bd80203-ee68-4e79-8658-7ea85692b553` | hosts, docker, networks, backups, deploy |
 | `config` | `4c61f3e6-5c86-4e85-bfd6-f534f86adc2e` | plugin/server configuration |

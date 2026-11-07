@@ -121,3 +121,10 @@ this app adds `thunderbird`. Labels, priorities and the MCP recipe are in
 
 Conventional commits (`.cz.toml`), short and lowercase, e.g.
 `fix: drop the mnemonic hash from register`. Never commit without asking.
+
+## Infra boundary
+
+Host topology, compose files, Traefik, the registry and the rollout live in
+`ProjectFasberry/infra`. This repository builds and publishes images only: no host
+names, ports, paths or deploy commands belong here.
+

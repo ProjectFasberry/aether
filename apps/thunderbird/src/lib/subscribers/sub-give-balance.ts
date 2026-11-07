@@ -1,32 +1,39 @@
-import { playerpoints } from "#/shared/database/playerpoints-db";
+import { general } from "#/shared/database/general-db";
+import { credit } from "#/modules/economy/wallet.model";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import type { Msg, NatsConnection } from "@nats-io/nats-core";
-import { sql } from "kysely";
+
+/** Kept as the server-side test/gift amount; the ledger records each call. */
+const GIVE_AMOUNT = 5;
 
 async function handleGiveBalance(msg: Msg) {
 	const nickname = msg.data.toString();
 
 	try {
-		const res = await playerpoints
-			.updateTable("playerpoints_points")
-			.set({ points: sql`points + 5` })
-			.where(
-				"uuid",
-				"=",
-        playerpoints
-          .selectFrom("playerpoints_username_cache")
-          .select("uuid")
-          .where("username", "=", nickname),
-			)
-			.executeTakeFirstOrThrow();
+		const account = await general
+			.selectFrom("accounts")
+			.select("uuid")
+			.where("lower_nickname", "=", nickname.toLowerCase())
+			.executeTakeFirst();
 
-    const payload = res.numUpdatedRows
-      ? JSON.stringify({ result: "ok" })
-      : JSON.stringify({ error: "not updated" });
+		if (!account) {
+			msg.respond(JSON.stringify({ error: "not updated" }));
+			return;
+		}
 
-		msg.respond(payload);
+		// A retried request with the same message id credits once.
+		const orderId = msg.headers?.get("Nats-Msg-Id") ?? undefined;
+
+		const result = await credit(nickname, "BELKOIN", GIVE_AMOUNT, {
+			reason: "server.give_balance",
+			orderId,
+			actor: "server",
+		});
+
+		msg.respond(JSON.stringify({ result: "ok", balance: result.balance }));
 	} catch (e) {
-		logErrorMsg(e);
+		logErrorMsg(e, { subject: "give-balance" });
+		msg.respond(JSON.stringify({ error: "not updated" }));
 	}
 }
 

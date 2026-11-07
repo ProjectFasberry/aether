@@ -16,6 +16,13 @@ export type PaymentMeta = {
 	paymentValue: PaymentDonateType | string | number;
 };
 
+export type CreateOrderSkippedItem = {
+	id: number;
+	title: string;
+	recipient: string;
+	reason: "PERMISSION_ALREADY_PRESENT";
+};
+
 export type CreateOrderRoutePayload = {
 	purchase: {
 		uniqueId: string;
@@ -26,4 +33,6 @@ export type CreateOrderRoutePayload = {
 			CHARISM: number;
 		};
 	};
+	/** Items that were already owned and therefore not charged. */
+	skipped?: CreateOrderSkippedItem[];
 };

@@ -6,7 +6,10 @@ import { buildRouteSummary } from "#/utils";
 
 const balancePayload = t.Object({
   CHARISM: t.Number(),
-  BELKOIN: t.Number()
+  BELKOIN: t.Number(),
+  server: t.String(),
+  available: t.Boolean(),
+  purchasable: t.Boolean()
 })
 
 export const balance = new Elysia()

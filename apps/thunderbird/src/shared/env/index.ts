@@ -5,6 +5,8 @@ export const isProduction = Bun.env.NODE_ENV === "production";
 
 const envSchema = z.object({
   PORT: z.coerce.number(),
+  /** Listen address. `127.0.0.1` keeps the API off the LAN: Traefik runs on the host. */
+  HOST: z.string().optional().default("0.0.0.0"),
   /** Deploy stage: `prod` serves the public release channel, anything else `dev`. */
   STAGE: z.string().optional().default("dev"),
   NATS_HOST: z.string().min(1),
@@ -15,6 +17,8 @@ const envSchema = z.object({
   PLAYERPOINTS_MYSQL_URI: z.url(),
   LOBBY_MYSQL_URI: z.url(),
   BISQUITE_MYSQL_URI: z.url(),
+  /** Optional Muffin/CMI database; without it the server is unavailable. */
+  MUFFIN_MYSQL_URI: z.optional(z.url()),
   GENERAL_POSTGRES_URI: z.url(),
   LIBERTYBANS_POSTGRES_URI: z.url(),
   LUCKPERMS_POSTGRES_URI: z.url(),
@@ -34,6 +38,18 @@ const envSchema = z.object({
   /** Shared secret for the Velocity join gate; when unset, verification is off. */
   GATE_SECRET: z.optional(z.string().min(16)),
   MINESKIN_API_KEY: z.string().min(1),
+  /** Payments. A provider without credentials stays disabled. */
+  SBP_PROVIDER_URL: z.optional(z.url()),
+  SBP_MERCHANT_ID: z.optional(z.string().min(1)),
+  SBP_API_KEY: z.optional(z.string().min(1)),
+  HELEKET_API_URL: z.optional(z.url()),
+  HELEKET_MERCHANT_UUID: z.optional(z.string().min(1)),
+  HELEKET_API_KEY: z.optional(z.string().min(1)),
+  PAYMENT_INVOICE_TTL_MINUTES: z.optional(z.coerce.number().min(1).max(1440)),
+  /** Use the structured LuckPerms bridge in nats-spigot instead of direct SQL. */
+  LUCKPERMS_BRIDGE: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
+  /** Send a chat debug message to the recipient after a bridge grant/revoke. */
+  LUCKPERMS_BRIDGE_DEBUG: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
   MINESKIN_AES_SECRET_KEY: z.string().min(1),
   verbose: z.boolean().optional().default(false)
 });

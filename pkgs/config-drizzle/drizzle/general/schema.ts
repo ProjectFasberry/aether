@@ -8,6 +8,7 @@ import {
 	boolean,
 	timestamp,
 	jsonb,
+	numeric,
 	unique,
 	check,
 	foreignKey,
@@ -30,7 +31,7 @@ export const paymentCryptoTonStatus = pgEnum("payment_crypto_ton_status", [
 	"cancelled",
 	"failed",
 ]);
-export const paymentStatus = pgEnum("payment_status", ["pending", "waitingForCapture", "succeeded", "canceled"]);
+
 export const playerActivityEvent = pgEnum("player_activity_event", ["join", "quit"]);
 export const storeCurrency = pgEnum("store_currency", ["CHARISM", "BELKOIN"]);
 
@@ -776,6 +777,20 @@ export const paymentsGameChilds = pgTable("payments_game_childs", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 	recipient: text().notNull(),
 	orderId: text("order_id").notNull(),
+	line: integer("line"),
+	type: text("type"),
+	value: text("value"),
+	command: text("command"),
+	refundCmd: text("refund_cmd"),
+	price: numeric("price", { precision: 14, scale: 2 }),
+	currency: text("currency"),
+	effect: jsonb("effect"),
+	deliveryStatus: text("delivery_status").default("pending").notNull(),
+	deliveryAttempts: integer("delivery_attempts").default(0).notNull(),
+	deliveredAt: timestamp("delivered_at", { withTimezone: true, mode: "string" }),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
+	lastError: text("last_error"),
+	commandId: text("command_id"),
 });
 
 export const tgLogsChats = pgTable("tg_logs_chats", {
@@ -805,21 +820,6 @@ export const playersSocialsAvailable = pgTable("players_socials_available", {
 		}),
 	value: text().notNull(),
 	isAvailable: boolean().default(true),
-});
-
-export const payments = pgTable("payments", {
-	id: integer().notNull(),
-	orderId: text("order_id").notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-	status: paymentStatus().notNull(),
-	payload: text().notNull(),
-	price: text().notNull(),
-	invoiceId: integer("invoice_id").notNull(),
-	uniqueId: text("unique_id").notNull(),
-	payUrl: text("pay_url").notNull(),
-	asset: text().notNull(),
-	initiator: text().notNull(),
-	comment: text(),
 });
 
 export const paymentsGame = pgTable("payments_game", {
@@ -965,3 +965,45 @@ export const accountCredentials = pgTable("account_credentials", {
 	passwordHash: text("password_hash").notNull(),
 	passwordUpdatedAt: timestamp("password_updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 });
+
+export const walletLots = pgTable(
+	"wallet_lots",
+	{
+		id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+		nickname: text().notNull(),
+		currency: text().notNull(),
+		kind: text().notNull(),
+		refundable: boolean().default(false).notNull(),
+		amount: bigint({ mode: "number" }).notNull(),
+		remaining: bigint({ mode: "number" }).notNull(),
+		sourceOrderId: text("source_order_id"),
+		sourceLedgerId: bigint("source_ledger_id", { mode: "number" }),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("wallet_lots_spend_idx").using("btree", table.nickname.asc().nullsLast().op("text_ops"), table.currency.asc().nullsLast().op("text_ops"), table.remaining.asc().nullsLast().op("int8_ops"), table.createdAt.asc().nullsLast().op("timestamptz_ops"), table.id.asc().nullsLast().op("int8_ops")),
+		index("wallet_lots_source_idx").using("btree", table.sourceOrderId.asc().nullsLast().op("text_ops")).where(sql`"source_order_id" IS NOT NULL`),
+		check("wallet_lots_amount_nonnegative", sql`${table.amount} >= 0`),
+		check("wallet_lots_remaining_range", sql`${table.remaining} >= 0 AND ${table.remaining} <= ${table.amount}`),
+	],
+);
+
+export const lotAllocations = pgTable(
+	"lot_allocations",
+	{
+		id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+		lotId: bigint("lot_id", { mode: "number" }).notNull().references(() => walletLots.id, { onDelete: "cascade" }),
+		ledgerEntryId: bigint("ledger_entry_id", { mode: "number" }).notNull(),
+		amount: bigint({ mode: "number" }).notNull(),
+		restoredAmount: bigint("restored_amount", { mode: "number" }).default(0).notNull(),
+		direction: text().notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("lot_allocations_ledger_idx").using("btree", table.ledgerEntryId.asc().nullsLast().op("int8_ops")),
+		index("lot_allocations_lot_idx").using("btree", table.lotId.asc().nullsLast().op("int8_ops")),
+		check("lot_allocations_amount_positive", sql`${table.amount} > 0`),
+		check("lot_allocations_restored_range", sql`${table.restoredAmount} >= 0 AND ${table.restoredAmount} <= ${table.amount}`),
+	],
+);

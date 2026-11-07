@@ -74,7 +74,6 @@ export const boot = createBootstrap([
     }), {
       timeout: 20_000
     }),
-    critical: false
   }),
   definePipe("redis", {
     run: async () => {

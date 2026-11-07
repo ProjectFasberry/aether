@@ -9,11 +9,12 @@ import { banners } from "./banners";
 import { modpacks } from "./modpacks";
 import { events } from "./events";
 import { history } from "./history";
-import { chat } from "./chat";
 import { dictionaries } from "./dictionaries";
 import { volume } from "./volume";
 import { lands } from "./lands";
 import { api } from "./api";
+import { releases } from "./releases";
+import { economy } from "./economy";
 
 const infra = new Elysia()
   .group("", app => app
@@ -33,9 +34,10 @@ const entities = new Elysia()
     .use(modpacks)
     .use(events)
     .use(history)
-    .use(chat)
     .use(dictionaries)
     .use(lands)
+    .use(releases)
+    .use(economy)
   );
 
 export const privated = new Elysia()

@@ -3,7 +3,7 @@ import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
 import { SUBSCRIBERS } from "./subscribers";
 import { NATS_CONSUMERS, NATS_CONSUMERS_CB, NATS_JS_STREAMS } from "./cons";
-import { jetstream, jetstreamManager } from "@nats-io/jetstream";
+import { jetstreamManager } from "@nats-io/jetstream";
 import { invariant } from "#/utils";
 import { getEnv } from "#/shared/env"
 import { isError } from "@repo/shared/utils";
@@ -68,7 +68,6 @@ export const natsService = {
       this.logger.error(`Error subscribing`, e);
     }
 
-    const js = jetstream(nc);
     const jsm = await jetstreamManager(nc);
 
     for (const { name, subjects } of NATS_JS_STREAMS) {
@@ -80,12 +79,22 @@ export const natsService = {
       }
     }
 
-    for (const { name, stream_name } of Object.entries(NATS_CONSUMERS).flatMap(([_, arr]) => arr)) {
-      try {
-        const consumer = await js.consumers.get(stream_name, name);
-        this.logger.info(`Consumer "${name}"`);
-      } catch (e) {
-        const consumerInfo = await jsm.consumers.add(stream_name, { name });
+    for (const spec of Object.entries(NATS_CONSUMERS).flatMap(([_, arr]) => arr)) {
+      const { name, stream_name, ...config } = spec;
+
+      const existing = await jsm.consumers.info(stream_name, name).catch(() => null);
+
+      if (existing) {
+        try {
+          await jsm.consumers.update(stream_name, name, config);
+          this.logger.info(`Consumer "${name}" updated`);
+        } catch (e) {
+          // An older server may reject a mutable field. The consumer still
+          // works; the client-side retry/DLQ limits remain active.
+          this.logger.warn(`Consumer "${name}" update failed: ${isError(e) ? e.message : e}`);
+        }
+      } else {
+        await jsm.consumers.add(stream_name, { name, ...config });
         this.logger.info(`Consumer "${name}" added`);
       }
     }

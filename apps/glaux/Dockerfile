@@ -25,14 +25,15 @@ RUN set -eu; \
 
 WORKDIR /
 
-COPY bun.lock* package.json bunfig.toml ./
+# Manifests first: the dependency layer must survive source changes.
+COPY --parents package.json bun.lock bunfig.toml apps/glaux/package.json apps/workers/*/package.json pkgs/*/package.json ./
+RUN bun install --frozen-lockfile --ignore-scripts
+
 COPY apps/glaux ./apps/glaux
 COPY pkgs ./pkgs
 
 COPY apps/glaux/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
-
-RUN bun install --ignore-scripts
 
 WORKDIR /apps/glaux
 RUN if [ "$STAGE" = "prod" ]; then bun run build:prod; else bun run build; fi
@@ -49,11 +50,8 @@ ENV STAGE=$STAGE
 
 WORKDIR /
 
-COPY --from=build /package.json /bun.lock ./
-COPY --from=build /apps/glaux/package.json ./apps/glaux/package.json
-COPY --from=build /pkgs ./pkgs
-
-RUN bun install --production --ignore-scripts
+COPY --from=build --parents /package.json /bun.lock /apps/glaux/package.json /apps/workers/*/package.json /pkgs/*/package.json ./
+RUN bun install --frozen-lockfile --production --ignore-scripts
 
 COPY --from=build /usr/bin/infisical /usr/bin/infisical
 COPY --from=build /entrypoint.sh /entrypoint.sh

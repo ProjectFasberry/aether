@@ -10,13 +10,18 @@ export async function handleByBearer(bearer: string): Promise<boolean> {
     .update(bearer)
     .digest("hex");
 
-  const query = await general
+  const query = await (general as any)
     .selectFrom("api_keys")
-    .select("id")
+    .select(["id", "created_at", "duration"])
     .where("key", "=", hash)
     .executeTakeFirst();
 
-	return Boolean(query?.id);
+  if (!query?.id) return false;
+
+  // A null duration is a legacy key without an expiry; new keys store seconds.
+  if (query.duration == null) return true;
+
+  return new Date(query.created_at).getTime() + Number(query.duration) * 1000 > Date.now();
 }
 
 export const defineOptionalUser = () =>

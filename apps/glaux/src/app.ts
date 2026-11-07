@@ -48,7 +48,12 @@ const app = new Elysia(appConfig)
   .use(corsPlugin())
   .use(openApiPlugin())
   .use(root)
-  .onError(({ code, error }) => {
+  .onError(({ code, error, set }) => {
+    // Elysia's `throw status(401)` is an Error; without copying the numeric code
+    // every auth failure would leave as a 500.
+    const customStatus = (error as { code?: unknown }).code;
+    if (typeof customStatus === "number") set.status = customStatus;
+
     let message: string | ValidationError = "INTERNAL_SERVER_ERROR";
 
     if (code === "VALIDATION") {

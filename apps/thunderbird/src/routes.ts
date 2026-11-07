@@ -1,5 +1,6 @@
 import Elysia from "elysia";
 import { store } from "./modules/store";
+import { payments } from "./modules/payments/payment.route";
 import { auth } from "./modules/auth";
 import { serverGroup } from "./modules/server";
 import { rate } from "./modules/user/like.route";
@@ -48,6 +49,7 @@ export const main = new Elysia()
   .use(me)
   .use(serverGroup)
   .use(store)
+  .use(payments)
   .use(rate)
   .use(account)
 

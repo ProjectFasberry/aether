@@ -6,18 +6,30 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
+import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
 import type { Selectable } from "kysely";
 import { buildUpdates } from "#/utils/config/transforms";
 import { buildRouteSummary } from "#/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
+import { store } from "../../store/items/store-items.model";
 
 const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
-  const updates = buildUpdates<Selectable<StoreItems>>(values);
+  const normalized = values.map((entry) => {
+    if (entry.field !== "command" && entry.field !== "refund_cmd") return entry;
 
-  const fields = values.map((o) => o.field);
+    return {
+      ...entry,
+      value: normalizeStoreCommand(typeof entry.value === "string" ? entry.value : null),
+    };
+  });
 
-  const query = await general
+  const updates = buildUpdates<Selectable<StoreItems>>(normalized as any);
+
+  const fields = normalized.map((o) => o.field);
+
+  const query = await (general as any)
     .updateTable("store_items")
     .set(updates)
     .where("id", "=", id)
@@ -51,8 +63,24 @@ const storeItemEditFields = new Elysia()
     },
   });
 
+const storeItemGet = new Elysia()
+  .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
+  .get("/:id", async ({ params: { id }, status }) => {
+    const data = await store.getItemForEdit(id);
+
+    if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));
+
+    return { data };
+  }, {
+    params: t.Object({ id: t.Number() }),
+    detail: {
+      summary: buildRouteSummary("Get a store item for editing"),
+    },
+  });
+
 export const storeItemEditGroup = new Elysia()
   .group("", app => app
     .use(storeItemEditFields)
+    .use(storeItemGet)
     .use(storeItemEdit)
   );

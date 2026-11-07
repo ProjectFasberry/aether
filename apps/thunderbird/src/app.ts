@@ -7,6 +7,7 @@ import { session } from "./modules/auth/login.model";
 import { appLogger } from "./shared/constants/logger";
 import { main, root } from "./routes";
 import { corsPlugin, ipPlugin, isAllowedOrigin, loggerPlugin } from "./lib/plugins";
+import { publicRateLimit } from "./lib/plugins/public-rate-limit";
 import { SESSION_KEY } from "./utils/auth/cookie";
 import { logging } from "./shared/constants";
 import { safeJsonParse } from "./utils";
@@ -23,6 +24,7 @@ const app = new Elysia(appConfig)
   .use(openApiPlugin())
   .use(serverTimingPlugin())
   .use(ipPlugin())
+  .use(publicRateLimit())
   .use(corsPlugin())
   // A cross-site request still reaches the server even when CORS blocks the
   // response, so cookie-authenticated mutations need an explicit origin check.
@@ -101,7 +103,7 @@ export function startApp() {
     showRoutes({ routes: app.routes });
   }
 
-  app.listen(getEnv().PORT);
+  app.listen({ port: getEnv().PORT, hostname: getEnv().HOST });
 
   appLogger.child({ name: "server" }).info(
     `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`

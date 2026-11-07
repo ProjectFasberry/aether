@@ -5,6 +5,7 @@ import { buildRouteSummary } from "#/utils";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/helpers"
+import { charism, CHARISM_SERVERS } from "#/modules/economy/charism";
 
 const cartAddItem = new Elysia()
   .use(defineRequiredUser())
@@ -91,10 +92,21 @@ const cartEditItem = new Elysia()
 
 const cartPrice = new Elysia()
   .use(defineRequiredUser())
-  .get("/price", async ({ nickname: initiator }) => {
+  .get("/price", async ({ nickname: initiator, query }) => {
+    const server = query.server ?? "bisquite";
+    const provider = charism.get(server);
     const data = await defineGlobalPrice(initiator);
-    return { data }
+
+    return {
+      data: {
+        ...data,
+        server,
+        available: Boolean(provider?.available()),
+        purchasable: Boolean(provider?.purchasable()),
+      }
+    }
   }, {
+    query: t.Object({ server: t.Optional(t.UnionEnum(CHARISM_SERVERS)) }),
     response: {
       200: withData(cartPriceSchema)
     },
@@ -105,7 +117,9 @@ const cartPrice = new Elysia()
 
 const cartList = new Elysia()
   .use(defineRequiredUser())
-  .get("/list", async ({ nickname: initiator }) => {
+  .get("/list", async ({ nickname: initiator, query }) => {
+    const server = query.server ?? "bisquite";
+    const provider = charism.get(server);
     const data = await cartItem.getData(initiator)
 
     return {
@@ -113,11 +127,15 @@ const cartList = new Elysia()
         data,
         meta: {
           hasNextPage: false,
-          hasPrevPage: false
+          hasPrevPage: false,
+          server,
+          available: Boolean(provider?.available()),
+          purchasable: Boolean(provider?.purchasable())
         }
       }
     }
   }, {
+    query: t.Object({ server: t.Optional(t.UnionEnum(CHARISM_SERVERS)) }),
     response: {
       200: withData(cartListSchema)
     },

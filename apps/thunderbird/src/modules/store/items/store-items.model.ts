@@ -29,7 +29,6 @@ export const storeItemsItemSchema = t.Object({
   description: t.Nullable(t.String()),
   imageUrl: t.String(),
   type: t.String(),
-  command: t.Nullable(t.String()),
   value: t.String(),
   currency: t.String(),
   price: t.Number(),
@@ -45,7 +44,7 @@ export const storeItemsSchema = t.Object({
 
 export const store = {
   async getItem(id: number): Promise<Static<typeof storeItemsItemSchema> | null> {
-    const query = await general
+    const query = await (general as any)
       .selectFrom("store_items")
       .select([
         "id",
@@ -56,7 +55,6 @@ export const store = {
         "type",
         "value",
         "currency",
-        "command",
         "content"
       ])
       .where("id", "=", id)
@@ -72,6 +70,17 @@ export const store = {
 
     return data
   },
+  /**
+   * Full row for the private edit form. Public routes must not expose
+   * `command`/`refund_cmd`, so they use `getItem` instead.
+   */
+  async getItemForEdit(id: number): Promise<any | null> {
+    return await (general as any)
+      .selectFrom("store_items")
+      .selectAll()
+      .where("id", "=", id)
+      .executeTakeFirst() ?? null;
+  },
   async getItems(
     { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>
   ): Promise<Static<typeof storeItemsSchema>> {
@@ -85,7 +94,6 @@ export const store = {
         "imageUrl",
         "type",
         "currency",
-        "command",
         "value",
         "content"
       ])

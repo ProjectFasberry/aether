@@ -3,6 +3,8 @@ import type { JsonValue } from "@gen/db/general";
 export type CartItem = {
 	imageUrl: string;
 	price: number;
+	priceSnapshot: number;
+	priceChanged: boolean;
 	recipient: string;
 	selected: boolean;
 	quantity: number;
@@ -10,7 +12,6 @@ export type CartItem = {
 	description: string | null;
 	value: string;
 	type: string;
-	command: string | null;
 	currency: string;
 	content: JsonValue;
 	title: string;

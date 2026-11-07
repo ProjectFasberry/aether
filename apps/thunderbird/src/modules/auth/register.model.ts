@@ -20,6 +20,9 @@ type RegisterUser = Omit<CreateUser, "findoutType" | "findout" | "uuid"> & {
 
 const registerLogger = authLogger.child({ name: "register" });
 
+/** Referral payouts open one day after registration (anti alt-account). */
+const REFERRAL_PAYOUT_DELAY_MS = 24 * 60 * 60 * 1000;
+
 type CreateUser = Omit<z.infer<typeof registerSchema>, "token"> & {
 	uuid: string;
 	ip: string;
@@ -60,8 +63,12 @@ const referral = {
 			.values({
 				referrer,
 				referral,
+				// Anti-fraud: the payout becomes available after a day. The column
+				// is added in `0006`, before the generated schema catches up.
+				...( { payout_after: new Date(Date.now() + REFERRAL_PAYOUT_DELAY_MS) } as any ),
 			})
-			.executeTakeFirstOrThrow();
+			.onConflict((oc) => oc.columns(["referrer", "referral"]).doNothing())
+			.executeTakeFirst();
 
 		logger.child({ name: "referals" }).info(`Registered new referal ${referral} of ${referrer}`);
 
