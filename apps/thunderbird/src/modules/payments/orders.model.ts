@@ -409,7 +409,7 @@ registerGrantHandler("payment.settle", async (payload) => {
 	if (!order) throw new Error("ORDER_NOT_FOUND");
 });
 
-/** Pending invoices past their TTL are closed; a late callback is ignored. */
+/** Pending invoices past their TTL are closed; a late success still credits. */
 export async function expireOrders(): Promise<number> {
 	const result = await db
 		.updateTable("orders")

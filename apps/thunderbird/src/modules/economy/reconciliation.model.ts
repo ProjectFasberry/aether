@@ -5,6 +5,7 @@ import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { appLogger } from "#/shared/constants/logger";
 import { enqueueGrantJob } from "./grant-jobs.model";
+import { repairWalletLots } from "./wallet.model";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
@@ -14,6 +15,7 @@ const db = general as unknown as Kysely<DB & {
 	ledger_entries: any;
 	grant_jobs: any;
 	orders: any;
+	wallet_lots: any;
 }>;
 
 export type BalanceMismatch = {
@@ -24,13 +26,23 @@ export type BalanceMismatch = {
 	delta: number;
 };
 
+export type LotMismatch = {
+	nickname: string;
+	currency: string;
+	wallet: number;
+	lots: number;
+	delta: number;
+};
+
 export type ReconciliationReport = {
 	at: Date;
 	checked: number;
 	mismatchCount: number;
+	lotMismatch: number;
 	missingPlugin: number;
 	pendingProjection: number;
 	mismatches: BalanceMismatch[];
+	lotMismatches: LotMismatch[];
 	missing: { nickname: string; currency: string }[];
 };
 
@@ -82,7 +94,7 @@ async function pendingProjections(): Promise<Set<string>> {
  * behind (queued) or the ledger and the plugin disagree.
  */
 export async function reconcileBalances({ limit = 5_000 } = {}): Promise<ReconciliationReport> {
-	const [wallets, plugin, pending] = await Promise.all([
+	const [wallets, plugin, pending, lotRows] = await Promise.all([
 		db
 			.selectFrom("wallets")
 			.select(["nickname", "currency", "balance"])
@@ -91,9 +103,19 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 			.execute() as unknown as Promise<WalletRow[]>,
 		pluginBalances(),
 		pendingProjections(),
+		db
+			.selectFrom("wallet_lots")
+			.select(["nickname", "currency", sql<string>`sum(remaining)`.as("remaining")])
+			.groupBy(["nickname", "currency"])
+			.execute() as unknown as Promise<{ nickname: string; currency: string; remaining: string }[]>,
 	]);
 
+	const lotMap = new Map(lotRows.map((row) => (
+		[`${String(row.currency).toUpperCase()}:${row.nickname.toLowerCase()}`, Number(row.remaining)]
+	)));
+
 	const mismatches: BalanceMismatch[] = [];
+	const lotMismatches: LotMismatch[] = [];
 	const missing: { nickname: string; currency: string }[] = [];
 	let missingPlugin = 0;
 	let pendingProjection = 0;
@@ -101,6 +123,18 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 	for (const wallet of wallets) {
 		const key = `${wallet.currency}:${wallet.nickname.toLowerCase()}`;
 		const walletBalance = Number(wallet.balance);
+		const lotSum = lotMap.get(key) ?? 0;
+
+		if (lotSum !== walletBalance) {
+			lotMismatches.push({
+				nickname: wallet.nickname,
+				currency: wallet.currency,
+				wallet: walletBalance,
+				lots: lotSum,
+				delta: walletBalance - lotSum,
+			});
+		}
+
 		const pluginBalance = plugin.get(key);
 
 		if (pluginBalance === undefined) {
@@ -138,9 +172,11 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 		at: new Date(),
 		checked: wallets.length,
 		mismatchCount: mismatches.length,
+		lotMismatch: lotMismatches.length,
 		missingPlugin,
 		pendingProjection,
 		mismatches: mismatches.slice(0, 100),
+		lotMismatches: lotMismatches.slice(0, 100),
 		missing: missing.slice(0, 100),
 	};
 }
@@ -152,7 +188,7 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 export async function repairReconciliation(
 	report: ReconciliationReport,
 	limit = 100,
-): Promise<{ enqueued: number }> {
+): Promise<{ enqueued: number; lotRepaired: number }> {
 	const candidates = [
 		...report.mismatches.map((item) => ({ nickname: item.nickname, currency: item.currency })),
 		...report.missing.map((item) => ({ nickname: item.nickname, currency: item.currency })),
@@ -185,7 +221,21 @@ export async function repairReconciliation(
 		enqueued += 1;
 	}
 
-	return { enqueued };
+	let lotRepaired = 0;
+
+	for (const item of report.lotMismatches.slice(0, limit)) {
+		if (item.currency !== "BELKOIN" && item.currency !== "CHARISM") continue;
+
+		try {
+			await repairWalletLots(item.nickname, item.currency);
+			lotRepaired += 1;
+		} catch (error) {
+			// Overcovered lots (lots > balance) cannot be repaired automatically.
+			appLogger.error({ name: "economy-lot-repair", error });
+		}
+	}
+
+	return { enqueued, lotRepaired };
 }
 
 export type GrantJobsReport = {
@@ -319,7 +369,7 @@ function sumByCurrency(rows: { currency: string; amount: string }[]): Record<str
 }
 
 export async function paymentsReport({ from, to }: { from: Date; to: Date }): Promise<PaymentsReport> {
-	const [statusRows, revenue, refunded, payers, issued] = await Promise.all([
+	const [statusRows, paid, revenue, refunded, payers, issued] = await Promise.all([
 		db
 			.selectFrom("orders")
 			.select(["status", sql<string>`count(*)`.as("count")])
@@ -329,8 +379,15 @@ export async function paymentsReport({ from, to }: { from: Date; to: Date }): Pr
 			.execute() as unknown as Promise<{ status: string; count: string }[]>,
 		db
 			.selectFrom("orders")
+			.select(sql<string>`count(*)`.as("count"))
+			.where("paid_at", ">=", from)
+			.where("paid_at", "<", to)
+			.executeTakeFirst() as unknown as Promise<{ count: string } | undefined>,
+		// Revenue is cash received in the period, including payments that were
+		// refunded later; refunds are counted separately by refunded_at.
+		db
+			.selectFrom("orders")
 			.select(["currency", sql<string>`sum(amount_minor)`.as("amount")])
-			.where("status", "=", "succeeded")
 			.where("paid_at", ">=", from)
 			.where("paid_at", "<", to)
 			.groupBy("currency")
@@ -338,7 +395,6 @@ export async function paymentsReport({ from, to }: { from: Date; to: Date }): Pr
 		db
 			.selectFrom("orders")
 			.select(["currency", sql<string>`sum(amount_minor)`.as("amount")])
-			.where("status", "=", "refunded")
 			.where("refunded_at", ">=", from)
 			.where("refunded_at", "<", to)
 			.groupBy("currency")
@@ -346,14 +402,12 @@ export async function paymentsReport({ from, to }: { from: Date; to: Date }): Pr
 		db
 			.selectFrom("orders")
 			.select(sql<string>`count(distinct nickname)`.as("count"))
-			.where("status", "=", "succeeded")
 			.where("paid_at", ">=", from)
 			.where("paid_at", "<", to)
 			.executeTakeFirst() as unknown as Promise<{ count: string } | undefined>,
 		db
 			.selectFrom("orders")
 			.select(sql<string>`coalesce(sum(belkoin), 0)`.as("amount"))
-			.where("status", "=", "succeeded")
 			.where("paid_at", ">=", from)
 			.where("paid_at", "<", to)
 			.executeTakeFirst() as unknown as Promise<{ amount: string } | undefined>,
@@ -363,8 +417,17 @@ export async function paymentsReport({ from, to }: { from: Date; to: Date }): Pr
 	for (const row of statusRows) orders[row.status] = Number(row.count);
 
 	const created = Object.values(orders).reduce((acc, value) => acc + value, 0);
-	const succeeded = orders.succeeded ?? 0;
-	const refundedCount = orders.refunded ?? 0;
+	const succeeded = Number(paid?.count ?? 0);
+
+	// Refund count uses refunded_at, so it is the period count, not the number
+	// of currently refunded orders created in the period.
+	const refundedOrders = await db
+		.selectFrom("orders")
+		.select(sql<string>`count(*)`.as("count"))
+		.where("refunded_at", ">=", from)
+		.where("refunded_at", "<", to)
+		.executeTakeFirst() as unknown as { count: string } | undefined;
+	const refundedCount = Number(refundedOrders?.count ?? 0);
 
 	const revenueMinor = sumByCurrency(revenue);
 	const refundedMinor = sumByCurrency(refunded);

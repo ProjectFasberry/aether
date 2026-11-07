@@ -31,7 +31,7 @@ export const paymentCryptoTonStatus = pgEnum("payment_crypto_ton_status", [
 	"cancelled",
 	"failed",
 ]);
-export const paymentStatus = pgEnum("payment_status", ["pending", "waitingForCapture", "succeeded", "canceled"]);
+
 export const playerActivityEvent = pgEnum("player_activity_event", ["join", "quit"]);
 export const storeCurrency = pgEnum("store_currency", ["CHARISM", "BELKOIN"]);
 
@@ -820,21 +820,6 @@ export const playersSocialsAvailable = pgTable("players_socials_available", {
 		}),
 	value: text().notNull(),
 	isAvailable: boolean().default(true),
-});
-
-export const payments = pgTable("payments", {
-	id: integer().notNull(),
-	orderId: text("order_id").notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-	status: paymentStatus().notNull(),
-	payload: text().notNull(),
-	price: text().notNull(),
-	invoiceId: integer("invoice_id").notNull(),
-	uniqueId: text("unique_id").notNull(),
-	payUrl: text("pay_url").notNull(),
-	asset: text().notNull(),
-	initiator: text().notNull(),
-	comment: text(),
 });
 
 export const paymentsGame = pgTable("payments_game", {

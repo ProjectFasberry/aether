@@ -133,6 +133,9 @@ export const CRON_JOBS: Job[] = [
         if (repaired.enqueued > 0) {
           cronLogger.warn(`Economy repair: enqueued ${repaired.enqueued} projections`);
         }
+        if (repaired.lotRepaired > 0) {
+          cronLogger.warn(`Economy repair: fixed lots for ${repaired.lotRepaired} wallets`);
+        }
       })
     },
     immediately: false,

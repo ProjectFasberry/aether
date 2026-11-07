@@ -510,6 +510,29 @@ export async function refundTopup({
 	});
 }
 
+/**
+ * Reconciles a wallet whose lot sum is below the balance. Cannot fix an
+ * overcovered wallet: that would mean lots exceed real money.
+ */
+export async function repairWalletLots(nickname: string, currency: Currency): Promise<number | null> {
+	return economyTransaction().execute(async (trx) => {
+		const wallet = await trx
+			.selectFrom("wallets")
+			.select("balance")
+			.where("nickname", "=", nickname)
+			.where("currency", "=", currency)
+			.forUpdate()
+			.executeTakeFirst();
+
+		if (!wallet) return null;
+
+		const balance = Number(wallet.balance);
+		await ensureLots(trx, nickname, currency, balance);
+
+		return balance;
+	});
+}
+
 export async function getRefundable(nickname: string, currency: Currency): Promise<number> {
 	const row = await db
 		.selectFrom("wallet_lots")

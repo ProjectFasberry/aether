@@ -93,8 +93,9 @@ export async function listLedger({
 	const hasNextPage = raw.length > limit;
 	if (hasNextPage) raw.pop();
 
-	// pg returns bigint columns as strings; the panel expects numbers.
-	const rows = raw.map((row) => ({
+	// pg returns bigint columns as strings; the panel expects numbers. The raw
+	// timestamp text stays internal to the cursor.
+	const rows = raw.map(({ created_at_text, ...row }) => ({
 		...row,
 		id: Number(row.id),
 		delta: Number(row.delta),
@@ -105,8 +106,8 @@ export async function listLedger({
 		data: rows,
 		meta: {
 			hasNextPage,
-			endCursor: rows.length > 0
-				? encodeCursor(rows[rows.length - 1] as { created_at: Date | string; created_at_text: string; id: number })
+			endCursor: raw.length > 0
+				? encodeCursor(raw[raw.length - 1] as { created_at: Date | string; created_at_text: string; id: number })
 				: undefined,
 		},
 	};
