@@ -698,7 +698,7 @@ export async function revokeGameOrder(orderId: string): Promise<void> {
 			if (type !== "donate" || !value) continue;
 
 			try {
-				await removeDonateGroup({ recipient: child.recipient, value });
+				await removeDonateGroup({ recipient: child.recipient, value, fallbackServer: "bisquite" });
 				await markChildRevoked(child.id);
 			} catch (error) {
 				await markChildRevokeFailed(child.id, error);

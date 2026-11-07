@@ -280,7 +280,7 @@ const ENABLED_COMMAND_SERVERS = ["bisquite"] as const;
  * The store lives on a backend; the panel knows which backend currently hosts
  * the player. If the player is offline, use the item's server as a fallback.
  */
-async function resolveTargetServer(recipient?: string, fallback?: string): Promise<string> {
+export async function resolveTargetServer(recipient?: string, fallback?: string): Promise<string> {
   if (recipient) {
     const status = await serverStatusService.getPlayerStatusGlobal({
       nickname: recipient,

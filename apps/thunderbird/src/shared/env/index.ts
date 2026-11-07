@@ -5,6 +5,8 @@ export const isProduction = Bun.env.NODE_ENV === "production";
 
 const envSchema = z.object({
   PORT: z.coerce.number(),
+  /** Listen address. `127.0.0.1` keeps the API off the LAN: Traefik runs on the host. */
+  HOST: z.string().optional().default("0.0.0.0"),
   /** Deploy stage: `prod` serves the public release channel, anything else `dev`. */
   STAGE: z.string().optional().default("dev"),
   NATS_HOST: z.string().min(1),
@@ -44,6 +46,8 @@ const envSchema = z.object({
   HELEKET_MERCHANT_UUID: z.optional(z.string().min(1)),
   HELEKET_API_KEY: z.optional(z.string().min(1)),
   PAYMENT_INVOICE_TTL_MINUTES: z.optional(z.coerce.number().min(1).max(1440)),
+  /** Use the structured LuckPerms bridge in nats-spigot instead of direct SQL. */
+  LUCKPERMS_BRIDGE: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
   MINESKIN_AES_SECRET_KEY: z.string().min(1),
   verbose: z.boolean().optional().default(false)
 });

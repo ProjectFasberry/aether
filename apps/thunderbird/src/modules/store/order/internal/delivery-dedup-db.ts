@@ -3,6 +3,8 @@ import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
 import { luckperms } from "#/shared/database/luckperms-db";
 import { redisService } from "#/shared/redis/client";
+import { getEnv } from "#/shared/env";
+import { callLuckPermsEffect } from "#/utils/server/call-luckperms";
 import {
 	effectCovers,
 	nodeCovers,
@@ -186,8 +188,23 @@ export async function checkProductsDuplicates(
  * permission. A missing LuckPerms player row is created from the game player
  * uuid first, so a donation bought before the first join can be delivered.
  */
-export async function applyDeliveryEffect(nickname: string, effect: DeliveryEffect): Promise<void> {
+export async function applyDeliveryEffect(
+	nickname: string,
+	effect: DeliveryEffect,
+	options?: { fallbackServer?: string },
+): Promise<void> {
 	const uuid = await findRecipientUuid(nickname);
+
+	if (getEnv().LUCKPERMS_BRIDGE) {
+		await callLuckPermsEffect(effect, {
+			recipient: nickname,
+			uuid,
+			kind: "grant",
+			fallbackServer: options?.fallbackServer,
+		});
+		return;
+	}
+
 	if (!uuid) throw new Error("PLAYER_NOT_FOUND");
 
 	await ensureLuckpermsPlayer(nickname, uuid);
@@ -215,8 +232,23 @@ export async function applyDeliveryEffect(nickname: string, effect: DeliveryEffe
 		.execute();
 }
 
-export async function removeDeliveryEffect(nickname: string, effect: DeliveryEffect): Promise<void> {
+export async function removeDeliveryEffect(
+	nickname: string,
+	effect: DeliveryEffect,
+	options?: { fallbackServer?: string },
+): Promise<void> {
 	const uuid = await findRecipientUuid(nickname);
+
+	if (getEnv().LUCKPERMS_BRIDGE) {
+		await callLuckPermsEffect(effect, {
+			recipient: nickname,
+			uuid,
+			kind: "revoke",
+			fallbackServer: options?.fallbackServer,
+		});
+		return;
+	}
+
 	if (!uuid) return;
 
 	await luckperms

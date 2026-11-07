@@ -34,10 +34,11 @@ function defaultEffect(value: string): DeliveryEffect {
 async function setPlayerGroup(
   nickname: string,
   effect: DeliveryEffect | null,
+  fallbackServer?: string,
 ): Promise<boolean> {
   if (!effect) return false;
 
-  await applyDeliveryEffect(nickname, effect);
+  await applyDeliveryEffect(nickname, effect, { fallbackServer });
   publishUpdateGroup({ nickname, permission: effect.permission });
 
   return true;
@@ -50,24 +51,26 @@ async function setPlayerGroup(
 export async function removeDonateGroup({
   recipient,
   value,
+  fallbackServer,
 }: {
   recipient: string;
   value: string;
+  fallbackServer?: string;
 }): Promise<void> {
   const effect = defaultEffect(value);
 
-  await removeDeliveryEffect(recipient, effect);
+  await removeDeliveryEffect(recipient, effect, { fallbackServer });
   publishUpdateGroup({ nickname: recipient, permission: effect.permission });
 }
 
-async function updatePlayerGroup({ recipient, value, effect }: ProcessDonate) {
+async function updatePlayerGroup({ recipient, value, effect, fallbackServer }: ProcessDonate) {
   const resolved = effect ?? resolveDeliveryEffect({
     recipient,
     type: "donate",
     value,
   });
 
-  const result = await setPlayerGroup(recipient, resolved);
+  const result = await setPlayerGroup(recipient, resolved, fallbackServer);
 
   if (!result) {
     throw new Error("Error updating player group")
