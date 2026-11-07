@@ -384,9 +384,9 @@ export const session = {
     return {
       ...dataRow.value,
       id: sessionId(sessionToken),
-      browser: JSON.parse(dataRow.value.browser),
-      platform: JSON.parse(dataRow.value.platform),
-      os: JSON.parse(dataRow.value.os),
+      browser: parseBrowser(dataRow.value.browser),
+      platform: parsePlatform(dataRow.value.platform),
+      os: parseOs(dataRow.value.os),
       created_at: dayjs(dataRow.value.created_at).toDate(),
     };
   },
@@ -413,14 +413,51 @@ async function getSessionsRows(tokens: string[]): Promise<UserSessionParsedPaylo
     result.push({
       ...dataRow.value,
       id: sessionId(tokens[index]),
-      browser: JSON.parse(dataRow.value.browser),
-      platform: JSON.parse(dataRow.value.platform),
-      os: JSON.parse(dataRow.value.os),
+      browser: parseBrowser(dataRow.value.browser),
+      platform: parsePlatform(dataRow.value.platform),
+      os: parseOs(dataRow.value.os),
       created_at: dayjs(dataRow.value.created_at).toDate(),
     });
   });
 
   return result;
+}
+
+/**
+ * Sessions created without a user agent (launcher) store the string "unknown"
+ * for browser/os/platform instead of JSON. Parsing must never turn a session
+ * list into a 500.
+ */
+function parseStoredObject(raw: string): Record<string, unknown> {
+  const parsed = safeJsonParse<Record<string, unknown>>(raw);
+
+  return parsed.ok && parsed.value && typeof parsed.value === "object" ? parsed.value : {};
+}
+
+function parseBrowser(raw: string) {
+  const value = parseStoredObject(raw);
+
+  return {
+    name: typeof value.name === "string" ? value.name : "unknown",
+    version: typeof value.version === "string" ? value.version : "unknown",
+  };
+}
+
+function parseOs(raw: string) {
+  const value = parseStoredObject(raw);
+
+  return {
+    name: typeof value.name === "string" ? value.name : undefined,
+    versionName: typeof value.versionName === "string" ? value.versionName : undefined,
+  };
+}
+
+function parsePlatform(raw: string) {
+  const value = parseStoredObject(raw);
+
+  return {
+    type: typeof value.type === "string" ? value.type : undefined,
+  };
 }
 
 export const sessions = {
