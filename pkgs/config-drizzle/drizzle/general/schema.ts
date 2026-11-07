@@ -8,6 +8,7 @@ import {
 	boolean,
 	timestamp,
 	jsonb,
+	numeric,
 	unique,
 	check,
 	foreignKey,
@@ -776,6 +777,20 @@ export const paymentsGameChilds = pgTable("payments_game_childs", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 	recipient: text().notNull(),
 	orderId: text("order_id").notNull(),
+	line: integer("line"),
+	type: text("type"),
+	value: text("value"),
+	command: text("command"),
+	refundCmd: text("refund_cmd"),
+	price: numeric("price", { precision: 14, scale: 2 }),
+	currency: text("currency"),
+	effect: jsonb("effect"),
+	deliveryStatus: text("delivery_status").default("pending").notNull(),
+	deliveryAttempts: integer("delivery_attempts").default(0).notNull(),
+	deliveredAt: timestamp("delivered_at", { withTimezone: true, mode: "string" }),
+	revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "string" }),
+	lastError: text("last_error"),
+	commandId: text("command_id"),
 });
 
 export const tgLogsChats = pgTable("tg_logs_chats", {

@@ -2,7 +2,17 @@ import Elysia from "elysia";
 import type { CreateOrderRoutePayload } from "@repo/shared/types/entities/payment"
 import { defineRequiredUser } from "#/lib/define";
 import { cartItem } from "../../cart/cart.model";
-import { findGameOrder, initialPrices, processStoreGamePurchase } from "./order-game.model";
+import { findGameOrder, processStoreGamePurchase } from "./order-game.model";
+import {
+  deliveryLockKeys,
+  partitionProducts,
+  sumProductsPrice,
+  type SkippedItem,
+} from "./delivery-dedup";
+import {
+  checkProductsDuplicates,
+  withDeliveryLocks,
+} from "./delivery-dedup-db";
 import { getOrderEntries, getWallet } from "#/modules/economy/wallet.model";
 import { charism, CHARISM_SERVERS } from "#/modules/economy/charism";
 import { t } from "elysia";
@@ -75,63 +85,70 @@ export const createOrder = new Elysia()
       return status(400, wrapError("items-not-found"))
     }
 
-    const finishPrice = items.reduce((acc: Record<string, number>, item: CartLine) => {
-      const { currency, price } = item;
-      const amount = parseFloat(price);
+    const products = items.map((target: CartLine) => ({
+      ...target,
+      recipient: target.recipient,
+      command: target.command ?? null,
+      refundCmd: target.refund_cmd ?? null,
+    }));
 
-      if (currency in acc) {
-        acc[currency] += amount;
-      } else {
-        acc[currency] = amount;
-      }
-
-      return acc;
-    }, { ...initialPrices });
-
-    const balance = await getWallet(initiator);
-
-    if (
-      balance.BELKOIN < finishPrice.BELKOIN
-      || balance.CHARISM < finishPrice.CHARISM
-    ) {
-      return status(400, wrapError("insufficient"))
-    }
+    type CheckoutResult =
+      | { ok: true; data: CreateOrderRoutePayload }
+      | { ok: false; error: string; skipped: SkippedItem[] };
 
     try {
-      const products = items.map((target: CartLine) => ({
-        ...target,
-        recipient: target.recipient,
-        command: target.command ?? null,
-        refundCmd: target.refund_cmd ?? null,
-      }));
+      // The same lock is taken again at delivery, so a duplicate cannot slip
+      // between the check and the LuckPerms write.
+      const result = await withDeliveryLocks(deliveryLockKeys(products), async (): Promise<CheckoutResult> => {
+        const dedup = await checkProductsDuplicates(products);
+        const { deliverable, skipped } = partitionProducts(products, dedup);
 
-      const result = await processStoreGamePurchase({
-        initiator,
-        uniqueId,
-        products,
-        finishPrice: finishPrice as Record<GameCurrency, number>,
-        server,
+        if (deliverable.length === 0) {
+          return { ok: false, error: "ITEMS_ALREADY_OWNED", skipped };
+        }
+
+        const finishPrice = sumProductsPrice(deliverable);
+        const balance = await getWallet(initiator);
+
+        if (
+          balance.BELKOIN < finishPrice.BELKOIN
+          || balance.CHARISM < finishPrice.CHARISM
+        ) {
+          return { ok: false, error: "insufficient", skipped: [] };
+        }
+
+        const purchase = await processStoreGamePurchase({
+          initiator,
+          uniqueId,
+          products,
+          finishPrice,
+          server,
+          dedup,
+        });
+
+        if (purchase.error) {
+          return { ok: false, error: purchase.error, skipped };
+        }
+
+        return {
+          ok: true,
+          data: {
+            purchase: { uniqueId },
+            payload: { price: finishPrice },
+            skipped,
+          },
+        };
       });
 
-      if (result.error) {
-        return status(400, wrapError(result.error))
-      }
-
-      const price: Record<GameCurrency, number> = {
-        BELKOIN: Number(finishPrice.BELKOIN ?? 0),
-        CHARISM: Number(finishPrice.CHARISM ?? 0),
-      }
-
-      const data: CreateOrderRoutePayload = {
-        purchase: {
-          uniqueId
-        },
-        payload: {
-          price
+      if (!result.ok) {
+        if (result.error === "ITEMS_ALREADY_OWNED") {
+          return status(400, { error: result.error, skipped: result.skipped });
         }
-      };
 
-      return { data }
+        return status(400, wrapError(result.error));
+      }
+
+      return { data: result.data };
     } catch (e) {
       if (e instanceof Error) {
         const message = ERRORS_MAP[e.message] ?? e.message
@@ -145,6 +162,14 @@ export const createOrder = new Elysia()
     })),
     response: {
       500: withError(),
-      400: withError(),
+      400: t.Object({
+        error: t.String(),
+        skipped: t.Optional(t.Array(t.Object({
+          id: t.Number(),
+          title: t.String(),
+          recipient: t.String(),
+          reason: t.UnionEnum(["PERMISSION_ALREADY_PRESENT"]),
+        }))),
+      }),
     }
   })

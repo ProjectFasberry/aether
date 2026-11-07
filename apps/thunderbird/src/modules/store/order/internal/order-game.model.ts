@@ -23,6 +23,16 @@ import {
 	processGrantJobs,
 	registerGrantHandler,
 } from "#/modules/economy/grant-jobs.model";
+import {
+	deliveryLockKey,
+	parseEffectSnapshot,
+	resolveDeliveryEffect,
+	type DeliveryCheck,
+} from "./delivery-dedup";
+import {
+	checkEffectDuplicate,
+	withDeliveryLocks,
+} from "./delivery-dedup-db";
 
 export const initialPrices: Record<string, number> = Object
 	.fromEntries(GAME_CURRENCIES.map((currency) => [currency, 0]));
@@ -43,13 +53,22 @@ type GameChild = {
 	id: number;
 	store_item_id: number;
 	recipient: string;
+	line: number | null;
 	type: string | null;
 	value: string | null;
 	command: string | null;
 	refund_cmd: string | null;
+	price: string | number | null;
+	currency: string | null;
+	effect: unknown;
 	delivery_status: string;
 	delivery_attempts: number;
 	command_id: string | null;
+};
+
+type FulfillmentProduct = Pick<Product, "id" | "recipient" | "type" | "value" | "command"> & {
+	childId?: number;
+	line?: number;
 };
 
 /** Outbox kind for the non-money part of an order (groups, toasts, items). */
@@ -62,7 +81,8 @@ function createTasksForItem(
 	const tasks: Array<() => Promise<unknown>> = [];
 
 	if (type === "donate") {
-		for (const task of processDonatePayment({ recipient, type: "donate", value, fallbackServer })) {
+		const effect = resolveDeliveryEffect({ recipient, type: "donate", value });
+		for (const task of processDonatePayment({ recipient, type: "donate", value, fallbackServer, effect })) {
 			// The group grant is the paid effect; the toast and broadcast are
 			// best-effort and must not leave a delivered order "processing"
 			// forever when no game server is online.
@@ -179,8 +199,89 @@ async function markChildRevokeFailed(childId: number, error: unknown): Promise<v
 		.execute();
 }
 
+/**
+ * A duplicate found after the charge is skipped and refunded per child. The
+ * purchase itself stays intact, so a multi-item order keeps its other lines.
+ */
+async function refundSkippedChild(
+	child: GameChild,
+	orderId: string,
+	initiator: string,
+	reason: string,
+): Promise<void> {
+	const result = await economyTransaction().execute(async (trx) => {
+		const claimed = await (trx as any)
+			.updateTable("payments_game_childs")
+			.set({
+				delivery_status: "skipped",
+				last_error: reason,
+			})
+			.where("id", "=", child.id)
+			.where("delivery_status", "in", ["pending", "failed"])
+			.returningAll()
+			.executeTakeFirst() as GameChild | undefined;
+
+		if (!claimed) return null;
+
+		const currency = String(claimed.currency ?? child.currency ?? "") as GameCurrency;
+		const amount = Number(claimed.price ?? child.price ?? 0);
+		const applied: ApplyResult[] = [];
+
+		if (GAME_CURRENCIES.includes(currency) && amount > 0) {
+			applied.push(await credit(initiator, currency, amount, {
+				// One ledger row per skipped child: the ledger is idempotent by
+				// (order_id, reason), so the reason must include the child id.
+				reason: `store.partial_refund:${currency}:${child.id}`,
+				orderId,
+				actor: "system",
+				metadata: { reason, childId: child.id, source: "delivery-dedup" },
+			}, trx));
+
+			const order = await (trx as any)
+				.selectFrom("payments_game")
+				.select("price")
+				.where("unique_id", "=", orderId)
+				.forUpdate()
+				.executeTakeFirst() as { price?: Record<string, number> | null } | undefined;
+
+			if (order) {
+				const price = { ...(order.price ?? {}) };
+				price[currency] = Math.max(0, Number(price[currency] ?? 0) - amount);
+
+				await (trx as any)
+					.updateTable("payments_game")
+					.set({ price })
+					.where("unique_id", "=", orderId)
+					.execute();
+			}
+		}
+
+		const remaining = await (trx as any)
+			.selectFrom("payments_game_childs")
+			.select("id")
+			.where("order_id", "=", orderId)
+			.where("delivery_status", "not in", ["skipped", "revoked"])
+			.executeTakeFirst();
+
+		// Every line was skipped: the order is fully refunded without a revoke
+		// job because nothing was delivered.
+		if (!remaining) {
+			await (trx as any)
+				.updateTable("payments_game")
+				.set({ refunded_at: new Date(), failure_reason: reason })
+				.where("unique_id", "=", orderId)
+				.where("refunded_at", "is", null)
+				.execute();
+		}
+
+		return { applied };
+	});
+
+	if (result) await flushProjections(result.applied);
+}
+
 async function fulfill(
-	products: Pick<Product, "id" | "recipient" | "type" | "value" | "command">[],
+	products: FulfillmentProduct[],
 	{
 		initiator,
 		orderId,
@@ -198,15 +299,25 @@ async function fulfill(
 		// deliver the rest; the revoke job will reverse what was already sent.
 		if (await isOrderRefunded(orderId)) return;
 
-		const child = childs.find((row) => (
-			row.store_item_id === product.id && row.recipient === product.recipient
-		));
+		const child = product.childId
+			? childs.find((row) => row.id === product.childId)
+			: childs.find((row) => (
+				row.store_item_id === product.id
+				&& row.recipient === product.recipient
+				&& (product.line == null || row.line === product.line)
+			));
 
-		if (child?.delivery_status === "delivered" || child?.delivery_status === "revoked") {
+		if (
+			child?.delivery_status === "delivered"
+			|| child?.delivery_status === "revoked"
+			|| child?.delivery_status === "skipped"
+		) {
 			continue;
 		}
 
-		try {
+		const effect = parseEffectSnapshot(child?.effect) ?? resolveDeliveryEffect(product);
+
+		const deliver = async () => {
 			// An explicit command is the delivery: it replaces the built-in
 			// type-specific behaviour and keeps other module integrations possible.
 			if (product.command) {
@@ -230,6 +341,33 @@ async function fulfill(
 			}
 
 			if (child) await markChildDelivered(child.id);
+		};
+
+		try {
+			if (!effect) {
+				await deliver();
+				continue;
+			}
+
+			await withDeliveryLocks([deliveryLockKey(product.recipient, effect)], async () => {
+				const check = await checkEffectDuplicate(product.recipient, effect);
+
+				// A concurrent checkout delivered the same permission while this
+				// order was waiting. Refund only this line.
+				if (check.duplicate) {
+					if (child) {
+						await refundSkippedChild(
+							child,
+							orderId,
+							initiator,
+							"PERMISSION_ALREADY_PRESENT",
+						);
+					}
+					return;
+				}
+
+				await deliver();
+			});
 		} catch (error) {
 			if (child) await markChildFailed(child.id, error);
 			throw error;
@@ -243,21 +381,33 @@ async function createGamePaymentRecord(
 	initiator: string,
 	products: Product[],
 	price: Record<string, number>,
+	dedup: Map<number, DeliveryCheck>,
 ) {
 	const game = trx as any;
 
 	const childs = await game
 		.insertInto("payments_game_childs")
-		.values(products.map(({ recipient, id: store_item_id, type, value, command, refundCmd }) => ({
-			recipient,
-			store_item_id,
-			order_id: uniqueId,
-			type,
-			value,
-			command: command ?? null,
-			refund_cmd: refundCmd ?? null,
-			command_id: randomUUID(),
-		})))
+		.values(products.map(({ recipient, id: store_item_id, type, value, command, refundCmd, price: itemPrice, currency }, index) => {
+			const check = dedup.get(index);
+			const duplicate = check?.duplicate ?? false;
+
+			return {
+				recipient,
+				store_item_id,
+				order_id: uniqueId,
+				line: index,
+				type,
+				value,
+				command: command ?? null,
+				refund_cmd: refundCmd ?? null,
+				price: itemPrice,
+				currency,
+				effect: check?.effect ?? null,
+				command_id: randomUUID(),
+				delivery_status: duplicate ? "skipped" : "pending",
+				last_error: duplicate ? "PERMISSION_ALREADY_PRESENT" : null,
+			};
+		}))
 		.returningAll()
 		.execute() as GameChild[];
 
@@ -308,6 +458,17 @@ export async function rollbackGameOrder(orderId: string, reason: string): Promis
 
 		const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
 
+		// A delivery-time duplicate may already have refunded a single child.
+		// Do not credit that amount a second time on a later full rollback.
+		const partialRefunds = new Map<string, number>();
+		for (const entry of entries) {
+			if (!entry.reason.startsWith("store.partial_refund:")) continue;
+			partialRefunds.set(
+				entry.currency,
+				(partialRefunds.get(entry.currency) ?? 0) + Math.abs(Number(entry.delta)),
+			);
+		}
+
 		if (order.refunded_at) {
 			// A retry may be the first place that sees a refund written by an
 			// older build without a revoke job.
@@ -339,8 +500,11 @@ export async function rollbackGameOrder(orderId: string, reason: string): Promis
 			const currency = entry.currency as GameCurrency;
 			if (!GAME_CURRENCIES.includes(currency)) continue;
 
-			const amount = Math.abs(Number(entry.delta));
+			const alreadyRefunded = partialRefunds.get(currency) ?? 0;
+			const amount = Math.max(0, Math.abs(Number(entry.delta)) - alreadyRefunded);
 			if (amount === 0) continue;
+
+			partialRefunds.set(currency, 0);
 
 			const credited = await credit(entry.nickname, currency, amount, {
 				reason: `store.rollback:${currency}`,
@@ -412,16 +576,25 @@ registerGrantHandler(FULFILLMENT_KIND, async (payload) => {
 		uniqueId: string;
 		initiator: string;
 		server?: string;
-		items: Pick<Product, "id" | "recipient" | "type" | "value" | "command">[];
+		items: FulfillmentProduct[];
 	};
 
 	const childs = await loadGameChildren(uniqueId);
-	// Older jobs did not carry the store item id; the child order matches the
-	// payload order because both come from the same cart.
-	const resolved = items.map((item, index) => ({
-		...item,
-		id: item.id ?? childs[index]?.store_item_id,
-	})).filter((item): item is typeof item & { id: number } => typeof item.id === "number");
+	// New jobs carry the child id; older jobs fall back to payload order.
+	const resolved = items
+		.map((item, index) => {
+			const child = item.childId
+				? childs.find((row) => row.id === item.childId)
+				: childs[index];
+
+			return {
+				...item,
+				id: item.id ?? child?.store_item_id,
+				line: item.line ?? child?.line ?? undefined,
+				childId: item.childId ?? child?.id,
+			};
+		})
+		.filter((item): item is typeof item & { id: number } => typeof item.id === "number");
 
 	await fulfill(resolved, { initiator, orderId: uniqueId, childs, server });
 	await updateGamePaymentRecord(uniqueId);
@@ -449,7 +622,7 @@ export async function revokeGameOrder(orderId: string): Promise<void> {
 	const errors: unknown[] = [];
 
 	for (const child of childs) {
-		if (child.delivery_status === "revoked") continue;
+		if (child.delivery_status === "revoked" || child.delivery_status === "skipped") continue;
 
 		const item = itemMap.get(child.store_item_id);
 		const type = child.type ?? item?.type ?? "";
@@ -548,8 +721,10 @@ export async function repairPendingGameOrders(limit = 20): Promise<{
 			.selectAll()
 			.where("order_id", "=", order.unique_id)
 			.execute() as Array<{
+				id: number;
 				store_item_id: number;
 				recipient: string;
+				line: number | null;
 				type: string | null;
 				value: string | null;
 				command: string | null;
@@ -579,7 +754,15 @@ export async function repairPendingGameOrders(limit = 20): Promise<{
 			// Either an explicit command or a known built-in type is required.
 			if (!command && (!type || !value)) return [];
 
-			return [{ id: child.store_item_id, recipient: child.recipient, type, value, command }];
+			return [{
+				id: child.store_item_id,
+				recipient: child.recipient,
+				type,
+				value,
+				command,
+				childId: child.id,
+				line: child.line ?? undefined,
+			}];
 		});
 
 		if (products.length === 0) {
@@ -625,18 +808,34 @@ export async function processStoreGamePurchase({
 	products,
 	finishPrice,
 	server,
+	dedup,
 }: {
 	initiator: string;
 	uniqueId: string;
 	products: Product[];
 	finishPrice: Record<GameCurrency, number>;
 	server: string;
+	dedup: Map<number, DeliveryCheck>;
 }): Promise<{ error: string | null }> {
 	let applied: ApplyResult[];
 
+	const deliverable = products
+		.map((product, index) => ({ product, index }))
+		.filter(({ index }) => !dedup.get(index)?.duplicate);
+
+	if (deliverable.length === 0) return { error: "ITEMS_ALREADY_OWNED" };
+
 	try {
 		const transaction = await economyTransaction().execute(async (trx) => {
-			await createGamePaymentRecord(trx, uniqueId, initiator, products, finishPrice);
+			const childs = await createGamePaymentRecord(
+				trx,
+				uniqueId,
+				initiator,
+				products,
+				finishPrice,
+				dedup,
+			);
+			const childByLine = new Map(childs.map((child) => [child.line, child]));
 
 			const results: ApplyResult[] = [];
 
@@ -668,13 +867,19 @@ export async function processStoreGamePurchase({
 					uniqueId,
 					initiator,
 					server,
-					items: products.map(({ id, recipient, type, value, command }) => ({
-						id,
-						recipient,
-						type,
-						value,
-						command,
-					})),
+					items: deliverable.map(({ product, index }) => {
+						const child = childByLine.get(index);
+
+						return {
+							id: product.id,
+							recipient: product.recipient,
+							type: product.type,
+							value: product.value,
+							command: product.command,
+							childId: child?.id,
+							line: index,
+						};
+					}),
 				},
 			}, trx);
 
