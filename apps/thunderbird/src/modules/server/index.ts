@@ -1,5 +1,6 @@
 import Elysia from "elysia";
 import { rating } from "#/modules/server/rating";
+import { catalog } from "#/modules/server/catalog";
 import { status } from "#/modules/server/status";
 import { events } from "#/modules/server/events";
 import { lands } from "#/modules/server/lands";
@@ -14,6 +15,7 @@ export const serverGroup = new Elysia()
 		.group("", (app) => app
 			.use(rating)
 			.use(lands)
+			.use(catalog)
 			.use(status)
 			.use(events)
 			.use(tasks)

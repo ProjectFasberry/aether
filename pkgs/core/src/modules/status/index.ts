@@ -9,6 +9,17 @@ import { getAuthHeaderWithBtoa } from "../../utils";
 import type { Kysely } from "kysely";
 import { getPanelClient } from "../../lib/api/panel";
 
+export const serverRuntimeSchema = t.Object({
+  minecraft: t.String(),
+  loader: t.String(),
+  loaderVersion: t.Nullable(t.String()),
+  javaMajor: t.Number(),
+});
+
+export const serverContentSchema = t.Object({
+  pack: t.Nullable(t.String()),
+});
+
 export const serverSchema = t.Object({
   online: t.Number(),
   fullname: t.String(),
@@ -18,6 +29,10 @@ export const serverSchema = t.Object({
   status: t.String(),
   available: t.Boolean(),
   description: t.Optional(t.Nullable(t.String())),
+  runtime: serverRuntimeSchema,
+  content: serverContentSchema,
+  default: t.Boolean(),
+  clientMod: t.Union([t.Literal("required"), t.Literal("optional")]),
 });
 
 export const statusSchema = t.Object({
@@ -38,6 +53,11 @@ export const statusQuerySchema = t.Object({
 
 export type StatusPayload = (typeof statusSchema)["static"];
 export type StatusQuery = (typeof statusQuerySchema)["static"];
+
+/** Keep the launcher contract stable even if the column holds an unknown value. */
+export function normalizeClientMod(value: string | null | undefined): "required" | "optional" {
+  return value === "optional" ? "optional" : "required";
+}
 
 type Player = {
   username: string;
@@ -146,6 +166,15 @@ export const createServerStatusService = ({
               description: rawData?.description,
               available: running && (rawData?.available ?? true),
               excluded: rawData?.excluded ?? false,
+              runtime: {
+                minecraft: rawData?.client_version ?? "1.20.4",
+                loader: rawData?.loader ?? "fabric",
+                loaderVersion: rawData?.loader_version ?? null,
+                javaMajor: rawData?.java_major ?? 21,
+              },
+              content: { pack: rawData?.resource_pack ?? null },
+              default: rawData?.is_default ?? false,
+              clientMod: normalizeClientMod(rawData?.client_mod),
             },
           ] as const;
 

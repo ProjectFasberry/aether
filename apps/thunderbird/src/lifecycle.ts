@@ -13,6 +13,7 @@ import { startJobs } from "./shared/cron/init";
 import { DATABASES_FOR_CHECK } from "./shared/database";
 import { getEnv } from "./shared/env";
 import { ensureUrlConfig } from "./shared/services/config";
+import { initServiceState } from "./shared/services/service-state";
 import { signingKeys } from "./modules/yggdrasil/signing-keys.model";
 import { voteSites } from "./modules/server/votes/vote-sites.model";
 
@@ -80,6 +81,10 @@ export const boot = createBootstrap([
       await redisService.start()
       await psubscribe();
     },
+  }),
+  definePipe("service-state", {
+    run: () => initServiceState(),
+    critical: false,
   }),
   definePipe("jobs", {
     run: () => startJobs(),

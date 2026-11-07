@@ -1,5 +1,6 @@
 import { getDeepValue, hasKeyDeep } from "#/helpers/object";
 import { updateState, getServiceState, type ServiceState } from "#/shared/constants";
+import { persistServiceState } from "#/shared/services/service-state";
 import { general } from "#/shared/database/general-db";
 import { type Static, t } from "elysia";
 
@@ -23,6 +24,7 @@ export async function updateOptions(
 
 	if (hasKeyDeep(serviceState, name)) {
 		updateState(name, value);
+		await persistServiceState();
 		const updatedState = getServiceState();
 		return { value: getDeepValue(updatedState, name) };
 	}

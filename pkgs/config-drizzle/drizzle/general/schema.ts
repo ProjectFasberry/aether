@@ -872,6 +872,13 @@ export const servers = pgTable("servers", {
 	description: text(),
 	thumbnail: text().notNull(),
 	origin: text().notNull(),
+	clientVersion: text("client_version").default("1.20.4").notNull(),
+	loader: text().default("fabric").notNull(),
+	loaderVersion: text("loader_version"),
+	javaMajor: integer("java_major").default(21).notNull(),
+	isDefault: boolean("is_default").default(false).notNull(),
+	resourcePack: text("resource_pack"),
+	clientMod: text("client_mod").default("required").notNull(),
 });
 
 export const rolePermissions = pgTable(
