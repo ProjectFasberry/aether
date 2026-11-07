@@ -69,7 +69,7 @@ async function getApiKeyList(): Promise<Static<typeof apiKeySchema>[]> {
 }
 
 const createApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL")))
   .post("/create", async (ctx) => {
     const nickname = "nickname" in ctx ? String(ctx.nickname) : "api";
     const data = await createApiKey(ctx.body, nickname);
@@ -81,12 +81,12 @@ const createApiKeyRoute = new Elysia()
       500: withError(),
     },
     detail: {
-      summary: buildRouteSummary("Create an API key", { tags: ["withExternal"] }),
+      summary: buildRouteSummary("Create an API key"),
     },
   });
 
 const listApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.LIST"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.LIST")))
   .get("/list", async ({ query }) => {
     const data = await getApiKeyList();
     return { data };
@@ -95,7 +95,7 @@ const listApiKeyRoute = new Elysia()
       200: withData(t.Array(apiKeySchema)),
     },
     detail: {
-      summary: buildRouteSummary("List all API keys", { tags: ["withExternal"] }),
+      summary: buildRouteSummary("List all API keys"),
     },
     // TODO: add cursor-based pagination
     // query: t.Object({
@@ -103,7 +103,7 @@ const listApiKeyRoute = new Elysia()
   });
 
 const deleteApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL"), { withExternal: true }))
+  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL")))
   .delete("/:id", async ({ params: { id } }) => {
     await general.deleteFrom("api_keys").where("id", "=", id).execute();
     return { data: "OK" };
@@ -116,7 +116,7 @@ const deleteApiKeyRoute = new Elysia()
       500: withError(),
     },
     detail: {
-      summary: buildRouteSummary("Delete an API key", { tags: ["withExternal"] }),
+      summary: buildRouteSummary("Delete an API key"),
     },
   });
 
