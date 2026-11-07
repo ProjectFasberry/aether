@@ -13,6 +13,7 @@ const bodySchema = t.Object({
 	operation: t.UnionEnum(["credit", "debit"]),
 	amount: t.Integer({ minimum: 1, maximum: 1_000_000_000 }),
 	reason: t.String({ minLength: 3, maxLength: 200 }),
+	idempotencyKey: t.String({ minLength: 8, maxLength: 64, pattern: "^[A-Za-z0-9_-]+$" }),
 });
 
 export const economyAdjust = new Elysia()
@@ -29,9 +30,17 @@ export const economyAdjust = new Elysia()
 				operation: body.operation,
 				adminReason: body.reason,
 				actor,
+				idempotencyKey: body.idempotencyKey,
 			});
 
-			return { data: { nickname, currency: body.currency, balance: result.balance } };
+			return {
+				data: {
+					nickname,
+					currency: body.currency,
+					balance: result.balance,
+					duplicate: result.duplicate,
+				},
+			};
 		} catch (error) {
 			if (error instanceof Error && error.message === "INSUFFICIENT_FUNDS") {
 				return status(400, wrapError("INSUFFICIENT_FUNDS"));

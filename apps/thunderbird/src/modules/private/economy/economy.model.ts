@@ -117,6 +117,7 @@ export async function adjustBalance({
 	operation,
 	adminReason,
 	actor,
+	idempotencyKey,
 }: {
 	nickname: string;
 	currency: Currency;
@@ -124,10 +125,12 @@ export async function adjustBalance({
 	operation: "credit" | "debit";
 	adminReason: string;
 	actor: string;
+	idempotencyKey?: string;
 }) {
 	const options = {
 		reason: "admin.adjustment",
 		actor,
+		orderId: idempotencyKey ?? null,
 		metadata: { adminReason, operation },
 	};
 

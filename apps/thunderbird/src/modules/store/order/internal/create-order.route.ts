@@ -29,6 +29,7 @@ type CartLine = {
   id: number;
   currency: string;
   price: string;
+  price_snapshot: string;
   type: string;
   value: string;
   title: string;
@@ -85,9 +86,14 @@ export const createOrder = new Elysia()
       return status(400, wrapError("items-not-found"))
     }
 
+    if (items.some((item) => Number(item.price) !== Number(item.price_snapshot))) {
+      return status(400, wrapError("PRICE_CHANGED"));
+    }
+
     const products = items.map((target: CartLine) => ({
       ...target,
       recipient: target.recipient,
+      priceSnapshot: target.price_snapshot,
       command: target.command ?? null,
       refundCmd: target.refund_cmd ?? null,
     }));
@@ -99,7 +105,10 @@ export const createOrder = new Elysia()
     try {
       // The same lock is taken again at delivery, so a duplicate cannot slip
       // between the check and the LuckPerms write.
-      const result = await withDeliveryLocks(deliveryLockKeys(products), async (): Promise<CheckoutResult> => {
+      const result = await withDeliveryLocks([
+        ...deliveryLockKeys(products),
+        `cart:${initiator.toLowerCase()}`,
+      ], async (): Promise<CheckoutResult> => {
         const dedup = await checkProductsDuplicates(products);
         const { deliverable, skipped } = partitionProducts(products, dedup);
 

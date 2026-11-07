@@ -41,6 +41,7 @@ type Product = {
 	recipient: string;
 	id: number;
 	price: string;
+	priceSnapshot?: string;
 	type: string;
 	value: string;
 	currency: string;
@@ -371,6 +372,68 @@ async function fulfill(
 		} catch (error) {
 			if (child) await markChildFailed(child.id, error);
 			throw error;
+		}
+	}
+}
+
+/**
+ * The route reads the cart before the lock. Re-read and lock the selected rows
+ * inside the purchase transaction, and re-check the current item price, so two
+ * tabs with different idempotency keys cannot both charge the same cart.
+ */
+async function lockAndValidateCart(
+	trx: EconomyTrx,
+	initiator: string,
+	products: Product[],
+): Promise<void> {
+	const locked = await (trx as any)
+		.selectFrom("store_cart_items")
+		.select(["product_id", "recipient", "price_snapshot"])
+		.where("initiator", "=", initiator)
+		.where("selected", "=", true)
+		.forUpdate()
+		.execute() as Array<{
+			product_id: number;
+			recipient: string;
+			price_snapshot: string;
+		}>;
+
+	const rowsByKey = new Map<string, Array<{ price_snapshot: string }>>();
+
+	for (const row of locked) {
+		const key = `${row.product_id}:${row.recipient.toLowerCase()}`;
+		const rows = rowsByKey.get(key) ?? [];
+		rows.push({ price_snapshot: row.price_snapshot });
+		rowsByKey.set(key, rows);
+	}
+
+	for (const product of products) {
+		const key = `${product.id}:${product.recipient.toLowerCase()}`;
+		const row = rowsByKey.get(key)?.pop();
+
+		if (!row) throw new Error("CART_CHANGED");
+		if (Number(row.price_snapshot) !== Number(product.priceSnapshot ?? product.price)) {
+			throw new Error("PRICE_CHANGED");
+		}
+	}
+
+	if ([...rowsByKey.values()].some((rows) => rows.length > 0)) {
+		throw new Error("CART_CHANGED");
+	}
+
+	const itemIds = [...new Set(products.map((product) => product.id))];
+	const current = itemIds.length > 0
+		? await (trx as any)
+			.selectFrom("store_items")
+			.select(["id", "price"])
+			.where("id", "in", itemIds)
+			.execute() as Array<{ id: number; price: string }>
+		: [];
+	const currentById = new Map(current.map((item) => [item.id, Number(item.price)]));
+
+	for (const product of products) {
+		if (currentById.get(product.id) !== Number(product.price)) {
+			throw new Error("PRICE_CHANGED");
 		}
 	}
 }
@@ -827,6 +890,8 @@ export async function processStoreGamePurchase({
 
 	try {
 		const transaction = await economyTransaction().execute(async (trx) => {
+			await lockAndValidateCart(trx, initiator, products);
+
 			const childs = await createGamePaymentRecord(
 				trx,
 				uniqueId,
