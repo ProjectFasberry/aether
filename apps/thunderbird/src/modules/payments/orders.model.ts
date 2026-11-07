@@ -269,7 +269,13 @@ export async function refundPayment({
 
 export const ORDER_LIST_SORTS = ["date", "amount"] as const;
 export type OrderListSort = typeof ORDER_LIST_SORTS[number];
-export type OrderListCursor = { sort: OrderListSort; value: string | number; id: number };
+export type OrderListCursor = {
+	sort: OrderListSort;
+	order?: "asc" | "desc";
+	/** Raw Postgres timestamp text for date sort, so microseconds survive. */
+	value: string | number;
+	id: number;
+};
 
 export function encodeOrderCursor(cursor: OrderListCursor): string {
 	return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
@@ -286,6 +292,7 @@ export function decodeOrderCursor(value: string): OrderListCursor | null {
 		}
 
 		if (parsed.sort !== "date" && parsed.sort !== "amount") return null;
+		if (parsed.order !== undefined && parsed.order !== "asc" && parsed.order !== "desc") return null;
 		if (typeof parsed.id !== "number" || !Number.isInteger(parsed.id)) return null;
 		if (parsed.sort === "date" && (typeof parsed.value !== "string" || Number.isNaN(Date.parse(parsed.value)))) return null;
 		if (parsed.sort === "amount" && typeof parsed.value !== "number") return null;
@@ -320,6 +327,7 @@ export async function listAllOrders({
 	let query = db
 		.selectFrom("orders")
 		.selectAll()
+		.select(sql<string>`"created_at"::text`.as("created_at_text"))
 		.orderBy(sortColumn, direction)
 		.orderBy("id", direction)
 		.limit(limit + 1);
@@ -330,7 +338,9 @@ export async function listAllOrders({
 
 	if (cursor) {
 		const comparator = direction === "asc" ? ">" : "<";
-		const value = sort === "date" ? new Date(cursor.value as string) : cursor.value;
+		const value = sort === "date"
+			? sql`${cursor.value}::timestamptz`
+			: cursor.value;
 
 		query = query.where(
 			sql<boolean>`(
@@ -340,7 +350,7 @@ export async function listAllOrders({
 		);
 	}
 
-	const rows = await query.execute() as unknown as (OrderRow & { id: number })[];
+	const rows = await query.execute() as unknown as (OrderRow & { id: number; created_at_text: string })[];
 	const hasNextPage = rows.length > limit;
 	if (hasNextPage) rows.pop();
 
@@ -377,7 +387,8 @@ export async function listAllOrders({
 			endCursor: last
 				? encodeOrderCursor({
 					sort,
-					value: sort === "date" ? new Date(last.created_at).toISOString() : Number(last.belkoin),
+					order,
+					value: sort === "date" ? last.created_at_text : Number(last.belkoin),
 					id: Number(last.id),
 				})
 				: undefined,

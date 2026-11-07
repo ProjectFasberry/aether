@@ -18,11 +18,20 @@ export const ordersList = new Elysia()
     const cursor = query.endCursor ? decodeGameOrderCursor(query.endCursor) : null;
     if (query.endCursor && !cursor) return status(400, wrapError("INVALID_CURSOR"));
 
+    const sort = query.sort ?? "date";
+    const order = query.order ?? "desc";
+
+    // A cursor belongs to one sort/direction. Mixing them would compare the
+    // wrong column and silently skip or repeat rows.
+    if (cursor && (cursor.sort !== sort || (cursor.order && cursor.order !== order))) {
+      return status(400, wrapError("INVALID_CURSOR"));
+    }
+
     const limit = Math.min(Math.max(Number(query.limit ?? 20), 1), 50);
     const data = await internalOrders.getGameOrders({
       initiator: nickname,
-      sort: query.sort ?? "date",
-      order: query.order ?? "desc",
+      sort,
+      order,
       status: query.status,
       cursor,
       limit,

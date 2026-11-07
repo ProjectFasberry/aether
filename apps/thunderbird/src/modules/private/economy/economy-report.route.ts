@@ -58,13 +58,20 @@ export const economyReport = new Elysia()
 		const cursor = query.endCursor ? decodeOrderCursor(query.endCursor) : null;
 		if (query.endCursor && !cursor) return status(400, wrapError("INVALID_CURSOR"));
 
+		const sort = query.sort ?? "date";
+		const order = query.order ?? "desc";
+
+		if (cursor && (cursor.sort !== sort || (cursor.order && cursor.order !== order))) {
+			return status(400, wrapError("INVALID_CURSOR"));
+		}
+
 		const limit = Math.min(Math.max(Number(query.limit ?? 50), 1), 100);
 		const page = await listAllOrders({
 			status: query.status,
 			nickname: query.nickname,
 			provider: query.provider,
-			sort: query.sort,
-			order: query.order,
+			sort,
+			order,
 			cursor,
 			limit,
 		});

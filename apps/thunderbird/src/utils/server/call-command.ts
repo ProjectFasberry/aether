@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { natsService } from "#/shared/nats/client"
-import { NATS_CONSUMERS } from "#/shared/nats/cons";
+import { NATS_CONSUMERS, ORDER_MAX_DELIVER } from "#/shared/nats/cons";
+import { nakDelayMs, shouldDeadLetter } from "./nats-retry";
 import { general } from "#/shared/database/general-db";
 import { serverStatusService } from "#/modules/server/status/index.model";
 import { getEnv } from "#/shared/env";
@@ -147,6 +148,27 @@ async function markCommandResult(
     .execute();
 }
 
+const DLQ_SUBJECT = "order.dlq";
+
+/**
+ * Stores a poison command for inspection. The original bytes are base64 so a
+ * replay does not depend on JSON re-serialization.
+ */
+async function deadLetter(
+  js: ReturnType<typeof jetstream>,
+  message: { subject: string; info: { streamSequence: number; deliveryCount: number }; timestamp: string; data: Uint8Array },
+  error: string,
+): Promise<void> {
+  await js.publish(DLQ_SUBJECT, JSON.stringify({
+    subject: message.subject,
+    streamSequence: message.info.streamSequence,
+    deliveryCount: message.info.deliveryCount,
+    error,
+    receivedAt: message.timestamp,
+    payload: Buffer.from(message.data).toString("base64"),
+  }));
+}
+
 export const startOrderConsumer = async (): Promise<void> => {
   const nc = natsService.getInstance()
   const js = jetstream(nc);
@@ -154,7 +176,7 @@ export const startOrderConsumer = async (): Promise<void> => {
   const orderCons = NATS_CONSUMERS["order"][0]
   const consumer = await js.consumers.get(orderCons.stream_name, orderCons.name);
 
-  const msgs = await consumer.consume({ max_messages: 1, expires: 1000 });
+  const msgs = await consumer.consume({ max_messages: 20, expires: 5000 });
 
   (async () => {
     try {
@@ -224,7 +246,23 @@ export const startOrderConsumer = async (): Promise<void> => {
         }
 
         console.error("Failed to process message:", e);
-        m.nak();
+
+        if (decoded && shouldDeadLetter(m.info.deliveryCount, ORDER_MAX_DELIVER)) {
+          try {
+            await deadLetter(js, m, message);
+            await markCommandResult(decoded, false, "MAX_DELIVERIES").catch(() => undefined);
+            resolveCommand(decoded.commandId, { ok: false, error: "MAX_DELIVERIES" });
+            m.term("max deliveries");
+          } catch (deadLetterError) {
+            console.error("Failed to dead-letter message:", deadLetterError);
+            m.nak(nakDelayMs(m.info.deliveryCount));
+          }
+
+          continue;
+        }
+
+        // Back off instead of spinning the same poison message in a hot loop.
+        m.nak(nakDelayMs(m.info.deliveryCount));
       }
     }
   } catch (e) {

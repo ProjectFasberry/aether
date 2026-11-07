@@ -10,6 +10,8 @@ import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
 import type { Selectable } from "kysely";
 import { buildUpdates } from "#/utils/config/transforms";
 import { buildRouteSummary } from "#/utils";
+import { wrapError } from "@repo/shared/lib/helpers";
+import { store } from "../../store/items/store-items.model";
 
 const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
 
@@ -61,8 +63,27 @@ const storeItemEditFields = new Elysia()
     },
   });
 
+const storeItemGet = new Elysia()
+  .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
+  .get("/:id", async ({ params: { id }, status }) => {
+    const data = await store.getItem(id) as (
+      Awaited<ReturnType<typeof store.getItem>>
+      & { refund_cmd?: string | null }
+    );
+
+    if (!data) return status(404, wrapError("ITEM_NOT_FOUND"));
+
+    return { data };
+  }, {
+    params: t.Object({ id: t.Number() }),
+    detail: {
+      summary: buildRouteSummary("Get a store item for editing"),
+    },
+  });
+
 export const storeItemEditGroup = new Elysia()
   .group("", app => app
     .use(storeItemEditFields)
+    .use(storeItemGet)
     .use(storeItemEdit)
   );

@@ -26,7 +26,6 @@ export const cartListItemSchema = t.Object({
   quantity: t.Number(),
   value: t.String(),
   type: t.String(),
-  command: t.Nullable(t.String()),
   currency: t.String(),
 })
 

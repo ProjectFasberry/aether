@@ -20,9 +20,10 @@ const db = general as unknown as Kysely<DB & { ledger_entries: any }>;
 
 export type LedgerCursor = { created_at: string; id: number };
 
-export function encodeCursor(row: { created_at: Date | string; id: number }): string {
+export function encodeCursor(row: { created_at: Date | string; created_at_text?: string; id: number }): string {
 	return Buffer.from(JSON.stringify({
-		created_at: new Date(row.created_at).toISOString(),
+		// Keep the Postgres text when available: JS Date truncates microseconds.
+		created_at: row.created_at_text ?? String(row.created_at),
 		id: Number(row.id),
 	}), "utf8").toString("base64url");
 }
@@ -71,13 +72,14 @@ export async function listLedger({
 	let query = db
 		.selectFrom("ledger_entries")
 		.selectAll()
+		.select(sql<string>`"created_at"::text`.as("created_at_text"))
 		.where("nickname", "=", nickname)
 		.orderBy("created_at", "desc")
 		.orderBy("id", "desc")
 		.limit(limit + 1);
 
 	if (cursor) {
-		const createdAt = new Date(cursor.created_at);
+		const createdAt = sql`${cursor.created_at}::timestamptz`;
 
 		query = query.where(
 			sql<boolean>`(
@@ -87,7 +89,7 @@ export async function listLedger({
 		);
 	}
 
-	const raw = await query.execute() as unknown as LedgerEntry[];
+	const raw = await query.execute() as unknown as (LedgerEntry & { created_at_text: string })[];
 	const hasNextPage = raw.length > limit;
 	if (hasNextPage) raw.pop();
 
@@ -104,7 +106,7 @@ export async function listLedger({
 		meta: {
 			hasNextPage,
 			endCursor: rows.length > 0
-				? encodeCursor(rows[rows.length - 1] as { created_at: Date | string; id: number })
+				? encodeCursor(rows[rows.length - 1] as { created_at: Date | string; created_at_text: string; id: number })
 				: undefined,
 		},
 	};
@@ -211,7 +213,8 @@ export async function refundOrder({
 			};
 		}
 
-		if (purchases.length === 0) return null;
+		// A free order has no purchase entries but still needs a revoke: the
+		// delivered item must be reversed even though there is no money to credit.
 
 		// A refunded order must not be delivered later by the outbox.
 		await (trx as any)

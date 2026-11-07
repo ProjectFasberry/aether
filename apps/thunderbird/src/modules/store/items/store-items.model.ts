@@ -29,7 +29,6 @@ export const storeItemsItemSchema = t.Object({
   description: t.Nullable(t.String()),
   imageUrl: t.String(),
   type: t.String(),
-  command: t.Nullable(t.String()),
   value: t.String(),
   currency: t.String(),
   price: t.Number(),
@@ -86,7 +85,6 @@ export const store = {
         "imageUrl",
         "type",
         "currency",
-        "command",
         "value",
         "content"
       ])

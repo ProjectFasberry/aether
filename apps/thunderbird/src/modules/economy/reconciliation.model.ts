@@ -301,61 +301,89 @@ export type PaymentsReport = {
 	orders: Record<string, number>;
 	created: number;
 	succeeded: number;
+	refunded: number;
 	conversion: number;
 	revenueMinor: Record<string, number>;
+	refundedMinor: Record<string, number>;
+	/** Ledger-net cash from top-ups; provider refunds are not implemented yet. */
+	netRevenueMinor: Record<string, number>;
+	providerRefundsImplemented: false;
 	uniquePayers: number;
 	belkoinIssued: number;
 };
 
+function sumByCurrency(rows: { currency: string; amount: string }[]): Record<string, number> {
+	const result: Record<string, number> = {};
+	for (const row of rows) result[row.currency] = Number(row.amount);
+	return result;
+}
+
 export async function paymentsReport({ from, to }: { from: Date; to: Date }): Promise<PaymentsReport> {
-	const statusRows = await db
-		.selectFrom("orders")
-		.select(["status", sql<string>`count(*)`.as("count")])
-		.where("created_at", ">=", from)
-		.where("created_at", "<", to)
-		.groupBy("status")
-		.execute() as unknown as { status: string; count: string }[];
-
-	const orders: Record<string, number> = {};
-	for (const row of statusRows) orders[row.status] = Number(row.count);
-
-	const created = Object.values(orders).reduce((acc, value) => acc + value, 0);
-	const succeeded = orders.succeeded ?? 0;
-
-	const [revenue, payers, issued] = await Promise.all([
+	const [statusRows, revenue, refunded, payers, issued] = await Promise.all([
+		db
+			.selectFrom("orders")
+			.select(["status", sql<string>`count(*)`.as("count")])
+			.where("created_at", ">=", from)
+			.where("created_at", "<", to)
+			.groupBy("status")
+			.execute() as unknown as Promise<{ status: string; count: string }[]>,
 		db
 			.selectFrom("orders")
 			.select(["currency", sql<string>`sum(amount_minor)`.as("amount")])
 			.where("status", "=", "succeeded")
-			.where("created_at", ">=", from)
-			.where("created_at", "<", to)
+			.where("paid_at", ">=", from)
+			.where("paid_at", "<", to)
+			.groupBy("currency")
+			.execute() as unknown as Promise<{ currency: string; amount: string }[]>,
+		db
+			.selectFrom("orders")
+			.select(["currency", sql<string>`sum(amount_minor)`.as("amount")])
+			.where("status", "=", "refunded")
+			.where("refunded_at", ">=", from)
+			.where("refunded_at", "<", to)
 			.groupBy("currency")
 			.execute() as unknown as Promise<{ currency: string; amount: string }[]>,
 		db
 			.selectFrom("orders")
 			.select(sql<string>`count(distinct nickname)`.as("count"))
 			.where("status", "=", "succeeded")
-			.where("created_at", ">=", from)
-			.where("created_at", "<", to)
+			.where("paid_at", ">=", from)
+			.where("paid_at", "<", to)
 			.executeTakeFirst() as unknown as Promise<{ count: string } | undefined>,
 		db
 			.selectFrom("orders")
 			.select(sql<string>`coalesce(sum(belkoin), 0)`.as("amount"))
 			.where("status", "=", "succeeded")
-			.where("created_at", ">=", from)
-			.where("created_at", "<", to)
+			.where("paid_at", ">=", from)
+			.where("paid_at", "<", to)
 			.executeTakeFirst() as unknown as Promise<{ amount: string } | undefined>,
 	]);
 
-	const revenueMinor: Record<string, number> = {};
-	for (const row of revenue) revenueMinor[row.currency] = Number(row.amount);
+	const orders: Record<string, number> = {};
+	for (const row of statusRows) orders[row.status] = Number(row.count);
+
+	const created = Object.values(orders).reduce((acc, value) => acc + value, 0);
+	const succeeded = orders.succeeded ?? 0;
+	const refundedCount = orders.refunded ?? 0;
+
+	const revenueMinor = sumByCurrency(revenue);
+	const refundedMinor = sumByCurrency(refunded);
+	const netRevenueMinor: Record<string, number> = { ...revenueMinor };
+
+	for (const [currency, amount] of Object.entries(refundedMinor)) {
+		netRevenueMinor[currency] = Number(netRevenueMinor[currency] ?? 0) - amount;
+	}
 
 	return {
 		orders,
 		created,
 		succeeded,
+		refunded: refundedCount,
 		conversion: created === 0 ? 0 : succeeded / created,
 		revenueMinor,
+		refundedMinor,
+		netRevenueMinor,
+		providerRefundsImplemented: false,
 		uniquePayers: Number(payers?.count ?? 0),
 		belkoinIssued: Number(issued?.amount ?? 0),
 	};

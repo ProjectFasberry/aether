@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
+import { pickCurrentRates } from "./rates.pure";
 
 /** BELKOIN is the hub: every other currency is priced through it. */
 export const RATE_CURRENCIES = ["RUB", "USDT", "USDC", "BELKOIN", "CHARISM"] as const;
@@ -12,6 +13,7 @@ export type ExchangeRate = {
 	to_currency: string;
 	rate: number;
 	spread: number;
+	disabled: boolean;
 	effective_from: Date;
 	created_at: Date;
 };
@@ -35,19 +37,12 @@ export async function currentRates(): Promise<ExchangeRate[]> {
 		.selectFrom("exchange_rates")
 		.selectAll()
 		.where("effective_from", "<=", new Date())
-		.orderBy("from_currency", "asc")
-		.orderBy("to_currency", "asc")
 		.orderBy("effective_from", "desc")
 		.execute() as unknown as ExchangeRate[];
 
-	const latest = new Map<string, ExchangeRate>();
-
-	for (const row of rows) {
-		const key = `${row.from_currency}:${row.to_currency}`;
-		if (!latest.has(key)) latest.set(key, row);
-	}
-
-	return [...latest.values()];
+	// A pair may have rows in both directions. Keep only the newest row for the
+	// canonical pair, so conversions do not get parallel edges.
+	return pickCurrentRates(rows) as ExchangeRate[];
 }
 
 export async function rateHistory({
@@ -85,8 +80,16 @@ export async function addRate(input: {
 			to_currency: input.to,
 			rate: input.rate,
 			spread: input.spread,
+			disabled: false,
 			effective_from: input.effectiveFrom ?? new Date(),
 		})
+		.onConflict((oc: any) => oc
+			.columns(["from_currency", "to_currency", "effective_from"])
+			.doUpdateSet({
+				rate: input.rate,
+				spread: input.spread,
+				disabled: false,
+			}))
 		.returningAll()
 		.executeTakeFirstOrThrow() as unknown as ExchangeRate;
 
@@ -99,31 +102,66 @@ export async function updateRate(input: {
 	spread?: number;
 	effectiveFrom?: Date;
 }): Promise<ExchangeRate | null> {
-	const updates: Record<string, unknown> = {};
-
-	if (input.rate !== undefined) updates.rate = input.rate;
-	if (input.spread !== undefined) updates.spread = input.spread;
-	if (input.effectiveFrom !== undefined) updates.effective_from = input.effectiveFrom;
-	if (Object.keys(updates).length === 0) return null;
-
-	const row = await db
-		.updateTable("exchange_rates")
-		.set(updates)
+	const existing = await db
+		.selectFrom("exchange_rates")
+		.selectAll()
 		.where("id", "=", input.id)
-		.returningAll()
 		.executeTakeFirst() as unknown as ExchangeRate | undefined;
 
-	return row ?? null;
+	if (!existing) return null;
+
+	const rate = input.rate ?? Number(existing.rate);
+	const spread = input.spread ?? Number(existing.spread);
+	const effectiveFrom = input.effectiveFrom ?? new Date();
+
+	// Append a new history row. Equal timestamps correct the same moment
+	// instead of violating the pair/effective unique index.
+	const row = await db
+		.insertInto("exchange_rates")
+		.values({
+			from_currency: existing.from_currency,
+			to_currency: existing.to_currency,
+			rate,
+			spread,
+			disabled: false,
+			effective_from: effectiveFrom,
+		})
+		.onConflict((oc: any) => oc
+			.columns(["from_currency", "to_currency", "effective_from"])
+			.doUpdateSet({ rate, spread, disabled: false }))
+		.returningAll()
+		.executeTakeFirstOrThrow() as unknown as ExchangeRate;
+
+	return row;
 }
 
 export async function deleteRate(id: number): Promise<ExchangeRate | null> {
-	const row = await db
-		.deleteFrom("exchange_rates")
+	const existing = await db
+		.selectFrom("exchange_rates")
+		.selectAll()
 		.where("id", "=", id)
-		.returningAll()
 		.executeTakeFirst() as unknown as ExchangeRate | undefined;
 
-	return row ?? null;
+	if (!existing) return null;
+
+	// Disable by appending a new row; the old rate stays in history.
+	const row = await db
+		.insertInto("exchange_rates")
+		.values({
+			from_currency: existing.from_currency,
+			to_currency: existing.to_currency,
+			rate: existing.rate,
+			spread: existing.spread,
+			disabled: true,
+			effective_from: new Date(),
+		})
+		.onConflict((oc: any) => oc
+			.columns(["from_currency", "to_currency", "effective_from"])
+			.doUpdateSet({ disabled: true }))
+		.returningAll()
+		.executeTakeFirstOrThrow() as unknown as ExchangeRate;
+
+	return row;
 }
 
 function buildEdges(rates: ExchangeRate[]): Edge[] {

@@ -11,6 +11,8 @@ export type OrderDirection = typeof ORDER_DIRECTIONS[number];
 
 export type GameOrderCursor = {
 	sort: OrderSort;
+	order?: OrderDirection;
+	/** Raw Postgres timestamp text for date sort, so microseconds survive. */
 	value: string | number;
 	id: number;
 };
@@ -24,6 +26,7 @@ export function decodeGameOrderCursor(value: string): GameOrderCursor | null {
 		const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<GameOrderCursor>;
 
 		if (parsed.sort !== "date" && parsed.sort !== "amount") return null;
+		if (parsed.order !== undefined && parsed.order !== "asc" && parsed.order !== "desc") return null;
 		if (typeof parsed.id !== "number" || !Number.isInteger(parsed.id)) return null;
 		if (parsed.sort === "date" && (typeof parsed.value !== "string" || Number.isNaN(Date.parse(parsed.value)))) return null;
 		if (parsed.sort === "amount" && typeof parsed.value !== "number") return null;
@@ -101,6 +104,7 @@ export const internalOrders = {
 				"payments_game.unique_id",
 				"payments_game.initiator",
 				"payments_game.created_at",
+				sql<string>`"payments_game"."created_at"::text`.as("created_at_text"),
 				"payments_game.finished_at",
 				"payments_game.refunded_at",
 				"payments_game.price",
@@ -149,8 +153,8 @@ export const internalOrders = {
 
 		if (cursor) {
 			if (cursor.sort === "date") {
-				const createdAt = new Date(cursor.value as string);
 				const comparator = direction === "asc" ? ">" : "<";
+				const createdAt = sql`${cursor.value}::timestamptz`;
 
 				query = query.where(
 					sql<boolean>`(
@@ -174,6 +178,7 @@ export const internalOrders = {
 			unique_id: string;
 			initiator: string;
 			created_at: Date;
+			created_at_text: string;
 			finished_at: Date | null;
 			refunded_at: Date | null;
 			price: Record<string, number>;
@@ -202,7 +207,8 @@ export const internalOrders = {
 				endCursor: last
 					? encodeGameOrderCursor({
 						sort,
-						value: sort === "date" ? new Date(last.created_at).toISOString() : Number((last.price?.BELKOIN ?? 0) + (last.price?.CHARISM ?? 0)),
+						order,
+						value: sort === "date" ? last.created_at_text : Number((last.price?.BELKOIN ?? 0) + (last.price?.CHARISM ?? 0)),
 						id: last.id,
 					})
 					: undefined,
