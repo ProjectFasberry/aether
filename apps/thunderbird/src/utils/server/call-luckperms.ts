@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { getEnv } from "#/shared/env";
 import { natsService } from "#/shared/nats/client";
 import type { DeliveryEffect } from "#/modules/store/order/internal/delivery-dedup";
 import { resolveTargetServer } from "./call-command";
@@ -38,6 +39,7 @@ export async function callLuckPermsEffect(
 			recipient,
 			uuid: uuid ?? null,
 			kind,
+			debug: getEnv().LUCKPERMS_BRIDGE_DEBUG === true,
 		}),
 		{ timeout: 5_000 },
 	);
