@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { belkoinFor } from "#/modules/economy/rates.model";
 import { credit, debit } from "#/modules/economy/wallet.model";
+import { sendEconomyAlert } from "#/modules/economy/reconciliation.model";
 import { getEnv } from "#/shared/env";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
@@ -177,7 +178,12 @@ export async function settleOrder({
 	const order = await getOrder(orderId);
 	if (!order || order.provider !== provider) return null;
 
-	if (order.status !== "pending") return view(order);
+	const lateSuccess = order.status === "expired" && status === "succeeded";
+
+	// Only a pending order changes. An expired order still accepts a late
+	// successful payment: the provider captured the money, so the player is
+	// credited instead of losing it. Repeated and post-refund events are no-ops.
+	if (order.status !== "pending" && !lateSuccess) return view(order);
 
 	if (status === "succeeded") {
 		if (
@@ -203,8 +209,14 @@ export async function settleOrder({
 			reason: "payment:BELKOIN",
 			orderId,
 			actor: "system",
-			metadata: { provider, providerPaymentId, amountMinor, currency },
+			metadata: { provider, providerPaymentId, amountMinor, currency, latePayment: lateSuccess },
 		});
+
+		if (lateSuccess) {
+			sendEconomyAlert(
+				`Late payment ${orderId}: ${provider} settled after expiry, ${order.belkoin} BELKOIN credited to ${order.nickname}`,
+			);
+		}
 	}
 
 	await db
@@ -213,6 +225,9 @@ export async function settleOrder({
 			status,
 			provider_payment_id: providerPaymentId,
 			paid_at: status === "succeeded" ? new Date() : null,
+			...(lateSuccess
+				? { metadata: { ...(order.metadata as object ?? {}), latePayment: true } }
+				: {}),
 		})
 		.where("order_id", "=", orderId)
 		.execute();
