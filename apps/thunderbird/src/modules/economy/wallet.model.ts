@@ -3,6 +3,7 @@ import { general } from "#/shared/database/general-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
+import { withRedisLock } from "#/shared/redis/lock";
 import type { DB } from "@gen/db/general";
 import type { Kysely, Transaction } from "kysely";
 import { enqueueGrantJob, registerGrantHandler } from "./grant-jobs.model";
@@ -310,7 +311,14 @@ async function withProjectionLock<T>(key: string, fn: () => Promise<T>): Promise
 	await previous;
 
 	try {
-		return await fn();
+		// The in-process queue still batches callers; the Redis lock serializes
+		// the actual plugin write across API replicas.
+		return await withRedisLock(
+			`wallet:projection:${key}`,
+			15_000,
+			fn,
+			{ waitMs: 5_000 },
+		);
 	} finally {
 		release();
 

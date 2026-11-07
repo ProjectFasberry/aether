@@ -7,7 +7,8 @@ import { cleanOldHistory } from "#/modules/private/history/history-retention";
 import { processGrantJobs } from "#/modules/economy/grant-jobs.model";
 import { repairPendingGameOrders } from "#/modules/store/order/internal/order-game.model";
 import { expireOrders } from "#/modules/payments/orders.model";
-import { grantJobsReport, reconcileBalances, sendEconomyAlert } from "#/modules/economy/reconciliation.model";
+import { grantJobsReport, reconcileBalances, repairReconciliation, sendEconomyAlert } from "#/modules/economy/reconciliation.model";
+import { withRedisLock } from "../redis/lock";
 import { cronLogger } from ".";
 
 type Job = {
@@ -16,7 +17,26 @@ type Job = {
   callback: () => Promise<void>;
   immediately: boolean;
   schedule: boolean;
-  allowIsDev?: boolean
+  allowIsDev?: boolean;
+  /** How long one replica owns the job before another may retry it. */
+  lockTtlMs?: number;
+}
+
+export async function withCronLock(name: string, ttlMs: number, fn: () => Promise<void>): Promise<void> {
+  try {
+    await withRedisLock(`cron:${name}`, ttlMs, fn);
+  } catch (e) {
+    // Another replica is already running this tick. Skipping is the point of
+    // the lock; do not report it as a job failure.
+    if (e instanceof Error && e.message === "LOCK_BUSY") {
+      cronLogger.info(`Job "${name}" is already running on another replica`);
+      return;
+    }
+
+    // A Redis failure must not become an unhandled rejection in the cron
+    // scheduler; the next tick retries the job.
+    cronLogger.error(`Job "${name}" lock failed`, e);
+  }
 }
 
 async function wrapJobCb(name: string, fn: () => Promise<void>) {
@@ -37,7 +57,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: true,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 9 * 60_000
   },
   {
     name: "warn-before-clean-old-events",
@@ -47,7 +68,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: true,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 9 * 60_000
   },
   {
     name: "update-server-status",
@@ -61,7 +83,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: true,
     schedule: false,
-    allowIsDev: false
+    allowIsDev: false,
+    lockTtlMs: 55_000
   },
   {
     name: "process-grant-jobs",
@@ -74,7 +97,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: false,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 55_000
   },
   {
     name: "reconcile-economy",
@@ -104,11 +128,17 @@ export const CRON_JOBS: Job[] = [
           sendEconomyAlert(`Reconciliation: ${problems.join(", ")}`);
           cronLogger.warn(`Economy reconciliation: ${problems.join(", ")}`);
         }
+
+        const repaired = await repairReconciliation(balances);
+        if (repaired.enqueued > 0) {
+          cronLogger.warn(`Economy repair: enqueued ${repaired.enqueued} projections`);
+        }
       })
     },
     immediately: false,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 5 * 60_000
   },
   {
     name: "repair-store-orders",
@@ -123,7 +153,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: false,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 4 * 60_000
   },
   {
     name: "expire-payment-orders",
@@ -136,7 +167,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: false,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 4 * 60_000
   },
   {
     name: "clean-old-history",
@@ -149,7 +181,8 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: false,
     schedule: true,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 60 * 60_000
   },
   {
     name: "update-seems-like",
@@ -159,6 +192,7 @@ export const CRON_JOBS: Job[] = [
     },
     immediately: true,
     schedule: false,
-    allowIsDev: true
+    allowIsDev: true,
+    lockTtlMs: 60 * 60_000
   }
 ]

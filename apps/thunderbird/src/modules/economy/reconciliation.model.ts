@@ -4,6 +4,7 @@ import { bisquite } from "#/shared/database/bisquite-db";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { appLogger } from "#/shared/constants/logger";
+import { enqueueGrantJob } from "./grant-jobs.model";
 import type { DB } from "@gen/db/general";
 import type { Kysely } from "kysely";
 import { sql } from "kysely";
@@ -30,6 +31,7 @@ export type ReconciliationReport = {
 	missingPlugin: number;
 	pendingProjection: number;
 	mismatches: BalanceMismatch[];
+	missing: { nickname: string; currency: string }[];
 };
 
 type WalletRow = { nickname: string; currency: string; balance: number };
@@ -92,6 +94,7 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 	]);
 
 	const mismatches: BalanceMismatch[] = [];
+	const missing: { nickname: string; currency: string }[] = [];
 	let missingPlugin = 0;
 	let pendingProjection = 0;
 
@@ -111,6 +114,7 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 			}
 
 			missingPlugin += 1;
+			missing.push({ nickname: wallet.nickname, currency: wallet.currency });
 			continue;
 		}
 
@@ -137,7 +141,51 @@ export async function reconcileBalances({ limit = 5_000 } = {}): Promise<Reconci
 		missingPlugin,
 		pendingProjection,
 		mismatches: mismatches.slice(0, 100),
+		missing: missing.slice(0, 100),
 	};
+}
+
+/**
+ * Re-enqueues a projection for every mismatch and every wallet whose plugin
+ * row disappeared. The job reads the current wallet, so repeating it is safe.
+ */
+export async function repairReconciliation(
+	report: ReconciliationReport,
+	limit = 100,
+): Promise<{ enqueued: number }> {
+	const candidates = [
+		...report.mismatches.map((item) => ({ nickname: item.nickname, currency: item.currency })),
+		...report.missing.map((item) => ({ nickname: item.nickname, currency: item.currency })),
+	].slice(0, limit);
+
+	// One repair attempt per wallet per hour: a done job must not block a later
+	// repair, but a 6-hourly cron must not create an unbounded queue either.
+	const bucket = new Date().toISOString().slice(0, 13);
+	const missingKeys = new Set(report.missing.map((item) => (
+		`${item.currency}:${item.nickname.toLowerCase()}`
+	)));
+	let enqueued = 0;
+
+	for (const item of candidates) {
+		if (item.currency !== "BELKOIN" && item.currency !== "CHARISM") continue;
+
+		const key = `${item.currency}:${item.nickname.toLowerCase()}`;
+		await enqueueGrantJob({
+			orderId: `projection:repair:${key}:${bucket}`,
+			kind: item.currency,
+			payload: { nickname: item.nickname, currency: item.currency },
+			// A missing plugin row usually means the player has not joined yet.
+			// Give CMI/PlayerPoints an hour to create it instead of burning all
+			// retries immediately.
+			runAfter: missingKeys.has(key)
+				? new Date(Date.now() + 60 * 60_000)
+				: undefined,
+		});
+
+		enqueued += 1;
+	}
+
+	return { enqueued };
 }
 
 export type GrantJobsReport = {
