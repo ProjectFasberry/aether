@@ -8,7 +8,10 @@ const requestLogger = logger.child({ name: "request" })
 const getRequestInfo = (request: Request, ...args: unknown[]) =>
   `${request.method} ${request.url} ${args.join(" ")}`
 
-export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true }) => ky.create({
+export const createClient = ({ verbose }: { verbose: boolean | (() => boolean) } = { verbose: true }) => {
+  const isVerbose = () => (typeof verbose === "function" ? verbose() : verbose);
+
+  return ky.create({
   hooks: {
     beforeRequest: [
       ({ request }) => {
@@ -17,7 +20,7 @@ export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true
         request.headers.set("x-request-id", String(id))
         timings.set(id, Date.now());
 
-        if (verbose) {
+        if (isVerbose()) {
           requestLogger.child({ name: "start" }).debug(getRequestInfo(request))
         }
       }
@@ -29,7 +32,7 @@ export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true
 
         const start = id ? (timings.get(Number(id)) ?? Date.now()) : Date.now()
 
-        if (verbose) {
+        if (isVerbose()) {
           requestLogger.child({ name: "end" }).debug(getRequestInfo(request, `${Date.now() - start}ms`))
         }
 
@@ -39,4 +42,5 @@ export const createClient = ({ verbose }: { verbose: boolean } = { verbose: true
       }
     ],
   }
-})
+  });
+};
