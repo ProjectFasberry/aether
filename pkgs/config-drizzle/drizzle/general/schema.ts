@@ -984,6 +984,8 @@ export const walletLots = pgTable(
 	(table) => [
 		index("wallet_lots_spend_idx").using("btree", table.nickname.asc().nullsLast().op("text_ops"), table.currency.asc().nullsLast().op("text_ops"), table.remaining.asc().nullsLast().op("int8_ops"), table.createdAt.asc().nullsLast().op("timestamptz_ops"), table.id.asc().nullsLast().op("int8_ops")),
 		index("wallet_lots_source_idx").using("btree", table.sourceOrderId.asc().nullsLast().op("text_ops")).where(sql`"source_order_id" IS NOT NULL`),
+		check("wallet_lots_amount_nonnegative", sql`${table.amount} >= 0`),
+		check("wallet_lots_remaining_range", sql`${table.remaining} >= 0 AND ${table.remaining} <= ${table.amount}`),
 	],
 );
 
@@ -1001,5 +1003,7 @@ export const lotAllocations = pgTable(
 	(table) => [
 		index("lot_allocations_ledger_idx").using("btree", table.ledgerEntryId.asc().nullsLast().op("int8_ops")),
 		index("lot_allocations_lot_idx").using("btree", table.lotId.asc().nullsLast().op("int8_ops")),
+		check("lot_allocations_amount_positive", sql`${table.amount} > 0`),
+		check("lot_allocations_restored_range", sql`${table.restoredAmount} >= 0 AND ${table.restoredAmount} <= ${table.amount}`),
 	],
 );
