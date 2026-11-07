@@ -87,7 +87,7 @@ export function startApp() {
     showRoutes({ routes: app.routes });
   }
 
-  app.listen(getEnv().PORT);
+  app.listen({ port: getEnv().PORT, hostname: getEnv().HOST ?? "0.0.0.0" });
 
   appLogger.info(
     `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`

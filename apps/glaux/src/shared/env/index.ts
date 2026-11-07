@@ -12,6 +12,8 @@ const envSchema = Type.Object({
 	GENERAL_POSTGRES_URI: Type.String(),
 	SKINS_MYSQL_URI: Type.String(),
 	PORT: CoerceNumber,
+	/** Listen address. `127.0.0.1` keeps the panel API off the LAN: Traefik runs on the host. */
+	HOST: Type.Optional(Type.String()),
 	BOT_GUARD_TOKEN: Type.String(),
 	BOT_GUARD_TOKEN_DEV: Type.Optional(Type.String({ description: "Only local development" })),
 	/** Base URL for the Telegram Bot API. Set it when the default endpoint is blocked (e.g. a local relay). */
