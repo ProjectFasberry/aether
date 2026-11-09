@@ -24,3 +24,13 @@ repository allowlist; `GITHUB_TG_TARGET` overrides the Telegram chat (default
 Set the webhook URL to `https://panel.fasberry.fun/webhooks/github`, content type
 `application/json`, the same secret, and the `push` event only. The secret lives in
 Infisical under `/glaux`.
+
+## Build metrics
+
+`POST /metrics/build` accepts `{ app, stage, branch, commitSha, metrics }` with
+`Authorization: Bearer $BUILD_METRICS_TOKEN` and stores a row in the
+`build_metrics` database (`client_js_bytes`, `client_css_bytes`,
+`client_fonts_bytes`, `client_images_bytes`, `client_other_bytes`,
+`server_js_bytes`, `total_bytes`). Atlas CI calls it after the production build;
+the table is created on boot. The database URI and token live in Infisical
+`/glaux` as `BUILD_METRICS_POSTGRES_URI` and `BUILD_METRICS_TOKEN`.
