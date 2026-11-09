@@ -11,6 +11,7 @@ import { minioService } from "./shared/minio/client";
 import { appLogger, logger } from "./shared/logger";
 import { DATABASES_FOR_CHECK } from "./shared/database";
 import { getEnv } from "./shared/env";
+import { ensureBuildMetricsTable } from "./shared/database/build-metrics-db";
 
 export const preboot = () => {
   Object.assign(getEnv(), { verbose: defineVerbose() })
@@ -42,6 +43,10 @@ export const boot = createBootstrap([
   }),
   definePipe("redis", {
     run: () => redis.init(),
+  }),
+  definePipe("build-metrics", {
+    run: () => ensureBuildMetricsTable(),
+    critical: false,
   }),
   definePipe("nats", {
     run: () => natsService.start(),
