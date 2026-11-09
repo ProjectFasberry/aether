@@ -3,6 +3,7 @@ import { bot } from "../../shared/bot";
 import { chats } from "../../shared/bot/chats";
 import { defineBearer } from "../../lib/define";
 import { invariant } from "@repo/shared/utils";
+import { githubWebhook } from "../webhooks/github";
 
 const watchtower = new Elysia()
   .use(defineBearer())
@@ -42,4 +43,5 @@ const watchtower = new Elysia()
   });
 
 export const service = new Elysia()
-  .use(watchtower);
+  .use(watchtower)
+  .use(githubWebhook);
