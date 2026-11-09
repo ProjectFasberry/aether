@@ -37,6 +37,12 @@ export const chats = {
     invariant(CHATS, "Chats is not defined");
     return CHATS;
   },
+  getChatIdByTarget(target: string): string | undefined {
+    for (const [chatId, label] of CHATS) {
+      if (label === target) return chatId;
+    }
+    return undefined;
+  },
   async updateChatsInternal() {
     const prev = CHATS?.size ?? 0;
     const newData = await fetchChatIds();
