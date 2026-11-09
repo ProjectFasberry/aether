@@ -78,8 +78,9 @@ every workspace that has it. `cd` into the app for a single service.
   recovery is handled by an admin until 2FA and email/Telegram are added. Do not
   reintroduce `hash` or restore routes.
 - Game auth is our Yggdrasil (`/yggdrasil/*`); the proxy runs
-  `online-mode = true` with `authlib-injector`. Check `docs/auth-migration.md` in
-  the workspace parent for the full design and progress log.
+  `online-mode = true` with `authlib-injector`. Check
+  `docs/auth/auth-migration.md` in the workspace parent for the full design and
+  progress log.
 
 ## Deploying thunderbird
 
