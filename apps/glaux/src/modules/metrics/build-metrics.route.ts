@@ -86,22 +86,24 @@ export const buildMetricsRoute = new Elysia()
 
 		const rows = await request.execute()
 
-		return rows.map((row) => ({
-			app: row.app,
-			stage: row.stage,
-			branch: row.branch,
-			commitSha: row.commit_sha,
-			createdAt: row.created_at,
-			metrics: {
-				clientJsBytes: Number(row.client_js_bytes),
-				clientCssBytes: Number(row.client_css_bytes),
-				clientFontsBytes: Number(row.client_fonts_bytes),
-				clientImagesBytes: Number(row.client_images_bytes),
-				clientOtherBytes: Number(row.client_other_bytes),
-				serverJsBytes: Number(row.server_js_bytes),
-				totalBytes: Number(row.total_bytes),
-			},
-		}))
+		return {
+			data: rows.map((row) => ({
+				app: row.app,
+				stage: row.stage,
+				branch: row.branch,
+				commitSha: row.commit_sha,
+				createdAt: row.created_at,
+				metrics: {
+					clientJsBytes: Number(row.client_js_bytes),
+					clientCssBytes: Number(row.client_css_bytes),
+					clientFontsBytes: Number(row.client_fonts_bytes),
+					clientImagesBytes: Number(row.client_images_bytes),
+					clientOtherBytes: Number(row.client_other_bytes),
+					serverJsBytes: Number(row.server_js_bytes),
+					totalBytes: Number(row.total_bytes),
+				},
+			})),
+		}
 	}, {
 		query: t.Object({
 			app: t.Optional(t.String()),
@@ -112,4 +114,3 @@ export const buildMetricsRoute = new Elysia()
 			summary: "List stored build sizes for charts",
 		},
 	})
-
