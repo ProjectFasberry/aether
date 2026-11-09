@@ -10,7 +10,7 @@ const watchtower = new Elysia()
   .post("/watchtower", async ({ body }) => {
     const { message, title } = body;
 
-    const infraChatId = chats.getData().get("g_infra")
+    const infraChatId = chats.getChatIdByTarget("g_infra")
     invariant(infraChatId, "Infra chat id is not defined");
 
     try {

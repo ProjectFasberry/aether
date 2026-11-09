@@ -59,9 +59,10 @@ export async function sendGithubPush(payload: GithubPushPayload): Promise<void> 
 		return
 	}
 
-	const chatId = chats.getData().get(getEnv().GITHUB_TG_TARGET ?? "g_infra")
+	const target = getEnv().GITHUB_TG_TARGET ?? "g_infra"
+	const chatId = chats.getChatIdByTarget(target)
 	if (!chatId) {
-		appLogger.warn("github webhook: g_infra chat is not configured")
+		appLogger.warn(`github webhook: telegram target ${target} is not configured`)
 		return
 	}
 
