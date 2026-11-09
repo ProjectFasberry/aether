@@ -70,3 +70,46 @@ export const buildMetricsRoute = new Elysia()
 			summary: "Store build output sizes for an atlas app",
 		},
 	})
+	.get("/metrics/build", async ({ query, status }) => {
+		const db = getBuildMetricsDb()
+		if (!db) return status(503, "build metrics are not configured")
+
+		const limit = Math.min(Math.max(Number(query.limit ?? 200) || 200, 1), 500)
+		let request = db
+			.selectFrom("build_metrics")
+			.selectAll()
+			.orderBy("created_at", "desc")
+			.limit(limit)
+
+		if (query.app) request = request.where("app", "=", query.app)
+		if (query.branch) request = request.where("branch", "=", query.branch)
+
+		const rows = await request.execute()
+
+		return rows.map((row) => ({
+			app: row.app,
+			stage: row.stage,
+			branch: row.branch,
+			commitSha: row.commit_sha,
+			createdAt: row.created_at,
+			metrics: {
+				clientJsBytes: row.client_js_bytes,
+				clientCssBytes: row.client_css_bytes,
+				clientFontsBytes: row.client_fonts_bytes,
+				clientImagesBytes: row.client_images_bytes,
+				clientOtherBytes: row.client_other_bytes,
+				serverJsBytes: row.server_js_bytes,
+				totalBytes: row.total_bytes,
+			},
+		}))
+	}, {
+		query: t.Object({
+			app: t.Optional(t.String()),
+			branch: t.Optional(t.String()),
+			limit: t.Optional(t.String()),
+		}),
+		detail: {
+			summary: "List stored build sizes for charts",
+		},
+	})
+
