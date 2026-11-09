@@ -27,6 +27,10 @@ const envSchema = Type.Object({
 	GITHUB_TG_TARGET: Type.Optional(Type.String()),
 	/** Comma-separated repository allowlist, all organization repositories by default. */
 	GITHUB_REPOS: Type.Optional(Type.String()),
+	/** Separate database on the general Postgres server for atlas build metrics. */
+	BUILD_METRICS_POSTGRES_URI: Type.Optional(Type.String()),
+	/** Bearer token used by atlas CI to upload build sizes. */
+	BUILD_METRICS_TOKEN: Type.Optional(Type.String()),
 	NATS_USER: Type.String(),
 	NATS_PASSWORD: Type.String(),
 	NATS_HOST: Type.String(),

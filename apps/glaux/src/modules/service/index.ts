@@ -4,6 +4,7 @@ import { chats } from "../../shared/bot/chats";
 import { defineBearer } from "../../lib/define";
 import { invariant } from "@repo/shared/utils";
 import { githubWebhook } from "../webhooks/github";
+import { buildMetricsRoute } from "../metrics/build-metrics.route";
 
 const watchtower = new Elysia()
   .use(defineBearer())
@@ -44,4 +45,5 @@ const watchtower = new Elysia()
 
 export const service = new Elysia()
   .use(watchtower)
-  .use(githubWebhook);
+  .use(githubWebhook)
+  .use(buildMetricsRoute);
