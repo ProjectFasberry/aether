@@ -26,7 +26,7 @@ export async function updateOptions(
 		updateState(name, value);
 		await persistServiceState();
 		const updatedState = getServiceState();
-		return { value: getDeepValue(updatedState, name) };
+		return { value: getDeepValue(updatedState, name) as boolean };
 	}
 
 	const query = await general
@@ -54,21 +54,27 @@ type DescriptionMap<T> = {
   : never;
 };
 
-function get(state: any, descriptions: any, path = ""): Option[] {
+function get(state: Record<string, unknown>, descriptions: Record<string, unknown>, path = ""): Option[] {
 	return Object.entries(state).flatMap(([key, value]): Option[] => {
 		const currentPath = path ? `${path}.${key}` : key;
 
 		if (typeof value === "boolean") {
+			const title = descriptions[key];
+
 			return [
 				{
 					name: currentPath,
 					value,
-					title: descriptions[key] || "No description",
+					title: typeof title === "string" ? title : "No description",
 				},
 			];
 		}
 
-		return get(value, descriptions[key], currentPath);
+		return get(
+			value as Record<string, unknown>,
+			(descriptions[key] ?? {}) as Record<string, unknown>,
+			currentPath,
+		);
 	});
 }
 

@@ -174,7 +174,14 @@ function cursorFor(row: RawPlayer, sort: Static<typeof sortSchema>, searching: b
  * A plain tuple comparison would compare the nickname in the primary
  * direction, which is wrong for `desc` orderings.
  */
-function applyCursor(query: any, primary: RawBuilder<unknown>, direction: "asc" | "desc", cursor: UsersCursor) {
+type CursorQuery<T> = {
+  where: {
+    (column: string, operator: string, value: unknown): T;
+    (expression: RawBuilder<unknown>): T;
+  };
+};
+
+function applyCursor<T extends CursorQuery<T>>(query: T, primary: RawBuilder<unknown>, direction: "asc" | "desc", cursor: UsersCursor): T {
   const value =
     cursor.rank !== undefined ? cursor.rank :
       cursor.created_at !== undefined ? new Date(cursor.created_at) :

@@ -690,7 +690,7 @@ export async function deleteOldSkins({
 type UploadPayload = {
   job: {
     id: string,
-    status: any
+    status: string
   },
   result: {
     url: string

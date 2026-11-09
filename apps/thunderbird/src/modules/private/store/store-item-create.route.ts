@@ -9,7 +9,7 @@ import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
 import { buildRouteSummary } from "#/utils";
 
 async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
-  const query = await (general as any)
+  const query = await general
     .insertInto("store_items")
     .values(values)
     .returningAll()

@@ -30,7 +30,7 @@ function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<
 
 interface RatingEntry {
 	schema: TSchema;
-	fn: (...args: any[]) => any;
+	fn: (query: Static<typeof ratingSchema>) => Promise<unknown>;
 }
 
 export const bySchema = t.UnionEnum([
@@ -141,7 +141,7 @@ const allSchemas = configValues.map(item => item.schema);
 
 export const ratingPayload = t.Union(allSchemas);
 
-async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.belkoin.schema>> {
+async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
 	const query = playerpoints
@@ -172,7 +172,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 	return { data, meta: wrapMeta(result) };
 }
 
-async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.parkour.schema>> {
+async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
 	const query = lobby
@@ -208,7 +208,7 @@ async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingS
 	return { data, meta: wrapMeta(result) };
 }
 
-async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.lands.schema>> {
+async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
@@ -272,7 +272,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof r
 	return { data, meta: wrapMeta(landsRes) };
 }
 
-async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.charism.schema>> {
+async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,
@@ -308,7 +308,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 	return { data, meta: wrapMeta(result) };
 }
 
-async function getReputationRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.reputation.schema>> {
+async function getReputationRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
 	const dbs: Record<string, Kysely<reputationDB> | null> = {
 		bisquite: reputation,
 		muffin: null,
@@ -355,7 +355,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 	return { data, meta: wrapMeta(result) };
 }
 
-async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<Static<typeof ratingConfig.playtime.schema>> {
+async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
 	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
 		bisquite: bisquite,
 		muffin: null,

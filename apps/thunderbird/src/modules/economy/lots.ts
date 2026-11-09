@@ -1,12 +1,14 @@
+export type LotId = number | string;
+
 export type SpendableLot = {
-	id: number;
+	id: LotId;
 	kind: string;
 	remaining: number | string;
 	created_at: string | Date;
 };
 
 export type LotPlan = {
-	allocations: Array<{ lotId: number; amount: number }>;
+	allocations: Array<{ lotId: LotId; amount: number }>;
 	remaining: number;
 };
 
@@ -25,7 +27,7 @@ function lotTime(lot: SpendableLot): number {
  */
 export function planLotConsumption(lots: SpendableLot[], amount: number): LotPlan {
 	let left = Math.max(0, amount);
-	const allocations: Array<{ lotId: number; amount: number }> = [];
+	const allocations: LotPlan["allocations"] = [];
 
 	const sorted = [...lots].sort((a, b) => {
 		const aTopup = a.kind === "topup" ? 0 : 1;
@@ -35,7 +37,7 @@ export function planLotConsumption(lots: SpendableLot[], amount: number): LotPla
 		const time = lotTime(a) - lotTime(b);
 		if (time !== 0) return time;
 
-		return a.id - b.id;
+		return Number(a.id) - Number(b.id);
 	});
 
 	for (const lot of sorted) {
@@ -50,4 +52,20 @@ export function planLotConsumption(lots: SpendableLot[], amount: number): LotPla
 	}
 
 	return { allocations, remaining: left };
+}
+
+/** Money returned by a refund, rollback or a delivery-time partial refund. */
+export function isRefundReason(reason: string): boolean {
+	return reason.startsWith("store.refund:")
+		|| reason.startsWith("store.rollback:")
+		|| reason.startsWith("store.partial_refund:");
+}
+
+/** Lot kind and refundability for a positive ledger entry. */
+export function lotKindFor(reason: string): { kind: "topup" | "adjustment" | "legacy" | "reward"; refundable: boolean } {
+	if (reason === "payment:BELKOIN") return { kind: "topup", refundable: true };
+	if (reason === "admin.adjustment") return { kind: "adjustment", refundable: false };
+	if (reason === "migration") return { kind: "legacy", refundable: false };
+
+	return { kind: "reward", refundable: false };
 }

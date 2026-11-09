@@ -27,8 +27,8 @@ const LIMIT = {
   write: { limit: 60, window: 60 },
 } as const;
 
-export const publicRateLimit = () =>
-  new Elysia({ name: "publicRateLimit" }).onBeforeHandle(async ({ request, status }) => {
+export const publicRateLimit = () => new Elysia({ name: "publicRateLimit" })
+  .onBeforeHandle(async ({ request, status }) => {
     if (request.method === "OPTIONS") return;
 
     const path = new URL(request.url).pathname;

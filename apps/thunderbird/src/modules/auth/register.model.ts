@@ -65,7 +65,7 @@ const referral = {
 				referral,
 				// Anti-fraud: the payout becomes available after a day. The column
 				// is added in `0006`, before the generated schema catches up.
-				...( { payout_after: new Date(Date.now() + REFERRAL_PAYOUT_DELAY_MS) } as any ),
+				payout_after: new Date(Date.now() + REFERRAL_PAYOUT_DELAY_MS),
 			})
 			.onConflict((oc) => oc.columns(["referrer", "referral"]).doNothing())
 			.executeTakeFirst();

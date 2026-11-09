@@ -5,7 +5,8 @@ import { wrapMeta } from "#/utils/config/transforms";
 import { definePrice, processImageUrl } from "#/utils/store";
 import { GAME_CURRENCIES } from "@repo/shared/schemas/store/payment";
 import { type Static, t } from "elysia";
-import { sql } from "kysely";
+import { sql, type Selectable } from "kysely";
+import type { StoreItems } from "@gen/db/general";
 import { executeWithCursorPagination } from "kysely-paginate";
 
 const STORE_LIST_TYPE = ["all", "donate", "event"] as const;
@@ -44,7 +45,7 @@ export const storeItemsSchema = t.Object({
 
 export const store = {
   async getItem(id: number): Promise<Static<typeof storeItemsItemSchema> | null> {
-    const query = await (general as any)
+    const query = await general
       .selectFrom("store_items")
       .select([
         "id",
@@ -74,8 +75,8 @@ export const store = {
    * Full row for the private edit form. Public routes must not expose
    * `command`/`refund_cmd`, so they use `getItem` instead.
    */
-  async getItemForEdit(id: number): Promise<any | null> {
-    return await (general as any)
+  async getItemForEdit(id: number): Promise<Selectable<StoreItems> | null> {
+    return await general
       .selectFrom("store_items")
       .selectAll()
       .where("id", "=", id)

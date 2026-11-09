@@ -35,6 +35,12 @@ describe("charism registry", () => {
 		expect(await registry.balance("unknown", "player")).toBeNull();
 	});
 
+	it("resolves a provider by server name", () => {
+		expect(registry.get("bisquite")?.title).toBe("bisquite");
+		expect(registry.get("muffin")?.title).toBe("muffin");
+		expect(registry.get("unknown")).toBeNull();
+	});
+
 	it("guards the server name", () => {
 		expect(isCharismServer("bisquite")).toBe(true);
 		expect(isCharismServer("muffin")).toBe(true);

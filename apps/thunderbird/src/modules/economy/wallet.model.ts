@@ -4,47 +4,25 @@ import { playerpoints } from "#/shared/database/playerpoints-db";
 import { bisquite } from "#/shared/database/bisquite-db";
 import { logErrorMsg } from "#/utils/config/log-utils";
 import { withRedisLock } from "#/shared/redis/lock";
-import type { DB } from "@gen/db/general";
-import { sql, type Kysely, type Transaction } from "kysely";
+import type { DB, JsonObject, LedgerEntries, WalletLots } from "@gen/db/general";
+import { sql, type Selectable, type Transaction } from "kysely";
 import { enqueueGrantJob, registerGrantHandler } from "./grant-jobs.model";
-import { planLotConsumption } from "./lots";
+import { isRefundReason, lotKindFor, planLotConsumption, type LotId } from "./lots";
 
 export const CURRENCIES = ["BELKOIN", "CHARISM"] as const;
 export type Currency = typeof CURRENCIES[number];
 
-/**
- * The new tables are additive and not part of the generated `DB` type yet.
- * Their Kysely surface is `any` on purpose: the generated schema is refreshed
- * separately, while the service keeps its own row types below.
- */
-type EconomyDB = {
-	wallets: any;
-	ledger_entries: any;
-	grant_jobs: any;
-	wallet_lots: any;
-	lot_allocations: any;
-};
+export function isCurrency(value: string): value is Currency {
+	return (CURRENCIES as readonly string[]).includes(value);
+}
 
-export type EconomyTrx = Transaction<DB & EconomyDB>;
+export type EconomyTrx = Transaction<DB>;
 
-type LedgerRow = {
-	id: number;
-	nickname: string;
-	currency: string;
-	delta: number;
-	balance_after: number;
-	reason: string;
-	order_id: string | null;
-	actor: string | null;
-	metadata: unknown;
-	created_at: Date;
-};
-
-const db = general as unknown as Kysely<DB & EconomyDB>;
+type LedgerRow = Selectable<LedgerEntries>;
 
 /** Economy-aware transaction; every money change must run inside one. */
 export function economyTransaction() {
-	return db.transaction();
+	return general.transaction();
 }
 
 export type LedgerEntry = LedgerRow;
@@ -57,7 +35,7 @@ type ApplyInput = {
 	reason: string;
 	orderId?: string | null;
 	actor?: string | null;
-	metadata?: Record<string, unknown>;
+	metadata?: JsonObject;
 };
 
 function isUniqueViolation(error: unknown): boolean {
@@ -99,7 +77,7 @@ async function pluginBalance(nickname: string, currency: Currency): Promise<numb
  * balance before the one-off migration runs.
  */
 export async function getBalance(nickname: string, currency: Currency): Promise<number> {
-	const wallet = await db
+	const wallet = await general
 		.selectFrom("wallets")
 		.select("balance")
 		.where("nickname", "=", nickname)
@@ -118,17 +96,6 @@ export async function getWallet(nickname: string): Promise<Record<Currency, numb
 	]);
 
 	return { BELKOIN, CHARISM };
-}
-
-export async function getHistory(nickname: string, limit = 50): Promise<LedgerEntry[]> {
-	return db
-		.selectFrom("ledger_entries")
-		.selectAll()
-		.where("nickname", "=", nickname)
-		.orderBy("created_at", "desc")
-		.orderBy("id", "desc")
-		.limit(limit)
-		.execute() as unknown as Promise<LedgerEntry[]>;
 }
 
 /**
@@ -162,24 +129,7 @@ async function seedWallet(trx: EconomyTrx, nickname: string, currency: Currency)
 		.execute();
 }
 
-type LotRow = {
-	id: number;
-	nickname: string;
-	currency: string;
-	kind: string;
-	refundable: boolean;
-	amount: number | string;
-	remaining: number | string;
-	source_order_id: string | null;
-	source_ledger_id: number | null;
-	created_at: Date;
-};
-
-function isRefundReason(reason: string): boolean {
-	return reason.startsWith("store.refund:")
-		|| reason.startsWith("store.rollback:")
-		|| reason.startsWith("store.partial_refund:");
-}
+type LotRow = Selectable<WalletLots>;
 
 /**
  * Keeps the invariant `sum(lots.remaining) == wallets.balance` before a change.
@@ -263,10 +213,10 @@ async function restoreLots(
 		const allocations = await trx
 			.selectFrom("lot_allocations as la")
 			.select([
-				"la.id as id",
-				"la.lot_id as lot_id",
-				"la.amount as amount",
-				"la.restored_amount as restored_amount",
+				"la.id",
+				"la.lot_id",
+				"la.amount",
+				"la.restored_amount",
 			])
 			.where("la.direction", "=", "consume")
 			.where(
@@ -280,12 +230,7 @@ async function restoreLots(
 			)
 			.orderBy("la.id", "desc")
 			.forUpdate()
-			.execute() as Array<{
-				id: number;
-				lot_id: number;
-				amount: number | string;
-				restored_amount: number | string;
-			}>;
+			.execute();
 
 		for (const allocation of allocations) {
 			if (left <= 0) break;
@@ -356,13 +301,7 @@ async function creditLot(
 		return;
 	}
 
-	const kind = reason === "payment:BELKOIN"
-		? "topup"
-		: reason === "admin.adjustment"
-			? "adjustment"
-			: reason === "migration"
-				? "legacy"
-				: "reward";
+	const { kind, refundable } = lotKindFor(reason);
 
 	await trx
 		.insertInto("wallet_lots")
@@ -370,7 +309,7 @@ async function creditLot(
 			nickname,
 			currency,
 			kind,
-			refundable: kind === "topup",
+			refundable,
 			amount,
 			remaining: amount,
 			source_order_id: kind === "topup" ? orderId : null,
@@ -385,7 +324,7 @@ async function debitLots(
 	nickname: string,
 	currency: Currency,
 	amount: number,
-	metadata: Record<string, unknown>,
+	metadata: JsonObject,
 ): Promise<void> {
 	let left = amount;
 	const explicitLotId = Number(metadata.lotId);
@@ -395,9 +334,9 @@ async function debitLots(
 		const lot = await trx
 			.selectFrom("wallet_lots")
 			.selectAll()
-			.where("id", "=", explicitLotId)
+			.where("id", "=", String(explicitLotId))
 			.forUpdate()
-			.executeTakeFirst() as LotRow | undefined;
+			.executeTakeFirst();
 
 		if (!lot) throw new Error("LOT_NOT_FOUND");
 		if (Number(lot.remaining) < left) throw new Error("LOT_INSUFFICIENT");
@@ -413,15 +352,15 @@ async function debitLots(
 		.selectAll()
 		.where("nickname", "=", nickname)
 		.where("currency", "=", currency)
-		.where("remaining", ">", 0)
+		.where("remaining", ">", "0")
 		.orderBy(sql`case when "kind" = 'topup' then 0 else 1 end`, "asc")
 		.orderBy("created_at", "asc")
 		.orderBy("id", "asc")
 		.forUpdate()
-		.execute() as LotRow[];
+		.execute();
 
 	const plan = planLotConsumption(lots, left);
-	const byId = new Map(lots.map((lot) => [lot.id, lot]));
+	const byId = new Map<LotId, LotRow>(lots.map((lot) => [lot.id, lot]));
 
 	for (const allocation of plan.allocations) {
 		const lot = byId.get(allocation.lotId);
@@ -452,7 +391,7 @@ export async function refundTopup({
 			.selectAll()
 			.where("order_id", "=", orderId)
 			.where("reason", "=", "payment.refund:BELKOIN")
-			.executeTakeFirst() as LedgerRow | undefined;
+			.executeTakeFirst();
 
 		if (existing) {
 			return {
@@ -470,7 +409,7 @@ export async function refundTopup({
 			.selectAll()
 			.where("source_order_id", "=", orderId)
 			.where("kind", "=", "topup")
-			.executeTakeFirst() as LotRow | undefined;
+			.executeTakeFirst();
 
 		if (!preview) return null;
 
@@ -487,18 +426,19 @@ export async function refundTopup({
 		const lot = await trx
 			.selectFrom("wallet_lots")
 			.selectAll()
-			.where("id", "=", preview.id)
+			.where("id", "=", String(preview.id))
 			.forUpdate()
-			.executeTakeFirst() as LotRow | undefined;
+			.executeTakeFirst();
 
 		if (!lot) return null;
 
 		const amount = Number(lot.remaining);
 		if (amount <= 0) return null;
+		if (!isCurrency(lot.currency)) return null;
 
 		const applied = await applyInTransaction(trx, {
 			nickname: lot.nickname,
-			currency: lot.currency as Currency,
+			currency: lot.currency,
 			delta: -amount,
 			reason: "payment.refund:BELKOIN",
 			orderId,
@@ -534,7 +474,7 @@ export async function repairWalletLots(nickname: string, currency: Currency): Pr
 }
 
 export async function getRefundable(nickname: string, currency: Currency): Promise<number> {
-	const row = await db
+	const row = await general
 		.selectFrom("wallet_lots")
 		.select(sql<string>`coalesce(sum("remaining"), 0)`.as("amount"))
 		.where("nickname", "=", nickname)
@@ -557,7 +497,7 @@ export async function getRefundable(nickname: string, currency: Currency): Promi
  * the debit together), it passes `trx` and calls `flushProjections` after the
  * commit instead of relying on side effects inside the transaction.
  */
-export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Promise<ApplyResult> {
+async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Promise<ApplyResult> {
 	const { nickname, currency, delta, reason, orderId = null, actor = null, metadata = {} } = input;
 
 	if (delta === 0) {
@@ -570,7 +510,7 @@ export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Pr
 			.selectAll()
 			.where("order_id", "=", orderId)
 			.where("reason", "=", reason)
-			.executeTakeFirst() as unknown as LedgerRow | undefined;
+			.executeTakeFirst();
 
 		if (existing) return { balance: Number(existing.balance_after), entry: existing, duplicate: true };
 	}
@@ -620,7 +560,7 @@ export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Pr
 			metadata,
 		})
 		.returningAll()
-		.executeTakeFirstOrThrow() as unknown as LedgerRow;
+		.executeTakeFirstOrThrow();
 
 	if (delta > 0) {
 		await creditLot(trx, entry, nickname, currency, delta, reason, orderId);
@@ -631,7 +571,7 @@ export async function applyInTransaction(trx: EconomyTrx, input: ApplyInput): Pr
 	return { balance, entry, duplicate: false };
 }
 
-export async function apply(input: ApplyInput): Promise<ApplyResult> {
+async function apply(input: ApplyInput): Promise<ApplyResult> {
 	const { nickname, currency, reason, orderId = null } = input;
 
 	try {
@@ -646,12 +586,12 @@ export async function apply(input: ApplyInput): Promise<ApplyResult> {
 		// Two concurrent retries of the same operation: one wins the unique index,
 		// the other reads the winning row.
 		if (orderId && isUniqueViolation(error)) {
-			const existing = await db
+			const existing = await general
 				.selectFrom("ledger_entries")
 				.selectAll()
 				.where("order_id", "=", orderId)
 				.where("reason", "=", reason)
-				.executeTakeFirst() as unknown as LedgerRow | undefined;
+				.executeTakeFirst();
 
 			if (existing) {
 				await syncOrEnqueue(existing);
@@ -685,6 +625,105 @@ export function debit(
 	const input: ApplyInput = { ...options, nickname, currency, delta: -Math.abs(amount) };
 
 	return trx ? applyInTransaction(trx, input) : apply(input);
+}
+
+export type RefundedPurchase = {
+	currency: Currency;
+	amount: number;
+	balance: number;
+	duplicate: boolean;
+};
+
+export type RefundPurchasesResult = {
+	applied: ApplyResult[];
+	refunded: RefundedPurchase[];
+};
+
+/**
+ * Reverses every purchase entry of one order through the ledger. Shared by the
+ * admin refund and the automatic rollback so both keep the same rules: a child
+ * refunded at delivery time is not credited twice, and only game currencies
+ * are touched.
+ */
+export async function refundPurchasesInTransaction(
+	trx: EconomyTrx,
+	{
+		orderId,
+		reasonPrefix,
+		actor,
+		metadata,
+		resync = false,
+	}: {
+		orderId: string;
+		reasonPrefix: "store.refund" | "store.rollback";
+		actor: string | null;
+		metadata?: (entry: LedgerEntry) => JsonObject;
+		resync?: boolean;
+	},
+): Promise<RefundPurchasesResult> {
+	const entries = await trx
+		.selectFrom("ledger_entries")
+		.selectAll()
+		.where("order_id", "=", orderId)
+		.orderBy("id", "asc")
+		.execute();
+
+	const purchases = entries.filter((entry) => entry.reason.startsWith("store.purchase:"));
+
+	if (resync) {
+		return {
+			applied: purchases.map((entry) => ({
+				entry,
+				balance: Number(entry.balance_after),
+				duplicate: true,
+			})),
+			refunded: [],
+		};
+	}
+
+	// A delivery-time duplicate may already have refunded a single child.
+	// Do not credit that amount a second time on a later full refund.
+	const partialRefunds = new Map<string, number>();
+
+	for (const entry of entries) {
+		if (!entry.reason.startsWith("store.partial_refund:")) continue;
+
+		partialRefunds.set(
+			entry.currency,
+			(partialRefunds.get(entry.currency) ?? 0) + Math.abs(Number(entry.delta)),
+		);
+	}
+
+	const applied: ApplyResult[] = [];
+	const refunded: RefundedPurchase[] = [];
+
+	for (const entry of purchases) {
+		if (!isCurrency(entry.currency)) continue;
+
+		const currency = entry.currency;
+		const alreadyRefunded = partialRefunds.get(currency) ?? 0;
+		const amount = Math.max(0, Math.abs(Number(entry.delta)) - alreadyRefunded);
+		if (amount === 0) continue;
+
+		partialRefunds.set(currency, 0);
+
+		const credited = await credit(entry.nickname, currency, amount, {
+			reason: `${reasonPrefix}:${currency}`,
+			orderId,
+			actor,
+			metadata: metadata?.(entry) ?? {},
+		}, trx);
+
+		applied.push(credited);
+		refunded.push({
+			currency,
+			amount,
+			balance: credited.balance,
+			duplicate: credited.duplicate,
+		});
+	}
+
+	return { applied, refunded };
 }
 
 /**
@@ -722,7 +761,7 @@ async function withProjectionLock<T>(key: string, fn: () => Promise<T>): Promise
 }
 
 async function currentWalletBalance(nickname: string, currency: Currency): Promise<number> {
-	const wallet = await db
+	const wallet = await general
 		.selectFrom("wallets")
 		.select("balance")
 		.where("nickname", "=", nickname)
@@ -780,7 +819,13 @@ async function syncProjection(nickname: string, currency: Currency): Promise<voi
 
 async function syncOrEnqueue(entry: LedgerRow): Promise<void> {
 	const nickname = entry.nickname;
-	const currency = entry.currency as Currency;
+
+	if (!isCurrency(entry.currency)) {
+		logErrorMsg(new Error(`UNKNOWN_CURRENCY:${entry.currency}`), { subject: "wallet-projection" });
+		return;
+	}
+
+	const currency = entry.currency;
 
 	try {
 		await syncProjection(nickname, currency);
@@ -804,20 +849,18 @@ export async function flushProjections(results: ApplyResult[]): Promise<void> {
 	}
 }
 
-registerGrantHandler("BELKOIN", async (payload) => {
-	await syncProjection(String(payload.nickname), "BELKOIN");
-});
-
-registerGrantHandler("CHARISM", async (payload) => {
-	await syncProjection(String(payload.nickname), "CHARISM");
-});
+for (const currency of CURRENCIES) {
+	registerGrantHandler(currency, async (payload) => {
+		await syncProjection(String(payload.nickname), currency);
+	});
+}
 
 /**
  * One-off migration: copies the plugin balance into a wallet and records an
  * opening ledger entry. Idempotent through `migration:<nickname>:<currency>`
  * and a no-op once the wallet exists (first write seeds it automatically).
  */
-export async function migrateWallet(
+async function migrateWallet(
 	nickname: string,
 	currency: Currency,
 ): Promise<{ balance: number } | null> {
@@ -880,7 +923,6 @@ async function collectNicknames(cursor: string, limit: number): Promise<string[]
 		bisquite
 			.selectFrom("cmi_users")
 			.select("username as nickname")
-			.where("username", "is not", null)
 			.where("username", ">", cursor)
 			.orderBy("username", "asc")
 			.limit(limit)
@@ -935,11 +977,11 @@ export async function migrateBalances({
 
 /** All ledger rows of one business operation (used by refunds). */
 export async function getOrderEntries(orderId: string): Promise<LedgerEntry[]> {
-	return db
+	return general
 		.selectFrom("ledger_entries")
 		.selectAll()
 		.where("order_id", "=", orderId)
 		.orderBy("id", "asc")
-		.execute() as unknown as Promise<LedgerEntry[]>;
+		.execute();
 }
 

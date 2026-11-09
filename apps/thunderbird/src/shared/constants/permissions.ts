@@ -1,23 +1,23 @@
 import { appLogger } from "#/shared/constants/logger";
 import { general } from "../database/general-db";
 
-let PERMISSIONS: Record<string, any> = {}
+type PermissionTree = { [key: string]: string | PermissionTree };
+
+let PERMISSIONS: PermissionTree = {}
 
 export const permissionsService = {
   get(path: string): string | null {
-    try {
-      const result = path
-        .split(".")
-        .reduce((acc, part) => acc?.[part.toUpperCase()], PERMISSIONS);
+    const parts = path.split(".").map((part) => part.toUpperCase());
 
-      if (!result || typeof result !== "string") {
-        return null;
-      }
+    let node: string | PermissionTree | undefined = PERMISSIONS;
 
-      return result;
-    } catch (e) {
-      return null;
+    for (const part of parts) {
+      if (!node || typeof node === "string") return null;
+
+      node = node[part];
     }
+
+    return typeof node === "string" ? node : null;
   },
   async init() {
     const query = await general
@@ -39,8 +39,8 @@ export const permissionsService = {
   }
 };
 
-function buildPermissions(data: { name: string, id: number }[]): Record<string, any> {
-  const result: Record<string, any> = {};
+function buildPermissions(data: { name: string, id: number }[]): PermissionTree {
+  const result: PermissionTree = {};
 
   data.forEach(({ name }) => {
     const parts = name.split(".");
@@ -51,13 +51,19 @@ function buildPermissions(data: { name: string, id: number }[]): Record<string, 
 
       if (idx === parts.length - 1) {
         current[key] = name;
-      } else {
-        if (!current[key]) {
-          current[key] = {};
-        }
-
-        current = current[key];
+        return;
       }
+
+      const next = current[key];
+
+      if (!next || typeof next === "string") {
+        const created: PermissionTree = {};
+        current[key] = created;
+        current = created;
+        return;
+      }
+
+      current = next;
     });
   });
 
@@ -69,19 +75,21 @@ type PermissionStats = {
   levels: Record<number, number>;
 }
 
-function analyzePermissions(obj: Record<string, any>): PermissionStats {
+function analyzePermissions(obj: PermissionTree): PermissionStats {
   const stats: PermissionStats = {
     total: 0, levels: {}
   };
 
-  function recurse(current: Record<string, any>, level: number) {
+  function recurse(current: PermissionTree, level: number) {
     stats.levels[level] = (stats.levels[level] || 0) + Object.keys(current).length;
 
     for (const key in current) {
-      if (typeof current[key] === "string") {
+      const value = current[key];
+
+      if (typeof value === "string") {
         stats.total += 1;
-      } else if (typeof current[key] === "object") {
-        recurse(current[key], level + 1);
+      } else {
+        recurse(value, level + 1);
       }
     }
   }

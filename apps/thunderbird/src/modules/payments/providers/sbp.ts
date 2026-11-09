@@ -23,16 +23,13 @@ function config() {
 export const sbpProvider: PaymentProvider = {
 	name: "sbp",
 	currencies: ["RUB"],
-
 	isConfigured() {
 		const { url, merchantId, apiKey } = config();
 		return Boolean(url && merchantId && apiKey);
 	},
-
 	async createInvoice() {
 		throw new Error("SBP_NOT_IMPLEMENTED");
 	},
-
 	async verifyWebhook(): Promise<WebhookEvent | null> {
 		throw new Error("SBP_NOT_IMPLEMENTED");
 	},

@@ -1,31 +1,19 @@
 import { general } from "#/shared/database/general-db";
+import type { GrantJobs, JsonValue } from "@gen/db/general";
+import type { Selectable } from "kysely";
+import type { EconomyTrx } from "./wallet.model";
 import { logErrorMsg } from "#/utils/config/log-utils";
-import type { DB } from "@gen/db/general";
-import { sql, type Kysely } from "kysely";
+import { sql } from "kysely";
 
 /**
  * Outbox for work that must survive a failed attempt: projecting a wallet
  * balance into a plugin table or running the non-money part of an order.
- *
- * The table predates the generated `DB` type, so its Kysely surface stays
- * untyped here.
  */
-export type GrantJobRow = {
-	id: number;
-	order_id: string;
-	kind: string;
+export type GrantJobRow = Omit<Selectable<GrantJobs>, "payload"> & {
 	payload: Record<string, unknown>;
-	status: "pending" | "processing" | "done" | "failed";
-	attempts: number;
-	last_error: string | null;
-	run_after: Date;
-	created_at: Date;
-	updated_at: Date;
 };
 
-type GrantHandler = (payload: Record<string, any>, job: GrantJobRow) => Promise<void>;
-
-const db = general as unknown as Kysely<DB & { grant_jobs: any }>;
+type GrantHandler = (payload: Record<string, unknown>, job: GrantJobRow) => Promise<void>;
 
 const handlers = new Map<string, GrantHandler>();
 
@@ -46,25 +34,36 @@ export async function enqueueGrantJob(
 		payload: Record<string, unknown>;
 		runAfter?: Date;
 	},
-	executor: any = db,
+	executor: typeof general | EconomyTrx = general,
 ): Promise<void> {
 	await executor
 		.insertInto("grant_jobs")
 		.values({
 			order_id: orderId,
 			kind,
-			payload,
+			payload: payload as JsonValue,
 			run_after: runAfter ?? new Date(),
 		})
-		.onConflict((oc: any) => oc.columns(["order_id", "kind"]).doNothing())
+		.onConflict((oc) => oc.columns(["order_id", "kind"]).doNothing())
 		.execute();
+}
+
+export const GRANT_JOB_MAX_ATTEMPTS = 10;
+
+/** Exponential backoff capped at five minutes. */
+export function grantJobDelayMs(attempts: number): number {
+	return Math.min(2 ** attempts, 300) * 1000;
+}
+
+export function isFinalGrantAttempt(attempts: number, maxAttempts = GRANT_JOB_MAX_ATTEMPTS): boolean {
+	return attempts >= maxAttempts;
 }
 
 /** Retry loop for the outbox; called by the cron job every minute. */
 export async function processGrantJobs(limit = 50): Promise<{ processed: number; failed: number }> {
 	// A process that died while handling a job leaves it in `processing`. The
 	// lease is 15 minutes, long enough for a plugin write, short enough to retry.
-	await db
+	await general
 		.updateTable("grant_jobs")
 		.set({ status: "pending", updated_at: new Date() })
 		.where("status", "=", "processing")
@@ -86,9 +85,9 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 			FOR UPDATE SKIP LOCKED
 		)
 		RETURNING *
-	`.execute(db);
+	`.execute(general);
 
-	const jobs = claimed.rows as GrantJobRow[];
+	const jobs = claimed.rows;
 
 	let failed = 0;
 
@@ -100,7 +99,7 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 
 			await handler(job.payload, job);
 
-			await db
+			await general
 				.updateTable("grant_jobs")
 				.set({ status: "done", updated_at: new Date(), last_error: null })
 				.where("id", "=", job.id)
@@ -109,8 +108,7 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 			const attempts = job.attempts + 1;
 			// Store delivery waits for the game server; keep trying much longer
 			// than a projection retry.
-			const maxAttempts = 10;
-			const giveUp = attempts >= maxAttempts;
+			const giveUp = isFinalGrantAttempt(attempts);
 
 			if (giveUp) failed += 1;
 
@@ -119,7 +117,7 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 			if (giveUp && job.kind === "store.fulfillment") {
 				// Keep the per-child state honest before the rollback: the panel
 				// must show which items were not delivered.
-				await (db as any)
+				await general
 					.updateTable("payments_game_childs")
 					.set({
 						delivery_status: "failed",
@@ -142,13 +140,13 @@ export async function processGrantJobs(limit = 50): Promise<{ processed: number;
 				}).catch((e) => logErrorMsg(e, { subject: "store-rollback-enqueue" }));
 			}
 
-			await db
+			await general
 				.updateTable("grant_jobs")
 				.set({
 					attempts,
 					status: giveUp ? "failed" : "pending",
 					last_error: error instanceof Error ? error.message : String(error),
-					run_after: new Date(Date.now() + Math.min(2 ** attempts, 300) * 1000),
+					run_after: new Date(Date.now() + grantJobDelayMs(attempts)),
 					updated_at: new Date(),
 				})
 				.where("id", "=", job.id)

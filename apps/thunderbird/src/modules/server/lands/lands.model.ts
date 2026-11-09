@@ -1,6 +1,5 @@
 import { bisquite } from "#/shared/database/bisquite-db";
 import { wrapMeta } from "#/utils/config/transforms";
-import { landHelpers } from "#/utils/lands/lands-helpers";
 import { type Static, t } from "elysia";
 import { withMeta } from "#/shared/schemas";
 import { getDirection } from "#/utils/config/paginate";
@@ -12,6 +11,20 @@ import { skinsService } from "../../../shared/services/skins";
 import { safeJsonParse } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
 import { playerService } from "#/shared/services/player";
+import { getObjectUrl } from "#/helpers/volume"
+
+const landHelpers = {
+  getLandsUrl(path: string): string {
+    return getObjectUrl("lands", path)
+  },
+  transformBanner(input?: string | null): string | null {
+    if (!input) return null
+    return this.getLandsUrl(input)
+  },
+  transformGallery(input: { url: string }[] = []): string[] {
+    return input.map(row => this.getLandsUrl(row.url))
+  }
+}
 
 export const landSchema = t.Object({
   area: t.Nullable(

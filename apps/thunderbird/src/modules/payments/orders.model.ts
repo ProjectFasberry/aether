@@ -3,37 +3,18 @@ import { belkoinFor } from "#/modules/economy/rates.model";
 import { credit, refundTopup } from "#/modules/economy/wallet.model";
 import { sendEconomyAlert } from "#/modules/economy/reconciliation.model";
 import { getEnv } from "#/shared/env";
-import type { DB } from "@gen/db/general";
-import type { Kysely } from "kysely";
+import type { JsonObject, JsonValue, Orders } from "@gen/db/general";
 import { nanoid } from "nanoid";
-import { sql } from "kysely";
+import { sql, type Selectable } from "kysely";
 import { getProvider } from "./providers";
 import { registerGrantHandler } from "#/modules/economy/grant-jobs.model";
 import { fromMinor, type PaymentProviderName, type PaymentStatus } from "./types";
 
-const db = general as unknown as Kysely<DB & { orders: any; payment_events: any; wallet_lots: any }>;
+const db = general;
 
 const DEFAULT_TTL_MINUTES = 15;
 
-export type OrderRow = {
-	id: number;
-	order_id: string;
-	nickname: string;
-	provider: string;
-	status: PaymentStatus;
-	amount_minor: number;
-	currency: string;
-	belkoin: number;
-	rate: number | null;
-	spread: number | null;
-	provider_payment_id: string | null;
-	pay_url: string | null;
-	metadata: unknown;
-	created_at: Date;
-	expires_at: Date;
-	paid_at: Date | null;
-	refunded_at: Date | null;
-};
+export type OrderRow = Selectable<Orders>;
 
 export type OrderView = {
 	orderId: string;
@@ -53,11 +34,18 @@ export class PaymentError extends Error {
 	}
 }
 
+/** Stored JSON metadata is an object by construction; anything else is ignored. */
+function storedMetadata(value: JsonValue): JsonObject {
+	return value && typeof value === "object" && !Array.isArray(value)
+		? value as JsonObject
+		: {};
+}
+
 function view(row: OrderRow, extra?: Pick<OrderView, "refundedBelkoin">): OrderView {
 	return {
 		orderId: row.order_id,
 		provider: row.provider,
-		status: row.status,
+		status: row.status as PaymentStatus,
 		amountMinor: Number(row.amount_minor),
 		currency: row.currency,
 		belkoin: Number(row.belkoin),
@@ -111,7 +99,7 @@ export async function createPaymentInvoice({
 			expires_at: expiresAt,
 		})
 		.returningAll()
-		.execute() as unknown as OrderRow[];
+		.execute();
 
 	let invoice;
 
@@ -141,7 +129,7 @@ export async function getOrder(orderId: string): Promise<OrderRow | null> {
 		.selectFrom("orders")
 		.selectAll()
 		.where("order_id", "=", orderId)
-		.executeTakeFirst() as unknown as OrderRow | undefined;
+		.executeTakeFirst();
 
 	return row ?? null;
 }
@@ -153,7 +141,7 @@ export async function listOrders(nickname: string, limit = 50): Promise<OrderVie
 		.where("nickname", "=", nickname)
 		.orderBy("created_at", "desc")
 		.limit(limit)
-		.execute() as unknown as OrderRow[];
+		.execute();
 
 	return rows.map((row) => view(row));
 }
@@ -199,7 +187,7 @@ export async function settleOrder({
 				.set({
 					status: "failed",
 					provider_payment_id: providerPaymentId,
-					metadata: { ...(order.metadata as object ?? {}), underpaidMinor: amountMinor },
+					metadata: { ...storedMetadata(order.metadata), underpaidMinor: amountMinor },
 				})
 				.where("order_id", "=", orderId)
 				.execute();
@@ -228,7 +216,7 @@ export async function settleOrder({
 			provider_payment_id: providerPaymentId,
 			paid_at: status === "succeeded" ? new Date() : null,
 			...(lateSuccess
-				? { metadata: { ...(order.metadata as object ?? {}), latePayment: true } }
+				? { metadata: { ...storedMetadata(order.metadata), latePayment: true } }
 				: {}),
 		})
 		.where("order_id", "=", orderId)
@@ -350,7 +338,7 @@ export async function listAllOrders({
 		);
 	}
 
-	const rows = await query.execute() as unknown as (OrderRow & { id: number; created_at_text: string })[];
+	const rows = await query.execute();
 	const hasNextPage = rows.length > limit;
 	if (hasNextPage) rows.pop();
 
@@ -360,7 +348,7 @@ export async function listAllOrders({
 			.select(["source_order_id", "remaining"])
 			.where("kind", "=", "topup")
 			.where("source_order_id", "in", rows.map((row) => row.order_id))
-			.execute() as Array<{ source_order_id: string; remaining: number | string }>
+			.execute()
 		: [];
 	const refundableByOrder = new Map(lots.map((lot) => [lot.source_order_id, Number(lot.remaining)]));
 
@@ -443,7 +431,7 @@ export async function recordPaymentEvent({
 			provider_event_id: eventId ?? null,
 			order_id: orderId ?? null,
 			signature_valid: signatureValid,
-			payload: payload ?? {},
+			payload: (payload ?? {}) as JsonValue,
 			error: error ?? null,
 			processed_at: error ? null : new Date(),
 		})

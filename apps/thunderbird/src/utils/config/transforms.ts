@@ -7,7 +7,7 @@ export function wrapMeta(res: Partial<PaginatedMeta>): PaginatedMeta {
 	};
 }
 
-export function buildUpdates<T extends Record<string, any>>(
+export function buildUpdates<T extends object>(
 	entries: { field: keyof T; value: T[keyof T] }[],
 ): Partial<T> {
 	const result: Partial<T> = {};

@@ -2,7 +2,6 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { buildRouteSummary } from "#/utils";
-import type { DB } from "@gen/db/general";
 import Elysia, { t } from "elysia";
 import { sql, type Kysely } from "kysely";
 
@@ -11,7 +10,7 @@ import { sql, type Kysely } from "kysely";
  * additive, so this route keeps a local, untyped table surface until the
  * schema is regenerated.
  */
-const db = general as unknown as Kysely<DB & { admin_activity_log: any }>;
+const db = general;
 
 const SEVERITIES = ["info", "warning", "danger"] as const;
 

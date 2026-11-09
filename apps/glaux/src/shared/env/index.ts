@@ -21,6 +21,12 @@ const envSchema = Type.Object({
 	RCON_PASSWORD: Type.String(),
 	GOTIFY_URL: Type.Optional(Type.String()),
 	GOTIFY_TOKEN: Type.Optional(Type.String()),
+	/** Secret configured on the GitHub organization webhook. */
+	GITHUB_WEBHOOK_SECRET: Type.Optional(Type.String()),
+	/** Telegram chat target for GitHub pushes, `g_infra` by default. */
+	GITHUB_TG_TARGET: Type.Optional(Type.String()),
+	/** Comma-separated repository allowlist, all organization repositories by default. */
+	GITHUB_REPOS: Type.Optional(Type.String()),
 	NATS_USER: Type.String(),
 	NATS_PASSWORD: Type.String(),
 	NATS_HOST: Type.String(),

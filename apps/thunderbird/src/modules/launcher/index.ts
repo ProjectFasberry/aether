@@ -26,7 +26,6 @@ function publicOrigin(request: Request): string {
 
 async function platformUrls(request: Request): Promise<Record<string, string>> {
   const latest = await readLatest("prod");
-
   if (!latest) return {};
 
   const platforms = rewritePlatforms(latest, publicOrigin(request));
@@ -38,51 +37,43 @@ async function platformUrls(request: Request): Promise<Record<string, string>> {
 
 export const launcher = new Elysia()
   .use(joinGate)
-  .get(
-    "/launcher",
-    async ({ request }) => {
-      const urls = await platformUrls(request);
+  .get("/launcher", async ({ request }) => {
+    const urls = await platformUrls(request);
 
-      return {
-        data: {
-          artifacts: PLATFORMS.map((platform) => ({
-            platform,
-            url: urls[platform] ?? null,
-          })),
-        },
-      };
-    },
-    {
-      response: {
-        200: withData(t.Object({ artifacts: t.Array(artifactSchema) })),
+    return {
+      data: {
+        artifacts: PLATFORMS.map((platform) => ({
+          platform,
+          url: urls[platform] ?? null,
+        })),
       },
-      detail: {
-        summary: buildRouteSummary("Launcher builds"),
-      },
+    };
+  }, {
+    response: {
+      200: withData(t.Object({ artifacts: t.Array(artifactSchema) })),
     },
-  )
-  .get(
-    "/launcher/:platform",
-    async ({ params, request, set }) => {
-      const urls = await platformUrls(request);
-      const url = PLATFORMS.includes(params.platform as (typeof PLATFORMS)[number])
-        ? urls[params.platform]
-        : undefined;
-
-      if (!url) {
-        set.status = 404;
-        return { error: "not found" };
-      }
-
-      set.status = 302;
-      set.headers["location"] = url;
-      set.headers["cache-control"] = "public, max-age=300";
-
-      return "";
+    detail: {
+      summary: buildRouteSummary("Launcher builds"),
     },
-    {
-      detail: {
-        summary: buildRouteSummary("Download launcher"),
-      },
+  })
+  .get("/launcher/:platform", async ({ params, request, set }) => {
+    const urls = await platformUrls(request);
+    const url = PLATFORMS.includes(params.platform as (typeof PLATFORMS)[number])
+      ? urls[params.platform]
+      : undefined;
+
+    if (!url) {
+      set.status = 404;
+      return { error: "not found" };
+    }
+
+    set.status = 302;
+    set.headers["location"] = url;
+    set.headers["cache-control"] = "public, max-age=300";
+
+    return "";
+  }, {
+    detail: {
+      summary: buildRouteSummary("Download launcher"),
     },
-  );
+  });

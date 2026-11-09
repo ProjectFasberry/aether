@@ -19,7 +19,7 @@ const SESSION_ERRORS_MAP = {
 
 type ErrorKeys = keyof typeof SESSION_ERRORS_MAP;
 
-const SESSION_ERRORS = Object.keys(SESSION_ERRORS_MAP) as unknown as readonly [ErrorKeys, ...ErrorKeys[]];
+const SESSION_ERRORS = Object.keys(SESSION_ERRORS_MAP) as [ErrorKeys, ...ErrorKeys[]];
 
 function defineError(e: Error | unknown, status: SelectiveStatus<any>) {
   if (isError(e)) {
