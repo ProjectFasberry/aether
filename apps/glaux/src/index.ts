@@ -1,7 +1,7 @@
 import "./assign";
 
 import { isError } from "@repo/shared/utils";
-import { handleProcessOnEvent } from "./shared/utils/handle-log";
+import { handleProcessOnEvent, publishHealthAlert } from "./shared/utils/handle-log";
 import { getEnv } from "./shared/env";
 import { lifecycle, preboot } from "./lifecycle";
 import { appLogger } from "./shared/logger";
@@ -13,6 +13,8 @@ try {
   if (!getEnv().PROD) {
     appLogger.error(e)
   }
+
+  await publishHealthAlert(`boot: ${isError(e) ? e.message : "UNKNOWN"}`).catch(() => undefined);
   process.exit(1);
 }
 

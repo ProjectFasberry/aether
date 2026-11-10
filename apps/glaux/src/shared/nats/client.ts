@@ -32,6 +32,9 @@ export const natsService = {
 		invariant(client, "Nats client is not initialized");
 		return client;
 	},
+	getOptionalInstance(): NatsConnection | null {
+		return client;
+	},
 	async start(): Promise<void> {
 		await this._init();
 
