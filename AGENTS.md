@@ -1,12 +1,15 @@
 # AGENTS.md - working in aether
 
-Bun monorepo with the Fasberry backend services. The main public API is
-`apps/thunderbird` (Elysia + Kysely + Redis + NATS + MinIO), the panel API is
-`apps/glaux`, and `apps/workers/generate-types` generates DB types. Shared code
-lives in `pkgs/*` (`@repo/shared`, `@repo/core`, configs).
+Bun monorepo with the Fasberry backend services. Shared rules, layout and the
+deploy model live here; each service keeps its own details:
 
-Read `standards/MAINTAINING.md` first. This file is the agent-facing summary:
-rules, layout, and the deploy path.
+| path | doc |
+| --- | --- |
+| `apps/thunderbird` - public + game API | [AGENTS.md](apps/thunderbird/AGENTS.md), [modules](apps/thunderbird/agent-docs/) |
+| `apps/glaux` - panel/bot API | [AGENTS.md](apps/glaux/AGENTS.md), [modules](apps/glaux/agent-docs/) |
+| `apps/workers/generate-types` - DB types | [AGENTS.md](apps/workers/generate-types/AGENTS.md) |
+| `pkgs/config-drizzle/drizzle/general` - migrations | [README.md](pkgs/config-drizzle/drizzle/general/README.md) |
+| `agent-docs/` - triage and API conventions | [incident-triage.md](agent-docs/incident-triage.md), [data-and-errors.md](agent-docs/data-and-errors.md) |
 
 ## Hard rules
 
@@ -15,10 +18,10 @@ rules, layout, and the deploy path.
 - **Bun only.** `bun install`, `bun run ...`. Never create a second lockfile
   (`npm`, `pnpm`, `yarn` are forbidden); the lockfile is `bun.lock`.
 - **Secrets stay out of the repo and images.** Runtime secrets come from
-  Infisical (`/thunderbird`, `/glaux`; envs `dev`/`staging`/`prod`). The
-  `NODE_AUTH_TOKEN` for private `@projectfasberry/*` packages lives in the
-  gitignored `.env` and goes into Docker builds only as the BuildKit secret
-  `npm_token`, never as `ARG`/`ENV`.
+  Infisical (`/thunderbird`, `/glaux`; database URLs are also under `/shared`;
+  envs `dev`/`staging`/`prod`). The `NODE_AUTH_TOKEN` for private
+  `@projectfasberry/*` packages lives in the gitignored `.env` and goes into
+  Docker builds only as the BuildKit secret `npm_token`, never as `ARG`/`ENV`.
 - **Deploy only on an explicit request.** Production is not a place for
   "while I was here" changes.
 - **No direct host access.** Do not ssh/scp/docker against deploy or production
@@ -28,104 +31,80 @@ rules, layout, and the deploy path.
 
 ## Layout
 
-- `apps/thunderbird/src/modules/` - domain routes and models: `auth`, `yggdrasil`,
-  `account`, `launcher`, `releases`, `user`, `server`, `news`, `modpack`, `store`,
-  `private/*`, etc.
-- `apps/thunderbird/src/shared/` - `env`, db clients, NATS, Redis, MinIO,
-  services, constants.
-- `apps/thunderbird/src/lib/` - Elysia plugins, guards, permissions helpers.
+- `apps/thunderbird/` - public and game API; routes and models under
+  `src/modules`, infrastructure under `src/shared`, Elysia plugins and guards
+  under `src/lib`.
+- `apps/glaux/` - panel API and Telegram bot service; same layout as thunderbird.
+- `apps/workers/generate-types/` - `kysely-codegen` runner for
+  `pkgs/shared/.out`.
 - `pkgs/shared/schemas/*` - zod schemas used by both routes and clients.
-- `pkgs/core` - reusable domain services.
+- `pkgs/core` - reusable domain services (lifecycle, database helpers).
+- `pkgs/config-drizzle/drizzle/<db>/` - Drizzle schemas and hand-applied SQL
+  migrations per database.
 - Cross-package imports are `@repo/shared/...`, `@repo/core/...`; inside an app
   use the `#/` alias. Never reach into another workspace with `../../`.
 
 ## Commands
 
 ```bash
-bun install                      # once, root
-cd apps/thunderbird && bun run dev       # infisical dev, watch mode
-cd apps/thunderbird && bun run type-check
-bun run lint                     # biome, root
-bun run circular-check           # per app
-bun gen:types:db                 # regenerate pkgs/shared/.out (needs DB + .env.infisical)
+bun install
+bun run type-check        # every workspace that has the script
+bun run lint              # biome
+bun run test
+bun run circular-check
+bun gen:types:db          # regenerate pkgs/shared/.out (interactive)
 ```
 
-`bun <script>` at the root is not one app: `scripts/run.ts` runs the script in
-every workspace that has it. `cd` into the app for a single service.
+Root scripts fan out through `scripts/run.ts` to every workspace that defines the
+script and exit non-zero if any of them fails. Per-service commands (`dev`,
+`release:prod`, ...) are in the app docs.
 
-## Checks and gotchas
+## Definition of done
 
-- `tsc --build` fails in confusing ways when DB types are missing or stale
-  (`pkgs/shared/.out`). A known symptom is `ADAPT_DATA` in
-  `apps/thunderbird/src/modules/server/player/player.model.ts`. Run
-  `bun gen:types:db`; do not patch the query to silence it.
-- Lefthook hooks call `node`. On a machine without Node a commit fails; use
-  `git -c core.hooksPath=/dev/null commit ...` only when the user asked for a
-  commit.
+| change | add / run |
+| --- | --- |
+| route or response schema | `body`, `response`, `detail.summary`; `bun run type-check`; compare `/openapi/json`; `scripts/dispatch-contracts.sh` after deploy |
+| DB schema | new additive `NNNN_*.sql` under `pkgs/config-drizzle/drizzle/<db>/`; apply by name; regenerate `.out`; `type-check` |
+| permission or role | catalog entry in `permissions.ts` plus the literal in the route; boot creates the row |
+| shared package (`pkgs/*`) | root `bun run type-check` and `bun run test` |
+| worker or CLI | non-interactive run of the affected target |
+| anything | `bun run test`, `bun run lint`; update `agent-docs/` when behaviour or env changes |
+
+## Repo-wide gotchas
+
+- `pkgs/shared/.out` and `dist` are generated: never edit them by hand,
+  regenerate. `.out` is git-ignored, so a stale copy only shows up in a local
+  `type-check`.
 - OpenAPI is the contract: `GET /openapi/json`. Route `body`, `response` and
   `detail` are the source of truth; `api-contracts` syncs from the deployed spec.
   A route without them is an undocumented route.
-- CAP tokens are single-use. Never throw `status()` inside a `try/catch` in
-  `botValidator`: `ElysiaCustomStatusResponse` inherits `Error`, and the catch
-  turns a 400 into a 500.
-
-## Auth model (2026-11)
-
-- Canonical tables: `accounts` + `account_credentials`. `AUTH` is a legacy
-  compatibility dual-write kept until cleanup; do not read it for new code.
-- Registration is nickname + password + findout only. The seed phrase/mnemonic
-  was removed from the client and the API (`registerSchema` has no `hash`);
-  recovery is handled by an admin until 2FA and email/Telegram are added. Do not
-  reintroduce `hash` or restore routes.
-- Game auth is our Yggdrasil (`/yggdrasil/*`); the proxy runs
-  `online-mode = true` with `authlib-injector`. Check
-  `docs/auth/auth-migration.md` in the workspace parent for the full design and
-  progress log.
-
-## Deploying thunderbird
-
-There is no direct access to deploy hosts and no manual deploy path from this
-workstation: do not ssh/scp/docker against `i-m` or the production host.
-
-Deploys are pull-based:
-
-- `.github/workflows/build-thunderbird.yml` builds `linux/amd64` on push to
-  `main` (prod) and `dev` (staging) and pushes
-  `registry.fasberry.fun/<stage>/thunderbird:latest` plus `:sha-<commit>`.
-  Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
-- The deploy host runs the pull-update script from the infra repository
-  (`ProjectFasberry/infra`, `scripts/pull-update.sh` + its systemd timer) every
-  two minutes. It pulls the image and recreates the container only when the
-  digest changed, so a push is the whole rollout. This repository carries no host
-  scripts.
-- The Dockerfile pins `INFISICAL_VERSION` and downloads the CLI from the GitHub
-  release with SHA-256 verification; the apt repository on
-  `artifacts-cli.infisical.com` hangs behind the deploy network. Bump it with
-  `--build-arg INFISICAL_VERSION=<version>`.
-
-Verify from outside: `https://api.fasberry.fun/server/status` (200) and
-`/openapi/json` when the contract changed. Host-side changes (Traefik/Zot,
-compose files) belong to the infra repo, not to a deploy from this checkout.
-
-`apps/glaux` has its own `Dockerfile` and `Makefile`; check its `release:prod`
-script before deploying it. The repo-level `release:prod` scripts run
-`type-check` first, which currently fails on the stale DB-types issue above.
+- Env vars are a zod schema validated at boot
+  (`apps/thunderbird/src/shared/env`): a new variable must be added there, and a
+  missing one exits the process instead of failing on the first request.
+- Absolute URLs must use `x-forwarded-proto`: Traefik terminates TLS and the app
+  only sees plain HTTP.
+- Lefthook hooks call `node`; without Node a commit needs
+  `git -c core.hooksPath=/dev/null commit`.
 
 ## Issue tracking
 
-Work items live in Linear (workspace `modkeep`, team `main`, project Fasberry).
-Agent-created issues get the `AI` label; API work adds `api`, and anything in
-this app adds `thunderbird`. Labels, priorities and the MCP recipe are in
-`standards/linear.md`.
+Work items live in the team tracker, whichever one is connected through the
+available MCP tools; do not hardcode workspace, project or team ids here -
+discover them with the tracker tools. Agent-created items get the `AI` label;
+API work adds `api`, and anything in this repository adds `thunderbird`. Labels,
+states and priorities are per team, so list them before filtering or setting.
 
 ## Commits
 
 Conventional commits (`.cz.toml`), short and lowercase, e.g.
 `fix: drop the mnemonic hash from register`. Never commit without asking.
 
-## Infra boundary
+## Deploy model
 
-Host topology, compose files, Traefik, the registry and the rollout live in
-`ProjectFasberry/infra`. This repository builds and publishes images only: no host
-names, ports, paths or deploy commands belong here.
-
+Deploys are pull-based: a push to `main` (prod) or `dev` (staging) builds the
+image in GitHub Actions and pushes it to `registry.fasberry.fun/<stage>/<app>`;
+the deploy host runs `scripts/pull-update.sh` from `ProjectFasberry/infra` (local
+checkout: `../infra-host`) on a two-minute timer and recreates the container only
+when the digest changed. There is no manual deploy path from this workstation.
+Image names, workflows and health checks are in the per-app docs; first response
+steps are in [agent-docs/incident-triage.md](agent-docs/incident-triage.md).
