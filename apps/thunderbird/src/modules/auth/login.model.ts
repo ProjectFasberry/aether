@@ -156,25 +156,57 @@ export const session = {
     const result = await auth.getUserNickname(token);
     return Boolean(result);
   },
-  async updateSession(token: string | null, cookies: Context["cookie"]) {
-    if (!token) return;
+  async updateSession(token: string | null, cookies: Context["cookie"]): Promise<{ nickname: string } | null> {
+    if (!token) return null;
 
-    const refreshResult = await this.refreshSession(token);
-    if (!refreshResult) return;
+    const redisClient = redisService.getInstance();
+    const sessionKey = auth.getSessionKey(token);
 
-    const { expires_at, nickname } = refreshResult;
+    // Read the payload and TTL in one Redis round-trip. The global session
+    // derive caches the nickname for route guards.
+    const result = await redisClient.multi().get(sessionKey).pttl(sessionKey).exec();
+    if (!result) return null;
 
-    cookie.set({
-      cookies,
-      domain: getClientDomain(),
-      expires: expires_at,
-      value: token,
-      key: SESSION_KEY,
-    })
+    const [getError, raw] = result[0] ?? [];
+    const [ttlError, ttl] = result[1] ?? [];
 
-    if (!isProduction) {
-      loginLogger.debug(`Session updated for ${nickname} ${expires_at.getDate()}`);
+    if (getError || ttlError || typeof raw !== "string" || typeof ttl !== "number" || ttl < 0) return null;
+
+    const parsed = safeJsonParse<UserSessionPayload>(raw);
+    if (!parsed.ok || !auth.isSessionFresh(parsed.value)) return null;
+
+    const { nickname } = parsed.value;
+
+    if (ttl < MIN_SESSION_EXPIRE_MS) {
+      const userSessionsKey = sessions.getUserSessionsKey(nickname);
+      const newExpiresAtTimestamp = Date.now() + SESSION_EXPIRE_MS;
+
+      const refreshSessionResult = await redisClient
+        .multi()
+        .pexpireat(sessionKey, newExpiresAtTimestamp)
+        .pexpireat(userSessionsKey, newExpiresAtTimestamp)
+        .exec();
+
+      invariant(refreshSessionResult, "Transaction failed");
+
+      refreshSessionResult.forEach(([error, value]) => {
+        if (!isProduction) {
+          loginLogger.log("refreshSessionResult", { error, result: value });
+        }
+
+        if (error) throw error;
+      });
+
+      cookie.set({
+        cookies,
+        domain: getClientDomain(),
+        expires: new Date(newExpiresAtTimestamp),
+        value: token,
+        key: SESSION_KEY,
+      });
     }
+
+    return { nickname };
   },
   generateSessionToken(): string {
     const bytes = new Uint8Array(20);

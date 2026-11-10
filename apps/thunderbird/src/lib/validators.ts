@@ -6,9 +6,9 @@ import {
   defineBearer,
   handleByBearer,
   getUserRole,
+  resolveNickname,
 } from "./define";
 import { general } from "#/shared/database/general-db";
-import { auth } from "#/modules/auth/auth.model";
 import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
@@ -88,12 +88,12 @@ export const validateAuthStatus = () =>
   new Elysia({name: "validateAuthStatus"
 })
     .use(defineOptionalSession())
-    .onBeforeHandle(async ({ session, status }) => {
+    .onBeforeHandle(async ({ session, request, status }) => {
       logValidators("validateAuthStatus");
 
       if (!session) return;
 
-      const nickname = await auth.getUserNickname(session);
+      const nickname = await resolveNickname(request, session);
       if (nickname) throw status(409, "AUTHORIZED");
     })
     .as("scoped");

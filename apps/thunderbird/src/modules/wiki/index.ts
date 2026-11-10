@@ -1,8 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
-import { defineOptionalSession } from "#/lib/define";
-import { auth } from "#/modules/auth/auth.model";
+import { defineOptionalSession, resolveNickname } from "#/lib/define";
 import Elysia, { t } from "elysia";
 import { logger } from "@repo/shared/utils/logger";
 
@@ -119,8 +118,8 @@ const wikiCategory = new Elysia()
 
 const wikiAccess = new Elysia()
   .use(defineOptionalSession())
-  .get("/access", async ({ session }) => {
-    const nickname = session ? await auth.getUserNickname(session) : null;
+  .get("/access", async ({ session, request }) => {
+    const nickname = await resolveNickname(request, session);
     const canEdit = Boolean(nickname && WIKI_EDITORS.has(nickname));
 
     return {

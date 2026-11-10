@@ -3,6 +3,7 @@ import { Elysia, type ElysiaConfig, type ValidationError } from "elysia";
 import { serverTiming as serverTimingPlugin } from "@elysia/server-timing";
 import { openApiPlugin } from "./lib/plugins/openapi";
 import { defineOptionalSession } from "./lib/define";
+import { setRequestNickname } from "./shared/services/session-cache";
 import { session } from "./modules/auth/login.model";
 import { appLogger } from "./shared/constants/logger";
 import { main, root } from "./routes";
@@ -113,7 +114,16 @@ const app = new Elysia(appConfig)
   })
   .use(root)
   .use(defineOptionalSession())
-  .onBeforeHandle(async (ctx) => session.updateSession(ctx.session, ctx.cookie))
+  .derive(async ({ session: token, request, cookie }) => {
+    if (!token) return {};
+
+    // One Redis round-trip per request: refresh the sliding TTL and cache the
+    // nickname so route guards do not read the session again.
+    const updated = await session.updateSession(token, cookie);
+    if (updated) setRequestNickname(request, token, updated.nickname);
+
+    return {};
+  })
   .use(main);
 
 export const appService = {
