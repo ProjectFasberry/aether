@@ -26,10 +26,16 @@ const paths = await Promise.all(
 
 const colors = ["blue", "green", "magenta", "yellow", "red"];
 
-concurrently(
+const { result } = concurrently(
   paths.map((path, index) => ({
     name: path,
     command: `cd ${path} && bun run ${command}`,
     prefixColor: colors[index % colors.length],
   })),
-).result.catch(() => { });
+);
+
+result.then((results) => {
+  if (results.some(({ exitCode }) => exitCode !== 0)) process.exitCode = 1;
+}).catch(() => {
+  process.exitCode = 1;
+});
