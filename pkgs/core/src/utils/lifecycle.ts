@@ -32,6 +32,11 @@ export type LifecycleOptions = {
   name?: string;
   /** Runs before the first resource is stopped (drain/readiness flag). */
   onStopping?: () => void;
+  /**
+   * Runs right before rollback on a critical boot failure, while resources such
+   * as NATS are still connected. Alerting must not block the rollback.
+   */
+  onCriticalFailure?: (failure: { name: string; error: unknown }) => void | Promise<void>;
 };
 
 export type ResourceHealth = {
@@ -254,6 +259,13 @@ export function createLifecycle<const R extends Record<string, ResourceSpec<any>
       if (criticalFailure) {
         const [name, entry] = criticalFailure;
         setState("failed");
+
+        try {
+          await options.onCriticalFailure?.({ name, error: entry.error });
+        } catch (hookError) {
+          lifecycleLogger.error(`critical failure hook failed: ${normalizeError(hookError)}`);
+        }
+
         await stopStarted("critical boot failure");
         throw new Error(`Critical resource "${name}" failed: ${normalizeError(entry.error)}`);
       }

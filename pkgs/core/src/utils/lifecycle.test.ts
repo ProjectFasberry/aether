@@ -105,6 +105,29 @@ describe("createLifecycle", () => {
 		expect(calls).toContain("redis:stop");
 	});
 
+	it("runs the critical failure hook before stopping resources", async () => {
+		const calls: string[] = [];
+		const lifecycle = createLifecycle({
+			db: {
+				critical: true,
+				start: (): void => {
+					throw new Error("db down");
+				},
+			},
+			redis: {
+				start: () => { calls.push("redis:start") },
+				stop: () => { calls.push("redis:stop") },
+			},
+		}, {
+			onCriticalFailure: ({ name, error }) => {
+				calls.push(`alert:${name}:${(error as Error).message}`);
+			},
+		});
+
+		await expect(lifecycle.start()).rejects.toThrow("Critical resource");
+		expect(calls).toEqual(["redis:start", "alert:db:db down", "redis:stop"]);
+	});
+
 	it("retries a start and succeeds", async () => {
 		let attempts = 0;
 		const lifecycle = createLifecycle({

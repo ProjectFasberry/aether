@@ -13,6 +13,8 @@ import { getEnv } from "./shared/env";
 import { ensureBuildMetricsTable } from "./shared/database/build-metrics-db";
 import { initServiceState } from "./shared/services/service-state";
 import { beginShutdown } from "./shared/shutdown";
+import { publishHealthAlert } from "./shared/utils/handle-log";
+import { normalizeError } from "@repo/shared/utils";
 
 export const lifecycle = defineLifecycle()
   .add("db", {
@@ -85,6 +87,9 @@ export const lifecycle = defineLifecycle()
   .build({
     name: "glaux",
     onStopping: beginShutdown,
+    // NATS is still connected here; the catch in index.ts runs after rollback.
+    onCriticalFailure: ({ name, error }) =>
+      publishHealthAlert(`boot: critical resource "${name}": ${normalizeError(error)}`),
   });
 
 export const preboot = () => {

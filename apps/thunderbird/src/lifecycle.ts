@@ -20,6 +20,8 @@ import { initServiceState } from "./shared/services/service-state";
 import { signingKeys } from "./modules/yggdrasil/signing-keys.model";
 import { voteSites } from "./modules/server/votes/vote-sites.model";
 import { beginShutdown } from "./shared/shutdown";
+import { handleProcessOnEvent } from "./shared/observability/process";
+import { normalizeError } from "@repo/shared/utils";
 
 export const lifecycle = defineLifecycle()
   .add("db", {
@@ -107,6 +109,11 @@ export const lifecycle = defineLifecycle()
   .build({
     name: "thunderbird",
     onStopping: beginShutdown,
+    // NATS is still connected here; the catch in index.ts runs after rollback.
+    onCriticalFailure: ({ name, error }) => handleProcessOnEvent("boot", {
+      error: new Error(`critical resource "${name}": ${normalizeError(error)}`),
+      kill: false,
+    }),
   });
 
 export const preboot = () => {
