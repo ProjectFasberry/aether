@@ -5,6 +5,7 @@ import { appLogger } from "./shared/constants/logger";
 import { natsService } from "./shared/nats/client";
 import { redisService } from "./shared/redis/client";
 import { refreshDatabaseHealth } from "./shared/database/health";
+import { detectRoleAdminFlag } from "./shared/database/roles";
 import { urlsService } from "./shared/services/urls";
 import { permissionsService } from "./shared/constants/permissions";
 import { minioService } from "./shared/services/minio";
@@ -61,6 +62,7 @@ export const lifecycle = defineLifecycle()
       });
 
       await permissionsService.init();
+      await detectRoleAdminFlag();
     },
   })
   .add("signing-keys", {

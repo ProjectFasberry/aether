@@ -44,7 +44,7 @@ export const me = new Elysia()
         id: role_id,
         name: role_name
       },
-      permissions
+      permissions: [...permissions]
     }
 
     const avatar = await skinsService.player.getAvatar(base.nickname);

@@ -1,6 +1,5 @@
 import { DateTime } from "#/helpers/typebox";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
@@ -69,7 +68,7 @@ async function getApiKeyList(): Promise<Static<typeof apiKeySchema>[]> {
 }
 
 const createApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL")))
+  .use(validatePermission("api.keys.control"))
   .post("/create", async (ctx) => {
     const nickname = "nickname" in ctx ? String(ctx.nickname) : "api";
     const data = await createApiKey(ctx.body, nickname);
@@ -86,7 +85,7 @@ const createApiKeyRoute = new Elysia()
   });
 
 const listApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.LIST")))
+  .use(validatePermission("api.keys.list"))
   .get("/list", async ({ query }) => {
     const data = await getApiKeyList();
     return { data };
@@ -103,7 +102,7 @@ const listApiKeyRoute = new Elysia()
   });
 
 const deleteApiKeyRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("API.KEYS.CONTROL")))
+  .use(validatePermission("api.keys.control"))
   .delete("/:id", async ({ params: { id } }) => {
     await general.deleteFrom("api_keys").where("id", "=", id).execute();
     return { data: "OK" };

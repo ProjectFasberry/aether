@@ -1,13 +1,12 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { getServer, serverSchema } from "./server.model";
 
 export const serverSolo = new Elysia()
-	.use(validatePermission(permissionsService.get("SERVERS.READ")))
+	.use(validatePermission("servers.read"))
 	.get(
 		"/:id",
 		async ({ params: { id }, status }) => {

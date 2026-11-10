@@ -2,6 +2,54 @@ import { appLogger } from "#/shared/constants/logger";
 import { general } from "../database/general-db";
 import { sleep } from "@repo/shared/utils";
 
+/**
+ * Every permission the API checks. This list is the source of truth: missing
+ * rows are created in the `permissions` table on boot, so adding a permission
+ * is a code change only.
+ */
+export const PERMISSION_NAMES = [
+  "api.keys.control",
+  "api.keys.list",
+  "banners.create",
+  "banners.delete",
+  "dictionaries.create",
+  "dictionaries.delete",
+  "dictionaries.read",
+  "dictionaries.update",
+  "economy.read",
+  "economy.write",
+  "events.create",
+  "events.delete",
+  "history.read",
+  "modpacks.create",
+  "modpacks.delete",
+  "news.create",
+  "news.delete",
+  "news.update",
+  "options.read",
+  "options.update",
+  "permissions.read",
+  "players.auth",
+  "players.permission.update",
+  "players.read",
+  "players.restrict.create",
+  "players.restrict.delete",
+  "players.role.update",
+  "releases.read",
+  "roles.read",
+  "roles.update",
+  "servers.read",
+  "servers.update",
+  "store.item.create",
+  "store.item.delete",
+  "store.item.update",
+  "store.methods.read",
+  "store.methods.update",
+  "volume.control",
+] as const;
+
+export type Permission = (typeof PERMISSION_NAMES)[number];
+
 type PermissionTree = { [key: string]: string | PermissionTree };
 
 let PERMISSIONS: PermissionTree = Object.freeze({});
@@ -77,6 +125,41 @@ export function analyzePermissions(obj: PermissionTree): PermissionStats {
   return stats;
 }
 
+/**
+ * Creates the rows for permissions that exist in code but not in the database.
+ * A read-only account cannot insert; the coverage check then decides whether
+ * the existing rows are enough.
+ */
+async function createMissingPermissions(): Promise<void> {
+  try {
+    await general
+      .insertInto("permissions")
+      .values(PERMISSION_NAMES.map((name) => ({ name })))
+      .onConflict((oc) => oc.column("name").doNothing())
+      .execute();
+  } catch (error) {
+    appLogger.warn({ message: "Permission sync failed; checking existing rows", error });
+  }
+}
+
+/** Fails when a permission from the code catalog has no row in the database. */
+async function loadPermissions() {
+  const rows = await general
+    .selectFrom("permissions")
+    .selectAll()
+    .orderBy("name", "asc")
+    .execute();
+
+  const known = new Set(rows.map(({ name }) => name));
+  const missing = PERMISSION_NAMES.filter((name) => !known.has(name));
+
+  if (missing.length > 0) {
+    throw new Error(`Permissions missing from the database: ${missing.join(", ")}`);
+  }
+
+  return rows;
+}
+
 export const permissionsService = {
   get(path: string): string | null {
     return PERMISSION_INDEX.get(path.toUpperCase()) ?? null;
@@ -86,20 +169,26 @@ export const permissionsService = {
 
     for (let attempt = 1; attempt <= retries; attempt += 1) {
       try {
-        const query = await general
-          .selectFrom("permissions")
-          .selectAll()
-          .orderBy("name", "asc")
-          .execute()
+        await createMissingPermissions();
+
+        const query = await loadPermissions();
 
         PERMISSION_INDEX = buildPermissionIndex(query)
         PERMISSIONS = freezeTree(buildPermissions(query))
 
         const stats = analyzePermissions(PERMISSIONS);
+        const managed = new Set<string>(PERMISSION_NAMES);
+        const unmanaged = query
+          .map(({ name }) => name)
+          .filter((name) => !managed.has(name));
 
         appLogger.info(
-          `Permissions loaded: total=${stats.total}, levels=${JSON.stringify(stats.levels)}`
+          `Permissions loaded: total=${stats.total}, managed=${PERMISSION_NAMES.length}, unmanaged=${unmanaged.length}, levels=${JSON.stringify(stats.levels)}`
         )
+
+        if (unmanaged.length > 0) {
+          appLogger.debug(`Permissions in the database but not in code: ${unmanaged.join(", ")}`);
+        }
 
         return;
       } catch (e) {

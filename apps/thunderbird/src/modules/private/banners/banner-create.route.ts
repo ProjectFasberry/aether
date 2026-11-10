@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import Elysia from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { banner, createBannerPayloadSchema, createBannerSchema } from "./banner.model";
@@ -7,7 +6,7 @@ import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const bannerCreate = new Elysia()
-  .use(validatePermission(permissionsService.get("BANNERS.CREATE")))
+  .use(validatePermission("banners.create"))
   .post("/create", async ({ body }) => {
     const data = await banner.create(body);
     return { data };

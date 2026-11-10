@@ -1,6 +1,5 @@
 import { DateTime } from "#/helpers/typebox";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
@@ -24,7 +23,7 @@ async function getDictList() {
 }
 
 export const dictionariesList = new Elysia()
-  .use(validatePermission(permissionsService.get("DICTIONARIES.READ")))
+  .use(validatePermission("dictionaries.read"))
   .get("/list", async (ctx) => {
     const data = await getDictList();
     return { data };

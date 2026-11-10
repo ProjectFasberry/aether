@@ -3,7 +3,6 @@ import type * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import type { StoreItems } from "@gen/db/general";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
 import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
@@ -13,7 +12,7 @@ import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { store } from "../../store/items/store-items.model";
 
-const PERMISSION = permissionsService.get("STORE.ITEM.UPDATE");
+const PERMISSION = "store.item.update" as const;
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
   const normalized = values.map((entry) => {
@@ -56,7 +55,7 @@ const storeItemEdit = new Elysia()
   });
 
 const storeItemEditFields = new Elysia()
-  .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
+  .use(validatePermission("store.item.update"))
   .get("/editable-fields", async () => ({ data: EDITABLE_FIELDS }), {
     detail: {
       summary: buildRouteSummary("Get editable store item fields"),
@@ -64,7 +63,7 @@ const storeItemEditFields = new Elysia()
   });
 
 const storeItemGet = new Elysia()
-  .use(validatePermission(permissionsService.get("STORE.ITEM.UPDATE")))
+  .use(validatePermission("store.item.update"))
   .get("/:id", async ({ params: { id }, status }) => {
     const data = await store.getItemForEdit(id);
 

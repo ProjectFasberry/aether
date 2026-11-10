@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import {
@@ -12,7 +11,7 @@ import {
 } from "./releases.model";
 
 export const releasesList = new Elysia()
-  .use(validatePermission(permissionsService.get("RELEASES.READ")))
+  .use(validatePermission("releases.read"))
   .get("/releases", async ({ query, status }) => {
     const channel = query.channel ?? "prod";
 

@@ -1,7 +1,6 @@
 import { validatePermission } from "#/lib/validators";
 import { ipPlugin } from "#/lib/plugins/index";
 import { register } from "#/modules/auth/register.model";
-import { permissionsService } from "#/shared/constants/permissions";
 import { natsService } from "#/shared/nats/client";
 import { registerSchema } from "@repo/shared/schemas/auth";
 import Elysia, { t } from "elysia";
@@ -80,7 +79,7 @@ const playersAuthUnreg = new Elysia()
   })
 
 export const playersAuth = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.AUTH"), { withExternal: true }))
+  .use(validatePermission("players.auth", { withExternal: true }))
   .group("/auth", app => app
     .use(playersAuthReg)
     .use(playersAuthUnreg)

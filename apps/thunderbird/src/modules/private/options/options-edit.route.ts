@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData, withError } from "#/shared/schemas";
 import { updateOptions, updateOptionsSchema } from "./options.model";
@@ -9,7 +8,7 @@ import { isError } from "@repo/shared/utils";
 import { wrapError } from "@repo/shared/lib/helpers"
 
 export const optionsUpdate = new Elysia()
-  .use(validatePermission(permissionsService.get("OPTIONS.UPDATE"), { withExternal: true }))
+  .use(validatePermission("options.update", { withExternal: true }))
   .post("/:name/edit", async ({ status, params: { name }, body, nickname }) => {
     try {
       const data = await updateOptions(name, body, nickname);

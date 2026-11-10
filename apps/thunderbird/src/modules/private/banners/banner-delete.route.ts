@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { bannerSchema } from "../../banner/banner.model";
-import { permissionsService } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import { banner } from "./banner.model";
@@ -8,7 +7,7 @@ import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const bannerDelete = new Elysia()
-  .use(validatePermission(permissionsService.get("BANNERS.DELETE")))
+  .use(validatePermission("banners.delete"))
   .delete("/:id", async ({ params: { id } }) => {
     await banner.delete(id);
     return { data: "OK" };

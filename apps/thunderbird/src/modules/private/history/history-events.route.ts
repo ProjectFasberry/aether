@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { natsService } from "#/shared/nats/client";
 import { buildRouteSummary } from "#/lib/routes";
 import { safeJsonParse } from "@repo/shared/utils";
@@ -60,7 +59,7 @@ function releaseSubscription() {
 }
 
 export const historyEvents = new Elysia()
-  .use(validatePermission(permissionsService.get("HISTORY.READ")))
+  .use(validatePermission("history.read"))
   .get("/events", async function* ({ request }) {
     const queue: HistoryPayload[] = [];
     let wake: (() => void) | null = null;

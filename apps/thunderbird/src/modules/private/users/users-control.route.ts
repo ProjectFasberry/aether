@@ -3,7 +3,6 @@ import {
   changeRoleUsers, restrictUser, editPlayerRole, controlPayloadSchema, userRestrictSchema, userRolesSchema, playersPermissionsSchema,
 } from "./users-control.model";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
@@ -16,7 +15,7 @@ function publish(event: string, data: { initiator: string, payload: string }) {
 }
 
 const playersControlRestrictCreate = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.RESTRICT.CREATE"), { withExternal: true }))
+  .use(validatePermission("players.restrict.create", { withExternal: true }))
   .post("/create", async ({ body: { args, ...rest } }) => {
     const data = await restrictUser({ args, ...rest })
     return { data }
@@ -48,7 +47,7 @@ const playersControlRestrictCreate = new Elysia()
   })
 
 const playersControlRestrictDelete = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.RESTRICT.DELETE"), { withExternal: true }))
+  .use(validatePermission("players.restrict.delete", { withExternal: true }))
   .delete("/remove", async ({ body: { args, ...rest } }) => {
     const data = await restrictUser({ args, ...rest })
     return { data }
@@ -86,7 +85,7 @@ const playersControlRestrict = new Elysia()
   )
 
 const playersControlRoles = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.ROLE.UPDATE"), { withExternal: true }))
+  .use(validatePermission("players.role.update", { withExternal: true }))
   .post("/roles", async ({ body: { nicknames, ...base } }) => {
     const data = await changeRoleUsers(nicknames, base)
     return { data }
@@ -108,7 +107,7 @@ const playersControlRoles = new Elysia()
   })
 
 const playersControlPermissions = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.PERMISSION.UPDATE"), { withExternal: true }))
+  .use(validatePermission("players.permission.update", { withExternal: true }))
   .post("/permission", async ({ body: { nicknames, ...base } }) => {
     const data = await editPlayerRole({ nicknames, ...base })
     return { data }

@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import {
@@ -38,7 +37,7 @@ function parseDate(value: string | undefined): Date | null | undefined {
 }
 
 export const economyRates = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.READ")))
+	.use(validatePermission("economy.read"))
 	.get("/rates", async () => {
 		const [current, history] = await Promise.all([
 			currentRates(),
@@ -67,7 +66,7 @@ export const economyRates = new Elysia()
 	});
 
 export const economyRateAdd = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.post("/rates", async ({ body, status }) => {
 		if (body.from === body.to) return status(400, wrapError("SAME_CURRENCY"));
 

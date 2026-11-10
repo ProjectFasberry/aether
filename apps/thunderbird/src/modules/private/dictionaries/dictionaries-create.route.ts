@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
@@ -36,7 +35,7 @@ async function createDisc({
 }
 
 export const dictionariesCreate = new Elysia()
-  .use(validatePermission(permissionsService.get("DICTIONARIES.CREATE")))
+  .use(validatePermission("dictionaries.create"))
   .post("/create", async ({ body }) => {
     const data = await createDisc(body);
     return { data };

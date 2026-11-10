@@ -429,25 +429,11 @@ export const activityUsers = pgTable("activity_users", {
 	type: playerActivityEvent().notNull(),
 });
 
-export const fvItems = pgTable("fv_items", {
-	id: integer()
-		.primaryKey()
-		.generatedAlwaysAsIdentity({
-			name: "fv_items_id_seq",
-			startWith: 1,
-			increment: 1,
-			minValue: 1,
-			maxValue: 2147483647,
-			cache: 1,
-		}),
-	nickname: text().notNull(),
-	itemId: integer("item_id").notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-});
-
 export const roles = pgTable("roles", {
 	id: serial().primaryKey().notNull(),
 	name: varchar({ length: 50 }).notNull(),
+	// Staff flag: lets the code stop relying on the role id 3 comparison.
+	isAdmin: boolean("is_admin").default(false).notNull(),
 });
 
 export const permissions = pgTable(

@@ -1,4 +1,5 @@
 import { general } from "#/shared/database/general-db"
+import { clearPermissionCache } from "#/shared/services/permission-cache";
 import { invariant } from "#/utils";
 import { type Static, t } from "elysia";
 
@@ -157,6 +158,8 @@ export async function changeRoleUsers(
       .where("nickname", "in", nicknames)
       .returning("nickname")
       .execute()
+
+    clearPermissionCache();
 
     return { ok: true, type, payload: nicknames }
   }

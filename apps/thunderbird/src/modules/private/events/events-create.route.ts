@@ -1,14 +1,13 @@
 import Elysia from "elysia";
 import { createEvent, createEventSchema } from "../../server/events/events.model";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { eventPayloadSchema } from "./events.model";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const eventsCreate = new Elysia()
-  .use(validatePermission(permissionsService.get("EVENTS.CREATE")))
+  .use(validatePermission("events.create"))
   .post("/create", async ({ body }) => {
     const data = await createEvent(body);
     return { data };

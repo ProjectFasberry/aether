@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { S3 } from "#/shared/minio/client";
 import { withData } from "#/shared/schemas";
 import { minioService } from "#/shared/services/minio";
@@ -61,7 +60,7 @@ const S3ListObjectsResponseSchema = t.Object({
 });
 
 export const volume = new Elysia()
-  .use(validatePermission(permissionsService.get("VOLUME.CONTROL")))
+  .use(validatePermission("volume.control"))
   .group("/volume", app => app
     .get("/buckets/list", async () => {
       const buckets = await minioService.getInstance().listBuckets()
