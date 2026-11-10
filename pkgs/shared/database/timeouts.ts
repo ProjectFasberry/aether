@@ -22,6 +22,6 @@ export function applyMySqlQueryTimeout(pool: ConnectionPool): void {
 /** MariaDB applies `max_statement_time` to every statement, in seconds */
 export function applyMariaDbQueryTimeout(pool: ConnectionPool): void {
   pool.on("connection", (connection) => {
-    connection.query(`SET SESSION max_statement_time = ${DB_QUERY_TIMEOUT_MS / 1000}`);
+    connection.query(`SET SESSION max_statement_time = ${DB_QUERY_TIMEOUT_MS / 1000}`, () => undefined);
   });
 }
