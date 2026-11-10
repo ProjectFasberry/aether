@@ -7,7 +7,7 @@
 		"dev": "bun scripts/run dev",
 		"lint": "bun scripts/run lint",
 		"type-check": "bun scripts/run type-check",
-		"circular-check": "bun run scripts/run circlular-check",
+		"circular-check": "bun run scripts/run circular-check",
 		"postinstall": "lefthook install",
 		"-------": "-",
 		"gen:types:db": "cd apps/workers/generate-types && bun run db",
