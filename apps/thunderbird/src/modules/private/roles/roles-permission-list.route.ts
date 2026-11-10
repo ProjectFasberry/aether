@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { rolesRolePermissionListSchema, type RolesRolePermissionListPayload } from "./roles-list.route";
@@ -7,7 +6,7 @@ import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const rolesRolePermissionList = new Elysia()
-  .use(validatePermission(permissionsService.get("ROLES.READ")))
+  .use(validatePermission("roles.read"))
   .get("/:id/permission/list", async ({ params: { id } }) => {
     const query = await general
       .selectFrom("role_permissions")

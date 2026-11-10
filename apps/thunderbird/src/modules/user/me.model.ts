@@ -1,9 +1,18 @@
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
+import {
+  permissionCacheKey,
+  readPermissions,
+  writePermissions,
+} from "#/shared/services/permission-cache";
 
 export async function getPermissions(
   nickname: string, role_id: number
-): Promise<string[]> {
+): Promise<Set<string>> {
+  const cacheKey = permissionCacheKey(nickname, role_id);
+  const cached = readPermissions(cacheKey);
+  if (cached) return cached;
+
   const effectivePermissions = await general
     .selectFrom('permissions as p')
     .select(['p.name'])
@@ -20,7 +29,8 @@ export async function getPermissions(
     )
     .execute();
 
-  const perms = effectivePermissions.map((p) => p.name)
+  const perms = new Set(effectivePermissions.map((p) => p.name));
+  writePermissions(cacheKey, perms);
 
   return perms
 }

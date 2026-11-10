@@ -2,7 +2,6 @@ import Elysia, { type Static, t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { getStaticUrl } from "#/helpers/volume";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { createStringBoolSchema, withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
@@ -30,7 +29,7 @@ async function getMethods(): Promise<PrivatedMethodsPayload> {
 }
 
 export const storeMethodsList = new Elysia()
-  .use(validatePermission(permissionsService.get("STORE.METHODS.READ")))
+  .use(validatePermission("store.methods.read"))
   .get("/list", async () => {
     const data = await getMethods();
     return { data };
@@ -61,7 +60,7 @@ async function updateStoreMethod(method: string, { key, value }: Static<typeof u
 }
 
 export const storeMethodsEdit = new Elysia()
-  .use(validatePermission(permissionsService.get("STORE.METHODS.UPDATE")))
+  .use(validatePermission("store.methods.update"))
   .post("/edit/:method", async ({ params: { method }, body }) => {
     const data = await updateStoreMethod(method, body);
     return { data };

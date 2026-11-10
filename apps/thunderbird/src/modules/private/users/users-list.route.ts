@@ -1,12 +1,11 @@
 import Elysia from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { getPlayersList, privatedUsersSchema, userListSchema } from "./users-list.model";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const playersList = new Elysia()
-  .use(validatePermission(permissionsService.get("PLAYERS.READ"), { withExternal: true }))
+  .use(validatePermission("players.read", { withExternal: true }))
   .get("/list", async ({ query, status }) => {
     const data = await getPlayersList(query);
 

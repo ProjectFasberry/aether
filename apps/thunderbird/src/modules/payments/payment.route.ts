@@ -1,7 +1,6 @@
 import Elysia, { t, type Context } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "#/modules/private/private.model";
 import { enqueueGrantJob } from "#/modules/economy/grant-jobs.model";
 import { buildRouteSummary } from "#/lib/routes";
@@ -50,7 +49,7 @@ function page(title: string, body: string): string {
 }
 
 const fakeCheckout = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.get("/fake/:orderId", async ({ params, set, status }) => {
 		const order = await getOrder(params.orderId);
 
@@ -147,7 +146,7 @@ const invoices = new Elysia()
 	});
 
 const refunds = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.post("/orders/:orderId/refund", async ({ params, nickname, body, status }) => {
 		try {
 			const result = await refundPayment({

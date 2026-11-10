@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { general } from "#/shared/database/general-db";
@@ -36,7 +35,7 @@ async function createModpack({
 const MODRINTH_PREFIX = ["https://modrinth.com/modpack"];
 
 export const modpackCreate = new Elysia()
-  .use(validatePermission(permissionsService.get("MODPACKS.CREATE")))
+  .use(validatePermission("modpacks.create"))
   .post("/create", async ({ body, status }) => {
     if (!MODRINTH_PREFIX.some((prefix) => body.downloadLink.startsWith(prefix))) {
       throw status(400, wrapError("INVALID_LINK"));

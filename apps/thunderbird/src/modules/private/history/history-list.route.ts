@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import { buildRouteSummary } from "#/lib/routes";
 import Elysia, { t } from "elysia";
@@ -60,7 +59,7 @@ function parseDate(value: string | undefined): Date | null | undefined {
 }
 
 export const historyList = new Elysia()
-  .use(validatePermission(permissionsService.get("HISTORY.READ")))
+  .use(validatePermission("history.read"))
   .get("/list", async ({ query, status }) => {
     const {
       limit = 50,

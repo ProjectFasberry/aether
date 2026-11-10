@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { BUCKETS, presignPath } from "#/shared/minio/client";
 import { buildRouteSummary } from "#/lib/routes";
 import { releaseChannels, releaseKey } from "./releases.model";
@@ -14,7 +13,7 @@ function safe(value: string | undefined): value is string {
 }
 
 export const releasesDownload = new Elysia()
-  .use(validatePermission(permissionsService.get("RELEASES.READ")))
+  .use(validatePermission("releases.read"))
   .get("/releases/:channel/:version/:platform/:file", ({ params, status }) => {
     const { channel, version, platform, file } = params;
 

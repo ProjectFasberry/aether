@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
@@ -15,7 +14,7 @@ async function deleteDict(id: number) {
 }
 
 export const dictionariesDelete = new Elysia()
-  .use(validatePermission(permissionsService.get("DICTIONARIES.DELETE")))
+  .use(validatePermission("dictionaries.delete"))
   .delete("/:id/remove", async ({ params: { id } }) => {
     await deleteDict(id);
     return { data: "OK" };

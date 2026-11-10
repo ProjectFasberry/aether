@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { CURRENCIES } from "#/modules/economy/wallet.model";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
@@ -17,7 +16,7 @@ const bodySchema = t.Object({
 });
 
 export const economyAdjust = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.post("/adjust", async ({ body, nickname: actor, status }) => {
 		const nickname = await findPlayer(body.nickname);
 		if (!nickname) return status(404, wrapError("PLAYER_NOT_FOUND"));

@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
 import {
@@ -41,7 +40,7 @@ function parsePeriod(from?: string, to?: string): { from: Date; to: Date } | nul
 }
 
 export const economyReport = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.READ")))
+	.use(validatePermission("economy.read"))
 	.get("/reconciliation", async () => {
 		const [balances, jobs] = await Promise.all([
 			reconcileBalances(),

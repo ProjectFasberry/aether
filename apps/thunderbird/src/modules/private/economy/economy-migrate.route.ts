@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { migrateBalances } from "#/modules/economy/wallet.model";
 import { buildRouteSummary } from "#/lib/routes";
 import { createAdminActivityLog } from "../private.model";
@@ -11,7 +10,7 @@ const bodySchema = t.Optional(t.Object({
 }));
 
 export const economyMigrate = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.post("/migrate", async ({ body, nickname: initiator }) => {
 		const batch = await migrateBalances({
 			cursor: body?.cursor ?? "",

@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
 import { decodeCursor, findPlayer, listLedger } from "./economy.model";
@@ -12,7 +11,7 @@ const querySchema = t.Object({
 });
 
 export const economyLedger = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.READ")))
+	.use(validatePermission("economy.read"))
 	.get("/ledger", async ({ query, status }) => {
 		const nickname = await findPlayer(query.nickname);
 		if (!nickname) return status(404, wrapError("PLAYER_NOT_FOUND"));

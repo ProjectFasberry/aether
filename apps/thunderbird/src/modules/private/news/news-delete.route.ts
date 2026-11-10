@@ -1,5 +1,4 @@
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
@@ -7,7 +6,7 @@ import { deleteNews } from "./news.model";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const newsDeleteRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("NEWS.DELETE")))
+  .use(validatePermission("news.delete"))
   .delete("/:id", async ({ params: { id } }) => {
     await deleteNews(id);
     return { data: "OK" };

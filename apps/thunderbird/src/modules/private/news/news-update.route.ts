@@ -1,5 +1,4 @@
 import Elysia, { t } from "elysia";
-import { permissionsService } from "#/shared/constants/permissions";
 import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
@@ -8,7 +7,7 @@ import { newsSingleExtendedSchema, updateNews } from "./news.model";
 import { buildRouteSummary } from "#/lib/routes";
 
 export const newsUpdateRoute = new Elysia()
-  .use(validatePermission(permissionsService.get("NEWS.UPDATE")))
+  .use(validatePermission("news.update"))
   .post("/:id/edit", async ({ params: { id }, body }) => {
     const data = await updateNews(id, body);
     return { data };

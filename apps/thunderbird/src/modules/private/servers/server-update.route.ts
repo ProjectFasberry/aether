@@ -1,6 +1,5 @@
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
@@ -26,7 +25,7 @@ const serverUpdateBody = t.Object({
 });
 
 export const serverUpdate = new Elysia()
-  .use(validatePermission(permissionsService.get("SERVERS.UPDATE")))
+  .use(validatePermission("servers.update"))
   .patch(
     "/:id",
     async ({ params: { id }, body, status }) => {

@@ -1,6 +1,5 @@
 import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
 import { refundOrder } from "./economy.model";
@@ -12,7 +11,7 @@ const bodySchema = t.Object({
 });
 
 export const economyRefund = new Elysia()
-	.use(validatePermission(permissionsService.get("ECONOMY.WRITE")))
+	.use(validatePermission("economy.write"))
 	.post("/refund", async ({ body, nickname: actor, status }) => {
 		const refunded = await refundOrder({
 			orderId: body.orderId,

@@ -8,22 +8,22 @@ import {
   getUserRole,
   resolveNickname,
 } from "./define";
-import { general } from "#/shared/database/general-db";
 import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { getEnv } from "#/shared/env";
 import { logErrorMsg, logValidators } from "#/shared/observability/log";
-import { appLogger } from "#/shared/constants/logger";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { urlsService } from "#/shared/services/urls";
+import { isAdminNickname } from "#/shared/database/roles";
 import { safeJsonParse } from "#/utils";
 import { getOption } from "#/shared/constants/options";
+import type { Permission } from "#/shared/constants/permissions";
 import bearer from "@elysia/bearer";
 
 type ValidatePermission<T extends boolean> = T extends true
-  ? { as: "external"; permission: string }
-  : { as: "internal"; role: { id: number; name: string }; nickname: string; permission: string };
+  ? { as: "external"; permission: Permission }
+  : { as: "internal"; role: { id: number; name: string }; nickname: string; permission: Permission };
 
 /**
  *
@@ -31,18 +31,13 @@ type ValidatePermission<T extends boolean> = T extends true
  * @param withExternal - Whether to use external bearer authentication. Defaults to `false`.
  */
 export const validatePermission = <T extends boolean = false>(
-  permission: string | null,
+  permission: Permission,
   { withExternal }: { withExternal: T } = { withExternal: false as T },
 ) => new Elysia()
   .use(defineOptionalUser())
   .use(withExternal && bearer())
   .derive(async ({ status, nickname, ...args }): Promise<ValidatePermission<T>> => {
     logValidators("validatePermission");
-
-    if (!permission) {
-      appLogger.warn(`Permission "${permission}" is not found. Route is disabled for security reasons`);
-      throw status(500, "INTERNAL_SERVER_ERROR");
-    }
 
     if (!nickname) {
       if (!withExternal) {
@@ -72,8 +67,7 @@ export const validatePermission = <T extends boolean = false>(
     if (role) {
       const perms = await getPermissions(nickname, role.id);
 
-      const isExist = perms.includes(permission);
-      if (!isExist) {
+      if (!perms.has(permission)) {
         throw status(400, "PERMISSION_DENIED");
       }
 
@@ -106,17 +100,7 @@ export const validateBannedStatus = () =>
 
       if (!nickname) return;
 
-      const target = await general
-        .selectFrom("players")
-        .select("role_id")
-        .where("players.nickname", "=", nickname)
-        .executeTakeFirst();
-
-      if (target) {
-        if (target?.role_id === 3) {
-          return;
-        }
-      }
+      if (await isAdminNickname(nickname)) return;
 
       const ban = await libertybans
         .selectFrom("libertybans_victims")

@@ -1,7 +1,6 @@
 import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { validatePermission } from "#/lib/validators";
-import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
@@ -17,7 +16,7 @@ async function removeStoreItem(id: number): Promise<{ id: number }> {
 }
 
 export const storeItemDelete = new Elysia()
-  .use(validatePermission(permissionsService.get("STORE.ITEM.DELETE")))
+  .use(validatePermission("store.item.delete"))
   .delete("/:id", async ({ params: { id } }) => {
     const data = await removeStoreItem(id);
     return { data };
