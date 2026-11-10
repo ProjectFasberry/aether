@@ -12,10 +12,11 @@ type ConnectionPool = {
   on: (event: "connection", listener: (connection: any) => void) => unknown;
 };
 
-/** MySQL has no pool-wide query timeout; apply it per new connection (SELECT only) */
+/** MySQL/MariaDB have different session variables; try both and ignore the unknown one. */
 export function applyMySqlQueryTimeout(pool: ConnectionPool): void {
   pool.on("connection", (connection) => {
-    connection.query(`SET SESSION max_execution_time = ${DB_QUERY_TIMEOUT_MS}`);
+    connection.query(`SET SESSION max_statement_time = ${DB_QUERY_TIMEOUT_MS / 1000}`, () => undefined);
+    connection.query(`SET SESSION max_execution_time = ${DB_QUERY_TIMEOUT_MS}`, () => undefined);
   });
 }
 
