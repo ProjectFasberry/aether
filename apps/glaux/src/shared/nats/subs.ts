@@ -1,8 +1,6 @@
 import type { NatsConnection, Subscription } from "@nats-io/nats-core";
 import { SUBJECTS } from "./subjects";
-import { sendGotify } from "../notify/gotify";
-import { bot } from "../bot";
-import { chats } from "../bot/chats";
+import { sendAlert } from "../notify/alert";
 import { natsService } from "./client";
 import { isError } from "@repo/shared/utils";
 
@@ -27,8 +25,6 @@ export const SUBSCRIBERS: Sub[] = [
           try {
             const text = JSON.stringify(json);
 
-            // Gotify does not depend on the Telegram side: a missing bot
-            // instance must not swallow the alert.
             const source = typeof json === "object" && json !== null && "from" in json
               ? String((json as { from?: unknown }).from ?? "fasberry")
               : "fasberry";
@@ -36,26 +32,11 @@ export const SUBSCRIBERS: Sub[] = [
               ? String((json as { data?: unknown }).data ?? text)
               : text;
 
-            void sendGotify(`${source} alert`, body);
-
-            const instance = bot.getOptionalInstance();
-            if (!instance) {
-              console.warn("no bot instance available")
-              return;
-            }
-
-            // A Telegram failure must not swallow the alert: Gotify already has it.
-            try {
-              for (const [chat_id] of chats.getData()) {
-                const payload = { chat_id, text };
-
-                instance.api
-                  .sendMessage(payload)
-                  .catch((e) => natsService.logger.error(`${this.subject}: telegram send failed: ${e?.message ?? e}`));
-              }
-            } catch (e) {
-              natsService.logger.error(`${this.subject}: telegram fan-out failed: ${isError(e) ? e.message : String(e)}`);
-            }
+            void sendAlert({ from: source, message: body, title: `${source} alert` })
+              .catch((e) => {
+                const errMsg = `${this.subject}: alert fan-out failed: ${isError(e) ? e.message : String(e)}`
+                natsService.logger.error(errMsg)
+              });
           } catch (e) {
             natsService.logger.error(`${this.subject}: ${isError(e) ? e.message : String(e)}`)
           }

@@ -30,6 +30,11 @@ export const state = {
 		keys: new Set<string>(),
 		fail: false,
 	},
+	apiKey: {
+		valid: false,
+	},
+	alerts: [] as unknown[],
+	alertDelivered: 1,
 	metrics: {
 		configured: true,
 		rows: [] as MetricsRow[],
@@ -51,6 +56,9 @@ export function resetState() {
 	state.notifications = []
 	state.redis.keys.clear()
 	state.redis.fail = false
+	state.apiKey.valid = false
+	state.alerts = []
+	state.alertDelivered = 1
 	state.metrics.configured = true
 	state.metrics.rows = []
 	state.metrics.inserted = []
@@ -101,7 +109,7 @@ const generalDb = {
 	selectFrom: () => ({
 		select: () => ({
 			where: () => ({
-				executeTakeFirst: async () => undefined,
+				executeTakeFirst: async () => (state.apiKey.valid ? { id: 1 } : undefined),
 			}),
 		}),
 	}),
@@ -149,6 +157,13 @@ export function installGlauxMocks() {
 					return "OK"
 				},
 			}),
+		},
+	}))
+
+	mock.module("#/shared/notify/alert", () => ({
+		sendAlert: async (payload: unknown) => {
+			state.alerts.push(payload)
+			return state.alertDelivered
 		},
 	}))
 

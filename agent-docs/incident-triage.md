@@ -24,6 +24,11 @@ Read the boot log first: every resource logs
 | `notify-keyspace-events is "unset"` | QR expiry falls back to WebSocket timers; expected |
 | `Stopped: critical boot failure` | a `critical: true` resource did not start; the failing line is above it |
 
+A critical boot failure publishes `internal.health` before the rollback closes
+NATS, so it also reaches Gotify and Telegram. Manual alerts:
+`POST /internal/alerts` with an API key - see
+[glaux internal-alerts](../apps/glaux/agent-docs/internal-alerts.md).
+
 ## Non-critical degradation
 
 `jobs`, `minio` and similar `critical: false` resources log a failure and boot

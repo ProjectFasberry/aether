@@ -23,7 +23,7 @@ Add `agent-docs/<module>.md` for a new module and list it in the table below.
 | --- | --- |
 | `src/modules/webhooks` | [github-webhook.md](agent-docs/github-webhook.md) |
 | `src/modules/metrics` | [build-metrics.md](agent-docs/build-metrics.md) |
-| `src/modules/service` | - (state route and module wiring) |
+| `src/modules/service` | [internal-alerts.md](agent-docs/internal-alerts.md) (alerts, state route, wiring) |
 
 ## Layout
 
