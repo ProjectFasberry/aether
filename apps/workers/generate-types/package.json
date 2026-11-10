@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "type-check": "tsc --build",
-    "db": "bun run --env-file=.env.infisical ./src/index.ts --type=db"
+    "db": "bun run --env-file=.env.infisical ./src/index.ts --type=db",
+    "db:ci": "bun run ./src/index.ts --type=db --no-interactive"
   },
   "dependencies": {
     "kysely": "0.28.2",
