@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { auth } from "./auth.model";
 import { session as sessionService } from "./login.model";
-import { defineOptionalBearerSession } from "#/lib/define";
+import { defineOptionalBearerSession, resolveNickname } from "#/lib/define";
 import { ipPlugin } from "#/lib/plugins";
 import { buildRouteSummary } from "#/lib/routes";
 import { withData, withError } from "#/shared/schemas";
@@ -126,7 +126,7 @@ const sessionRoute = new Elysia()
   .get("/validate", async ({ session, status, request }) => {
     if (!session) return status(401, wrapError("UNAUTHORIZED"));
 
-    const nickname = await auth.getUserNickname(session);
+    const nickname = await resolveNickname(request, session);
     if (!nickname) return status(401, wrapError("UNAUTHORIZED"));
 
     const identity = await auth.getUserIdentity(nickname);
@@ -148,10 +148,10 @@ const sessionRoute = new Elysia()
       summary: buildRouteSummary("Validate launcher session"),
     },
   })
-  .patch("/password", async ({ session, body, status, ip }) => {
+  .patch("/password", async ({ session, body, status, ip, request }) => {
     if (!session) return status(401, wrapError("UNAUTHORIZED"));
 
-    const nickname = await auth.getUserNickname(session);
+    const nickname = await resolveNickname(request, session);
     if (!nickname) return status(401, wrapError("UNAUTHORIZED"));
 
     const result = await changePassword({

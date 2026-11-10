@@ -2,8 +2,7 @@ import Elysia, { t } from "elysia";
 import { BUCKETS, S3, presignPath } from "#/shared/minio/client";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { auth } from "#/modules/auth/auth.model";
-import { defineOptionalBearerSession, handleByBearer } from "#/lib/define";
+import { defineOptionalBearerSession, handleByBearer, resolveNickname } from "#/lib/define";
 import { getEnv } from "#/shared/env";
 
 /**
@@ -111,8 +110,12 @@ async function latestArtifact(channel: string, platform: string) {
 }
 
 /** Dev downloads are for the team only: a session or an API key is required. */
-async function canDownloadDev(headers: Record<string, string | undefined>, session: string | null) {
-  const nickname = session ? await auth.getUserNickname(session) : null;
+async function canDownloadDev(
+  request: Request,
+  headers: Record<string, string | undefined>,
+  session: string | null,
+) {
+  const nickname = await resolveNickname(request, session);
   if (nickname) return true;
 
   const bearer = headers.authorization?.replace(/^Bearer\s+/i, "").trim() ?? "";
@@ -124,10 +127,10 @@ const latestDownload = new Elysia()
   .use(defineOptionalBearerSession())
   .get(
     "/download/:platform",
-    async ({ params, headers, session, status }) => {
+    async ({ params, headers, session, request, status }) => {
       const channel = currentChannel();
 
-      if (channel !== "prod" && !(await canDownloadDev(headers, session))) {
+      if (channel !== "prod" && !(await canDownloadDev(request, headers, session))) {
         return status(401, wrapError("UNAUTHORIZED"));
       }
 

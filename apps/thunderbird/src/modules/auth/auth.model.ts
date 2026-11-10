@@ -53,6 +53,10 @@ export const auth = {
 
 		return { hash: account.hash, result: true };
 	},
+	isSessionFresh(payload: UserSessionPayload): boolean {
+		const created = new Date(payload.created_at).getTime();
+		return !Number.isFinite(created) || Date.now() - created <= MAX_SESSION_AGE_MS;
+	},
 	async getSessionPayload(token: string): Promise<UserSessionPayload | null> {
     const data = await redisService
       .getInstance()
@@ -64,8 +68,7 @@ export const auth = {
 		if (!result.ok) return null;
 
 		// Sliding TTL keeps an active session alive forever; cap the absolute age.
-		const created = new Date(result.value.created_at).getTime();
-		if (Number.isFinite(created) && Date.now() - created > MAX_SESSION_AGE_MS) return null;
+		if (!this.isSessionFresh(result.value)) return null;
 
 		return result.value;
 	},

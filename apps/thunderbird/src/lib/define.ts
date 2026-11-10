@@ -4,8 +4,55 @@ import { general } from "#/shared/database/general-db";
 import { SESSION_KEY } from "#/modules/auth/cookie";
 import { bearer } from "@elysia/bearer";
 import { logValidators } from "#/shared/observability/log";
+import { getRequestNickname, setRequestNickname } from "#/shared/services/session-cache";
+
+/*
+ * Positive results are cached so a burst of requests with the same key costs
+ * one SELECT instead of one per request. Negative results are cached for a much
+ * shorter time, so a freshly created key is picked up quickly.
+ */
+const BEARER_CACHE_TTL_MS = 30_000;
+const BEARER_NEGATIVE_CACHE_TTL_MS = 5_000;
+const BEARER_CACHE_MAX_ENTRIES = 1_000;
+
+type BearerCacheEntry = { valid: boolean; expiresAt: number };
+
+const bearerCache = new Map<string, BearerCacheEntry>();
+
+function readBearerCache(token: string): boolean | null {
+  const entry = bearerCache.get(token);
+  if (!entry) return null;
+
+  if (entry.expiresAt <= Date.now()) {
+    bearerCache.delete(token);
+    return null;
+  }
+
+  return entry.valid;
+}
+
+function writeBearerCache(token: string, valid: boolean, expiresAt: number): void {
+  if (bearerCache.size >= BEARER_CACHE_MAX_ENTRIES) {
+    const now = Date.now();
+
+    for (const [key, entry] of bearerCache) {
+      if (entry.expiresAt <= now) bearerCache.delete(key);
+    }
+
+    // Still full: drop the oldest insertion (Map keeps insertion order).
+    if (bearerCache.size >= BEARER_CACHE_MAX_ENTRIES) {
+      const oldest = bearerCache.keys().next();
+      if (!oldest.done) bearerCache.delete(oldest.value);
+    }
+  }
+
+  bearerCache.set(token, { valid, expiresAt });
+}
 
 export async function handleByBearer(bearer: string): Promise<boolean> {
+  const cached = readBearerCache(bearer);
+  if (cached !== null) return cached;
+
   const hash = new Bun.CryptoHasher("sha256")
     .update(bearer)
     .digest("hex");
@@ -16,32 +63,63 @@ export async function handleByBearer(bearer: string): Promise<boolean> {
     .where("key", "=", hash)
     .executeTakeFirst();
 
-  if (!query?.id) return false;
+  const now = Date.now();
+
+  if (!query?.id) {
+    writeBearerCache(bearer, false, now + BEARER_NEGATIVE_CACHE_TTL_MS);
+    return false;
+  }
 
   // A null duration is a legacy key without an expiry; new keys store seconds.
-  if (query.duration == null) return true;
+  const keyExpiresAt = query.duration == null
+    ? Number.POSITIVE_INFINITY
+    : new Date(query.created_at).getTime() + Number(query.duration) * 1000;
 
-  return new Date(query.created_at).getTime() + Number(query.duration) * 1000 > Date.now();
+  const valid = keyExpiresAt > now;
+  const expiresAt = valid
+    ? Math.min(now + BEARER_CACHE_TTL_MS, keyExpiresAt)
+    : now + BEARER_NEGATIVE_CACHE_TTL_MS;
+
+  writeBearerCache(bearer, valid, expiresAt);
+
+  return valid;
+}
+
+/**
+ * Resolves a session token to a nickname once per request. The global session
+ * derive already read the cookie session, so guards only hit Redis when the
+ * token was not read yet (bearer tokens, tests without the global derive).
+ */
+export async function resolveNickname(request: Request, session: string | null): Promise<string | null> {
+  if (!session) return null;
+
+  const cached = getRequestNickname(request, session);
+  if (cached !== undefined) return cached;
+
+  const nickname = await auth.getUserNickname(session);
+  if (nickname) setRequestNickname(request, session, nickname);
+
+  return nickname;
 }
 
 export const defineOptionalUser = () => new Elysia({ name: "defineOptionalUser" })
   .use(defineOptionalSession())
-  .derive(async ({ session }): Promise<{ nickname: string | null }> => {
+  .derive(async ({ session, request }): Promise<{ nickname: string | null }> => {
     logValidators("defineOptionalUser");
 
-    const nickname = session ? await auth.getUserNickname(session) : null;
+    const nickname = await resolveNickname(request, session);
     return { nickname };
   })
   .as("scoped");
 
 export const defineRequiredUser = () => new Elysia({ name: "defineRequiredUser" })
   .use(defineOptionalSession())
-  .derive(async ({ session, status }): Promise<{ nickname: string }> => {
+  .derive(async ({ session, request, status }): Promise<{ nickname: string }> => {
     logValidators("defineRequiredUser");
 
     if (!session) throw status(401);
 
-    const nickname = await auth.getUserNickname(session);
+    const nickname = await resolveNickname(request, session);
     if (!nickname) throw status(401);
 
     return { nickname };
@@ -69,12 +147,12 @@ export const defineOptionalBearerSession = () => new Elysia({ name: "defineOptio
 
 export const defineRequiredClientUser = () => new Elysia({ name: "defineRequiredClientUser" })
   .use(defineOptionalBearerSession())
-  .derive(async ({ session, status }): Promise<{ nickname: string; session: string }> => {
+  .derive(async ({ session, request, status }): Promise<{ nickname: string; session: string }> => {
     logValidators("defineRequiredClientUser");
 
     if (!session) throw status(401);
 
-    const nickname = await auth.getUserNickname(session);
+    const nickname = await resolveNickname(request, session);
     if (!nickname) throw status(401);
 
     return { nickname, session };
