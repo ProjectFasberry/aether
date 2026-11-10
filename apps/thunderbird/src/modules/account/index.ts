@@ -3,7 +3,7 @@ import { withData, withError } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { changePassword, changePasswordSchema, deleteAccount } from "./account.model";
 import { ipPlugin } from "#/lib/plugins";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 
 export const account = new Elysia()

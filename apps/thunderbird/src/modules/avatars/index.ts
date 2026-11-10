@@ -1,6 +1,6 @@
 import Elysia from "elysia";
 import { BUCKETS, presignPath } from "#/shared/minio/client";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 /**
  * Player heads from the private `avatars` bucket.

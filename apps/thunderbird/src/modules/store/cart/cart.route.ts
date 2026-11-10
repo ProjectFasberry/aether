@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
-import { defineGlobalPrice } from "#/utils/store";
+import { getCartTotals } from "#/modules/store/lib/pricing";
 import { cartItem, cartListSchema, cartPriceSchema, editItemToBasketSchema } from "./cart.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { withData, withError } from "#/shared/schemas";
 import { defineRequiredUser } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/helpers"
@@ -95,7 +95,7 @@ const cartPrice = new Elysia()
   .get("/price", async ({ nickname: initiator, query }) => {
     const server = query.server ?? "bisquite";
     const provider = charism.get(server);
-    const data = await defineGlobalPrice(initiator);
+    const data = await getCartTotals(initiator);
 
     return {
       data: {

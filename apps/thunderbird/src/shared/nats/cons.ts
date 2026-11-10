@@ -1,4 +1,4 @@
-import { startOrderConsumer } from "#/utils/server/call-command";
+import { startOrderConsumer } from "#/shared/nats/command";
 import type { ConsumerUpdateConfig } from "@nats-io/jetstream";
 
 type ConsumerSpec = ConsumerUpdateConfig & {

@@ -1,9 +1,9 @@
 import Elysia from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { general } from "#/shared/database/general-db";
-import { SESSION_KEY } from "#/utils/auth/cookie";
+import { SESSION_KEY } from "#/modules/auth/cookie";
 import { bearer } from "@elysia/bearer";
-import { logValidators } from "#/utils/config/log-utils";
+import { logValidators } from "#/shared/observability/log";
 
 export async function handleByBearer(bearer: string): Promise<boolean> {
   const hash = new Bun.CryptoHasher("sha256")

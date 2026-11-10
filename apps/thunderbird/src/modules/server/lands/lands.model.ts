@@ -1,8 +1,8 @@
 import { bisquite } from "#/shared/database/bisquite-db";
-import { wrapMeta } from "#/utils/config/transforms";
+import { toPageMeta } from "#/helpers/pagination";
 import { type Static, t } from "elysia";
 import { withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
+import { getDirection } from "#/helpers/pagination";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { general } from "#/shared/database/general-db";
 import { sql, type SelectExpression } from "kysely";
@@ -12,6 +12,7 @@ import { safeJsonParse } from "#/utils";
 import { DateTime } from "#/helpers/typebox";
 import { playerService } from "#/shared/services/player";
 import { getObjectUrl } from "#/helpers/volume"
+import { logger } from "@repo/shared/utils/logger"
 
 const landHelpers = {
   getLandsUrl(path: string): string {
@@ -383,7 +384,7 @@ export async function getLand(
 
   const membersObject = safeJsonParse<{ [key: string]: { chunks: number } }>(landRow.members);
   if (!membersObject.ok) {
-    console.error(membersObject.error)
+    logger.error({ message: "Failed to parse land members", error: membersObject.error })
     return null;
   }
 
@@ -557,7 +558,7 @@ export async function getLands({
   }));
 
   if (!parsedLands.length) {
-    return { data: [], meta: wrapMeta(result) }
+    return { data: [], meta: toPageMeta(result) }
   }
 
   const allUUIDs = Array.from(
@@ -578,7 +579,7 @@ export async function getLands({
   if (nicknames.length === 0) {
     return {
       data: [],
-      meta: wrapMeta(result)
+      meta: toPageMeta(result)
     };
   }
 
@@ -611,6 +612,6 @@ export async function getLands({
 
   return {
     data,
-    meta: wrapMeta(result)
+    meta: toPageMeta(result)
   }
 }

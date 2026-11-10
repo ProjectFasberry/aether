@@ -1,5 +1,5 @@
 import { getNewsList, getNewsListSchema } from "#/modules/news/news.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia from "elysia";
 
 export const newsList = new Elysia()

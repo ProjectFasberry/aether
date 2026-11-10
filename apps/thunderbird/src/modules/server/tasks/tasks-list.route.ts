@@ -1,11 +1,11 @@
 import { general } from "#/shared/database/general-db"
 import { metaSchema, withData, withMeta } from "#/shared/schemas"
-import { getDirection } from "#/utils/config/paginate"
-import { wrapMeta } from "#/utils/config/transforms"
+import { getDirection } from "#/helpers/pagination"
+import { toPageMeta } from "#/helpers/pagination"
 import Elysia, { type Static, t } from "elysia"
 import { executeWithCursorPagination } from "kysely-paginate"
 import { taskPayload } from "./tasks.model"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 
 export type TaskItem = {
   id: number;
@@ -60,7 +60,7 @@ async function getTasks({ asc, endCursor }: Static<typeof tasksListSchema>) {
 
   return {
     data: result.rows,
-    meta: wrapMeta(result)
+    meta: toPageMeta(result)
   }
 }
 

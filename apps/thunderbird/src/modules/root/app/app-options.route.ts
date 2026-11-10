@@ -6,7 +6,7 @@ import { libertybans } from "#/shared/database/libertybans-db";
 import { urlsService } from "#/shared/services/urls";
 import { ipPlugin } from "#/lib/plugins/index";
 import { getOption } from "#/shared/constants/options";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { DateTime } from "#/helpers/typebox";
 
 function getWhitelist(ip: string) {

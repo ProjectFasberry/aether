@@ -3,7 +3,7 @@ import { withData, withError } from "#/shared/schemas";
 import { statusQuerySchema, statusSchema } from "@repo/core/modules/status/index"
 import { redisService } from "#/shared/redis/client";
 import { serverStatusService } from "./index.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const status = new Elysia()
 	.get("/status", async ({ query }) => {

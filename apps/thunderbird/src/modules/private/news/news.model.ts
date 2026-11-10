@@ -2,7 +2,7 @@ import { getStaticUrl } from "#/helpers/volume";
 import { newsSingleSchema } from "#/modules/news/news.model";
 import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
-import { buildUpdates } from "#/utils/config/transforms";
+import { buildUpdates } from "#/helpers/object";
 import type { createNewsSchema, newsUpdateSchema } from "@repo/shared/schemas/news";
 import type { DB } from "@gen/db/general";
 import { type Static, t } from "elysia";

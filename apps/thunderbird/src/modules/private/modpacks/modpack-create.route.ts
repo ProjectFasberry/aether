@@ -4,7 +4,7 @@ import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { general } from "#/shared/database/general-db";
 import { withData, withError } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { DateTime } from "#/helpers/typebox";
 import { wrapError } from "@repo/shared/lib/helpers"
 

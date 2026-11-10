@@ -1,7 +1,6 @@
 import { logger } from "@repo/shared/utils/logger";
-import type { ConnectionOptions, NatsConnection } from "@nats-io/nats-core";
+import type { ConnectionOptions, NatsConnection, Subscription } from "@nats-io/nats-core";
 import { connect } from "@nats-io/transport-node";
-import { SUBSCRIBERS } from "./subscribers";
 import { NATS_CONSUMERS, NATS_CONSUMERS_CB, NATS_JS_STREAMS } from "./cons";
 import { jetstreamManager } from "@nats-io/jetstream";
 import { invariant } from "#/utils";
@@ -18,6 +17,11 @@ const config: ConnectionOptions = {
   maxReconnectAttempts: -1,
   reconnectTimeWait: 2000,
 }
+
+export type NatsSubscription = {
+  name: string;
+  cb: (nc: NatsConnection) => Subscription;
+};
 
 let client: NatsConnection | null = null;
 
@@ -37,6 +41,9 @@ export const natsService = {
     invariant(client, "Nats client is not initialized");
     return client;
   },
+  getOptionalInstance(): NatsConnection | null {
+    return client;
+  },
   async close(): Promise<void> {
     if (!client) return;
 
@@ -49,9 +56,11 @@ export const natsService = {
     }
   },
   async start({
-    onStart
+    onStart,
+    subscribers = [],
   }: {
     onStart?: () => void
+    subscribers?: NatsSubscription[]
     } = {}) {
     onStart?.();
 
@@ -60,7 +69,7 @@ export const natsService = {
     const nc = this.getInstance();
 
     try {
-      for (const sub of SUBSCRIBERS) {
+      for (const sub of subscribers) {
         sub.cb(nc);
         this.logger.info(`Subscribed to "${sub.name}"`)
       }

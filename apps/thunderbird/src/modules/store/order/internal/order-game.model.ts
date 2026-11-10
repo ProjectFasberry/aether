@@ -1,11 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
-import { logErrorMsg } from "#/utils/config/log-utils";
-import { callBroadcast } from "#/utils/server/call-broadcast";
-import { publishUpdateGroup } from "#/lib/publishers/pub-update-group";
+import { logErrorMsg } from "#/shared/observability/log";
+import { publishBroadcast } from "#/events/publishers/broadcast";
+import { publishUpdateGroup } from "#/events/publishers/pub-update-group";
 import { DONATE_TITLE } from "@repo/shared/constants/donate-aliases";
-import { callServerCommand, type CommandMeta } from "#/utils/server/call-command";
+import { callServerCommand, type CommandMeta } from "#/shared/nats/command";
 import {
 	GAME_CURRENCIES,
 	STORE_COMMAND_PARENTS,
@@ -123,7 +123,7 @@ function createTasksForItem(
 
 		tasks.push(async () => {
 			try {
-				await callBroadcast({ message });
+				await publishBroadcast({ message });
 			} catch (error) {
 				logErrorMsg(error, { subject: "store-fulfillment-notify" });
 			}

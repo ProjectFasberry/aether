@@ -3,8 +3,8 @@ import { lobby } from "#/shared/database/lobby-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { reputation } from "#/shared/database/reputation-db";
 import { metaSchema, withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
-import { wrapMeta } from "#/utils/config/transforms";
+import { getDirection } from "#/helpers/pagination";
+import { toPageMeta } from "#/helpers/pagination";
 import type { DB as bisquiteDB } from "@gen/db/bisquite";
 import type { Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
@@ -169,7 +169,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 		balance: row.points
 	}))
 
-	return { data, meta: wrapMeta(result) };
+	return { data, meta: toPageMeta(result) };
 }
 
 async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
@@ -205,7 +205,7 @@ async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingS
 		score: Number(row.score ?? 0)
 	}))
 
-	return { data, meta: wrapMeta(result) };
+	return { data, meta: toPageMeta(result) };
 }
 
 async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
@@ -269,7 +269,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof r
 		})
 	)
 
-	return { data, meta: wrapMeta(landsRes) };
+	return { data, meta: toPageMeta(landsRes) };
 }
 
 async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
@@ -305,7 +305,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 		avatar: avatarsMap[row.nickname!]
 	}))
 
-	return { data, meta: wrapMeta(result) };
+	return { data, meta: toPageMeta(result) };
 }
 
 async function getReputationRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
@@ -352,7 +352,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 		}),
 	);
 
-	return { data, meta: wrapMeta(result) };
+	return { data, meta: toPageMeta(result) };
 }
 
 async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
@@ -385,7 +385,7 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 		total: Number(row.total ?? 0)
 	}))
 
-	return { data, meta: wrapMeta(result) };
+	return { data, meta: toPageMeta(result) };
 }
 
 export async function getRating(by: AllowedKeys, query: Static<typeof ratingSchema>) {

@@ -1,5 +1,5 @@
 import Elysia, { t } from "elysia";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { withData } from "#/shared/schemas";
 import { readLatest, rewritePlatforms } from "#/modules/releases";
 import { joinGate } from "./join.route";

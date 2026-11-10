@@ -8,8 +8,8 @@ import { createAdminActivityLog } from "../private.model";
 import { EDITABLE_FIELDS, storeItemEditSchema } from "@repo/shared/schemas/store";
 import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
 import type { Selectable } from "kysely";
-import { buildUpdates } from "#/utils/config/transforms";
-import { buildRouteSummary } from "#/utils";
+import { buildUpdates } from "#/helpers/object";
+import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { store } from "../../store/items/store-items.model";
 

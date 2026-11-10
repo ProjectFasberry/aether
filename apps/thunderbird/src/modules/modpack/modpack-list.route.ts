@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { modpackPayloadSchema } from "./modpack.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 async function getModpacks() {
   const query = await general

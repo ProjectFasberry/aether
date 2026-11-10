@@ -1,11 +1,13 @@
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { natsService } from "#/shared/nats/client";
-import { buildRouteSummary, safeJsonParse } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
+import { safeJsonParse } from "@repo/shared/utils";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
 import type { Subscription } from "@nats-io/nats-core";
 import Elysia, { sse } from "elysia";
 import { logger } from "@repo/shared/utils/logger";
+import { shutdownSignal } from "#/shared/shutdown";
 
 type HistoryPayload = {
   id: number;
@@ -74,11 +76,12 @@ export const historyEvents = new Elysia()
 
     const abort = () => wake?.();
     request.signal.addEventListener("abort", abort, { once: true });
+    shutdownSignal.addEventListener("abort", abort, { once: true });
 
     try {
       yield sse({ event: "config", data: "connected" });
 
-      while (!request.signal.aborted) {
+      while (!request.signal.aborted && !shutdownSignal.aborted) {
         while (queue.length > 0) {
           const payload = queue.shift();
           if (payload) yield sse({ data: payload, event: "payload" });
@@ -94,12 +97,13 @@ export const historyEvents = new Elysia()
         });
         wake = null;
 
-        if (!request.signal.aborted) {
+        if (!request.signal.aborted && !shutdownSignal.aborted) {
           yield sse({ event: "config", data: "ping" });
         }
       }
     } finally {
       request.signal.removeEventListener("abort", abort);
+      shutdownSignal.removeEventListener("abort", abort);
       clients.delete(push);
       releaseSubscription();
     }

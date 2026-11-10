@@ -8,7 +8,7 @@ import Elysia, { t } from "elysia";
 import * as z from "zod";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { DateTime } from "#/helpers/typebox";
 
 function publishAuth(event: keyof typeof SUBJECTS.EVENTS.AUTHORIZATION, { nickname, created_at }: { nickname: string, created_at?: Date }) {

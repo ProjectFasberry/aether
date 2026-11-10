@@ -3,7 +3,7 @@ import * as z from "zod";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import { taskPayload } from "./tasks.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 async function getTask(id: number) {
   const query = await general

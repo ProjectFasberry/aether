@@ -7,7 +7,7 @@ import {
   sessionsParsedPayloadSchema,
 } from "./login.model";
 import { withData, withError } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { isError } from "@repo/shared/utils";
 import { wrapError } from "@repo/shared/lib/helpers"
 

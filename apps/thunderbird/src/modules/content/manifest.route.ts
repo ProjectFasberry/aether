@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { BUCKETS, presignPath, S3 } from "#/shared/minio/client";
 import { defineOptionalBearerSession } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { withData } from "#/shared/schemas";
 
 /** Object key of the content manifest inside the `static` bucket. */

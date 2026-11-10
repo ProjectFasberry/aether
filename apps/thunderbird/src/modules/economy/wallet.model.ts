@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { general } from "#/shared/database/general-db";
 import { playerpoints } from "#/shared/database/playerpoints-db";
 import { bisquite } from "#/shared/database/bisquite-db";
-import { logErrorMsg } from "#/utils/config/log-utils";
+import { logErrorMsg } from "#/shared/observability/log";
 import { withRedisLock } from "#/shared/redis/lock";
 import type { DB, JsonObject, LedgerEntries, WalletLots } from "@gen/db/general";
 import { sql, type Selectable, type Transaction } from "kysely";

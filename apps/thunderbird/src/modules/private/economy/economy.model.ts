@@ -1,5 +1,5 @@
 import { general } from "#/shared/database/general-db";
-import { logErrorMsg } from "#/utils/config/log-utils";
+import { logErrorMsg } from "#/shared/observability/log";
 import {
 	credit,
 	debit,

@@ -11,6 +11,27 @@ type CreateMinioSharedParams = {
 let instance: Minio.Client | null = null;
 let currentBucketsList: string[] = [];
 
+/** Derives MinIO client options from the public volume URL. */
+export function createMinioConfig({
+  volumeUrl,
+  accessKey,
+  secretKey,
+}: {
+  volumeUrl: string;
+  accessKey: string;
+  secretKey: string;
+}): Minio.ClientOptions {
+  const volume = new URL(volumeUrl);
+
+  return {
+    endPoint: volume.hostname,
+    port: Number(volume.port || (volume.protocol === "https:" ? 443 : 80)),
+    useSSL: volume.protocol === "https:",
+    accessKey,
+    secretKey,
+  };
+}
+
 export const createMinioService = (
   { config }: { config: Minio.ClientOptions, }
 ) => {

@@ -616,24 +616,6 @@ export const adminActivityLog = pgTable("admin_activity_log", {
 	event: text().notNull(),
 });
 
-export const privatedChat = pgTable("privated_chat", {
-	id: integer()
-		.primaryKey()
-		.generatedAlwaysAsIdentity({
-			name: "privated_chat_id_seq",
-			startWith: 1,
-			increment: 1,
-			minValue: 1,
-			maxValue: 2147483647,
-			cache: 1,
-		}),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-	nickname: text().notNull(),
-	message: text().notNull(),
-	edited: boolean().default(false).notNull(),
-	editedAt: timestamp("edited_at", { withTimezone: true, mode: "string" }),
-});
-
 export const dictionaries = pgTable("dictionaries", {
 	id: integer()
 		.primaryKey()
@@ -649,26 +631,6 @@ export const dictionaries = pgTable("dictionaries", {
 	value: text().notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
 });
-
-export const chatViews = pgTable(
-	"chat_views",
-	{
-		id: integer()
-			.primaryKey()
-			.generatedAlwaysAsIdentity({
-				name: "chat_views_id_seq",
-				startWith: 1,
-				increment: 1,
-				minValue: 1,
-				maxValue: 2147483647,
-				cache: 1,
-			}),
-		messageId: integer("message_id").notNull(),
-		nickname: text().notNull(),
-		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-	},
-	(table) => [unique("chat_views_constraint_1").on(table.messageId, table.nickname)],
-);
 
 export const rules = pgTable(
 	"rules",

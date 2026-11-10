@@ -1,12 +1,13 @@
 import Elysia, { t } from "elysia";
-import { buildRouteSummary, cookie } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
+import { cookie } from "#/lib/cookies";
 import { auth } from "./auth.model";
 import { wrapError } from "@repo/shared/lib/helpers"
-import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
+import { getClientDomain, SESSION_KEY } from "#/modules/auth/cookie";
 import { botValidator, validateAuthStatus } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";
 import { authSchema } from "@repo/shared/schemas/auth";
-import { session, loginQR, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger } from "./login.model";
+import { session, loginQR, TOKEN_ERROR_CODES, TOKEN_MSG_RECORDS, qrLogger, QR_VERIFY_TIMEOUT_S } from "./login.model";
 import { ipPlugin } from "#/lib/plugins/index";
 import { defineRequiredUser } from "#/lib/define";
 import Bowser from "bowser";
@@ -92,6 +93,7 @@ const visitorSchema = t.Object({
 });
 
 const timers = new Map<string, ReturnType<typeof setInterval>>();
+const expiryTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const subs = new Map<string, Subscription>();
 
 export const withQR = new Elysia()
@@ -133,6 +135,14 @@ export const withQR = new Elysia()
       const intervalId = setInterval(() => ws.ping(), 30000);
       timers.set(wsId, intervalId);
 
+      // Redis keyspace notifications are an optimisation, not a requirement:
+      // this timer still closes the socket when the token expires silently.
+      const expiryTimer = setTimeout(() => {
+        ws.send(JSON.stringify({ event: "expired" } satisfies QREventsPayload));
+        ws.close(1000);
+      }, QR_VERIFY_TIMEOUT_S * 1000);
+      expiryTimers.set(wsId, expiryTimer);
+
       const nc = natsService.getInstance();
       const subject = loginQR.getQRSubject(token);
 
@@ -153,6 +163,9 @@ export const withQR = new Elysia()
           ws.send(JSON.stringify(pd));
 
           if (event !== "connected") {
+            const expiry = expiryTimers.get(wsId);
+            if (expiry) clearTimeout(expiry);
+            expiryTimers.delete(wsId);
             ws.close(1000);
           }
         },
@@ -169,6 +182,10 @@ export const withQR = new Elysia()
     async close({ id: wsId, data: { query: { token }, }, }, code, reason) {
       clearInterval(timers.get(wsId));
       timers.delete(wsId);
+
+      const expiry = expiryTimers.get(wsId);
+      if (expiry) clearTimeout(expiry);
+      expiryTimers.delete(wsId);
 
       const sub = subs.get(wsId);
 

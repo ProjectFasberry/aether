@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { buildRatings, bySchema, getRating, ratingPayload, ratingSchema } from "./rating.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const ratingBy = new Elysia()
 	.get("/:by", async ({ params: { by }, query }) => {

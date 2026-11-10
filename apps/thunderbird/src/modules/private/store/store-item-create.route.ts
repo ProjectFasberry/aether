@@ -6,7 +6,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { storeItemCreateSchema } from "@repo/shared/schemas/store";
 import { normalizeStoreCommand } from "@repo/shared/schemas/store/payment";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 async function createStoreItem(values: z.infer<typeof storeItemCreateSchema>) {
   const query = await general

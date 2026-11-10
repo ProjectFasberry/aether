@@ -1,7 +1,7 @@
 import { withData } from "#/shared/schemas";
 import Elysia from "elysia";
 import { getServers, serverPayloadSchema } from "./server-ip.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const serversWithMap = new Elysia()
   .get("/servers-with-map", async () => {

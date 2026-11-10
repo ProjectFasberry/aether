@@ -8,7 +8,7 @@ import {
   uploadQuerySchema,
   UpstreamError
 } from "./skin.model"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 import { wrapError } from "@repo/shared/lib/helpers"
 
 export const skinUpload = new Elysia()

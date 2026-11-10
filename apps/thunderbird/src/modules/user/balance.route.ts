@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { defineRequiredUser } from "#/lib/define";
 import { withData } from "#/shared/schemas";
 import { balanceSchema, getBalance } from "./balance.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const balancePayload = t.Object({
   CHARISM: t.Number(),

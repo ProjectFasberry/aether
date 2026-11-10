@@ -3,7 +3,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { S3 } from "#/shared/minio/client";
 import { withData } from "#/shared/schemas";
 import { minioService } from "#/shared/services/minio";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia, { t } from "elysia";
 
 const S3ObjectSchema = t.Object({

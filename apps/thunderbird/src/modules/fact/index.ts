@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const fact = new Elysia()
   .get("/random-fact", async () => {

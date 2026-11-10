@@ -2,9 +2,9 @@ import Elysia from "elysia";
 import { sql } from "kysely";
 import { timingSafeEqual } from "node:crypto";
 import { bisquite } from "#/shared/database/bisquite-db";
-import { publishVoteNotify } from "#/lib/publishers/pub-vote-notify";
+import { publishVoteNotify } from "#/events/publishers/pub-vote-notify";
 import { general } from "#/shared/database/general-db";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { voteSites } from "./vote-sites.model";
 
 async function postVoted(nickname: string) {

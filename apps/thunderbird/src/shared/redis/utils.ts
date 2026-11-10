@@ -4,9 +4,24 @@ import { SUBSCRIBERS } from "./subscribers";
 
 export async function psubscribe() {
   const rsClient = redisService.getBridgeInstance()
-  await rsClient.psubscribe('__keyevent@0__:expired');
-
   const psubcribeLogger = redisService.logger.child({ name: "psubscribe" });
+
+  // Keyspace notifications are server-wide. Use the existing bridge client;
+  // a dedicated connection would not add isolation.
+  try {
+    const reply = await (rsClient as any).config("GET", "notify-keyspace-events");
+    const flags = Array.isArray(reply) ? String(reply[1] ?? "") : "";
+
+    if (!flags.includes("E") || !flags.includes("x")) {
+      psubcribeLogger.error(
+        `notify-keyspace-events is "${flags || "unset"}"; QR expiry falls back to WebSocket timers`,
+      );
+    }
+  } catch (e) {
+    psubcribeLogger.warn({ message: "cannot read notify-keyspace-events", error: e });
+  }
+
+  await rsClient.psubscribe('__keyevent@0__:expired');
 
   SUBSCRIBERS.forEach((subscriber) => {
     psubcribeLogger.info(`Subscribed to "${subscriber.key}"`)

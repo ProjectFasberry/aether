@@ -11,65 +11,62 @@
     :root {
       --bg: #090909;
       --surface: #101010;
-      --surface-hover: #151515;
-      --border: #242424;
-      --border-hover: #383838;
-      --text: #f1f1f1;
-      --muted: #888;
-      --muted-light: #aaa;
+      --surface-2: #151515;
+      --surface-3: #1b1b1b;
+      --border: #262626;
+      --border-strong: #363636;
+      --text: #f2f2f2;
+      --muted: #a3a3a3;
+      --dim: #737373;
       --accent: #d6d6d6;
+      --green: #1db954;
+      --blue: #5b8def;
+      --amber: #f4b942;
+      --red: #ef6b6b;
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
-    html,
+    html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      min-height: 100%;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255, 255, 255, 0.06), transparent 36%),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    body {
-      min-height: 100vh;
+    a { color: inherit; text-decoration: none; }
+
+    button { font: inherit; }
+
+    .shell {
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 28px 18px 56px;
+    }
+
+    /* Header */
+
+    .brand-row {
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 32px 20px;
-
-      background:
-        radial-gradient(
-          circle at 50% 0%,
-          rgba(255, 255, 255, 0.055),
-          transparent 38%
-        ),
-        var(--bg);
-
-      color: var(--text);
-      font-family:
-        Inter,
-        ui-sans-serif,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 760px;
-    }
-
-    .header {
-      margin-bottom: 36px;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 26px;
     }
 
     .brand {
       display: flex;
       align-items: center;
-      gap: 13px;
-      margin-bottom: 18px;
+      gap: 12px;
     }
 
     .logo {
@@ -77,286 +74,963 @@
       height: 38px;
       display: grid;
       place-items: center;
-
-      border: 1px solid #303030;
-      border-radius: 10px;
-
-      background: linear-gradient(
-        145deg,
-        #1d1d1d,
-        #0d0d0d
-      );
-
-      color: #eee;
+      border: 1px solid var(--border-strong);
+      border-radius: 11px;
+      background: linear-gradient(145deg, #202020, #121212);
+      font-weight: 800;
       font-size: 17px;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-
-      box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.06),
-        0 8px 30px rgba(0, 0, 0, 0.35);
+      color: var(--accent);
     }
 
     .brand-name {
-      font-size: 18px;
       font-weight: 650;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      color: var(--dim);
+      font-size: 12px;
+      margin-top: -2px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--dim);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.035);
+      transition: background 160ms ease, box-shadow 160ms ease;
+    }
+
+    .status-pill[data-state="up"] .status-dot {
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.13);
+    }
+
+    .status-pill[data-state="down"] .status-dot {
+      background: var(--red);
+      box-shadow: 0 0 0 3px rgba(239, 107, 107, 0.13);
     }
 
     .eyebrow {
-      margin-bottom: 9px;
-
-      color: #777;
+      color: var(--dim);
       font-size: 11px;
-      font-weight: 650;
-      letter-spacing: 0.13em;
+      font-weight: 700;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
+      margin-bottom: 9px;
     }
 
     h1 {
-      margin: 0;
-
-      font-size: clamp(34px, 6vw, 48px);
+      margin: 0 0 10px;
+      font-size: clamp(30px, 5vw, 46px);
       line-height: 1.05;
       letter-spacing: -0.045em;
-      font-weight: 700;
+      font-weight: 760;
     }
 
-    .description {
-      max-width: 570px;
-      margin: 14px 0 0;
-
+    .lead {
+      margin: 0;
+      max-width: 680px;
       color: var(--muted);
       font-size: 15px;
-      line-height: 1.65;
     }
 
-    .cards {
+    .header-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 36px;
+      padding: 8px 13px;
+      border: 1px solid var(--border-strong);
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+    }
+
+    .btn:hover {
+      background: var(--surface-3);
+      border-color: #454545;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: #ededed;
+      border-color: #ededed;
+      color: #0a0a0a;
+    }
+
+    .btn-primary:hover {
+      background: #ffffff;
+      border-color: #ffffff;
+    }
+
+    /* Sticky section nav, like the minotaur config dashboard */
+
+    .section-nav {
+      position: sticky;
+      top: 10px;
+      z-index: 20;
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 6px;
+      margin: 26px 0 22px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: rgba(16, 16, 16, 0.92);
+      backdrop-filter: blur(12px);
+      scrollbar-width: none;
+    }
+
+    .section-nav::-webkit-scrollbar { display: none; }
+
+    .section-nav a {
+      flex: 0 0 auto;
+      padding: 7px 11px;
+      border-radius: 8px;
+      color: var(--muted);
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: background 140ms ease, color 140ms ease;
+    }
+
+    .section-nav a:hover,
+    .section-nav a.active {
+      background: var(--surface-3);
+      color: var(--text);
+    }
+
+    /* Layout */
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
 
+    .grid-stats {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .section {
+      scroll-margin-top: 74px;
+      margin-top: 34px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+      font-weight: 700;
+    }
+
+    .section-note {
+      color: var(--dim);
+      font-size: 12px;
+      text-align: right;
+    }
+
     .card {
-      position: relative;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      padding: 16px;
+    }
+
+    .stat {
+      min-height: 92px;
       display: flex;
       flex-direction: column;
-      min-height: 210px;
-      padding: 22px;
-
-      color: inherit;
-      text-decoration: none;
-
-      background:
-        linear-gradient(
-          145deg,
-          rgba(255, 255, 255, 0.035),
-          rgba(255, 255, 255, 0.008)
-        ),
-        var(--surface);
-
-      border: 1px solid var(--border);
-      border-radius: 14px;
-
-      transition:
-        background 160ms ease,
-        border-color 160ms ease,
-        transform 160ms ease;
+      justify-content: space-between;
+      gap: 10px;
     }
 
-    .card:hover {
-      background: var(--surface-hover);
-      border-color: var(--border-hover);
-      transform: translateY(-2px);
+    .stat-label {
+      color: var(--dim);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
     }
 
-    .card:focus-visible {
-      outline: 2px solid #777;
-      outline-offset: 3px;
+    .stat-value {
+      font-size: 24px;
+      line-height: 1;
+      font-weight: 720;
+      letter-spacing: -0.03em;
     }
 
-    .icon {
-      width: 40px;
-      height: 40px;
-      display: grid;
-      place-items: center;
-      margin-bottom: 26px;
-
-      border: 1px solid #292929;
-      border-radius: 10px;
-
-      background: #151515;
-      color: #bdbdbd;
+    .stat-hint {
+      color: var(--dim);
+      font-size: 11.5px;
     }
 
-    .icon svg {
-      width: 18px;
-      height: 18px;
+    .group-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-width: 0;
+      transition: border-color 140ms ease, background 140ms ease;
     }
 
-    .card-title {
-      margin-bottom: 7px;
-
-      font-size: 16px;
-      font-weight: 620;
-      letter-spacing: -0.015em;
+    .group-card:hover {
+      border-color: var(--border-strong);
+      background: #121212;
     }
 
-    .card-description {
+    .group-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .group-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 680;
+      letter-spacing: -0.01em;
+    }
+
+    .group-desc {
+      margin: 5px 0 0;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.55;
+      font-size: 12.5px;
     }
 
-    .path {
-      margin-top: auto;
-      padding-top: 25px;
-
-      color: #707070;
-      font-family:
-        "SFMono-Regular",
-        Consolas,
-        "Liberation Mono",
-        monospace;
-      font-size: 12px;
+    .count {
+      flex: 0 0 auto;
+      min-width: 34px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface-2);
+      color: var(--dim);
+      font: 11px/1.2 var(--mono);
+      text-align: center;
     }
 
-    .arrow {
-      position: absolute;
-      top: 23px;
-      right: 22px;
-
-      color: #555;
-      font-size: 17px;
-
-      transition:
-        color 160ms ease,
-        transform 160ms ease;
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
     }
 
-    .card:hover .arrow {
-      color: #aaa;
-      transform: translate(2px, -2px);
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      max-width: 100%;
+      padding: 5px 8px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: var(--surface-2);
+      color: var(--muted);
+      font: 11.5px/1.3 var(--mono);
+      cursor: pointer;
+      transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+    }
+
+    .chip:hover {
+      border-color: var(--border-strong);
+      background: var(--surface-3);
+      color: var(--text);
+    }
+
+    .chip::before {
+      content: "";
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--blue);
+      flex: 0 0 auto;
+    }
+
+    .chip:hover::after {
+      content: "copy";
+      color: var(--dim);
+      font-size: 9.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 12px;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    .list li::before {
+      content: "—";
+      color: var(--dim);
+      flex: 0 0 auto;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      font-size: 11.5px;
+      color: var(--text);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 5px;
+      white-space: nowrap;
+    }
+
+    .command {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 11px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #0c0c0c;
+      color: var(--muted);
+      font: 12px/1.45 var(--mono);
+      overflow: hidden;
+    }
+
+    .command code {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface-2);
+      color: var(--dim);
+      padding: 3px 7px;
+      font-size: 10.5px;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover {
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    .command + .command { margin-top: 7px; }
+
+    .callout {
+      border-left: 2px solid var(--amber);
+      padding-left: 12px;
+      color: var(--muted);
+      font-size: 12.5px;
     }
 
     .footer {
       display: flex;
       align-items: center;
-      gap: 9px;
-      margin-top: 24px;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 44px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--dim);
+      font-size: 12px;
+    }
 
-      color: #555;
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 14px;
+    }
+
+    .footer-links a:hover { color: var(--text); }
+
+    .mono-small {
+      font-family: var(--mono);
       font-size: 11px;
     }
 
-    .status {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #777;
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.025);
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      transform: translate(-50%, 12px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 8px 12px;
+      border: 1px solid var(--border-strong);
+      border-radius: 9px;
+      background: var(--surface-3);
+      color: var(--text);
+      font-size: 12px;
+      transition: opacity 160ms ease, transform 160ms ease;
+      z-index: 50;
     }
 
-    @media (max-width: 600px) {
-      body {
-        align-items: flex-start;
-        padding-top: 70px;
-      }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
 
-      .cards {
-        grid-template-columns: 1fr;
-      }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
 
-      .card {
-        min-height: 185px;
-      }
+    @media (max-width: 860px) {
+      .grid-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .two-col { grid-template-columns: 1fr; }
+    }
 
-      .header {
-        margin-bottom: 28px;
-      }
+    @media (max-width: 640px) {
+      .shell { padding: 20px 13px 44px; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .section-head { align-items: flex-start; flex-direction: column; gap: 4px; }
+      .section-note { text-align: left; }
+      .brand-row { margin-bottom: 20px; }
+      .section-nav { top: 6px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      * { transition-duration: 0.001ms !important; }
     }
   </style>
 </head>
 
 <body>
-  <main class="container">
-    <header class="header">
-      <div class="brand">
-        <div class="logo">G</div>
-        <div class="brand-name">Thunderbird</div>
+  <main class="shell">
+    <header>
+      <div class="brand-row">
+        <div class="brand">
+          <div class="logo" aria-hidden="true">T</div>
+          <div>
+            <div class="brand-name">Thunderbird API</div>
+            <div class="brand-sub">Fasberry backend</div>
+          </div>
+        </div>
+
+        <div class="status-pill" id="status-pill" data-state="unknown" title="GET /health">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="status-label">checking health…</span>
+        </div>
       </div>
 
-      <div class="eyebrow">API Reference</div>
-
-      <h1>Thunderbird API</h1>
-
-      <p class="description">
-        Explore the API documentation or access the raw OpenAPI specification.
+      <div class="eyebrow">API overview</div>
+      <h1>One entry point for<br />the Fasberry backend.</h1>
+      <p class="lead">
+        Authentication, Yggdrasil, game server data, store, content and panel APIs.
+        Use the section menu below to jump to a domain or open the generated reference.
       </p>
+
+      <div class="header-actions">
+        <a class="btn btn-primary" href="/openapi">Open API reference <span aria-hidden="true">↗</span></a>
+        <a class="btn" href="/openapi/json">OpenAPI JSON</a>
+        <a class="btn" href="/health">Health</a>
+        <button class="btn" type="button" id="copy-base">Copy base URL</button>
+      </div>
     </header>
 
-    <section class="cards">
-      <a class="card" href="/openapi">
-        <span class="arrow">↗</span>
+    <nav class="section-nav" aria-label="API sections">
+      <a href="#overview" class="active">Overview</a>
+      <a href="#quickstart">Quick start</a>
+      <a href="#auth">Auth</a>
+      <a href="#yggdrasil">Yggdrasil</a>
+      <a href="#server">Server</a>
+      <a href="#store">Store</a>
+      <a href="#content">Content</a>
+      <a href="#launcher">Launcher</a>
+      <a href="#health">Health</a>
+      <a href="#private">Private</a>
+      <a href="#help">Help</a>
+    </nav>
 
-        <div class="icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M4 5h16" />
-            <path d="M4 12h10" />
-            <path d="M4 19h7" />
-            <path d="M17 14v6" />
-            <path d="M14 17h6" />
-          </svg>
+    <section class="section" id="overview">
+      <div class="section-head">
+        <h2>At a glance</h2>
+        <span class="section-note">live values from <span class="mono">/openapi/json</span> and <span class="mono">/health</span></span>
+      </div>
+
+      <div class="grid grid-stats">
+        <div class="card stat">
+          <span class="stat-label">Endpoints</span>
+          <span class="stat-value" id="endpoint-count">—</span>
+          <span class="stat-hint" id="endpoint-hint">loading spec…</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">API status</span>
+          <span class="stat-value" id="health-value">—</span>
+          <span class="stat-hint">GET /health</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Spec version</span>
+          <span class="stat-value" id="spec-version">—</span>
+          <span class="stat-hint">OpenAPI</span>
+        </div>
+        <div class="card stat">
+          <span class="stat-label">Uptime</span>
+          <span class="stat-value" id="uptime-value">—</span>
+          <span class="stat-hint">from health payload</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="quickstart">
+      <div class="section-head">
+        <h2>Quick start</h2>
+        <span class="section-note">curl-friendly, no auth for public reads</span>
+      </div>
+
+      <div class="two-col">
+        <div class="card">
+          <div class="command">
+            <code>curl -s "<span class="base-url"></span>/health"</code>
+            <button class="copy-btn" type="button" data-copy-base="/health">copy</button>
+          </div>
+          <div class="command">
+            <code>curl -s "<span class="base-url"></span>/openapi/json" | jq '.info'</code>
+            <button class="copy-btn" type="button" data-copy-base="/openapi/json">copy</button>
+          </div>
+          <div class="command">
+            <code>curl -s "<span class="base-url"></span>/yggdrasil"</code>
+            <button class="copy-btn" type="button" data-copy-base="/yggdrasil">copy</button>
+          </div>
         </div>
 
-        <div class="card-title">API Documentation</div>
-
-        <div class="card-description">
-          Interactive API reference with endpoints, schemas and request details.
+        <div class="card">
+          <ul class="list">
+            <li>Public reads are rate-limited per IP; authenticated mutations use the session cookie.</li>
+            <li>Launcher and scripts use <span class="mono">Authorization: Bearer &lt;key&gt;</span>.</li>
+            <li>Responses use <span class="mono">{ data }</span>; errors use <span class="mono">{ error }</span>.</li>
+            <li>Every response carries <span class="mono">x-request-id</span> for log correlation.</li>
+          </ul>
         </div>
+      </div>
+    </section>
 
-        <div class="path">/openapi</div>
-      </a>
+    <section class="section" id="auth">
+      <div class="section-head">
+        <h2>Authentication</h2>
+        <span class="section-note">web session · launcher bearer · CAP/PoW</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/auth">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Accounts &amp; sessions</h3>
+              <p class="group-desc">Password login, registration, QR login and session invalidation.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/auth/login/basic">/auth/login/basic</button>
+            <button class="chip" type="button" data-copy-path="/auth/register">/auth/register</button>
+            <button class="chip" type="button" data-copy-path="/auth/login/qr/generate">/auth/login/qr/generate</button>
+            <button class="chip" type="button" data-copy-path="/auth/session">/auth/session</button>
+          </div>
+        </article>
 
-      <a class="card" href="/openapi/json">
-        <span class="arrow">↗</span>
+        <article class="card group-card"><div class="group-top"><div><h3 class="group-title">Auth model</h3><p class="group-desc">Cookie sessions for the web, bearer keys for the launcher and internal clients.</p></div></div><ul class="list"><li><span class="mono">/privated/*</span> requires an authenticated user or API key.</li><li>CAP PoW protects login/registration; tokens are single-use.</li><li>Session lifetime is sliding, with an absolute maximum age.</li></ul></article>
+      </div>
+    </section>
 
-        <div class="icon">
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.7"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M8 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
-            <path d="M14 4h6v6" />
-            <path d="M20 4l-9 9" />
-          </svg>
+    <section class="section" id="yggdrasil">
+      <div class="section-head">
+        <h2>Yggdrasil</h2>
+        <span class="section-note">Minecraft authlib-injector bridge</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/yggdrasil">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Auth server</h3>
+              <p class="group-desc">Metadata, authenticate, refresh, validate and invalidate.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/yggdrasil">/yggdrasil</button>
+            <button class="chip" type="button" data-copy-path="/yggdrasil/authserver/authenticate">/authserver/authenticate</button>
+            <button class="chip" type="button" data-copy-path="/yggdrasil/sessionserver/session/minecraft/profile">/sessionserver/…</button>
+          </div>
+        </article>
+        <article class="card group-card"><div class="group-top"><div><h3 class="group-title">Signed textures</h3><p class="group-desc">Profiles carry our own RSA-signed textures property.</p></div></div><ul class="list"><li><span class="mono">skinDomains</span> is environment-driven.</li><li>Signing keys are stable across restarts.</li><li>Fallback skin is always available when the cache is cold.</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section" id="server">
+      <div class="section-head">
+        <h2>Server data</h2>
+        <span class="section-note">player, lands, rating, events, skins</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/server">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Game server API</h3>
+              <p class="group-desc">Public and authenticated data read from the Minecraft backend.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/server/status">/server/status</button>
+            <button class="chip" type="button" data-copy-path="/server/player">/server/player</button>
+            <button class="chip" type="button" data-copy-path="/server/lands">/server/lands</button>
+            <button class="chip" type="button" data-copy-path="/server/rating">/server/rating</button>
+            <button class="chip" type="button" data-copy-path="/server/skin/history">/server/skin/history</button>
+          </div>
+        </article>
+        <article class="card group-card"><div class="group-top"><div><h3 class="group-title">Data ownership</h3><p class="group-desc">The API reads the game databases; the panel writes through explicit routes.</p></div></div><ul class="list"><li>Lands, players, ratings and events are read-heavy public surfaces.</li><li>Skins come from SkinsRestorer plus a local MinIO cache.</li><li>Heavy lists are cached and paginated.</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section" id="store">
+      <div class="section-head">
+        <h2>Store &amp; economy</h2>
+        <span class="section-note">catalog, cart, payments, wallet</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/store">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Store</h3>
+              <p class="group-desc">Items, cart and delivery into the game server.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/store/items">/store/items</button>
+            <button class="chip" type="button" data-copy-path="/store/cart">/store/cart</button>
+            <button class="chip" type="button" data-copy-path="/payments/invoice">/payments/invoice</button>
+          </div>
+        </article>
+        <article class="card group-card" data-prefix="/payments">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Payments</h3>
+              <p class="group-desc">Invoices, status and provider webhooks.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/payments/invoice">/payments/invoice</button>
+            <button class="chip" type="button" data-copy-path="/payments/webhook">/payments/webhook</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="content">
+      <div class="section-head">
+        <h2>Content</h2>
+        <span class="section-note">news, modpacks, releases, rules, banners</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/news">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">News &amp; wiki</h3>
+              <p class="group-desc">Public news, wiki categories and editor content.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/news">/news</button>
+            <button class="chip" type="button" data-copy-path="/wiki/categories">/wiki/categories</button>
+          </div>
+        </article>
+        <article class="card group-card" data-prefix="/content">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Launcher content</h3>
+              <p class="group-desc">Manifest, modpacks, releases and resource packs.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/content/manifest">/content/manifest</button>
+            <button class="chip" type="button" data-copy-path="/releases">/releases</button>
+            <button class="chip" type="button" data-copy-path="/modpack">/modpack</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="launcher">
+      <div class="section-head">
+        <h2>Launcher</h2>
+        <span class="section-note">tickets, join gate, runtime catalog</span>
+      </div>
+      <article class="card group-card" data-prefix="/launcher">
+        <div class="group-top">
+          <div>
+            <h3 class="group-title">Launcher API</h3>
+            <p class="group-desc">Session bootstrap, server list and join tickets for the desktop client.</p>
+          </div>
+          <span class="count" data-count>—</span>
         </div>
-
-        <div class="card-title">OpenAPI JSON</div>
-
-        <div class="card-description">
-          Raw OpenAPI specification in JSON format for tooling and integrations.
+        <div class="chips">
+          <button class="chip" type="button" data-copy-path="/launcher/join">/launcher/join</button>
+          <button class="chip" type="button" data-copy-path="/launcher/servers">/launcher/servers</button>
+          <button class="chip" type="button" data-copy-path="/auth/client">/auth/client</button>
         </div>
+      </article>
+    </section>
 
-        <div class="path">/openapi/json</div>
-      </a>
+    <section class="section" id="health">
+      <div class="section-head">
+        <h2>Health &amp; operations</h2>
+        <span class="section-note">liveness, readiness, cron, metrics</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/health">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Health checks</h3>
+              <p class="group-desc">Public liveness and authenticated readiness with database status.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/health">/health</button>
+            <button class="chip" type="button" data-copy-path="/health/ready">/health/ready</button>
+          </div>
+        </article>
+        <article class="card group-card" data-prefix="/service">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Service</h3>
+              <p class="group-desc">Cron state and internal operational endpoints.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/service/cron">/service/cron</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="private">
+      <div class="section-head">
+        <h2>Private / panel</h2>
+        <span class="section-note">bearer or session required</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card group-card" data-prefix="/privated">
+          <div class="group-top">
+            <div>
+              <h3 class="group-title">Admin API</h3>
+              <p class="group-desc">Users, roles, options, history, store and economy management.</p>
+            </div>
+            <span class="count" data-count>—</span>
+          </div>
+          <div class="chips">
+            <button class="chip" type="button" data-copy-path="/privated/options/list">/privated/options/list</button>
+            <button class="chip" type="button" data-copy-path="/privated/users">/privated/users</button>
+            <button class="chip" type="button" data-copy-path="/privated/history">/privated/history</button>
+          </div>
+        </article>
+        <article class="card group-card"><div class="group-top"><div><h3 class="group-title">Access</h3><p class="group-desc">Every private route checks a permission from the permissions tree.</p></div></div><ul class="list"><li>Use the panel UI or send a bearer API key.</li><li>Missing permissions return a stable error code.</li><li>Admin changes are written to the activity log.</li></ul></article>
+      </div>
+    </section>
+
+    <section class="section" id="help">
+      <div class="section-head">
+        <h2>Helpful details</h2>
+        <span class="section-note">what to expect from the API</span>
+      </div>
+      <div class="grid grid-2">
+        <article class="card"><h3 class="group-title">Response envelope</h3><ul class="list"><li>Success: <span class="mono">{ "data": ... }</span></li><li>Error: <span class="mono">{ "error": "CODE" }</span></li><li>Validation failures use <span class="mono">422</span> and a stable validation payload.</li></ul></article>
+        <article class="card"><h3 class="group-title">Debugging</h3><ul class="list"><li>Send <span class="mono">x-request-id</span> or read it from the response.</li><li>Use <span class="mono">/openapi/json</span> to generate a client.</li><li>Check <span class="mono">/health</span> before blaming a route.</li></ul></article>
+      </div>
+      <div class="callout" style="margin-top: 12px;">
+        The API is a single Elysia service. Public routes are rate-limited per IP; the private group and launcher require credentials.
+      </div>
     </section>
 
     <footer class="footer">
-      <span class="status"></span>
-      <span>Thunderbird API</span>
+      <div class="footer-left">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Thunderbird API</span>
+        <span class="mono-small" id="footer-build"></span>
+      </div>
+      <div class="footer-links">
+        <a href="/openapi">Reference</a>
+        <a href="/openapi/json">OpenAPI</a>
+        <a href="/health">Health</a>
+      </div>
     </footer>
   </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const base = location.origin;
+      const $ = (selector, root = document) => root.querySelector(selector);
+      const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+      for (const node of $$('.base-url')) node.textContent = base;
+
+      const toast = $('#toast');
+      let toastTimer;
+
+      const showToast = (message) => {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+      };
+
+      const copy = async (value, message) => {
+        try {
+          await navigator.clipboard.writeText(value);
+          showToast(message ?? 'copied');
+        } catch {
+          showToast('copy failed');
+        }
+      };
+
+      $('#copy-base')?.addEventListener('click', () => copy(base, 'base URL copied'));
+
+      for (const button of $$('[data-copy-base]')) {
+        button.addEventListener('click', () => copy(base + button.dataset.copyBase, 'command copied'));
+      }
+
+      for (const chip of $$('[data-copy-path]')) {
+        chip.addEventListener('click', () => copy(chip.dataset.copyPath, 'path copied'));
+      }
+
+      const setStatus = (state, label) => {
+        const pill = $('#status-pill');
+        if (pill) pill.dataset.state = state;
+        const node = $('#status-label');
+        if (node) node.textContent = label;
+        const health = $('#health-value');
+        if (health) health.textContent = state === 'up' ? 'OK' : state === 'down' ? 'DOWN' : '—';
+      };
+
+      const loadHealth = async () => {
+        try {
+          const response = await fetch('/health', { headers: { accept: 'application/json' } });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload?.error ?? 'unhealthy');
+          setStatus('up', 'API online');
+          const uptime = Number(payload?.data?.uptime);
+          if (Number.isFinite(uptime)) {
+            const minutes = Math.floor(uptime / 60);
+            const hours = Math.floor(minutes / 60);
+            const days = Math.floor(hours / 24);
+            $('#uptime-value').textContent = days > 0 ? `${days}d ${hours % 24}h` : hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+          }
+        } catch {
+          setStatus('down', 'API unavailable');
+        }
+      };
+
+      const loadSpec = async () => {
+        try {
+          const response = await fetch('/openapi/json', { headers: { accept: 'application/json' } });
+          if (!response.ok) throw new Error('spec unavailable');
+          const spec = await response.json();
+          const paths = Object.keys(spec.paths ?? {});
+          const count = paths.length;
+          $('#endpoint-count').textContent = String(count);
+          $('#endpoint-hint').textContent = `${Object.keys(spec.info ?? {}).length ? 'OpenAPI' : 'spec'} · ${paths.filter((path) => path.startsWith('/privated')).length} private`;
+          $('#spec-version').textContent = spec.info?.version ?? spec.openapi ?? '—';
+
+          for (const group of $$('[data-prefix]')) {
+            const prefix = group.dataset.prefix;
+            const total = paths.filter((path) => path === prefix || path.startsWith(`${prefix}/`)).length;
+            const badge = $('[data-count]', group);
+            if (badge) badge.textContent = String(total);
+          }
+        } catch {
+          $('#endpoint-count').textContent = '—';
+          $('#endpoint-hint').textContent = 'spec unavailable';
+        }
+      };
+
+      const setupActiveNav = () => {
+        const links = $$('.section-nav a');
+        const byId = new Map(links.map((link) => [link.getAttribute('href')?.slice(1), link]));
+        const observer = new IntersectionObserver((entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            for (const link of links) link.classList.remove('active');
+            byId.get(entry.target.id)?.classList.add('active');
+          }
+        }, { rootMargin: '-20% 0px -65% 0px', threshold: 0.01 });
+
+        for (const id of byId.keys()) {
+          if (!id) continue;
+          const section = document.getElementById(id);
+          if (section) observer.observe(section);
+        }
+      };
+
+      loadHealth();
+      loadSpec();
+      setupActiveNav();
+    })();
+  </script>
 </body>
 </html>

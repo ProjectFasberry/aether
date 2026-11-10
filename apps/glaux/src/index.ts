@@ -3,25 +3,33 @@ import "./assign";
 import { isError } from "@repo/shared/utils";
 import { handleProcessOnEvent } from "./shared/utils/handle-log";
 import { getEnv } from "./shared/env";
-import { boot, preboot, shutdown } from "./lifecycle";
+import { lifecycle, preboot } from "./lifecycle";
+import { appLogger } from "./shared/logger";
 
 try {
   preboot();
-  await boot.start();
-
-  const { startApp } = await import("./app");
-  startApp();
+  await lifecycle.start();
 } catch (e) {
   if (!getEnv().PROD) {
-    console.error(e)
+    appLogger.error(e)
   }
-  Promise.reject(isError(e) ? e : new Error("UNKNOWN"));
+  process.exit(1);
 }
+
+const stop = async (signal: string) => {
+  const force = setTimeout(() => process.exit(1), 10_000);
+  force.unref();
+
+  await lifecycle.stop(signal);
+
+  clearTimeout(force);
+  process.exit(0);
+};
 
 process
   .on("uncaughtException", (error) => handleProcessOnEvent("uncaughtException", { error }))
   .on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { error }))
   .on("rejectionHandled", (error) => handleProcessOnEvent("rejectionHandled", { kill: false, error }))
   .on("warning", (error) => handleProcessOnEvent("warning", { error }))
-  .on("SIGTERM", () => shutdown({ signal: "SIGTERM" }))
-  .on("SIGINT", () => shutdown({ signal: "SIGINT" }));
+  .on("SIGTERM", () => stop("SIGTERM"))
+  .on("SIGINT", () => stop("SIGINT"));

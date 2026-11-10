@@ -1,7 +1,7 @@
 import Elysia from "elysia"
 import { getLands, landsListPayload, landsSchema } from "./lands.model"
 import { withData } from "#/shared/schemas"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 
 export const landsList = new Elysia()
   .get("/list", async ({ query }) => {

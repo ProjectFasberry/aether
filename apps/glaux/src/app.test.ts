@@ -3,9 +3,9 @@ import { installGlauxMocks, resetState } from "./__tests__/harness"
 
 installGlauxMocks()
 
-const { app } = await import("./app")
+const { appService } = await import("./app")
 
-const get = (path: string) => app.handle(new Request(`http://localhost${path}`))
+const get = (path: string) => appService.get().handle(new Request(`http://localhost${path}`))
 
 beforeEach(() => {
 	resetState()
@@ -43,7 +43,7 @@ describe("root routes", () => {
 	})
 
 	it("treats a wrong method as not found", async () => {
-		const response = await app.handle(new Request("http://localhost/health", { method: "POST" }))
+		const response = await appService.get().handle(new Request("http://localhost/health", { method: "POST" }))
 
 		expect(response.status).toBe(404)
 		expect(await response.json()).toEqual({ error: "Not found" })

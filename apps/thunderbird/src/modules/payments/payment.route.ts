@@ -4,7 +4,7 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "#/modules/private/private.model";
 import { enqueueGrantJob } from "#/modules/economy/grant-jobs.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import {
 	PaymentError,

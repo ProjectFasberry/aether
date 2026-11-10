@@ -10,9 +10,9 @@ import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
 import { nanoid } from "nanoid";
 import type { QREventsEvent, QRGeneratePayload } from "@repo/shared/types/entities/auth";
 import { type Static, t, type Context } from "elysia";
-import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
+import { getClientDomain, SESSION_KEY } from "#/modules/auth/cookie";
 import { DateTime } from "#/helpers/typebox";
-import { cookie } from "#/utils";
+import { cookie } from "#/lib/cookies";
 
 export const loginLogger = authLogger.child({ name: "login" });
 export const qrLogger = loginLogger.child({ name: "qr" });
@@ -594,8 +594,8 @@ type LoginQRGenerateParams = {
   userAgentStr: string;
   ip: string;
 };
-const QR_VERIFY_TIMEOUT_S = 120;
-const QR_CONFIRM_TIMEOUT_S = 60;
+export const QR_VERIFY_TIMEOUT_S = 120;
+export const QR_CONFIRM_TIMEOUT_S = 60;
 
 export const loginQR = {
   getQRTokenKey: (token: string) => `auth:qr:${token}`,

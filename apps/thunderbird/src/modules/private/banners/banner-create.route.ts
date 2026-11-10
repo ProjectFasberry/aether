@@ -4,7 +4,7 @@ import Elysia from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { banner, createBannerPayloadSchema, createBannerSchema } from "./banner.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const bannerCreate = new Elysia()
   .use(validatePermission(permissionsService.get("BANNERS.CREATE")))

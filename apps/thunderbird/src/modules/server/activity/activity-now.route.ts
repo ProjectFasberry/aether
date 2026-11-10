@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { getPlayerStatus } from "./activity.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export type PlayerActivityPayload =
   | {

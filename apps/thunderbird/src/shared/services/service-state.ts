@@ -1,54 +1,27 @@
-import { applyServiceState, getServiceState, type ServiceState } from "#/shared/constants";
+import { serviceState } from "#/shared/state";
 import { redisService } from "#/shared/redis/client";
+import { LEGACY_SERVICE_STATE_KEY, SERVICE_STATE_CHANNEL, SERVICE_STATE_KEY } from "@repo/core/utils/redis";
+import { createServiceStateStore } from "@repo/shared/utils";
 import { logger } from "@repo/shared/utils/logger";
-
-/**
- * Service switches (logging flags) are process state, so they are persisted in
- * Redis and broadcast to every replica. Without this, a switch changed in one
- * instance had no effect on the others and was lost on restart.
- */
-const STATE_KEY = "service:state";
-const CHANNEL = "service:state:changed";
 
 const stateLogger = logger.child({ name: "service-state" });
 
-function parse(raw: string | null): Partial<ServiceState> | null {
-  if (!raw) return null;
+export const serviceStateStore = createServiceStateStore({
+  state: serviceState,
+  key: SERVICE_STATE_KEY,
+  channel: SERVICE_STATE_CHANNEL,
+  legacyKey: LEGACY_SERVICE_STATE_KEY,
+  logger: stateLogger,
+  redis: {
+    get: (key) => redisService.getInstance().get(key),
+    set: (key, value) => redisService.getInstance().set(key, value),
+    publish: (channel, message) => redisService.getInstance().publish(channel, message),
+  },
+  bridge: {
+    subscribe: (channel) => redisService.getBridgeInstance().subscribe(channel),
+    on: (event, listener) => redisService.getBridgeInstance().on(event, listener),
+  },
+});
 
-  try {
-    return JSON.parse(raw) as Partial<ServiceState>;
-  } catch {
-    stateLogger.warn("stored state is not valid json, ignoring");
-    return null;
-  }
-}
-
-export async function initServiceState(): Promise<void> {
-  const redis = redisService.getInstance();
-
-  const stored = parse(await redis.get(STATE_KEY));
-
-  if (stored) {
-    applyServiceState(stored);
-    stateLogger.info("state loaded from redis");
-  }
-
-  const bridge = redisService.getBridgeInstance();
-  await bridge.subscribe(CHANNEL);
-
-  bridge.on("message", (channel, message) => {
-    if (channel !== CHANNEL) return;
-
-    const next = parse(message);
-    if (next) applyServiceState(next);
-  });
-}
-
-export async function persistServiceState(): Promise<void> {
-  const redis = redisService.getInstance();
-  const state = getServiceState();
-  const payload = JSON.stringify(state);
-
-  await redis.set(STATE_KEY, payload);
-  await redis.publish(CHANNEL, payload);
-}
+export const initServiceState = serviceStateStore.init;
+export const persistServiceState = serviceStateStore.persist;

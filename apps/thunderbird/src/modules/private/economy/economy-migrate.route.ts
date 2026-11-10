@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { migrateBalances } from "#/modules/economy/wallet.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { createAdminActivityLog } from "../private.model";
 
 const bodySchema = t.Optional(t.Object({

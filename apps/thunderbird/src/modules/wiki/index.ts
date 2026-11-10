@@ -1,9 +1,10 @@
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { defineOptionalSession } from "#/lib/define";
 import { auth } from "#/modules/auth/auth.model";
 import Elysia, { t } from "elysia";
+import { logger } from "@repo/shared/utils/logger";
 
 /** Who may edit the wiki. A permission/role check replaces this later. */
 const WIKI_EDITORS = new Set(["distribate"]);
@@ -56,7 +57,7 @@ const wikiCategories = new Elysia()
       ...main
     };
 
-    console.log({categories, payload, main});
+    logger.debug({ categories, payload, main });
 
     return { data }
   }, {

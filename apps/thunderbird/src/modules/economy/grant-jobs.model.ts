@@ -2,7 +2,7 @@ import { general } from "#/shared/database/general-db";
 import type { GrantJobs, JsonValue } from "@gen/db/general";
 import type { Selectable } from "kysely";
 import type { EconomyTrx } from "./wallet.model";
-import { logErrorMsg } from "#/utils/config/log-utils";
+import { logErrorMsg } from "#/shared/observability/log";
 import { sql } from "kysely";
 
 /**

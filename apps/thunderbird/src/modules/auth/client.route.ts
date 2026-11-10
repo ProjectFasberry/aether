@@ -4,7 +4,7 @@ import { auth } from "./auth.model";
 import { session as sessionService } from "./login.model";
 import { defineOptionalBearerSession } from "#/lib/define";
 import { ipPlugin } from "#/lib/plugins";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";

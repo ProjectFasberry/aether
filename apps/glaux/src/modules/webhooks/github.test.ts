@@ -4,7 +4,7 @@ import { installGlauxMocks, resetState, state } from "../../__tests__/harness"
 
 installGlauxMocks()
 
-const { app } = await import("../../app")
+const { appService } = await import("../../app")
 
 const SECRET = "webhook-secret"
 const MAX_BODY_BYTES = 1024 * 1024
@@ -37,7 +37,7 @@ function deliver(body: string, {
 	if (signature !== null) headers["x-hub-signature-256"] = signature ?? sign(body)
 	if (delivery) headers["x-github-delivery"] = delivery
 
-	return app.handle(new Request("http://localhost/webhooks/github", {
+	return appService.get().handle(new Request("http://localhost/webhooks/github", {
 		method: "POST",
 		headers,
 		body,

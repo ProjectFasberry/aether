@@ -8,7 +8,7 @@ import { ipPlugin } from "#/lib/plugins";
 import { getEnv } from "#/shared/env";
 import { general } from "#/shared/database/general-db";
 import { redisService } from "#/shared/redis/client";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
 import { allowRequest } from "#/shared/services/rate-limit";

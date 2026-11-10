@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { bannersSchema, getBanners, getBannersListSchema } from "./banner.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const bannerList = new Elysia()
   .get("/list", async ({ query }) => {

@@ -1,30 +1,39 @@
 import "../declare.d.ts";
 import "./assign";
 
-// import "./shared/instrumentation"
-
 import { isError } from "@repo/shared/utils";
-import { boot, preboot, shutdown } from "./lifecycle";
-import { handleProcessOnEvent } from "./utils/config/handle-log";
+import { lifecycle, preboot } from "./lifecycle";
+import { handleProcessOnEvent } from "./shared/observability/process";
 import { getEnv } from "./shared/env";
+import { appLogger } from "./shared/constants/logger";
 
 try {
   preboot();
-  await boot.start();
-
-  const { startApp } = await import("./app");
-  startApp();
+  await lifecycle.start();
 } catch (e) {
   if (!getEnv().PROD) {
-    console.error(e)
+    appLogger.error(e)
   }
-  Promise.reject(isError(e) ? e : new Error("UNKNOWN"));
+
+  await handleProcessOnEvent("boot", {
+    error: isError(e) ? e : new Error("UNKNOWN"), kill: true
+  });
 }
+
+const stop = async (signal: string) => {
+  const force = setTimeout(() => process.exit(1), 10_000);
+  force.unref();
+
+  await lifecycle.stop(signal);
+
+  clearTimeout(force);
+  process.exit(0);
+};
 
 process
   .on("uncaughtException", (error) => handleProcessOnEvent("uncaughtException", { error }))
-  .on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { error }))
+  .on("unhandledRejection", (error) => handleProcessOnEvent("unhandledRejection", { kill: false, error }))
   .on("rejectionHandled", (error) => handleProcessOnEvent("rejectionHandled", { kill: false, error }))
-  .on("warning", (error) => handleProcessOnEvent("warning", { error }))
-  .on("SIGTERM", () => shutdown({ signal: "SIGTERM" }))
-  .on("SIGINT", () => shutdown({ signal: "SIGINT" }));
+  .on("warning", (error) => handleProcessOnEvent("warning", { kill: false, error }))
+  .on("SIGTERM", () => stop("SIGTERM"))
+  .on("SIGINT", () => stop("SIGINT"));

@@ -4,7 +4,7 @@ import { general } from "#/shared/database/general-db";
 import Elysia, { t } from "elysia";
 import { rolesRolePermissionListSchema, type RolesRolePermissionListPayload } from "./roles-list.route";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const rolesRolePermissionList = new Elysia()
   .use(validatePermission(permissionsService.get("ROLES.READ")))

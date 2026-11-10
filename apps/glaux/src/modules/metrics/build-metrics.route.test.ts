@@ -3,7 +3,7 @@ import { installGlauxMocks, resetState, state } from "../../__tests__/harness"
 
 installGlauxMocks()
 
-const { app } = await import("../../app")
+const { appService } = await import("../../app")
 
 const validPayload = {
 	app: "minotaur",
@@ -23,14 +23,14 @@ const validPayload = {
 }
 
 const post = (body: unknown, headers: Record<string, string> = {}) =>
-	app.handle(new Request("http://localhost/metrics/build", {
+	appService.get().handle(new Request("http://localhost/metrics/build", {
 		method: "POST",
 		headers: { "content-type": "application/json", ...headers },
 		body: typeof body === "string" ? body : JSON.stringify(body),
 	}))
 
 const get = (query = "") =>
-	app.handle(new Request(`http://localhost/metrics/build${query}`))
+	appService.get().handle(new Request(`http://localhost/metrics/build${query}`))
 
 const bearer = { authorization: "Bearer metrics-token" }
 

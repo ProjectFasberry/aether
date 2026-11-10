@@ -40,3 +40,13 @@ export const getDeepValue = (obj: unknown, path: string): unknown =>
 
     return undefined;
   }, obj);
+
+export function buildUpdates<T extends object>(
+	entries: { field: keyof T; value: T[keyof T] }[],
+): Partial<T> {
+	const result: Partial<T> = {};
+	for (const { field, value } of entries) {
+		result[field] = value;
+	}
+	return result;
+}

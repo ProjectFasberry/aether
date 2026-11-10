@@ -1,1 +1,1 @@
-export const SERVICE_NAME = "thunderbird"
+export const SERVICE_NAME = Bun.env["SERVICE_NAME"] ?? "thunderbird"

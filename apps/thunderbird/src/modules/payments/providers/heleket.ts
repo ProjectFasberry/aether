@@ -3,6 +3,7 @@ import { getEnv } from "#/shared/env";
 import { logger } from "@repo/shared/utils/logger";
 import type { Context } from "elysia";
 import { fromMinor, type PaymentProvider, type WebhookEvent } from "../types";
+import { client } from "#/shared/api/client";
 
 /**
  * Heleket (USDT/USDC) adapter.
@@ -62,7 +63,7 @@ export const heleketProvider: PaymentProvider = {
 		};
 		const raw = JSON.stringify(body);
 
-		const response = await fetch(`${url}/payment`, {
+		const response = await client(`${url}/payment`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

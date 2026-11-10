@@ -2,7 +2,7 @@ import Elysia, { t } from 'elysia';
 import { general } from '#/shared/database/general-db';
 import dayjs from 'dayjs';
 import { withData } from '#/shared/schemas';
-import { buildRouteSummary } from '#/utils';
+import { buildRouteSummary } from '#/lib/routes';
 
 export type PlayerActivitySummaryPayload = {
   [k: string]: {

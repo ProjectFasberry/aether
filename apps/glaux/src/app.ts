@@ -6,6 +6,9 @@ import { getEnv } from "./shared/env";
 import { service } from "./modules/service";
 import previewHtml from "../static/preview.html" with { type: "text" }
 import { showRoutes } from "@repo/shared/lib/helpers";
+import { isShuttingDown } from "./shared/shutdown";
+import { requestIdPlugin } from "@repo/core/lib/elysia/request-id";
+import { logging } from "./shared/state";
 
 const appConfig: ElysiaConfig<string> = {
   serve: {
@@ -56,9 +59,18 @@ const root = new Elysia()
       }
     })
     .get("/favicon.ico", () => "")
-    .get("/health", ({ status }) => status(200, "OK"), {
+    .get("/health", ({ status }) => {
+      if (isShuttingDown()) {
+        return status(503, { error: "SHUTTING_DOWN" });
+      }
+
+      return status(200, "OK");
+    }, {
       response: {
         200: t.Literal("OK"),
+        503: t.Object({
+          error: t.Literal("SHUTTING_DOWN")
+        }),
         500: t.Object({
           error: t.Literal("INTERNAL_SERVER_ERROR")
         }),
@@ -73,12 +85,13 @@ const root = new Elysia()
     .use(service)
   )
 
-export const app = new Elysia(appConfig)
+const app = new Elysia(appConfig)
+  .use(requestIdPlugin())
   .use(loggerPlugin())
   .use(corsPlugin())
   .use(openApiPlugin())
   .use(root)
-  .onError(({ code, error, set }) => {
+  .onError(({ code, error, set, requestId }) => {
     const caught = error as CaughtError;
 
     // `throw status(401)` carries a numeric `code`; `NotFoundError` has
@@ -98,7 +111,7 @@ export const app = new Elysia(appConfig)
     if (notFound) return { error: statusError(404) } satisfies ErrorPayload;
 
     if (responseValidation) {
-      appLogger.error(error);
+      if (logging.globalError) appLogger.error({ requestId, error });
       return { error: statusError(500) } satisfies ErrorPayload;
     }
 
@@ -126,19 +139,24 @@ export const app = new Elysia(appConfig)
       return { error: statusError(numericCode) } satisfies ErrorPayload;
     }
 
-    if (status >= 500) appLogger.error(error);
+    if (status >= 500 && logging.globalError) appLogger.error({ requestId, error });
 
     return { error: statusError(status) } satisfies ErrorPayload;
   });
 
-export function startApp() {
-  if (getEnv().verbose) {
-    showRoutes({ routes: app.routes });
+export const appService = {
+  get: () => app,
+  start() {
+    if (getEnv().verbose) {
+      showRoutes({ routes: app.routes });
+    }
+
+    app.listen({ port: getEnv().PORT, hostname: getEnv().HOST ?? "0.0.0.0" });
+
+    appLogger.info(
+      `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`
+    );
+
+    return app;
   }
-
-  app.listen({ port: getEnv().PORT, hostname: getEnv().HOST ?? "0.0.0.0" });
-
-  appLogger.info(
-    `Server is running. Preview at http://${app.server?.hostname}:${app.server?.port}`
-  );
 }
