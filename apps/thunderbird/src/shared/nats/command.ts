@@ -62,6 +62,8 @@ export type AbortableCommandArgs = {
 
 const timeout = 2000
 const commandTimeout = 5000
+const NO_RESPONDER_LOG_INTERVAL_MS = 60_000
+const noResponderLoggedAt = new Map<string, number>()
 const commandWaiters = new Map<string, Array<{
   resolve: (result: CommandResult) => void;
   timer: NodeJS.Timeout;
@@ -239,7 +241,14 @@ export const startOrderConsumer = async (): Promise<void> => {
             resolveCommand(decoded.commandId, { ok: false, error: "NO_RESPONDERS" });
           }
 
-          appLogger.error(`No command executor for ${commandSubject}`);
+          const now = Date.now();
+          const lastLogged = noResponderLoggedAt.get(commandSubject) ?? 0;
+
+          if (now - lastLogged >= NO_RESPONDER_LOG_INTERVAL_MS) {
+            noResponderLoggedAt.set(commandSubject, now);
+            appLogger.warn(`No command executor for ${commandSubject}; suppressing repeats for 60s`);
+          }
+
           m.ack();
           continue;
         }

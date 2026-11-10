@@ -13,7 +13,7 @@ export async function psubscribe() {
     const flags = Array.isArray(reply) ? String(reply[1] ?? "") : "";
 
     if (!flags.includes("E") || !flags.includes("x")) {
-      psubcribeLogger.error(
+      psubcribeLogger.warn(
         `notify-keyspace-events is "${flags || "unset"}"; QR expiry falls back to WebSocket timers`,
       );
     }
