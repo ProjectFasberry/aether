@@ -1,5 +1,6 @@
 import { SERVICE_NAME } from "../const/internal";
 import { logger } from "../logger";
+import { normalizeError } from "@repo/shared/utils";
 import { natsService } from "../nats/client";
 import { SUBJECTS } from "../nats/subjects";
 
@@ -13,7 +14,7 @@ export async function handleProcessOnEvent(
 		kill?: boolean;
 	},
 ) {
-	logger.error(handleProcessOnEvent.name, sub, error);
+	logger.error(`${sub}: ${normalizeError(error)}`);
 
 	//#region todo: impl logging/alerting using fluentbit + grafana
 	const nc = natsService.getInstance();
@@ -36,7 +37,7 @@ export async function handleProcessOnEvent(
 
 		await nc.close();
 	} catch (e) {
-		console.error("Failed to send alert to NATS:", e);
+		logger.error(`Failed to send alert to NATS: ${normalizeError(e)}`);
 	}
 	//#endregion
 

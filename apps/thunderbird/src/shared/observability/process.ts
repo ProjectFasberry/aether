@@ -2,6 +2,7 @@ import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "@repo/shared/constants/subjects";
 import { appLogger } from "#/shared/constants/logger";
 import { SERVICE_NAME } from "#/shared/constants/internal";
+import { normalizeError } from "@repo/shared/utils";
 
 export async function handleProcessOnEvent(sub: string, {
   error,
@@ -9,7 +10,7 @@ export async function handleProcessOnEvent(sub: string, {
 }: {
   error: Error | unknown, kill?: boolean
 }) {
-  appLogger.error({ name: handleProcessOnEvent.name, sub, error });
+  appLogger.error(`${sub}: ${normalizeError(error)}`);
 
   const nc = natsService.getOptionalInstance()
 

@@ -10,9 +10,9 @@ type ScopedLogger = typeof logger & {
   child(meta?: LoggerMeta): ScopedLogger;
 };
 
-/** Containers always run with NODE_ENV=production; STAGE distinguishes prod. */
-const structured = Bun.env["STAGE"] === "prod" || Bun.env["NODE_ENV"] === "production";
-const level = Bun.env["LOG_LEVEL"] ?? (structured ? "info" : "debug");
+/** JSON is opt-in; local/staging/prod logs stay human-readable by default. */
+const structured = Bun.env["LOG_FORMAT"] === "json" || Bun.env["LOG_JSON"] === "true";
+const level = Bun.env["LOG_LEVEL"] ?? "debug";
 
 const devFormat = format.combine(
   format.timestamp({ format: 'HH:mm:ss' }),

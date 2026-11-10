@@ -74,7 +74,7 @@ export const lifecycle = defineLifecycle()
     start: () => voteSites.ensure(),
   })
   .add("minio", {
-    critical: true,
+    critical: false,
     timeoutMs: 20_000,
     start: () => minioService.start({
       onAfterStart: (client) => loadInternalFiles(client, INTERNAl_FILES),
@@ -86,7 +86,7 @@ export const lifecycle = defineLifecycle()
     start: () => initServiceState(),
   })
   .add("jobs", {
-    critical: true,
+    critical: false,
     dependsOn: ["db", "redis"],
     start: () => startJobs(),
     stop: () => stopJobs(),
