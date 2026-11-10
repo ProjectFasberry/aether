@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { auth } from "#/modules/auth/auth.model";
 import { defineOptionalBearerSession } from "#/lib/define";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { profileService, type AccountProfile } from "./profile.model";
 import { signaturePublicKey, texturesService } from "./textures.model";
 import { yggdrasilLogger } from "./logger.model";

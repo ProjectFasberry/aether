@@ -1,4 +1,4 @@
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia, { t } from "elysia";
 import { getLandsByNickname, getRandomLands, landsByRandomSchema } from "./lands.model";
 import { withData, withError } from "#/shared/schemas";

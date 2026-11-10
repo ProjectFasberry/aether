@@ -3,7 +3,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { withData } from "#/shared/schemas";
 import Elysia from "elysia";
 import { getPermissions, permissionsPayloadSchema } from "./permissions.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const permissionsListAll = new Elysia()
   .use(validatePermission(permissionsService.get("PERMISSIONS.READ"), { withExternal: true }))

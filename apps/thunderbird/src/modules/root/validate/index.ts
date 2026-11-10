@@ -3,7 +3,7 @@ import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
 import Elysia, { t } from "elysia";
 import { banSchema, getBan } from "../app/app-options.route";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const validateNickname = new Elysia()
   .get("/nickname/:nickname", async ({ params: { nickname } }) => {

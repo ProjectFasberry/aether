@@ -5,7 +5,7 @@ import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { skinsHistorySchema } from "@repo/core/modules/skins/index"
 import { skinsService } from "../../../shared/services/skins";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { minioService } from "#/shared/services/minio";
 
 const history = new Elysia()
@@ -25,7 +25,7 @@ const set = new Elysia()
   .use(defineRequiredUser())
   .get("/set", async ({ query, nickname, status }) => {
     const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
-    if (!result) throw status(500, wrapError("THIRDPARTY_ERROR"))
+    if (!result) return status(500, wrapError("THIRDPARTY_ERROR"))
 
     return { data: "OK" }
   }, {

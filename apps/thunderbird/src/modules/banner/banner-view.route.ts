@@ -3,7 +3,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { general } from "#/shared/database/general-db";
 import { bannerSchema } from "./banner.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 async function viewBanner(id: number, nickname: string) {
   const query = await general

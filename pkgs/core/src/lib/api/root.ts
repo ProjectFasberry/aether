@@ -5,12 +5,10 @@ const timings = new Map<number, number>()
 let counter = 0
 
 const requestLogger = logger.child({ name: "request" })
-const getRequestInfo = (request: Request, ...args: unknown[]) =>
-  `${request.method} ${request.url} ${args.join(" ")}`
+const getRequestInfo = (req: Request, ...args: unknown[]) =>
+  `${req.method} ${req.url} ${args.join(" ")}`
 
-export const createClient = ({ verbose }: { verbose: boolean | (() => boolean) } = { verbose: true }) => {
-  const isVerbose = () => (typeof verbose === "function" ? verbose() : verbose);
-
+export const createClient = ({ verbose }: { verbose: () => boolean } = { verbose: () => true }) => {
   return ky.create({
   hooks: {
     beforeRequest: [
@@ -20,7 +18,7 @@ export const createClient = ({ verbose }: { verbose: boolean | (() => boolean) }
         request.headers.set("x-request-id", String(id))
         timings.set(id, Date.now());
 
-        if (isVerbose()) {
+        if (verbose()) {
           requestLogger.child({ name: "start" }).debug(getRequestInfo(request))
         }
       }
@@ -32,7 +30,7 @@ export const createClient = ({ verbose }: { verbose: boolean | (() => boolean) }
 
         const start = id ? (timings.get(Number(id)) ?? Date.now()) : Date.now()
 
-        if (isVerbose()) {
+        if (verbose()) {
           requestLogger.child({ name: "end" }).debug(getRequestInfo(request, `${Date.now() - start}ms`))
         }
 

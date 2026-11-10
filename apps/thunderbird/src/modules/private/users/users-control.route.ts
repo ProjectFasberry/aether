@@ -8,7 +8,7 @@ import { createAdminActivityLog } from "../private.model";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 function publish(event: string, data: { initiator: string, payload: string }) {
   const nc = natsService.getInstance()

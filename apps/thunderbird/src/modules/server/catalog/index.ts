@@ -1,5 +1,5 @@
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia from "elysia";
 import { catalogSchema, getCatalog } from "./catalog.model";
 

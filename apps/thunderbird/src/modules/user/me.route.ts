@@ -5,7 +5,7 @@ import { validateBannedStatus } from "#/lib/validators";
 import { getPermissions, getMe } from "./me.model";
 import { withData } from "#/shared/schemas";
 import { skinsService } from "../../shared/services/skins";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export type MePayload = {
   nickname: string;

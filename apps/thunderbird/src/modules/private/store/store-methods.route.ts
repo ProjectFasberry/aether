@@ -5,7 +5,7 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { createStringBoolSchema, withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export type PrivatedMethodsPayload = Static<typeof storeMethodsPayloadSchema>;
 

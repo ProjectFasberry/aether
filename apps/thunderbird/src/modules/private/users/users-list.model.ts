@@ -2,8 +2,8 @@ import { skinsService } from "#/shared/services/skins";
 import { general } from "#/shared/database/general-db";
 import { getEnv } from "#/shared/env";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
-import { wrapMeta } from "#/utils/config/transforms";
+import { getDirection } from "#/helpers/pagination";
+import { toPageMeta } from "#/helpers/pagination";
 import { DEFAULT_HEAD, skinsHistorySchema } from "@repo/core/modules/skins";
 import dayjs from "dayjs";
 import { type Static, t } from "elysia";
@@ -286,7 +286,7 @@ export async function getPlayersList({
 
   return {
     data,
-    meta: wrapMeta({
+    meta: toPageMeta({
       hasNextPage,
       hasPrevPage: Boolean(cursor),
       startCursor: encodeCursor(cursorFor(rows[0], order, searching)),

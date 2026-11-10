@@ -89,9 +89,15 @@ export const register = {
 
 		const eventsExec = await Promise.all(
 			Object.entries(REGISTRATION_EVENTS).map(async ([key, cb]) => {
-				const val = await cb();
-				invariant(val, `${key} for ${nickname} error inited`);
-				return { val, key };
+				try {
+					const val = await cb();
+					return { val, key };
+				} catch (e) {
+					// The account is already committed. A secondary initializer must
+					// not turn a successful registration into a 500.
+					registerLogger.error({ message: `${key} init failed for ${nickname}`, error: e });
+					return { val: false, key };
+				}
 			}),
 		);
 
@@ -198,7 +204,7 @@ export const register = {
 						referral: nickname,
 						referrer: findout,
 					});
-					console.log(result);
+					registerLogger.debug(result);
 				},
 				custom: async () => {
           const val = await trx
@@ -206,7 +212,7 @@ export const register = {
             .values({ nickname, value: findout })
             .executeTakeFirstOrThrow();
 
-          console.log(val);
+          registerLogger.debug(val);
 				},
 			};
 

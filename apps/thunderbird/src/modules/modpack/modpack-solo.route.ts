@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { withData } from "#/shared/schemas";
 import { getModpack, modpackPayloadSchema } from "./modpack.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const modpackSingle = new Elysia()
   .get("/id", async ({ params }) => {

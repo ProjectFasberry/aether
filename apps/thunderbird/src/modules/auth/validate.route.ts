@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { session } from "./login.model";
 import { defineOptionalSession } from "#/lib/define";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const validate = new Elysia()
   .use(defineOptionalSession())

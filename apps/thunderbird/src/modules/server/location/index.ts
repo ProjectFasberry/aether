@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia"
 import { defineRequiredUser } from "#/lib/define"
 import { getCustomLocation, getLocation, parseWorldName, type UserLocation } from "./location.model"
 import { withData } from "#/shared/schemas"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 
 const locationPayloadSchema = t.Object({
   world: t.String(),

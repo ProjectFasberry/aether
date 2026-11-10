@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { achievementsPayloadSchema, getAchievements } from "./achievements.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const achievementsByPlayer = new Elysia()
   .get("/:nickname", async ({ params: { nickname } }) => {

@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { achievementsMetaPayloadSchema, getAchievementsMeta } from "./achievements.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const achievementsMeta = new Elysia()
   .get("/meta", async (ctx) => {

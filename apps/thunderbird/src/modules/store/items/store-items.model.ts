@@ -1,8 +1,9 @@
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema, withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
-import { wrapMeta } from "#/utils/config/transforms";
-import { definePrice, processImageUrl } from "#/utils/store";
+import { getDirection } from "#/helpers/pagination";
+import { toPageMeta } from "#/helpers/pagination";
+import { parsePrice } from "#/modules/store/lib/pricing";
+import { resolveStoreImageUrl } from "#/modules/store/lib/images";
 import { GAME_CURRENCIES } from "@repo/shared/schemas/store/payment";
 import { type Static, t } from "elysia";
 import { sql, type Selectable } from "kysely";
@@ -65,8 +66,8 @@ export const store = {
 
     const data = {
       ...query,
-      imageUrl: processImageUrl(query.imageUrl),
-      price: definePrice(query.currency, query.price),
+      imageUrl: resolveStoreImageUrl(query.imageUrl),
+      price: parsePrice(query.currency, query.price),
     }
 
     return data
@@ -140,12 +141,12 @@ export const store = {
     })
 
     const data = result.rows.map((item) => {
-      const imageUrl = processImageUrl(item.imageUrl)
+      const imageUrl = resolveStoreImageUrl(item.imageUrl)
 
       const updated = {
         ...item,
         imageUrl,
-        price: definePrice(item.currency, item.price),
+        price: parsePrice(item.currency, item.price),
       }
 
       return updated
@@ -153,7 +154,7 @@ export const store = {
 
     return {
       data,
-      meta: wrapMeta(result)
+      meta: toPageMeta(result)
     }
   }
 }

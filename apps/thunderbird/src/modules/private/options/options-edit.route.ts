@@ -4,15 +4,15 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData, withError } from "#/shared/schemas";
 import { updateOptions, updateOptionsSchema } from "./options.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { isError } from "@repo/shared/utils";
 import { wrapError } from "@repo/shared/lib/helpers"
 
 export const optionsUpdate = new Elysia()
   .use(validatePermission(permissionsService.get("OPTIONS.UPDATE"), { withExternal: true }))
-  .post("/:name/edit", async ({ status, params: { name }, body }) => {
+  .post("/:name/edit", async ({ status, params: { name }, body, nickname }) => {
     try {
-      const data = await updateOptions(name, body);
+      const data = await updateOptions(name, body, nickname);
       return { data };
     } catch (e) {
       if (isError(e)) {
@@ -25,7 +25,9 @@ export const optionsUpdate = new Elysia()
   }, {
     body: updateOptionsSchema,
     afterResponse: ({ nickname: initiator, permission }) => {
-      if (initiator) createAdminActivityLog({ initiator, event: permission });
+      if (initiator) {
+        createAdminActivityLog({ initiator, event: permission });
+      }
     },
     response: {
       200: withData(updateOptionsSchema),

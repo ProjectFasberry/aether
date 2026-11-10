@@ -1,72 +1,104 @@
 import { Cron, type CronOptions } from "croner";
-import { CRON_JOBS, withCronLock } from "./jobs";
+import pLimit from "p-limit";
+import { CRON_JOBS, runJob, type Job } from "./jobs";
+import { cronTasks, type CronTask } from "./state";
 import { isProduction } from "../env";
-import { cronLogger } from ".";
+import { cronLogger } from "./logger";
 
-type CronTask = Pick<(typeof CRON_JOBS)[number], "immediately" | "schedule" | "allowIsDev"> & {
-	scheduledTo: Date;
-};
+export { cronTasks } from "./state";
 
-export const cronTasks: Map<string, CronTask> = new Map();
+const DEFAULT_START_DELAY_MS = 5 * 60_000;
+const configuredDelay = Number(Bun.env["CRON_START_DELAY_MS"] ?? DEFAULT_START_DELAY_MS);
+const START_DELAY_MS = Number.isFinite(configuredDelay) ? configuredDelay : DEFAULT_START_DELAY_MS;
+const IMMEDIATE_CONCURRENCY = 2;
+
+const cronInstances: Cron[] = [];
+
+export function validateJobs(jobs: Job[]): void {
+  const names = new Set<string>();
+
+  for (const job of jobs) {
+    if (names.has(job.name)) throw new Error(`Duplicate cron job "${job.name}"`);
+    names.add(job.name);
+
+    if (!job.schedule && !job.immediately) {
+      throw new Error(`Cron job "${job.name}" has neither schedule nor immediate run`);
+    }
+
+    if (!Number.isFinite(job.lockTtlMs) || job.lockTtlMs <= 0) {
+      throw new Error(`Cron job "${job.name}" has an invalid lockTtlMs`);
+    }
+
+    try {
+      new Cron(job.cron, { timezone: job.timezone ?? "UTC" }).stop();
+    } catch (e) {
+      throw new Error(`Cron job "${job.name}" has an invalid schedule`, { cause: e });
+    }
+  }
+}
+
+export function stopJobs(): void {
+  for (const instance of cronInstances) instance.stop();
+  cronInstances.length = 0;
+}
 
 export function startJobs() {
-	const immediatelyJobs: Array<(typeof CRON_JOBS)[number]> = [];
+  validateJobs(CRON_JOBS);
 
-	for (const job of CRON_JOBS) {
-		let config: CronOptions = {};
+  const immediateJobs: Job[] = [];
 
-		if (!isProduction) {
-			if (!job.allowIsDev) {
-				continue;
-			}
-		}
+  for (const job of CRON_JOBS) {
+    if (!isProduction && !job.allowIsDev) continue;
 
-		if (job.immediately) {
-			immediatelyJobs.push(job);
-		}
+    const task: CronTask = {
+      immediately: job.immediately,
+      schedule: job.schedule,
+      allowIsDev: job.allowIsDev,
+      scheduledTo: new Date(),
+      nextRunAt: null,
+      lastRunAt: null,
+      lastOutcome: null,
+      lastDurationMs: null,
+    };
 
-		const info: Omit<CronTask, "scheduledTo"> = {
-			immediately: job.immediately,
-			schedule: job.schedule,
-			allowIsDev: job.allowIsDev,
-		};
+    cronTasks.set(job.name, task);
 
-		cronTasks.set(job.name, {
-			...info,
-			scheduledTo: new Date(),
-		});
+    if (job.immediately) immediateJobs.push(job);
+    if (!job.schedule) continue;
 
-		if (job.schedule) {
-			const temp = new Cron(job.cron);
-			const nextRun = temp.nextRun();
+    const timezone = job.timezone ?? "UTC";
+    const probe = new Cron(job.cron, { timezone });
+    const nextRun = probe.nextRun() ?? new Date();
+    probe.stop();
 
-			if (!nextRun) continue;
+    const startAt = new Date(nextRun.getTime() + START_DELAY_MS);
+    const config: CronOptions = { timezone, startAt };
+    const cronJob = new Cron(job.cron, config, async () => {
+      await runJob(job);
 
-			const delayedStart = new Date(nextRun.getTime() + 5 * 60 * 1000);
+      const current = cronTasks.get(job.name);
+      if (current) {
+        const next = cronJob.nextRun() ?? null;
+        current.nextRunAt = next;
+        if (next) current.scheduledTo = next;
+      }
+    });
 
-			config = {
-				startAt: delayedStart,
-			};
+    cronInstances.push(cronJob);
+    task.scheduledTo = startAt;
+    task.nextRunAt = startAt;
 
-			cronTasks.set(job.name, {
-				...info,
-				scheduledTo: delayedStart,
-			});
-		}
+    cronLogger.info(`Job "${job.name}" will be started at ${startAt.toISOString()}`);
+  }
 
-		const cronJob = new Cron(job.cron, config, async () => {
-			await withCronLock(job.name, job.lockTtlMs ?? 55_000, () => job.callback());
-		});
+  const limit = pLimit(IMMEDIATE_CONCURRENCY);
 
-		cronLogger.info(`Job "${job.name}" will be started at ${cronJob.nextRun()?.toISOString()}`);
-	}
-
-	// Run the immediate jobs one after another with a small jitter, so a
-	// restart does not fire every job (and every replica) at the same instant.
-	void (async () => {
-		for (const job of immediatelyJobs) {
-			await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 2_000)));
-			await withCronLock(job.name, job.lockTtlMs ?? 55_000, () => job.callback());
-		}
-	})();
+  void Promise.all(
+    immediateJobs.map((job) =>
+      limit(async () => {
+        await new Promise((resolve) => setTimeout(resolve, Math.floor(Math.random() * 2_000)));
+        await runJob(job);
+      }),
+    ),
+  ).catch((e) => cronLogger.error("Immediate cron jobs failed", e));
 }

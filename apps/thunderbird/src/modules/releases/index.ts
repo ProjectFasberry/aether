@@ -1,6 +1,6 @@
 import Elysia, { t } from "elysia";
 import { BUCKETS, S3, presignPath } from "#/shared/minio/client";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { auth } from "#/modules/auth/auth.model";
 import { defineOptionalBearerSession, handleByBearer } from "#/lib/define";

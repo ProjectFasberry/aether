@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { getNewsSingle, newsSingleSchema } from "./news.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const newsSingle = new Elysia()
   .get("/:id", async ({ params: { id } }) => {

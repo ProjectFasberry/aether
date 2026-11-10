@@ -1,6 +1,7 @@
 import { getEnv } from "#/shared/env";
 import { getBalance as getWalletBalance } from "#/modules/economy/wallet.model";
 import { createDatabase } from "@repo/core/utils/database";
+import { applyMariaDbQueryTimeout, DB_CONNECT_TIMEOUT_MS } from "#/shared/database/timeouts";
 import type { DB as bisquiteDB } from "@gen/db/bisquite";
 import type { Kysely } from "kysely";
 import { createCharismRegistry, type CharismProvider } from "./contract";
@@ -29,11 +30,18 @@ function muffinDb(): Kysely<bisquiteDB> | null {
 	if (!uri) return null;
 
 	if (!muffinConnection) {
-		muffinConnection = createDatabase<bisquiteDB>()({
+		const database = createDatabase<bisquiteDB>()({
 			name: "muffin",
 			dialect: "mariadb",
-			config: uri,
-		}).connection;
+			config: {
+				uri,
+				connectionLimit: 10,
+				connectTimeout: DB_CONNECT_TIMEOUT_MS,
+				acquireTimeout: DB_CONNECT_TIMEOUT_MS,
+			},
+		});
+		applyMariaDbQueryTimeout(database.pool);
+		muffinConnection = database.connection;
 	}
 
 	return muffinConnection;

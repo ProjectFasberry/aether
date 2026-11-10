@@ -7,7 +7,7 @@ import { getRedisKey } from "#/helpers/redis";
 import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { DateTime } from "#/helpers/typebox";
 
 type PlayerSocialsValuePayload = {

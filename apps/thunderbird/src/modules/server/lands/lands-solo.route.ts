@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { defineOptionalUser } from "#/lib/define";
 import { getLand, landSingleSchema } from "./lands.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const landsSolo = new Elysia()
   .use(defineOptionalUser())

@@ -74,6 +74,15 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
   ) => `${config.VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
 
   const defaultHead = DEFAULT_HEAD(config.VOLUME_URL);
+  const defaultSkinUrl = getStaticUrl(DEFAULT_SKIN, config.VOLUME_URL);
+
+  const fallbackSkin = (): SkinsHistorySingle => ({
+    skin_identifier: "fallback",
+    skin_variant: DEFAULT_SKIN_VARIANT,
+    timestamp: 0,
+    skin_url: defaultSkinUrl,
+    skin_head_url: defaultHead,
+  });
 
   async function getCachedSkinsPayload(nickname: string): Promise<SkinsHistory | null> {
     const str = await redis().get(getSkinsHistoryCacheRedisKey(nickname))
@@ -159,7 +168,11 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
      */
     async getSkin(nickname: string): Promise<string> {
       const result = await this.getCachedSkinsPayload(nickname)
-      return result?.[0]?.skin_url ?? defaultHead
+      return result?.[0]?.skin_url ?? defaultSkinUrl
+    },
+    /** Static skin used when the player has no row or the cache/storage failed. */
+    getFallbackSkin(): SkinsHistorySingle {
+      return fallbackSkin();
     },
     /**
      * Initializes a skin for a given nickname
@@ -174,28 +187,30 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       onError?: (e: unknown) => void,
       uuid?: string
     }): Promise<boolean> {
+      let payload: SkinsHistory;
+
       try {
         onStart?.()
+        payload = await this._loadHistoryFromDB(nickname, minio, uuid)
+      } catch (e) {
+        onError?.(e)
+        payload = [fallbackSkin()]
+      }
 
-        const payload = await this._loadHistoryFromDB(nickname, minio, uuid)
-          .then(r => {
-            console.log("Loaded skin history from DB", r)
-            return r
-          })
-          .catch(e => {
-            console.error("Failed to load skin history from DB", e);
-            throw e
-          })
+      // A player without a row or with a broken cache still gets a valid skin.
+      if (payload.length === 0) payload = [fallbackSkin()]
 
+      try {
         const key = getSkinsHistoryCacheRedisKey(nickname)
         await redis().set(key, JSON.stringify(payload))
-
         onFinish?.()
-        return true
       } catch (e) {
-        onError?.(e) ?? console.error(e);
-        return false
+        // Redis is optional for correctness: the caller falls back to
+        // `getFallbackSkin` when the cache cannot be written.
+        onError?.(e)
       }
+
+      return true
     },
     /**
      * Returns the default skin for a given nickname

@@ -1,7 +1,7 @@
 import { withData } from "#/shared/schemas"
 import Elysia from "elysia"
 import { getLandsByNickname, landsByNicknameSchema, landsByPlayerSchema } from "./lands.model"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 
 export const landsByPlayer = new Elysia()
   .get("/list/:nickname", async ({ query, params: { nickname } }) => {

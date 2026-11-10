@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { eventPayload, getEvent } from "./events.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const eventsSolo = new Elysia()
   .get("/:id", async ({ params: { id } }) => {

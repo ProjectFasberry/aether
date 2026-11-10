@@ -2,7 +2,7 @@ import Elysia, { type Static, t } from "elysia";
 import { bannerSchema, bannerSingleSchema } from "./banner.model";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 type Banner = Static<typeof bannerSingleSchema>;
 

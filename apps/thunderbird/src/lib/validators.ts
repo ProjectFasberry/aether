@@ -13,7 +13,8 @@ import { getPermissions } from "#/modules/user/me.model";
 import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { getEnv } from "#/shared/env";
-import { logErrorMsg, logValidators } from "#/utils/config/log-utils";
+import { logErrorMsg, logValidators } from "#/shared/observability/log";
+import { appLogger } from "#/shared/constants/logger";
 import { libertybans } from "#/shared/database/libertybans-db";
 import { urlsService } from "#/shared/services/urls";
 import { safeJsonParse } from "#/utils";
@@ -39,7 +40,7 @@ export const validatePermission = <T extends boolean = false>(
     logValidators("validatePermission");
 
     if (!permission) {
-      console.warn(`Permission "${permission}" is not found. Route is disabled for security reasons`);
+      appLogger.warn(`Permission "${permission}" is not found. Route is disabled for security reasons`);
       throw status(500, "INTERNAL_SERVER_ERROR");
     }
 
@@ -166,7 +167,9 @@ async function verifyRequest(token: string): Promise<{ ok: boolean; error?: stri
 export const botValidator = () =>
   new Elysia({ name: "botValidator" })
     .use(ipPlugin())
-    .resolve(({ query }) => ({ token: query.token }))
+    // `x-cap-token` keeps the token out of access logs; `?token=` stays for
+    // older clients until they migrate.
+    .resolve(({ query, headers }) => ({ token: headers["x-cap-token"] ?? query.token }))
     .onBeforeHandle(async ({ status, token, ip }) => {
       logValidators("botValidator");
 

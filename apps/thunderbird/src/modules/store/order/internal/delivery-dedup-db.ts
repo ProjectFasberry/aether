@@ -4,7 +4,7 @@ import { general } from "#/shared/database/general-db";
 import { luckperms } from "#/shared/database/luckperms-db";
 import { redisService } from "#/shared/redis/client";
 import { getEnv } from "#/shared/env";
-import { callLuckPermsEffect } from "#/utils/server/call-luckperms";
+import { requestLuckPermsEffect } from "#/modules/store/order/internal/luckperms";
 import {
 	effectCovers,
 	nodeCovers,
@@ -196,7 +196,7 @@ export async function applyDeliveryEffect(
 	const uuid = await findRecipientUuid(nickname);
 
 	if (getEnv().LUCKPERMS_BRIDGE) {
-		await callLuckPermsEffect(effect, {
+		await requestLuckPermsEffect(effect, {
 			recipient: nickname,
 			uuid,
 			kind: "grant",
@@ -240,7 +240,7 @@ export async function removeDeliveryEffect(
 	const uuid = await findRecipientUuid(nickname);
 
 	if (getEnv().LUCKPERMS_BRIDGE) {
-		await callLuckPermsEffect(effect, {
+		await requestLuckPermsEffect(effect, {
 			recipient: nickname,
 			uuid,
 			kind: "revoke",

@@ -16,6 +16,7 @@ import { nanoid } from "nanoid";
 import { skinsService } from "../../../shared/services/skins";
 import { playerService } from "#/shared/services/player";
 import { minioService } from "#/shared/services/minio";
+import { logger } from "@repo/shared/utils/logger";
 
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
@@ -84,7 +85,7 @@ async function fetchMineSkinJob(jobId: string): Promise<MineSkinJobSuccessRespon
   }
 
   try {
-    !isProduction && console.log(JSON.stringify(data, null, 2));
+    if (!isProduction) logger.debug(data);
 
     const parsed = mineSkinJobSuccessSchema.parse(data);
     return parsed;
@@ -446,7 +447,7 @@ function logMineSkinParsingError(
     payload.error = error;
   }
 
-  console.error(`[MineSkin] Failed to parse ${context}`, payload);
+  logger.error({ message: `[MineSkin] Failed to parse ${context}`, payload });
 }
 
 async function enqueueMineSkinJob(fd: FormData): Promise<MineSkinJobDetails> {
@@ -485,7 +486,7 @@ function ensureHttpsTextureUrl(url?: string | null): string | undefined {
     }
     return parsed.toString();
   } catch (e) {
-    console.warn("Failed to normalise cape URL", e);
+    logger.warn({ message: "Failed to normalise cape URL", error: e });
     return url;
   }
 }
@@ -631,7 +632,7 @@ export async function uploadSkin(
     const result = await pollMineSkinJob(job.id, waitMs);
     return result
   } catch (e) {
-    console.error("MineSkin upload failed", e);
+    logger.error({ message: "MineSkin upload failed", error: e });
     throw e
   }
 }

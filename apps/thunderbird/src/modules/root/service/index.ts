@@ -1,11 +1,11 @@
 import Elysia, { t } from "elysia";
 import { withData, withError } from "#/shared/schemas";
 import { defineBearer } from "#/lib/define";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { cronTasks } from "#/shared/cron/init";
-import { checkDatabasesHealth, type HealthCheckResult } from "@repo/core/utils/database";
-import { DATABASES_FOR_CHECK } from "#/shared/database";
+import { areRequiredDatabasesHealthy, getDatabaseHealth } from "#/shared/database/health";
 import { wrapError } from "@repo/shared/lib/helpers"
+import { isShuttingDown } from "#/shared/shutdown"
 
 const healthCheckResultSchema = t.Object({
   name: t.String(),
@@ -28,47 +28,47 @@ const healthReadySuccessSchema = t.Object({
 
 export const health = new Elysia()
   .group("/health", app => app
-    .get("/", () => ({
-      data: {
-        status: "OK",
-        uptime: process.uptime(),
+    .get("/", ({ status }) => {
+      if (isShuttingDown()) return status(503, { error: "SHUTTING_DOWN" });
+
+      return {
+        data: {
+          status: "OK",
+          uptime: process.uptime(),
+        }
       }
-    }), {
+    }, {
       response: {
-        200: withData(healthPayloadSchema)
+        200: withData(healthPayloadSchema),
+        503: withError(t.UnionEnum(["SHUTTING_DOWN"]))
       },
       detail: {
         summary: buildRouteSummary("Get health")
       }
     })
     .use(defineBearer())
-    .get("/ready", async ({ status }) => {
-      try {
-        let databases: HealthCheckResult[] = []
+    .get("/ready", ({ status }) => {
+      if (isShuttingDown()) return status(503, { error: "SHUTTING_DOWN" });
 
-        await checkDatabasesHealth(DATABASES_FOR_CHECK, {
-          onSuccess: (results) => {
-            databases = results
-          }
-        })
+      const health = getDatabaseHealth();
 
-        return {
-          data: {
-            timestamp: new Date().toISOString(),
-            services: {
-              databases
-            }
+      if (!health.ready || !areRequiredDatabasesHealthy()) {
+        return status(503, wrapError("DB_UNAVAILABLE"));
+      }
+
+      return {
+        data: {
+          timestamp: new Date().toISOString(),
+          services: {
+            databases: health.databases
           }
         }
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "UNKNOWN";
-        return status(503, wrapError(msg))
       }
     }, {
       response: {
         200: withData(healthReadySuccessSchema),
         503: withError(
-          t.UnionEnum(["DB_CONNECTION_FAILED", "UNKNOWN"])
+          t.UnionEnum(["DB_CONNECTION_FAILED", "DB_UNAVAILABLE", "UNKNOWN", "SHUTTING_DOWN"])
         )
       },
       tags: ["authorized"],
@@ -93,6 +93,10 @@ export const service = new Elysia()
               schedule: t.Boolean(),
               allowIsDev: t.Optional(t.Boolean()),
               scheduledTo: t.Union([t.Date(), t.String()]),
+              nextRunAt: t.Optional(t.Nullable(t.Union([t.Date(), t.String()]))),
+              lastRunAt: t.Optional(t.Nullable(t.Union([t.Date(), t.String()]))),
+              lastOutcome: t.Optional(t.Nullable(t.UnionEnum(["ran", "busy", "failed"]))),
+              lastDurationMs: t.Optional(t.Nullable(t.Number())),
               name: t.String()
             })
           )

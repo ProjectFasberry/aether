@@ -1,7 +1,7 @@
 import Elysia, { type Static, t } from "elysia";
 import { withData } from "#/shared/schemas";
 import { getRules, rulesPayloadSchema } from "./rules.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const rulesTagsPayloadSchema = t.Array(
   t.Object({

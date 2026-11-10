@@ -1,6 +1,7 @@
 import { general } from "#/shared/database/general-db"
 import { withMeta } from "#/shared/schemas";
-import { definePrice, processImageUrl } from "#/utils/store"
+import { parsePrice } from "#/modules/store/lib/pricing";
+import { resolveStoreImageUrl } from "#/modules/store/lib/images"
 import type { CartItem } from "@repo/shared/types/entities/store"
 import { type Static, t } from "elysia";
 
@@ -186,12 +187,12 @@ export const cartItem = {
       .execute()
 
     const products = query.map((item) => {
-      const price = definePrice(item.currency, item.price);
-      const priceSnapshot = definePrice(item.currency, item.price_snapshot);
+      const price = parsePrice(item.currency, item.price);
+      const priceSnapshot = parsePrice(item.currency, item.price_snapshot);
 
       return {
         ...item,
-        imageUrl: processImageUrl(item.imageUrl),
+        imageUrl: resolveStoreImageUrl(item.imageUrl),
         price,
         priceSnapshot,
         priceChanged: price !== priceSnapshot,

@@ -13,6 +13,7 @@
 		"----------------": "",
 		"lint": "bunx biome lint",
 		"type-check": "tsc --build",
+		"test": "bun test",
 		"circular-check": "bunx dpdm --no-warning ./src/index.ts",
 		"------------------": "",
 		"build:image:prod": "infisical run --env=common --path=/root -- make build",

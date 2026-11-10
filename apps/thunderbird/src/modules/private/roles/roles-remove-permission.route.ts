@@ -4,7 +4,7 @@ import { general } from "#/shared/database/general-db";
 import Elysia, { type Static, t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 async function removePermissionForRole(
   roleId: number,

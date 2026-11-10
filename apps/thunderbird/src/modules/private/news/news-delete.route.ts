@@ -4,7 +4,7 @@ import Elysia, { t } from "elysia";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { deleteNews } from "./news.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const newsDeleteRoute = new Elysia()
   .use(validatePermission(permissionsService.get("NEWS.DELETE")))

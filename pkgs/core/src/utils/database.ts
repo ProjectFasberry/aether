@@ -54,6 +54,16 @@ type MariaDbUriConfig = {
   params?: { [key: string]: string };
 }
 
+type MariaDbPoolOptions = MariadbPoolConfig & { uri?: string };
+
+function resolveMariaDbConfig(config: string | MariaDbPoolOptions): MariadbPoolConfig {
+  if (typeof config === "string") return parseMariaDbUri(config);
+
+  const { uri, ...options } = config;
+
+  return uri ? { ...parseMariaDbUri(uri), ...options } : options as MariadbPoolConfig;
+}
+
 function parseMariaDbUri(uri: string): MariaDbUriConfig {
   const parsed = new URL(uri);
   if (parsed.protocol !== 'mariadb:' && parsed.protocol !== 'mysql:') {
@@ -90,7 +100,7 @@ export function createDatabase<TSchema>() {
     connection: Kysely<TSchema>;
     pool: MySQLPool;
   };
-  function impl(options: { dialect: "mariadb" } & CreateDatabaseOptions<MariadbPoolConfig | string>): {
+  function impl(options: { dialect: "mariadb" } & CreateDatabaseOptions<MariaDbPoolOptions | string>): {
     connection: Kysely<TSchema>;
     pool: MariadbPool;
   };
@@ -98,11 +108,7 @@ export function createDatabase<TSchema>() {
     const opts = getPoolOptions(name);
 
     if (dialect === 'mariadb') {
-      const { host, port, database, user, password } = parseMariaDbUri(config);
-
-      const pool = createMariadbPool({
-        host, port, database, user, password
-      });
+      const pool = createMariadbPool(resolveMariaDbConfig(config));
 
       return {
         connection: new Kysely<TSchema>({

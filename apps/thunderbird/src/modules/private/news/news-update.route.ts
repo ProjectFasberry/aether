@@ -5,7 +5,7 @@ import { createAdminActivityLog } from "../private.model";
 import { newsUpdateSchema } from "@repo/shared/schemas/news";
 import { withData } from "#/shared/schemas";
 import { newsSingleExtendedSchema, updateNews } from "./news.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const newsUpdateRoute = new Elysia()
   .use(validatePermission(permissionsService.get("NEWS.UPDATE")))

@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import { getSeemsLikePlayersByPlayer, seemsPlayersSchema } from "./seems-players.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const seemsPlayersPayload = t.Object({
   data: t.Array(t.Object({

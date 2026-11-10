@@ -5,7 +5,7 @@ import { createAdminActivityLog } from "../private.model";
 import { deleteEvent } from "./events.model";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const eventsDelete = new Elysia()
   .use(validatePermission(permissionsService.get("EVENTS.DELETE")))

@@ -2,8 +2,8 @@ import { normalizeIp } from "#/helpers/normalize-ip";
 import { getUrl } from "#/helpers/volume";
 import { general } from "#/shared/database/general-db";
 import { metaSchema, searchQuerySchema, createStringBoolSchema, withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
-import { wrapMeta } from "#/utils/config/transforms";
+import { getDirection } from "#/helpers/pagination";
+import { toPageMeta } from "#/helpers/pagination";
 import { DEFAULT_HEAD } from "@repo/core/modules/skins";
 import type { DB } from "@gen/db/general";
 import { type Static, t } from "elysia";
@@ -125,7 +125,7 @@ export async function getNewsList({
 
 	return {
 		data,
-		meta: wrapMeta(res),
+		meta: toPageMeta(res),
 	};
 }
 

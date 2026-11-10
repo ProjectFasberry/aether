@@ -2,7 +2,7 @@ import { DateTime } from "#/helpers/typebox";
 import { getStaticUrl } from "#/helpers/volume";
 import { general } from "#/shared/database/general-db";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia, { t } from "elysia";
 
 export const appLibrary = new Elysia()

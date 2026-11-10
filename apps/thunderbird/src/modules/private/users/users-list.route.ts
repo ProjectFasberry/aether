@@ -3,7 +3,7 @@ import { withData, withError } from "#/shared/schemas";
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { getPlayersList, privatedUsersSchema, userListSchema } from "./users-list.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const playersList = new Elysia()
   .use(validatePermission(permissionsService.get("PLAYERS.READ"), { withExternal: true }))

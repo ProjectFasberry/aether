@@ -1,11 +1,12 @@
 import Elysia, { t } from "elysia";
-import { getClientDomain, SESSION_KEY } from "#/utils/auth/cookie";
+import { getClientDomain, SESSION_KEY } from "#/modules/auth/cookie";
 import { defineRequiredSession } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { tokenService } from "#/modules/yggdrasil/token.model";
 import { auth } from "./auth.model";
 import { session } from "./login.model";
-import { buildRouteSummary, cookie } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
+import { cookie } from "#/lib/cookies";
 
 export const invalidate = new Elysia()
   .use(defineRequiredSession())

@@ -5,7 +5,7 @@ import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import { banner } from "./banner.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const bannerDelete = new Elysia()
   .use(validatePermission(permissionsService.get("BANNERS.DELETE")))

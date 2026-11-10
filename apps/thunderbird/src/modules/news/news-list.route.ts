@@ -2,7 +2,7 @@ import Elysia, { type Static } from "elysia";
 import { ipPlugin } from "#/lib/plugins/index";
 import { withData } from "#/shared/schemas";
 import { createNewsViews, getNewsList, newsPayloadSchema, getNewsListSchema } from "./news.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const newsList = new Elysia()
   .use(ipPlugin())

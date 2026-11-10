@@ -1,6 +1,6 @@
 import { general } from "#/shared/database/general-db"
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import Elysia, { t } from "elysia"
 
 export const appDictionaries = new Elysia()

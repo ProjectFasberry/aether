@@ -72,11 +72,11 @@ async function currentSkin(nickname: string, uuid: string) {
     minio: minioService.getInstance,
   });
 
-  if (!warmed) return null;
+  if (!warmed) return skinsService.skin.getFallbackSkin();
 
   const fresh = await skinsService.skin.getCachedSkinsPayload(nickname);
 
-  return fresh?.[0] ?? null;
+  return fresh?.[0] ?? skinsService.skin.getFallbackSkin();
 }
 
 export const texturesService = {

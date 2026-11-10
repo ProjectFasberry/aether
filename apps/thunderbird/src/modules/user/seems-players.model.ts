@@ -8,6 +8,7 @@ import pLimit from "p-limit";
 import * as z from "zod";
 import { skinsService } from "../../shared/services/skins";
 import { safeJsonParse } from "#/utils";
+import { logger } from "@repo/shared/utils/logger";
 
 export type SeemsLikePlayer = {
 	nickname: string;
@@ -70,7 +71,7 @@ export async function updateSeemsLikeList() {
 	}
 
 	if (!isProduction) {
-		console.log(`Updating ${candidates.length} players`);
+		logger.debug(`Updating ${candidates.length} players`);
 	}
 
 	let successCount = 0;
@@ -96,11 +97,11 @@ export async function updateSeemsLikeList() {
 						successCount++;
 
 						if (!isProduction) {
-							console.log(`${player.nickname} updated (${successCount}/${candidates.length})`);
+							logger.debug(`${player.nickname} updated (${successCount}/${candidates.length})`);
 						}
 					} catch (err) {
 						errorCount++;
-						console.error(`Error: ${player.nickname}:`, err);
+						logger.error({ message: "seems-like update failed", nickname: player.nickname, error: err });
 					}
 				}),
 			),
@@ -156,7 +157,7 @@ export async function processSeemsLikePlayersBatch(
 				}
 			}
 		} else {
-			console.error(parsedMembers.error.message)
+			logger.error(parsedMembers.error.message)
 		}
 	}
 
@@ -250,7 +251,7 @@ export async function getSeemsLikePlayersByPlayer(
 	const result = safeJsonParse<SeemsLikePlayer[]>(dataStr);
 
 	if (!result.ok) {
-		console.error(result.error.message);
+		logger.error(result.error.message);
 
 		return {
 			data: [],

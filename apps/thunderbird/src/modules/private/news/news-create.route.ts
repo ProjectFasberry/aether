@@ -5,7 +5,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { createNews, newsSingleExtendedSchema } from "./news.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const newsCreateRoute = new Elysia()
   .use(validatePermission(permissionsService.get("NEWS.CREATE")))

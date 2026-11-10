@@ -2,7 +2,7 @@ import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { BUCKETS, presignPath } from "#/shared/minio/client";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { releaseChannels, releaseKey } from "./releases.model";
 
 /** Same rule as the public launcher routes: one plain path segment, no traversal. */

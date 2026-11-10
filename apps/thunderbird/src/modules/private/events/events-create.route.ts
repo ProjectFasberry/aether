@@ -5,7 +5,7 @@ import { permissionsService } from "#/shared/constants/permissions";
 import { createAdminActivityLog } from "../private.model";
 import { withData } from "#/shared/schemas";
 import { eventPayloadSchema } from "./events.model";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const eventsCreate = new Elysia()
   .use(validatePermission(permissionsService.get("EVENTS.CREATE")))

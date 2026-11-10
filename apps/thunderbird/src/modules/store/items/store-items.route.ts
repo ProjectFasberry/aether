@@ -1,7 +1,7 @@
 import Elysia from "elysia";
 import { store, storeItemsSchema, storeListSchema } from "./store-items.model";
 import { withData } from "#/shared/schemas";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 export const storeItems = new Elysia()
   .get("/items", async ({ query }) => {

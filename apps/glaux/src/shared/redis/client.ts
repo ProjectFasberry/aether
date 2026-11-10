@@ -3,7 +3,10 @@ import { getEnv } from "../env";
 import { invariant } from "@repo/shared/utils";
 import { logger } from "../logger";
 
-let instance: Redis | null = null;
+const instances: { main: Redis | null; bridge: Redis | null } = {
+	main: null,
+	bridge: null,
+};
 
 const config: RedisOptions = {
 	host: getEnv().REDIS_HOST,
@@ -17,26 +20,42 @@ const config: RedisOptions = {
 export const redis = {
 	logger: logger.child({ name: "redis" }),
 	getInstance(): Redis {
-		invariant(instance, "Redis client is not initialized");
-		return instance;
+		invariant(instances.main, "Redis main client is not initialized");
+		return instances.main;
+	},
+	getBridgeInstance(): Redis {
+		invariant(instances.bridge, "Redis bridge client is not initialized");
+		return instances.bridge;
 	},
 	async init(): Promise<void> {
-		if (instance) return;
-
+		await this._initMain();
+		await this._initBridge();
+	},
+	async _initMain(): Promise<Redis> {
+		if (instances.main) return instances.main;
+		instances.main = await this._createClient("main");
+		return instances.main;
+	},
+	async _initBridge(): Promise<Redis> {
+		if (instances.bridge) return instances.bridge;
+		instances.bridge = await this._createClient("bridge");
+		return instances.bridge;
+	},
+	async _createClient(label: "main" | "bridge"): Promise<Redis> {
 		this.logger.info(`Connecting to ${config.host}:${config.port}...`);
 
-		await new Promise((resolve, _) => {
+		return new Promise<Redis>((resolve, reject) => {
 			try {
 				const client = new Redis(config);
 
-				client.on("error", (e) => this.logger.error("Runtime Error:", e));
-				client.on("connect", () => this.logger.info("Connection established"));
-				client.on("ready", () => {
-					this.logger.info("Is ready");
-					instance = client;
+				client.on("error", (e) => this.logger.child({ name: label }).error("Runtime Error:", e));
+				client.on("connect", () => this.logger.child({ name: label }).info("Connection established"));
+				client.once("ready", () => {
+					this.logger.child({ name: label }).info("Is ready");
 					resolve(client);
 				});
 				client.on("end", () => this.logger.warn("Connection closed"));
+				client.once("error", (e) => reject(e));
 			} catch (e) {
 				this.logger.error("Failed to create instance", e);
 				process.exit(1);
@@ -44,8 +63,10 @@ export const redis = {
 		});
 	},
 	async close(): Promise<void> {
-		if (instance) {
-			this.logger.info("Disconnected");
+		for (const [label, instance] of Object.entries(instances)) {
+			if (!instance) continue;
+
+			this.logger.child({ name: label }).info("Disconnected");
 			instance.disconnect();
 		}
 	},

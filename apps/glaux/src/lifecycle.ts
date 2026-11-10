@@ -1,6 +1,5 @@
-import { taskWithTimeout } from "@repo/core/utils";
+import { defineLifecycle } from "@repo/core/utils/lifecycle";
 import { defineVerbose } from "@repo/core/utils";
-import { createBootstrap, definePipe } from "@repo/core/utils/boot";
 import { checkDatabasesHealth, printDatabases } from "@repo/core/utils/database";
 import { redis } from "./shared/redis/client";
 import { chats } from "./shared/bot/chats";
@@ -12,72 +11,82 @@ import { appLogger, logger } from "./shared/logger";
 import { DATABASES_FOR_CHECK } from "./shared/database";
 import { getEnv } from "./shared/env";
 import { ensureBuildMetricsTable } from "./shared/database/build-metrics-db";
+import { initServiceState } from "./shared/services/service-state";
+import { beginShutdown } from "./shared/shutdown";
 
-export const preboot = () => {
-  Object.assign(getEnv(), { verbose: defineVerbose() })
-}
-
-export const boot = createBootstrap([
-  definePipe("db-health", {
+export const lifecycle = defineLifecycle()
+  .add("db", {
     critical: true,
-    run: async () => {
-      const logger = appLogger.child({ name: "db-health" });
+    timeoutMs: 20_000,
+    start: async () => {
+      const dbLogger = appLogger.child({ name: "db-health" });
 
       await checkDatabasesHealth(DATABASES_FOR_CHECK, {
         onSuccess: (results) => printDatabases(results),
         verbose: getEnv().verbose,
-        onError: (e) => logger.error(e),
+        onError: (error) => dbLogger.error(error),
       });
     },
-  }),
-  definePipe("shared-modules", {
+  })
+  .add("shared", {
     critical: true,
-    run: async () => {
+    dependsOn: "db",
+    start: async () => {
       await chats.init();
 
       await urlsService.init({
         onError: (error) => logger.error({ message: "Urls error", error }),
-        print: true
-      })
-    }
-  }),
-  definePipe("redis", {
-    run: () => redis.init(),
-  }),
-  definePipe("build-metrics", {
-    run: () => ensureBuildMetricsTable(),
+        print: true,
+      });
+    },
+  })
+  .add("redis", {
+    critical: true,
+    timeoutMs: 15_000,
+    start: () => redis.init(),
+    stop: () => redis.close(),
+  })
+  .add("build-metrics", {
     critical: false,
-  }),
-  definePipe("nats", {
-    run: () => natsService.start(),
-  }),
-  definePipe("minio", {
-    run: () => taskWithTimeout(() => minioService.start(), {
-      timeout: 5000
-    }),
-    critical: false
-  }),
-  definePipe("bot", {
-    run: () => taskWithTimeout(() => bot.start(), {
-      // First start goes through the local Telegram relay, which keeps upstream
-      // connections warm but still needs a few round-trips (getMe, commands).
-      timeout: 15000,
-      fallback: () => {
-        logger.error({ message: "Bot start timeout" });
-      }
-    })
-  }),
-]);
+    start: () => ensureBuildMetricsTable(),
+  })
+  .add("service-state", {
+    critical: false,
+    dependsOn: "redis",
+    start: () => initServiceState(),
+  })
+  .add("nats", {
+    critical: true,
+    timeoutMs: 15_000,
+    start: () => natsService.start(),
+    stop: () => natsService.close(),
+  })
+  .add("minio", {
+    critical: false,
+    timeoutMs: 5_000,
+    start: () => minioService.start(),
+  })
+  .add("bot", {
+    critical: true,
+    timeoutMs: 15_000,
+    start: () => bot.start()
+  })
+  .add("app", {
+    critical: true,
+    dependsOn: ["db", "shared", "redis", "nats", "minio", "bot"],
+    start: async () => {
+      const { appService } = await import("#/app");
+      return appService.start()
+    },
+    stop: async (app) => {
+      await app.stop(true);
+    },
+  })
+  .build({
+    name: "glaux",
+    onStopping: beginShutdown,
+  });
 
-export async function shutdown({ signal }: { signal: string }) {
-  appLogger.info(`Received ${signal}. Starting graceful shutdown...`);
-  setTimeout(() => process.exit(1), 10000).unref();
-
-  await Promise.allSettled([
-    natsService.close(),
-    redis.close(),
-  ]);
-
-  appLogger.info("All connections closed. Bye!");
-  process.exit(0);
+export const preboot = () => {
+  Object.assign(getEnv(), { verbose: defineVerbose() });
 };

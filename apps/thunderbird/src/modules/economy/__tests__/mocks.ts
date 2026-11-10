@@ -47,7 +47,7 @@ export function installDatabaseMocks(): void {
 			fn: () => Promise<unknown>,
 		) => fn(),
 	}));
-	mock.module("#/utils/config/log-utils", () => ({
+	mock.module("#/shared/observability/log", () => ({
 		logErrorMsg: () => {},
 	}));
 }

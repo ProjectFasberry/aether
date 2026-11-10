@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { metaSchema, withMeta } from "#/shared/schemas";
-import { getDirection } from "#/utils/config/paginate";
-import { wrapMeta } from "#/utils/config/transforms";
+import { getDirection } from "#/helpers/pagination";
+import { toPageMeta } from "#/helpers/pagination";
 import { type Static, t } from "elysia";
 import { executeWithCursorPagination } from "kysely-paginate";
 
@@ -88,7 +88,7 @@ export async function getBanners({
         value: banner.href_value
       }
     })),
-		meta: wrapMeta(result),
+		meta: toPageMeta(result),
 	};
 
 	return data;

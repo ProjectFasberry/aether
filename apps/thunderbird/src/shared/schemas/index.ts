@@ -1,4 +1,5 @@
-import { t, type TSchema } from "elysia";
+import { t } from "elysia";
+export { withData, withError } from "@repo/core/lib/elysia";
 
 export function parseBool(v: string | boolean) {
   if (typeof v === 'boolean') return v;
@@ -32,17 +33,9 @@ export const searchQuerySchema = t.Optional(
     .Encode(v => v || '')
 );
 
-export function withData<T extends TSchema>(schema: T) {
-  return t.Object({ data: schema }) as TSchema;
-}
-
 export const withMeta = t.Object({
   hasNextPage: t.Boolean(),
   hasPrevPage: t.Boolean(),
   startCursor: t.Optional(t.String()),
   endCursor: t.Optional(t.String())
 })
-
-export function withError<T extends TSchema>(schema?: T) {
-  return t.Object({ error: schema ?? t.String() })
-}

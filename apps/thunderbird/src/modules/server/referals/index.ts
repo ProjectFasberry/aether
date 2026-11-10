@@ -3,7 +3,7 @@ import { general } from "#/shared/database/general-db"
 import Elysia, { type Static, t } from "elysia"
 import { withData } from "#/shared/schemas"
 import { skinsService } from "../../../shared/services/skins"
-import { buildRouteSummary } from "#/utils"
+import { buildRouteSummary } from "#/lib/routes"
 import { DateTime } from "#/helpers/typebox"
 
 const referralsListSchema = t.Array(

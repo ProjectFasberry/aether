@@ -2,7 +2,7 @@ import { defineRequiredUser } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import Elysia, { t } from "elysia";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import {
   ORDER_DIRECTIONS,
   ORDER_SORTS,

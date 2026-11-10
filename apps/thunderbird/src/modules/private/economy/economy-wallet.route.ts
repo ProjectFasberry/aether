@@ -3,7 +3,7 @@ import { validatePermission } from "#/lib/validators";
 import { permissionsService } from "#/shared/constants/permissions";
 import { getRefundable, getWallet } from "#/modules/economy/wallet.model";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 import { findPlayer } from "./economy.model";
 
 const querySchema = t.Object({

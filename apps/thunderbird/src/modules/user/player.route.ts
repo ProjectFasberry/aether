@@ -4,7 +4,7 @@ import type { Player } from "@repo/shared/types/entities/user";
 import { withData } from "#/shared/schemas";
 import { getDonate, getMain, getRate } from "./player.model";
 import { skinsService } from "../../shared/services/skins";
-import { buildRouteSummary } from "#/utils";
+import { buildRouteSummary } from "#/lib/routes";
 
 const playerPayload = t.Object({
   nickname: t.String(),
