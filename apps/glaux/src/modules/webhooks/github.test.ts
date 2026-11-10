@@ -9,6 +9,20 @@ const { appService } = await import("../../app")
 const SECRET = "webhook-secret"
 const MAX_BODY_BYTES = 1024 * 1024
 
+const runPayload = {
+	action: "completed",
+	repository: { full_name: "ProjectFasberry/aether", html_url: "https://github.com/ProjectFasberry/aether" },
+	sender: { login: "distribate" },
+	workflow_run: {
+		name: "build-thunderbird",
+		conclusion: "failure",
+		head_branch: "main",
+		html_url: "https://github.com/ProjectFasberry/aether/actions/runs/1",
+		run_number: 42,
+		head_commit: { message: "feat: something", id: "abc" },
+	},
+}
+
 const pushPayload = {
 	ref: "refs/heads/main",
 	repository: { full_name: "ProjectFasberry/aether", html_url: "https://github.com/ProjectFasberry/aether" },
@@ -170,6 +184,52 @@ describe("POST /webhooks/github", () => {
 		expect(await noCommit.text()).toBe("ignored")
 
 		expect(state.notifications).toHaveLength(0)
+	})
+
+	it("accepts a failed workflow run and fans it out", async () => {
+		const response = await deliver(JSON.stringify(runPayload), { event: "workflow_run", delivery: "run-failed" })
+
+		expect(response.status).toBe(202)
+		expect(await response.text()).toBe("accepted")
+		expect(state.notifications).toHaveLength(1)
+		expect(state.notifications[0]).toMatchObject({
+			workflow_run: { name: "build-thunderbird", conclusion: "failure" },
+		})
+	})
+
+	it("ignores successful, pending and unknown workflow runs", async () => {
+		const successful = JSON.stringify({
+			...runPayload,
+			workflow_run: { ...runPayload.workflow_run, conclusion: "success" },
+		})
+		expect(await (await deliver(successful, { event: "workflow_run", delivery: "run-ok" })).text()).toBe("ignored")
+
+		const pending = JSON.stringify({ ...runPayload, action: "requested" })
+		expect(await (await deliver(pending, { event: "workflow_run", delivery: "run-pending" })).text()).toBe("ignored")
+
+		const unknown = JSON.stringify({
+			...runPayload,
+			workflow_run: { ...runPayload.workflow_run, conclusion: null },
+		})
+		expect(await (await deliver(unknown, { event: "workflow_run", delivery: "run-null" })).text()).toBe("ignored")
+
+		expect(state.notifications).toHaveLength(0)
+	})
+
+	it("applies the repository allowlist to workflow runs", async () => {
+		state.env.GITHUB_REPOS = "ProjectFasberry/aether"
+
+		const allowed = await deliver(JSON.stringify(runPayload), { event: "workflow_run", delivery: "run-allowed" })
+		expect(await allowed.text()).toBe("accepted")
+
+		const blocked = JSON.stringify({
+			...runPayload,
+			repository: { full_name: "someone/else" },
+		})
+		const response = await deliver(blocked, { event: "workflow_run", delivery: "run-blocked" })
+
+		expect(await response.text()).toBe("ignored")
+		expect(state.notifications).toHaveLength(1)
 	})
 
 	it("returns 413 for a body above one mebibyte", async () => {
