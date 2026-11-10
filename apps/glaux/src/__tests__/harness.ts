@@ -156,5 +156,8 @@ export function installGlauxMocks() {
 		sendGithubPush: async (payload: unknown) => {
 			state.notifications.push(payload)
 		},
+		sendGithubWorkflowRun: async (payload: unknown) => {
+			state.notifications.push(payload)
+		},
 	}))
 }

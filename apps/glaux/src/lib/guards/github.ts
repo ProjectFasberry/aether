@@ -1,18 +1,21 @@
 import { createHmac, timingSafeEqual } from "node:crypto"
 import Elysia from "elysia"
-import type { GithubPushPayload } from "../../shared/notify/github"
+import type { GithubPushPayload, GithubWorkflowRunPayload } from "../../shared/notify/github"
 import { getEnv } from "../../shared/env"
 import { appLogger } from "../../shared/logger"
 import { redis } from "../../shared/redis/client"
 
 const NOTIFY_REFS = new Set(["refs/heads/main", "refs/heads/dev"])
+const FAILED_CONCLUSIONS = new Set(["failure", "timed_out", "startup_failure"])
+const HANDLED_EVENTS = new Set(["push", "workflow_run"])
 const MAX_BODY_BYTES = 1024 * 1024
 
 export type GithubWebhookSkip = "ignored" | "duplicate"
 
 export type GithubWebhookResult =
-  | { githubPush: GithubPushPayload; githubSkip: null }
-  | { githubPush: null; githubSkip: GithubWebhookSkip }
+  | { githubPush: GithubPushPayload; githubRun: null; githubSkip: null }
+  | { githubPush: null; githubRun: GithubWorkflowRunPayload; githubSkip: null }
+  | { githubPush: null; githubRun: null; githubSkip: GithubWebhookSkip }
 
 function verifySignature(secret: string, body: string, header: string | undefined): boolean {
   if (!header?.startsWith("sha256=")) return false
@@ -55,12 +58,13 @@ export const githubWebhookGuard = () => new Elysia({ name: "githubWebhookGuard" 
       throw status(401, { error: "invalid signature" })
     }
 
-    if (headers["x-github-event"] !== "push") {
-      return { githubPush: null, githubSkip: "ignored" }
+    const event = headers["x-github-event"]
+    if (!event || !HANDLED_EVENTS.has(event)) {
+      return { githubPush: null, githubRun: null, githubSkip: "ignored" }
     }
 
     if (await isDuplicate(headers["x-github-delivery"])) {
-      return { githubPush: null, githubSkip: "duplicate" }
+      return { githubPush: null, githubRun: null, githubSkip: "duplicate" }
     }
 
     let payload: unknown
@@ -74,16 +78,36 @@ export const githubWebhookGuard = () => new Elysia({ name: "githubWebhookGuard" 
       throw status(400, { error: "invalid payload" })
     }
 
-    const push = payload as GithubPushPayload
     const repos = getEnv().GITHUB_REPOS?.split(",").map((repo) => repo.trim()).filter(Boolean)
 
-    if (repos?.length && !repos.includes(push.repository?.full_name ?? "")) {
-      return { githubPush: null, githubSkip: "ignored" }
+    if (event === "push") {
+      const push = payload as GithubPushPayload
+
+      if (repos?.length && !repos.includes(push.repository?.full_name ?? "")) {
+        return { githubPush: null, githubRun: null, githubSkip: "ignored" }
+      }
+
+      if (push.deleted === true || typeof push.ref !== "string" || !NOTIFY_REFS.has(push.ref) || !push.head_commit) {
+        return { githubPush: null, githubRun: null, githubSkip: "ignored" }
+      }
+
+      return { githubPush: push, githubRun: null, githubSkip: null }
     }
 
-    if (push.deleted === true || typeof push.ref !== "string" || !NOTIFY_REFS.has(push.ref) || !push.head_commit) {
-      return { githubPush: null, githubSkip: "ignored" }
+    const run = payload as GithubWorkflowRunPayload
+
+    if (repos?.length && !repos.includes(run.repository?.full_name ?? "")) {
+      return { githubPush: null, githubRun: null, githubSkip: "ignored" }
     }
 
-    return { githubPush: push, githubSkip: null }
+    if (run.action !== "completed") {
+      return { githubPush: null, githubRun: null, githubSkip: "ignored" }
+    }
+
+    const conclusion = run.workflow_run?.conclusion
+    if (!conclusion || !FAILED_CONCLUSIONS.has(conclusion)) {
+      return { githubPush: null, githubRun: null, githubSkip: "ignored" }
+    }
+
+    return { githubPush: null, githubRun: run, githubSkip: null }
   })
