@@ -422,12 +422,23 @@ export const options = pgTable("options", {
 	title: text().notNull(),
 });
 
-export const activityUsers = pgTable("activity_users", {
-	id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
-	nickname: text().notNull(),
-	event: timestamp({ withTimezone: true, mode: "string" }).notNull(),
-	type: playerActivityEvent().notNull(),
-});
+export const activityUsers = pgTable(
+	"activity_users",
+	{
+		id: bigserial({ mode: "bigint" }).primaryKey().notNull(),
+		nickname: text().notNull(),
+		event: timestamp({ withTimezone: true, mode: "string" }).notNull(),
+		type: playerActivityEvent().notNull(),
+		server: text(),
+		uuid: text(),
+		session: text(),
+	},
+	(table) => [
+		index("activity_users_event_idx").using("btree", table.event.desc().nullsLast().op("timestamptz_ops")),
+		index("activity_users_nickname_event_idx").using("btree", table.nickname.asc().nullsLast().op("text_ops"), table.event.desc().nullsLast().op("timestamptz_ops")),
+		index("activity_users_server_event_idx").using("btree", table.server.asc().nullsLast().op("text_ops"), table.event.desc().nullsLast().op("timestamptz_ops")),
+	],
+);
 
 export const roles = pgTable("roles", {
 	id: serial().primaryKey().notNull(),
