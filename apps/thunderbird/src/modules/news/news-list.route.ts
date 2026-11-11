@@ -3,11 +3,19 @@ import { ipPlugin } from "#/lib/plugins/index";
 import { withData } from "#/shared/schemas";
 import { createNewsViews, getNewsList, newsPayloadSchema, getNewsListSchema } from "./news.model";
 import { buildRouteSummary } from "#/lib/routes";
+import { cached } from "#/shared/cache/ttl";
+
+const LIST_CACHE_TTL_MS = 30_000;
 
 export const newsList = new Elysia()
   .use(ipPlugin())
   .get("/list", async ({ query }) => {
-    const data = await getNewsList(query);
+    const data = await cached(
+      `news:list:${JSON.stringify(query)}`,
+      LIST_CACHE_TTL_MS,
+      () => getNewsList(query),
+    );
+
     return { data };
   }, {
     query: getNewsListSchema,
