@@ -46,6 +46,8 @@ export const PERMISSION_NAMES = [
   "store.item.update",
   "store.methods.read",
   "store.methods.update",
+  "team.applications.read",
+  "team.applications.update",
   "volume.control",
 ] as const;
 

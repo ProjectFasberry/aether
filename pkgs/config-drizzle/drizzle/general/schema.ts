@@ -974,3 +974,25 @@ export const lotAllocations = pgTable(
 		check("lot_allocations_restored_range", sql`${table.restoredAmount} >= 0 AND ${table.restoredAmount} <= ${table.amount}`),
 	],
 );
+
+export const teamApplications = pgTable(
+	"team_applications",
+	{
+		id: serial().primaryKey().notNull(),
+		nickname: text().notNull(),
+		uuid: text(),
+		roles: text().array().notNull(),
+		about: text().notNull(),
+		telegram: text().notNull(),
+		email: text(),
+		portfolio: text(),
+		status: text().default("new").notNull(),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+	},
+	(table) => [
+		index("team_applications_created_at_idx").using("btree", table.createdAt.desc().nullsLast().op("timestamptz_ops")),
+		index("team_applications_status_idx").using("btree", table.status.asc().nullsLast().op("text_ops")),
+		index("team_applications_nickname_idx").using("btree", table.nickname.asc().nullsLast().op("text_ops")),
+	],
+);
