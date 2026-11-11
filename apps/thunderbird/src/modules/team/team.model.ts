@@ -10,11 +10,16 @@ export type TeamStatus = (typeof TEAM_STATUSES)[number];
 export const teamRoleSchema = t.UnionEnum([...TEAM_ROLES]);
 export const teamStatusSchema = t.UnionEnum([...TEAM_STATUSES]);
 
+/** One channel is enough: Telegram or email, never both. */
+export const teamContactSchema = t.Union([
+  t.Object({ type: t.Literal("telegram"), value: t.String({ minLength: 2, maxLength: 64 }) }),
+  t.Object({ type: t.Literal("email"), value: t.String({ format: "email", maxLength: 128 }) }),
+]);
+
 export const teamApplySchema = t.Object({
   roles: t.Array(teamRoleSchema, { minItems: 1, maxItems: TEAM_ROLES.length }),
   about: t.String({ minLength: 40, maxLength: 2000 }),
-  telegram: t.String({ minLength: 2, maxLength: 64 }),
-  email: t.Optional(t.String({ format: "email", maxLength: 128 })),
+  contact: teamContactSchema,
   portfolio: t.Optional(t.String({ maxLength: 2000 })),
 });
 
@@ -54,8 +59,8 @@ export async function createApplication(nickname: string, payload: TeamApplyPayl
       uuid,
       roles: payload.roles,
       about: payload.about.trim(),
-      telegram: payload.telegram.trim(),
-      email: payload.email?.trim() || null,
+      telegram: payload.contact.type === "telegram" ? payload.contact.value.trim() : null,
+      email: payload.contact.type === "email" ? payload.contact.value.trim() : null,
       portfolio: payload.portfolio?.trim() || null,
     })
     .returning("id")

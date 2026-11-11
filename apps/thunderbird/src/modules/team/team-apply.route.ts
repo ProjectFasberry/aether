@@ -31,8 +31,7 @@ export const teamApply = new Elysia()
       id: application.id,
       nickname,
       roles: body.roles,
-      telegram: body.telegram,
-      email: body.email,
+      contact: body.contact,
       about: body.about,
     });
 
