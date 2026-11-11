@@ -16,6 +16,7 @@ import { api } from "./api";
 import { releases } from "./releases";
 import { economy } from "./economy";
 import { servers } from "./servers";
+import { metrics } from "./metrics";
 
 const infra = new Elysia()
   .group("", app => app
@@ -23,6 +24,7 @@ const infra = new Elysia()
     .use(permissions)
     .use(options)
     .use(volume)
+    .use(metrics)
   );
 
 const entities = new Elysia()

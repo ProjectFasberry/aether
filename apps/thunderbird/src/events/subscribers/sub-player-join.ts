@@ -16,6 +16,9 @@ const presenceSchema = z.object({
 	date: z.string(),
 	name: z.string(),
 	server: z.string(),
+	/** Optional until the proxy publishes them; history stays useful without. */
+	uuid: z.string().optional(),
+	session: z.string().optional(),
 });
 
 type Presence = z.infer<typeof presenceSchema>;
@@ -27,18 +30,37 @@ function pushToReferral({ nickname }: { nickname: string }) {
 	nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload);
 }
 
-async function recordActivity(nickname: string, type: "join" | "quit") {
+/** `players.uuid` is stable across renames, the nickname in the payload is not. */
+async function resolveUuid(nickname: string, uuid?: string) {
+	if (uuid) return uuid;
+
+	const row = await general
+		.selectFrom("players")
+		.select("uuid")
+		.where("nickname", "=", nickname)
+		.executeTakeFirst();
+
+	return row?.uuid ?? null;
+}
+
+async function recordActivity(presence: Presence, type: "join" | "quit") {
+	const { name, server, session } = presence;
+	const uuid = await resolveUuid(name, presence.uuid);
+
 	const query = await general
 		.insertInto("activity_users")
 		.values({
 			event: new Date().toISOString(),
-			nickname,
+			nickname: name,
 			type,
+			server,
+			uuid,
+			session: session ?? null,
 		})
 		.executeTakeFirst();
 
 	if (!Number(query.numInsertedOrUpdatedRows)) {
-		logger.warn(`Activity for ${nickname} is not recorded (${type})`);
+		logger.warn(`Activity for ${name} is not recorded (${type})`);
 	}
 }
 
@@ -48,7 +70,7 @@ async function handlePresence(payload: Presence, type: "join" | "quit") {
 	try {
 		if (type === "join") pushToReferral({ nickname });
 
-		await recordActivity(nickname, type);
+		await recordActivity(payload, type);
 	} catch (e) {
 		logErrorMsg(e);
 	}
