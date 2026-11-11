@@ -220,6 +220,22 @@ export const CRON_JOBS = [
     lockTtlMs: 60 * 60_000
   }),
   defineJob({
+    name: "clean-old-activity",
+    cron: "0 50 4 * * *",
+    callback: async () => {
+      const { cleanOldActivity } = await import("#/modules/server/activity/activity-retention");
+      const removed = await cleanOldActivity();
+
+      if (removed > 0) {
+        cronLogger.info(`Activity: removed ${removed} rows older than 90 days`);
+      }
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true,
+    lockTtlMs: 60 * 60_000
+  }),
+  defineJob({
     name: "update-seems-like",
     cron: "0 0 */3 * * *",
     callback: async () => {
