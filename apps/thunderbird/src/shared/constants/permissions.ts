@@ -21,6 +21,7 @@ export const PERMISSION_NAMES = [
   "events.create",
   "events.delete",
   "history.read",
+  "metrics.read",
   "modpacks.create",
   "modpacks.delete",
   "news.create",
