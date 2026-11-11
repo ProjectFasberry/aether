@@ -75,11 +75,13 @@ jobs:
         env:
           ALERT_URL: ${{ vars.ALERT_URL || 'https://panel.fasberry.fun/internal/alerts' }}
           ALERT_KEY: ${{ secrets.ALERT_KEY }}
-          IMAGE: ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird
+          STAGE: ${{ steps.stage.outputs.stage }}
+          APP: thunderbird
         run: |
           [ -n "$ALERT_KEY" ] || { echo "ALERT_KEY is not set; skipping"; exit 0; }
-          TITLE="image pushed: ${IMAGE}:latest"
-          MESSAGE="commit ${GITHUB_SHA:0:8} | https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          TITLE="image pushed: ${STAGE}/${APP}"
+          MESSAGE=$(printf 'image: %s/%s:latest\ncommit: %s\nby: %s\nrun: https://github.com/%s/actions/runs/%s' \
+            "$STAGE" "$APP" "${GITHUB_SHA:0:7}" "$GITHUB_ACTOR" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
           payload=$(python3 -c 'import json,sys; print(json.dumps({"from":"ci","title":sys.argv[1],"message":sys.argv[2],"severity":"info"}))' "$TITLE" "$MESSAGE")
           curl -fsS -X POST "$ALERT_URL" \
             -H "Authorization: Bearer $ALERT_KEY" \
