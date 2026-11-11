@@ -17,6 +17,7 @@ import { releases } from "./releases";
 import { economy } from "./economy";
 import { servers } from "./servers";
 import { metrics } from "./metrics";
+import { teamPrivate } from "./team";
 
 const infra = new Elysia()
   .group("", app => app
@@ -25,6 +26,7 @@ const infra = new Elysia()
     .use(options)
     .use(volume)
     .use(metrics)
+    .use(teamPrivate)
   );
 
 const entities = new Elysia()

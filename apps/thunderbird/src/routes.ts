@@ -12,6 +12,7 @@ import { validateGroup } from "./modules/root/validate";
 import { processPlayerVote } from "./modules/server/votes/process-vote.route";
 import { privated } from "./modules/private";
 import { account } from "./modules/account";
+import { team } from "./modules/team";
 import { news } from "./modules/news";
 import { modpack } from "./modules/modpack";
 import { rules } from "./modules/rules";
@@ -52,6 +53,7 @@ export const main = new Elysia()
   .use(payments)
   .use(rate)
   .use(account)
+  .use(team)
 
 const privatedGroup = new Elysia()
   // TODO: make openapi with the different path (privated)

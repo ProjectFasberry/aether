@@ -51,6 +51,9 @@ const envSchema = z.object({
   /** Send a chat debug message to the recipient after a bridge grant/revoke. */
   LUCKPERMS_BRIDGE_DEBUG: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
   MINESKIN_AES_SECRET_KEY: z.string().min(1),
+  /** Optional: without it application notices are only logged. */
+  ALERT_URL: z.optional(z.url()),
+  ALERT_KEY: z.optional(z.string().min(1)),
   verbose: z.boolean().optional().default(false)
 });
 
