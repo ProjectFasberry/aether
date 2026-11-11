@@ -504,6 +504,7 @@ export const bannersViews = pgTable(
 			.onUpdate("cascade")
 			.onDelete("cascade"),
 		unique("banners_views_id_key").on(table.id),
+		uniqueIndex("banners_views_banner_id_nickname_uniq").on(table.bannerId, table.nickname),
 	],
 );
 
