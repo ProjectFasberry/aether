@@ -7,8 +7,7 @@ type TeamApplicationNotice = {
   id: number;
   nickname: string;
   roles: string[];
-  telegram: string;
-  email?: string | null;
+  contact: { type: "telegram" | "email"; value: string };
   about: string;
 };
 
@@ -30,8 +29,7 @@ export async function notifyTeamApplication(application: TeamApplicationNotice):
     `Заявка #${application.id} в команду`,
     `Игрок: ${application.nickname}`,
     `Роли: ${application.roles.join(", ")}`,
-    `Telegram: ${application.telegram}`,
-    application.email ? `Email: ${application.email}` : "",
+    `${application.contact.type === "telegram" ? "Telegram" : "Email"}: ${application.contact.value}`,
     "",
     application.about.slice(0, 500),
   ].filter((line) => line !== "").join("\n");

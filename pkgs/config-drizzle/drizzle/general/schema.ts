@@ -983,7 +983,7 @@ export const teamApplications = pgTable(
 		uuid: text(),
 		roles: text().array().notNull(),
 		about: text().notNull(),
-		telegram: text().notNull(),
+		telegram: text(),
 		email: text(),
 		portfolio: text(),
 		status: text().default("new").notNull(),
