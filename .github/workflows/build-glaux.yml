@@ -2,7 +2,7 @@ name: Build glaux
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, staging]
     paths:
       - "apps/glaux/**"
       - "pkgs/**"

@@ -2,7 +2,7 @@ name: Build thunderbird
 
 on:
   push:
-    branches: [main, dev]
+    branches: [main, dev, staging]
     paths:
       - "apps/thunderbird/**"
       - "pkgs/**"
