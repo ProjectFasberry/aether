@@ -39,8 +39,8 @@ jobs:
           password: ${{ secrets.REGISTRY_PASSWORD }}
           logout: false
 
-      # The deploy host pulls :latest on a timer (ProjectFasberry/infra,
-      # scripts/pull-update.sh), so pushing here is the whole rollout.
+      # Rollout is manual: publish the image, then run `fasberry deploy`
+      # (or use Portainer) on the host.
       - uses: docker/build-push-action@v6
         with:
           builder: fasberry
@@ -57,3 +57,18 @@ jobs:
             ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:sha-${{ github.sha }}
           cache-from: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:buildcache
           cache-to: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:buildcache,mode=max
+      - name: Notify glaux (Telegram + Gotify) about the pushed image
+        continue-on-error: true
+        env:
+          ALERT_URL: ${{ vars.ALERT_URL || 'https://panel.fasberry.fun/internal/alerts' }}
+          ALERT_KEY: ${{ secrets.ALERT_KEY }}
+          IMAGE: ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird
+        run: |
+          [ -n "$ALERT_KEY" ] || { echo "ALERT_KEY is not set; skipping"; exit 0; }
+          TITLE="image pushed: ${IMAGE}:latest"
+          MESSAGE="commit ${GITHUB_SHA:0:8} | https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          payload=$(python3 -c 'import json,sys; print(json.dumps({"from":"ci","title":sys.argv[1],"message":sys.argv[2],"severity":"info"}))' "$TITLE" "$MESSAGE")
+          curl -fsS -X POST "$ALERT_URL" \
+            -H "Authorization: Bearer $ALERT_KEY" \
+            -H "content-type: application/json" \
+            --data "$payload"
