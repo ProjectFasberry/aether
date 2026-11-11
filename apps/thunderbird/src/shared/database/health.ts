@@ -5,6 +5,7 @@ import { DATABASES_FOR_CHECK } from "./index";
 export type DatabaseHealth = {
   name: string;
   dialect: "mysql" | "postgres" | "mariadb";
+  required: boolean;
   healthy: boolean;
   checkedAt: Date;
   error?: unknown;
@@ -44,6 +45,7 @@ export async function refreshDatabaseHealth({
       statuses.set(name, {
         name,
         dialect: item.dialect,
+        required: item.required,
         healthy: false,
         checkedAt,
         error: failure,
@@ -60,6 +62,7 @@ export async function refreshDatabaseHealth({
     statuses.set(name, {
       name,
       dialect: item.dialect,
+      required: item.required,
       healthy: result?.healthy ?? false,
       checkedAt,
       error: result?.error,
@@ -70,21 +73,25 @@ export async function refreshDatabaseHealth({
   onSuccess?.(results);
 
   const unhealthy = [...statuses.values()].filter((entry) => !entry.healthy);
+  const unavailableRequired = unhealthy.filter((entry) => entry.required);
 
   if (unhealthy.length > 0) {
     healthLogger.warn({
-      message: "required databases are unavailable",
-      databases: unhealthy.map((entry) => entry.name),
+      message: "databases are unavailable",
+      required: unavailableRequired.map((entry) => entry.name),
+      optional: unhealthy
+        .filter((entry) => !entry.required)
+        .map((entry) => entry.name),
     });
   }
 
-  if (failOnUnhealthy && unhealthy.length > 0) {
-    throw new Error(`DB_UNAVAILABLE: ${unhealthy.map((entry) => entry.name).join(",")}`);
+  if (failOnUnhealthy && unavailableRequired.length > 0) {
+    throw new Error(`DB_UNAVAILABLE: ${unavailableRequired.map((entry) => entry.name).join(",")}`);
   }
 }
 
 export function areRequiredDatabasesHealthy(): boolean {
-  return ready && [...statuses.values()].every((entry) => entry.healthy);
+  return ready && [...statuses.values()].every((entry) => !entry.required || entry.healthy);
 }
 
 export function getDatabaseHealth(): { ready: boolean; databases: DatabaseHealth[] } {

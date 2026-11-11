@@ -9,32 +9,40 @@ import { playerPointsPool } from "./playerpoints-db";
 import { reputationPool } from "./reputation-db";
 import { skinsPool } from "./skins-db";
 
-export const DATABASES_FOR_CHECK: Record<string, DatabaseItem> = {
+/**
+ * `required` databases gate boot and readiness: without them auth, bans,
+ * profiles or balances cannot be served, so failing fast is safer. The rest are
+ * game-server or analytics databases; their own routes degrade instead of
+ * taking the whole API down.
+ */
+export type AppDatabaseItem = DatabaseItem & { required: boolean }
+
+export const DATABASES_FOR_CHECK: Record<string, AppDatabaseItem> = {
   bisquite: {
-    pool: bisquitePool, dialect: "mariadb",
+    pool: bisquitePool, dialect: "mariadb", required: false,
   },
   lobby: {
-    pool: lobbyPool, dialect: "mysql",
+    pool: lobbyPool, dialect: "mysql", required: false,
   },
   luckperms: {
-    pool: luckpermsPool, dialect: "postgres",
+    pool: luckpermsPool, dialect: "postgres", required: true,
   },
   general: {
-    pool: generalPool, dialect: "postgres",
+    pool: generalPool, dialect: "postgres", required: true,
   },
   reputation: {
-    pool: reputationPool, dialect: "mysql",
+    pool: reputationPool, dialect: "mysql", required: false,
   },
   skins: {
-    pool: skinsPool, dialect: "mysql",
+    pool: skinsPool, dialect: "mysql", required: true,
   },
   playerpoints: {
-    pool: playerPointsPool, dialect: "mysql",
+    pool: playerPointsPool, dialect: "mysql", required: true,
   },
   libertybans: {
-    pool: libertybansPool, dialect: "postgres",
+    pool: libertybansPool, dialect: "postgres", required: true,
   },
   plan: {
-    pool: planPool, dialect: "mysql",
+    pool: planPool, dialect: "mysql", required: false,
   },
 };
