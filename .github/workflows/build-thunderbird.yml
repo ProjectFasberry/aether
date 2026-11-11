@@ -15,7 +15,7 @@ on:
       stage:
         description: Image stage
         type: choice
-        options: [prod, staging]
+        options: [prod, staging, dev]
         default: prod
 
 concurrency:
@@ -27,10 +27,22 @@ jobs:
     runs-on: [self-hosted, linux, x64, fasberry]
     permissions:
       contents: read
-    env:
-      STAGE: ${{ github.event_name == 'workflow_dispatch' && inputs.stage || 'prod' }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve stage
+        id: stage
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            stage="${{ inputs.stage }}"
+          else
+            case "${{ github.ref_name }}" in
+              main) stage=prod ;;
+              staging) stage=staging ;;
+              *) stage=dev ;;
+            esac
+          fi
+          echo "stage=$stage" >> "$GITHUB_OUTPUT"
 
       - uses: docker/login-action@v3
         with:
@@ -49,20 +61,21 @@ jobs:
           platforms: linux/amd64
           push: true
           build-args: |
-            STAGE=${{ env.STAGE }}
+            STAGE=${{ steps.stage.outputs.stage }}
           secrets: |
             npm_token=${{ secrets.NODE_AUTH_TOKEN }}
           tags: |
-            ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:latest
-            ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:sha-${{ github.sha }}
-          cache-from: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:buildcache
-          cache-to: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird:buildcache,mode=max
+            ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird:latest
+            ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird:sha-${{ github.sha }}
+          cache-from: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird:buildcache
+          cache-to: type=registry,ref=${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird:buildcache,mode=max
+
       - name: Notify glaux (Telegram + Gotify) about the pushed image
         continue-on-error: true
         env:
           ALERT_URL: ${{ vars.ALERT_URL || 'https://panel.fasberry.fun/internal/alerts' }}
           ALERT_KEY: ${{ secrets.ALERT_KEY }}
-          IMAGE: ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ env.STAGE }}/thunderbird
+          IMAGE: ${{ vars.REGISTRY_HOST || 'registry.fasberry.fun' }}/${{ steps.stage.outputs.stage }}/thunderbird
         run: |
           [ -n "$ALERT_KEY" ] || { echo "ALERT_KEY is not set; skipping"; exit 0; }
           TITLE="image pushed: ${IMAGE}:latest"
