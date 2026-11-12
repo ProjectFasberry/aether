@@ -204,15 +204,17 @@ export const register = {
 						referral: nickname,
 						referrer: findout,
 					});
-					registerLogger.debug(result);
+					// Only a boolean is safe to log: the Kysely insert result carries a
+					// bigint that would break a structured logger.
+					registerLogger.debug({ referrer: findout, referral: nickname, registered: Boolean(result) });
 				},
 				custom: async () => {
-          const val = await trx
+          await trx
             .insertInto("findout")
             .values({ nickname, value: findout })
             .executeTakeFirstOrThrow();
 
-          registerLogger.debug(val);
+          registerLogger.debug({ nickname, findoutType });
 				},
 			};
 

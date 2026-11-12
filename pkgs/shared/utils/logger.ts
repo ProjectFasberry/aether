@@ -14,6 +14,23 @@ type ScopedLogger = typeof logger & {
 const structured = Bun.env["LOG_FORMAT"] === "json" || Bun.env["LOG_JSON"] === "true";
 const level = Bun.env["LOG_LEVEL"] ?? "debug";
 
+/**
+ * Logging must never fail a request. Driver results carry `bigint`
+ * (`numInsertedOrUpdatedRows`), which `JSON.stringify` refuses, and any object
+ * may be circular, so both are degraded to strings instead of thrown.
+ */
+function stringify(value: object, space: number): string {
+  try {
+    return JSON.stringify(
+      value,
+      (_key, nested) => typeof nested === "bigint" ? nested.toString() : nested,
+      space,
+    );
+  } catch {
+    return String(value);
+  }
+}
+
 const devFormat = format.combine(
   format.timestamp({ format: 'HH:mm:ss' }),
   format.colorize({ level: true }),
@@ -42,13 +59,7 @@ const devFormat = format.combine(
     }
 
     if (msg !== null && typeof msg === "object") {
-      const json = JSON.stringify(
-        msg,
-        null,
-        originalLevel === "debug" ? 0 : 2,
-      );
-
-      return `${prefix}: ${json}`;
+      return `${prefix}: ${stringify(msg, originalLevel === "debug" ? 0 : 2)}`;
     }
 
     return `${prefix}: ${msg}`;
