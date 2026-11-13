@@ -170,7 +170,11 @@ export const register = {
 				: await dbInstance.transaction().execute(register);
 
 			if (isProduction) {
-				await this.registrationEvents({ nickname, uuid });
+				// Best-effort after commit: skins DB or MinIO downtime must not delay
+				// or fail an already successful registration.
+				void this.registrationEvents({ nickname, uuid }).catch((error) => {
+					registerLogger.error({ message: `registration events failed for ${nickname}`, error });
+				});
 			}
 
 			if (isProduction) {

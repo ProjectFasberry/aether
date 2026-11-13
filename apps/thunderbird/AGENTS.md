@@ -28,6 +28,7 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 | Servers | `src/modules/{server,server-ip}` | - |
 | Content | `src/modules/{news,wiki,rules,banner,modpack,releases,content}` | - |
 | Players | `src/modules/{user,avatars,fact,misc}` | - |
+| Skins | `src/modules/server/skin`, `pkgs/core/src/modules/skins` | [skins.md](agent-docs/skins.md) |
 | Private panel | `src/modules/private/*` | - |
 
 ## Layout
