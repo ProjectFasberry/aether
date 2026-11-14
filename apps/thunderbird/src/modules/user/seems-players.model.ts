@@ -24,207 +24,143 @@ export type SeemsLikePlayersPayload = {
 	};
 };
 
+/** Bumped when the cached payload or the key layout changes. */
+const CACHE_VERSION = "v2";
+
 export const SEEMS_LIKE_LAST_UPDATE_KEY = (nickname: string) =>
-	getRedisKey("internal", `seems-like:last-update:${nickname}:data`);
-export const SEEMS_LIKE_LIST_KEY = (nickname: string) => getRedisKey("internal", `seems-like:list:${nickname}:data`);
+	getRedisKey("internal", `seems-like:${CACHE_VERSION}:last-update:${nickname.toLowerCase()}:data`);
+export const SEEMS_LIKE_LIST_KEY = (nickname: string) =>
+	getRedisKey("internal", `seems-like:${CACHE_VERSION}:list:${nickname.toLowerCase()}:data`);
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 const TTL_MS = SIX_HOURS_MS;
 const LIMIT = 32;
+const PLAYER_PAGE_SIZE = 1000;
+const BATCH_SIZE = 100;
+const CONCURRENCY = 16;
 
-export async function updateSeemsLikeList() {
-  const redisClient = redisService.getInstance()
-	const BATCH_SIZE = 100;
-	const CONCURRENCY = 16;
-	const limit = pLimit(CONCURRENCY);
+type BatchPlayer = { nickname: string; uuid: string };
+type RawSeemsLikePlayer = Omit<SeemsLikePlayer, "avatar">;
+type LandMembers = Record<string, { chunks: number }>;
+type FullPlayer = { nickname: string; uuid: string; role_id?: number };
 
-	const players = await general.selectFrom("players").select(["nickname", "uuid"]).limit(1000).execute();
+/**
+ * The list is rebuilt for one player on a cache miss, so a new player does not
+ * have to wait for the next cron tick. Concurrent requests share one lookup.
+ */
+const inflight = new Map<string, Promise<RawSeemsLikePlayer[]>>();
 
-	if (players.length === 0) {
-		return;
-	}
-
-	const start = Date.now();
-	const candidates: { nickname: string; uuid: string }[] = [];
-
-	const pipeline = redisClient.multi();
-
-	for (const p of players) {
-		pipeline.get(SEEMS_LIKE_LAST_UPDATE_KEY(p.nickname));
-	}
-
-	const results = await pipeline.exec();
-	if (!results) return;
-
-	results.forEach((res, i) => {
-		const [, value] = res as [Error | null, string | null];
-
-		const ts = Number(value ?? 0);
-
-		if (!value || Number.isNaN(ts) || start - ts > SIX_HOURS_MS) {
-			candidates.push(players[i]);
-		}
-	});
-
-	if (candidates.length === 0) {
-		return;
-	}
-
-	if (!isProduction) {
-		logger.debug(`Updating ${candidates.length} players`);
-	}
-
-	let successCount = 0;
-	let errorCount = 0;
-
-	async function processBatch(batch: { nickname: string; uuid: string }[], index: number) {
-		const batchStart = Date.now();
-
-		const batchResult = await processSeemsLikePlayersBatch(batch);
-
-		await Promise.all(
-			batch.map((player) =>
-				limit(async () => {
-					try {
-						const data = batchResult[player.nickname];
-						const multi = redisClient.multi();
-
-						multi.set(SEEMS_LIKE_LIST_KEY(player.nickname), JSON.stringify(data), "PX", TTL_MS);
-						multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname), Date.now().toString(), "PX", TTL_MS);
-
-						await multi.exec();
-
-						successCount++;
-
-						if (!isProduction) {
-							logger.debug(`${player.nickname} updated (${successCount}/${candidates.length})`);
-						}
-					} catch (err) {
-						errorCount++;
-						logger.error({ message: "seems-like update failed", nickname: player.nickname, error: err });
-					}
-				}),
-			),
-		);
-	}
-
-	for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
-		const batch = candidates.slice(i, i + BATCH_SIZE);
-		await processBatch(batch, i / BATCH_SIZE);
-		await new Promise((res) => setTimeout(res, 500));
-	}
-}
-
-async function getRandomPlayers(limit: number) {
+async function getRandomPlayers(limit: number, excludeUuid: string) {
 	return general
 		.selectFrom("players")
 		.select(["nickname", "uuid"])
+		.where("uuid", "!=", excludeUuid)
 		.orderBy(sql`RANDOM()`)
 		.limit(limit)
 		.execute();
 }
 
-type RawSeemsLikePlayer = Omit<SeemsLikePlayer, "avatar">
-
+/**
+ * Builds "seems like" candidates from the members of the player's lands. A
+ * player with no lands, or with no known co-members, gets a random fallback so
+ * the block is never empty for a normal account.
+ */
 export async function processSeemsLikePlayersBatch(
-	batch: { nickname: string; uuid: string }[],
+	batch: BatchPlayer[],
 ): Promise<Record<string, RawSeemsLikePlayer[]>> {
-	const batchNicknames = batch.map((p) => p.nickname);
+	if (batch.length === 0) return {};
+
+	const batchByUuid = new Map(batch.map((player) => [player.uuid, player]));
 
 	const lands = await bisquite
 		.selectFrom("lands_lands")
-		.innerJoin("lands_players", "lands_players.edit_land", "lands_lands.ulid")
-		.select(["lands_lands.ulid", "lands_lands.members", "lands_players.name as player_name"])
-		.where("lands_players.name", "in", batchNicknames)
+		.select(["ulid", "members"])
+		.where((eb) =>
+			eb.or(batch.map((player) => eb("lands_lands.members", "like", `%${player.uuid}%`))),
+		)
 		.orderBy("lands_lands.created_at", "asc")
 		.execute();
 
-	const playerToMembersMap: Record<string, Set<string>> = {};
+	const playerToMembers = new Map<string, Set<string>>();
+	const playerLandCounts = new Map<string, number>();
 
-	for (const { ulid, members } of lands) {
-		type Members = Record<string, { chunks: number }>;
+	for (const land of lands) {
+		const parsedMembers = safeJsonParse<LandMembers>(land.members);
 
-		if (!playerToMembersMap[ulid]) {
-			playerToMembersMap[ulid] = new Set();
+		if (!parsedMembers.ok) {
+			logger.error(parsedMembers.error.message);
+			continue;
 		}
 
-		const parsedMembers = safeJsonParse<Members>(members);
+		const memberUuids = Object.keys(parsedMembers.value);
 
-		if (parsedMembers.ok) {
-			for (const [memberUUID, _] of Object.entries(parsedMembers.value)) {
-				if (memberUUID !== ulid) {
-					playerToMembersMap[ulid].add(memberUUID);
-				}
+		for (const memberUuid of memberUuids) {
+			if (!batchByUuid.has(memberUuid)) continue;
+
+			playerLandCounts.set(memberUuid, (playerLandCounts.get(memberUuid) ?? 0) + 1);
+
+			let peers = playerToMembers.get(memberUuid);
+			if (!peers) {
+				peers = new Set();
+				playerToMembers.set(memberUuid, peers);
 			}
-		} else {
-			logger.error(parsedMembers.error.message)
+
+			for (const peerUuid of memberUuids) {
+				if (peerUuid !== memberUuid) peers.add(peerUuid);
+			}
 		}
 	}
 
-	const allMembersSet = new Set<string>();
+	const allMemberUuids = new Set<string>();
+	for (const peers of playerToMembers.values()) {
+		for (const uuid of peers) allMemberUuids.add(uuid);
+	}
 
-	Object.values(playerToMembersMap).forEach((set) => {
-		set.forEach((name) => {
-			allMembersSet.add(name);
-		});
-	});
-
-	const allMembers = Array.from(allMembersSet);
-
-	type FullPlayer = { nickname: string; uuid: string; role_id?: number };
-
-	const fullPlayersMap: Record<string, FullPlayer> = {};
-
-	if (allMembers.length > 0) {
-		const fullPlayers = await general
+	const fullPlayers = allMemberUuids.size > 0
+		? await general
 			.selectFrom("players")
 			.select(["nickname", "uuid", "role_id"])
-			.where("uuid", "in", allMembers)
+			.where("uuid", "in", Array.from(allMemberUuids))
 			.orderBy("role_id", "desc")
-			.execute();
+			.execute()
+		: [];
 
-		fullPlayers.forEach((p) => {
-			fullPlayersMap[p.nickname] = p;
-		});
-	}
-
+	const playersByUuid = new Map(fullPlayers.map((player) => [player.uuid, player]));
 	const result: Record<string, RawSeemsLikePlayer[]> = {};
 
 	for (const player of batch) {
 		const data: RawSeemsLikePlayer[] = [];
-		const members = playerToMembersMap[player.nickname] ?? new Set();
+		const seen = new Set<string>();
+		const peers = playerToMembers.get(player.uuid) ?? new Set<string>();
+		const landCount = playerLandCounts.get(player.uuid) ?? 0;
+		const seemsRate = Math.min(1, Math.log2(landCount + 1) / 3);
 
-		members.delete(player.nickname);
+		for (const peerUuid of peers) {
+			if (peerUuid === player.uuid || seen.has(peerUuid)) continue;
 
-		let count = 0;
+			const peer = playersByUuid.get(peerUuid);
+			if (!peer) continue;
 
-		const med = Math.log2(lands.filter((l) => l.player_name === player.nickname).length + 1) / 3;
-		const seemsRate = Math.min(1, med);
+			seen.add(peerUuid);
+			data.push({ nickname: peer.nickname, uuid: peer.uuid, seemsRate });
 
-		for (const name of members) {
-			const player = fullPlayersMap[name];
-
-			const { nickname, uuid } = player;
-
-			if (player && count < LIMIT) {
-				data.push({ nickname, uuid, seemsRate });
-				count++;
-			}
+			if (data.length >= LIMIT) break;
 		}
 
 		if (data.length === 0) {
-			const randomPlayers = await getRandomPlayers(LIMIT + 1);
+			const randomPlayers = await getRandomPlayers(LIMIT, player.uuid);
 
-			for (const p of randomPlayers) {
-				if (p.nickname === player.nickname) {
-					continue;
-				}
+			for (const randomPlayer of randomPlayers) {
+				if (randomPlayer.uuid === player.uuid || seen.has(randomPlayer.uuid)) continue;
 
-				data.push({ nickname: p.nickname, uuid: p.uuid, seemsRate: 0.1 });
+				seen.add(randomPlayer.uuid);
+				data.push({
+					nickname: randomPlayer.nickname,
+					uuid: randomPlayer.uuid,
+					seemsRate: 0.1,
+				});
 
-				if (data.length >= LIMIT) {
-					break;
-				}
+				if (data.length >= LIMIT) break;
 			}
 		}
 
@@ -234,52 +170,196 @@ export async function processSeemsLikePlayersBatch(
 	return result;
 }
 
+async function getStalePlayers(
+	redisClient: ReturnType<typeof redisService.getInstance>,
+	players: BatchPlayer[],
+	now: number,
+): Promise<BatchPlayer[]> {
+	const pipeline = redisClient.multi();
+
+	for (const player of players) {
+		pipeline.get(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname));
+	}
+
+	const results = await pipeline.exec();
+	if (!results) return [];
+
+	const candidates: BatchPlayer[] = [];
+
+	results.forEach((entry, index) => {
+		const [, value] = entry as [Error | null, string | null];
+		const timestamp = Number(value ?? 0);
+
+		if (!value || !Number.isFinite(timestamp) || now - timestamp > SIX_HOURS_MS) {
+			candidates.push(players[index]);
+		}
+	});
+
+	return candidates;
+}
+
+export async function updateSeemsLikeList() {
+	const redisClient = redisService.getInstance();
+	const limit = pLimit(CONCURRENCY);
+	const startedAt = Date.now();
+
+	let lastNickname = "";
+	let total = 0;
+	let successCount = 0;
+	let errorCount = 0;
+
+	while (true) {
+		const players = await general
+			.selectFrom("players")
+			.select(["nickname", "uuid"])
+			.where("nickname", ">", lastNickname)
+			.orderBy("nickname", "asc")
+			.limit(PLAYER_PAGE_SIZE)
+			.execute();
+
+		if (players.length === 0) break;
+
+		lastNickname = players[players.length - 1].nickname;
+		total += players.length;
+
+		const candidates = await getStalePlayers(redisClient, players, startedAt);
+		if (candidates.length === 0) continue;
+
+		if (!isProduction) {
+			logger.debug(`Updating ${candidates.length} seems-like players`);
+		}
+
+		for (let i = 0; i < candidates.length; i += BATCH_SIZE) {
+			const batch = candidates.slice(i, i + BATCH_SIZE);
+
+			try {
+				const batchResult = await processSeemsLikePlayersBatch(batch);
+
+				await Promise.all(
+					batch.map((player) =>
+						limit(async () => {
+							try {
+								const data = batchResult[player.nickname] ?? [];
+								const multi = redisClient.multi();
+
+								multi.set(SEEMS_LIKE_LIST_KEY(player.nickname), JSON.stringify(data), "PX", TTL_MS);
+								multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(player.nickname), Date.now().toString(), "PX", TTL_MS);
+
+								await multi.exec();
+								successCount++;
+							} catch (error) {
+								errorCount++;
+								logger.error({ message: "seems-like cache write failed", nickname: player.nickname, error });
+							}
+						}),
+					),
+				);
+			} catch (error) {
+				errorCount += batch.length;
+				logger.error({ message: "seems-like batch failed", error });
+			}
+
+			await new Promise((resolve) => setTimeout(resolve, 500));
+		}
+	}
+
+	logger.info({
+		message: "seems-like update finished",
+		total,
+		successCount,
+		errorCount,
+		durationMs: Date.now() - startedAt,
+	});
+}
+
+async function computeSeemsLikeList(nickname: string): Promise<RawSeemsLikePlayer[]> {
+	const key = nickname.toLowerCase();
+	const existing = inflight.get(key);
+	if (existing) return existing;
+
+	const promise = (async () => {
+		const player = await general
+			.selectFrom("players")
+			.select(["nickname", "uuid"])
+			.where(sql`lower(players.nickname)`, "=", key)
+			.executeTakeFirst();
+
+		if (!player) return [];
+
+		const batchResult = await processSeemsLikePlayersBatch([player]);
+
+		return batchResult[player.nickname] ?? [];
+	})().finally(() => {
+		inflight.delete(key);
+	});
+
+	inflight.set(key, promise);
+
+	return promise;
+}
+
+async function readCachedSeemsLikeList(nickname: string): Promise<RawSeemsLikePlayer[] | null> {
+	const redisClient = redisService.getInstance();
+	const dataStr = await redisClient.get(SEEMS_LIKE_LIST_KEY(nickname));
+
+	if (!dataStr) return null;
+
+	const result = safeJsonParse<RawSeemsLikePlayer[]>(dataStr);
+
+	if (!result.ok) {
+		logger.error(result.error.message);
+		return null;
+	}
+
+	return result.value;
+}
+
+async function writeCachedSeemsLikeList(nickname: string, data: RawSeemsLikePlayer[]): Promise<void> {
+	const redisClient = redisService.getInstance();
+	const multi = redisClient.multi();
+
+	multi.set(SEEMS_LIKE_LIST_KEY(nickname), JSON.stringify(data), "PX", TTL_MS);
+	multi.set(SEEMS_LIKE_LAST_UPDATE_KEY(nickname), Date.now().toString(), "PX", TTL_MS);
+
+	await multi.exec();
+}
+
 export async function getSeemsLikePlayersByPlayer(
 	nickname: string,
 	{ limit }: z.infer<typeof seemsPlayersSchema>,
 ): Promise<SeemsLikePlayersPayload> {
-  const redisClient = redisService.getInstance()
+	let data = await readCachedSeemsLikeList(nickname);
 
-	const dataStr = await redisClient.get(SEEMS_LIKE_LIST_KEY(nickname));
+	if (!data) {
+		data = await computeSeemsLikeList(nickname);
 
-	if (!dataStr)
-		return {
-			data: [],
-			meta: { count: 0 },
-		};
-
-	const result = safeJsonParse<SeemsLikePlayer[]>(dataStr);
-
-	if (!result.ok) {
-		logger.error(result.error.message);
-
-		return {
-			data: [],
-			meta: { count: 0 },
-		};
+		if (data.length > 0) {
+			await writeCachedSeemsLikeList(nickname, data);
+		}
 	}
 
-	let data = result.value.filter((d) => d.nickname !== nickname);
+	const normalizedNickname = nickname.toLowerCase();
+	const take = Math.min(Math.max(limit ?? LIMIT, 1), LIMIT);
 
-	if (limit) {
-		data = data.slice(0, limit);
-	}
+	data = data
+		.filter((entry) => entry.nickname.toLowerCase() !== normalizedNickname)
+		.slice(0, take);
 
-	const avatarsMap = await skinsService.players.getAvatar(data.map(r => r.nickname));
+	const avatarsMap = await skinsService.players.getAvatar(data.map((entry) => entry.nickname));
 
-	data = data.map((row) => ({
-		...row,
-		avatar: avatarsMap[row.nickname]
-	}))
+	const payload = data.map((entry) => ({
+		...entry,
+		avatar: avatarsMap[entry.nickname],
+	}));
 
 	return {
-		data,
+		data: payload,
 		meta: {
-			count: data.length,
+			count: payload.length,
 		},
 	};
 }
 
 export const seemsPlayersSchema = z.object({
-	limit: z.coerce.number().optional(),
+	limit: z.coerce.number().int().min(1).max(LIMIT).optional(),
 });
