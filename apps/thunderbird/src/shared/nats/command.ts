@@ -375,7 +375,9 @@ export async function callSkinsApply({
 }): Promise<void> {
   const nc = natsService.getInstance()
   const js = jetstream(nc)
-  const target = server?.toLowerCase() ?? await resolveTargetServer(nickname)
+  // Offline players still need a live backend to persist the shared row;
+  // bisquite is the default but it is not always running.
+  const target = server?.toLowerCase() ?? await resolveTargetServer(nickname, "lobby")
   const commandId = randomUUID()
 
   const payload = {

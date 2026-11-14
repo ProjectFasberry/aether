@@ -4,6 +4,7 @@ import { subscribePlayerJoin } from "./subscribers/sub-player-join";
 import { subscribeReferralCheck } from "./subscribers/sub-referals";
 import { subscribeReferralReward } from "./subscribers/sub-referals";
 import { subscribeConfig } from "./subscribers/sub-config";
+import { subscribeSkinsChanged } from "./subscribers/sub-skins-changed";
 
 export const SUBSCRIBERS: NatsSubscription[] = [
 	{
@@ -23,5 +24,9 @@ export const SUBSCRIBERS: NatsSubscription[] = [
   {
     name: "subscribeConfig",
     cb: (nc) => subscribeConfig(nc, `${SUBJECTS.CONFIG.BASE}.>`)
+  },
+  {
+    name: "Skins changed",
+    cb: (nc) => subscribeSkinsChanged(nc, SUBJECTS.EVENTS.SKINS.CHANGED),
   }
 ]
