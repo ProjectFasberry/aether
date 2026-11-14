@@ -4,8 +4,7 @@ import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { skinsHistorySchema } from "@repo/core/modules/skins/index"
-import { skinsService } from "../../../shared/services/skins";
-import { buildRouteSummary } from "#/lib/routes";
+import { skinsService } from "../../../shared/services/skins";import { buildRouteSummary } from "#/lib/routes";
 import { minioService } from "#/shared/services/minio";
 
 const skinNameSchema = t.String({ minLength: 1, maxLength: 36 })
@@ -14,8 +13,12 @@ const setSkinResponses = {
   200: withData(t.Literal("OK")),
   403: withError(t.UnionEnum(["SKIN_FORBIDDEN"])),
   404: withError(t.UnionEnum(["SKIN_NOT_FOUND", "PLAYER_NOT_FOUND"])),
-  500: withError(t.UnionEnum(["INTERNAL_SERVER_ERROR"]))
+  500: withError(t.UnionEnum(["INTERNAL_SERVER_ERROR"])),
+  503: withError(t.UnionEnum(["SERVER_OFFLINE"])),
 }
+
+const setSkinStatus = (error: "SKIN_FORBIDDEN" | "SERVER_OFFLINE" | "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND") =>
+  error === "SKIN_FORBIDDEN" ? 403 : error === "SERVER_OFFLINE" ? 503 : 404
 
 const history = new Elysia()
   .get("/history/:nickname", async ({ params: { nickname } }) => {
@@ -37,7 +40,7 @@ const current = new Elysia()
       const result = await skinsService.skin.setSkin(nickname, skinName, minioService.getInstance)
 
       if (!result.ok) {
-        return status(result.error === "SKIN_FORBIDDEN" ? 403 : 404, wrapError(result.error))
+        return status(setSkinStatus(result.error), wrapError(result.error))
       }
 
       return { data: "OK" as const }
@@ -65,7 +68,7 @@ const set = new Elysia()
       const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
 
       if (!result.ok) {
-        return status(result.error === "SKIN_FORBIDDEN" ? 403 : 404, wrapError(result.error))
+        return status(setSkinStatus(result.error), wrapError(result.error))
       }
 
       return { data: "OK" as const }

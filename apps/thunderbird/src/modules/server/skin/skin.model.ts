@@ -9,15 +9,17 @@ import { URL } from "node:url";
 import { sql, type Transaction } from "kysely";
 import type { DB } from "@gen/db/skins";
 import { client as inheritClient } from "#/shared/api/client";
-import { wrapError } from "@repo/shared/lib/helpers";
 import type { KyInstance } from "ky";
-import type { Context } from "elysia";
 import { nanoid } from "nanoid";
 import { skinsService } from "../../../shared/services/skins";
 import { playerService } from "#/shared/services/player";
 import { minioService } from "#/shared/services/minio";
 import { logger } from "@repo/shared/utils/logger";
 import { recordSkinAudit } from "@repo/core/modules/skins/index";
+import { allowRequest } from "#/shared/services/rate-limit";
+import { assertValidSkinFile, InvalidSkinFileError } from "./skin-file";
+
+export { InvalidSkinFileError } from "./skin-file";
 
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
@@ -25,14 +27,12 @@ const MINESKIN_URL_PREFIX = "https://minesk.in/";
 const ENCRYPTED_URL_SCHEME = "skinsrestorer-axolotl://";
 const DEFAULT_POLL_INTERVAL_MS = 1_000;
 const MAX_POLL_DURATION_MS = 5 * 60 * 1_000;
-const CAPE_CACHE_TTL_MS = 5 * 60 * 1_000;
 
 const uploadNameSchema = z.string().trim().min(1).max(64).optional();
 
 const uploadFormSchema = z.object({
   variant: z.enum(["classic", "slim"]),
   name: uploadNameSchema,
-  capeUuid: z.uuid(),
 });
 
 export class ConfigurationError extends Error {
@@ -47,6 +47,14 @@ export class UpstreamError extends Error {
     super(message);
     this.name = "UpstreamError";
     this.status = status;
+  }
+}
+
+/** Per-account upload quota or cooldown; maps to 429 RATE_LIMITED. */
+export class RateLimitedError extends Error {
+  constructor(message = "RATE_LIMITED") {
+    super(message);
+    this.name = "RateLimitedError";
   }
 }
 
@@ -354,12 +362,6 @@ const mineSkinSanitizedSkinSchema = z.object({
   url: z.string(),
 });
 
-const mineSkinCapeSchema = z.object({
-  uuid: z.string(),
-  alias: z.string(),
-  url: z.url(),
-});
-
 const mineSkinSanitizedResponseSchema = z.object({
   success: z.literal(true),
   skin: mineSkinSanitizedSkinSchema.nullable(),
@@ -377,14 +379,12 @@ export const uploadBodySchema = z.object({
   file: z.file().min(1).max(MAX_SKIN_FILE_SIZE).mime("image/png"),
   variant: uploadFormSchema.shape.variant,
   name: uploadNameSchema,
-  capeUuid: uploadFormSchema.shape.capeUuid.optional(),
 })
 
 type MineSkinError = z.infer<typeof mineSkinErrorSchema>;
 type MineSkinJobDetails = z.infer<typeof mineSkinJobDetailsSchema>;
 type MineSkinJobSuccessResponse = z.infer<typeof mineSkinJobSuccessSchema>;
 type MineSkinSanitizedResponse = z.infer<typeof mineSkinSanitizedResponseSchema>;
-type MineSkinCape = z.infer<typeof mineSkinCapeSchema>;
 type MineSkinRateLimitInfo = z.infer<typeof mineSkinRateLimitInfoSchema>;
 type MineSkinUsageInfo = z.infer<typeof mineSkinUsageInfoSchema>;
 
@@ -473,25 +473,6 @@ async function enqueueMineSkinJob(fd: FormData): Promise<MineSkinJobDetails> {
   }
 }
 
-type MineSkinCapeResponse = MineSkinGenericResponse & {
-  capes?: (MineSkinCape & { supported?: boolean })[];
-};
-
-function ensureHttpsTextureUrl(url?: string | null): string | undefined {
-  if (!url) return undefined;
-
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol === "http:") {
-      parsed.protocol = "https:";
-    }
-    return parsed.toString();
-  } catch (e) {
-    logger.warn({ message: "Failed to normalise cape URL", error: e });
-    return url;
-  }
-}
-
 function encryptMineSkinUuid(uuid: string): string {
   function getAesSecretKey(): Buffer {
     if (!getEnv().MINESKIN_AES_SECRET_KEY) {
@@ -548,77 +529,21 @@ function encryptMineSkinUrls(obj: unknown): unknown {
   return obj;
 }
 
-async function fetchMineSkinSupportedCapes(): Promise<MineSkinCape[]> {
-  const mineskin = getMineSkinClient()
-  const response = await mineskin(`capes`)
-
-  const data = (await response.json()) as MineSkinCapeResponse;
-
-  if (!response.ok || data.success === false) {
-    const status = response.ok ? 502 : response.status;
-    throw new UpstreamError(status, getMineSkinErrorMessage(data));
-  }
-
-  const capes = (data.capes ?? [])
-    .filter((cape) => cape.supported)
-    .map((cape) => ({
-      uuid: cape.uuid,
-      alias: cape.alias,
-      url: ensureHttpsTextureUrl(cape.url) ?? cape.url,
-    }));
-
-  try {
-    const parsed = z.array(mineSkinCapeSchema).parse(capes);
-    return encryptMineSkinUrls(parsed) as MineSkinCape[];
-  } catch (error) {
-    logMineSkinParsingError("MineSkin cape response", capes, error);
-    throw new UpstreamError(502, "Unexpected MineSkin cape response");
-  }
-}
-
-let cachedSupportedCapes: { data: MineSkinCape[]; fetchedAt: number } | null = null;
-
-async function getSupportedCapes(): Promise<MineSkinCape[]> {
-  const now = Date.now();
-  if (
-    cachedSupportedCapes &&
-    now - cachedSupportedCapes.fetchedAt < CAPE_CACHE_TTL_MS
-  ) {
-    return cachedSupportedCapes.data;
-  }
-
-  const capes = await fetchMineSkinSupportedCapes();
-  cachedSupportedCapes = { data: capes, fetchedAt: now };
-  return capes;
-}
-
 export async function uploadSkin(
   query: z.infer<typeof uploadQuerySchema>,
   body: z.infer<typeof uploadBodySchema>
 ) {
-  let waitMs = DEFAULT_POLL_INTERVAL_MS;
+  const waitMs = query.waitMs ?? DEFAULT_POLL_INTERVAL_MS;
 
-  try {
-    waitMs = query.waitMs ?? DEFAULT_POLL_INTERVAL_MS;
-  } catch (error) {
-    return { status: 400, error: wrapError(error).error }
-  }
-
-  const { file, variant, capeUuid, name } = body
+  const { file, variant, name } = body
 
   if (!isFileLike(file)) {
-    return { status: 400, error: "A skin file must be provided" }
+    throw new InvalidSkinFileError("A skin file must be provided")
   }
 
+  await assertValidSkinFile(file)
+
   try {
-    if (capeUuid) {
-      const supportedCapes = await getSupportedCapes();
-
-      if (!supportedCapes.some((cape) => cape.uuid === capeUuid)) {
-        return { status: 400, error: "Requested cape is not supported" }
-      }
-    }
-
     const upstreamFormData = new FormData();
 
     upstreamFormData.set("file", file);
@@ -667,15 +592,46 @@ export async function deleteOldSkins({
 
   const signatures = [...new Set(cs.map(d => d.signature))];
 
+  // Only this player's history rows may go; another player can reference the
+  // same skin name (public skins, old data).
   await trx
     .deleteFrom("sr_player_history")
     .where("skin_identifier", "in", ids)
+    .where("uuid", "=", uuid)
     .execute()
 
-  await trx
-    .deleteFrom("sr_custom_skins")
-    .where("name", "in", ids)
-    .execute()
+  const [historyRefs, playerRefs] = await Promise.all([
+    trx
+      .selectFrom("sr_player_history")
+      .select("skin_identifier")
+      .where("skin_identifier", "in", ids)
+      .execute(),
+    trx
+      .selectFrom("sr_players")
+      .select("skin_identifier")
+      .where("skin_identifier", "in", ids)
+      .execute(),
+  ])
+
+  const stillReferenced = new Set(
+    [...historyRefs, ...playerRefs]
+      .map((ref) => ref.skin_identifier)
+      .filter((id): id is string => Boolean(id)),
+  )
+  const removableIds = ids.filter((id) => !stillReferenced.has(id))
+
+  if (removableIds.length) {
+    await trx
+      .deleteFrom("sr_custom_skins")
+      .where("name", "in", removableIds)
+      .execute()
+
+    // Ownership rows follow the asset; audit rows are history and stay.
+    await sql`
+      delete from skin_owners
+      where skin_name in (${sql.join(removableIds.map((id) => sql`${id}`), sql`, `)})
+    `.execute(trx)
+  }
 
   // `sr_url_skins` is keyed by signature, which another custom skin can share:
   // only orphan rows may go.
@@ -690,13 +646,7 @@ export async function deleteOldSkins({
     `.execute(trx)
   }
 
-  // Ownership rows follow the asset; audit rows are history and stay.
-  await sql`
-    delete from skin_owners
-    where skin_name in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
-  `.execute(trx)
-
-  return ids
+  return removableIds
 }
 
 type UploadPayload = {
@@ -716,13 +666,17 @@ export async function upload(
   nickname: string,
   query: z.infer<typeof uploadQuerySchema>,
   body: z.infer<typeof uploadBodySchema>,
-  { status }: { status: Context["status"] }
 ): Promise<UploadPayload> {
-  const uploadResult = await uploadSkin(query, body)
-
-  if ("status" in uploadResult) {
-    throw status(uploadResult.status, uploadResult.error)
+  // Cooldown first: a spam attempt must not consume the daily quota.
+  if (!await allowRequest("skins:upload:cooldown", nickname.toLowerCase(), 1, 30)) {
+    throw new RateLimitedError()
   }
+
+  if (!await allowRequest("skins:upload:day", nickname.toLowerCase(), 5, 24 * 60 * 60)) {
+    throw new RateLimitedError()
+  }
+
+  const uploadResult = await uploadSkin(query, body)
 
   const { raw, sanitized } = uploadResult;
 

@@ -83,7 +83,7 @@ function resolveCommand(id: string | undefined, result: CommandResult): void {
   }
 }
 
-function waitForCommand(id: string): Promise<CommandResult> {
+function waitForCommand(id: string, timeoutMs = commandTimeout): Promise<CommandResult> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
       const waiters = commandWaiters.get(id);
@@ -93,7 +93,7 @@ function waitForCommand(id: string): Promise<CommandResult> {
       else commandWaiters.delete(id);
 
       resolve({ ok: false, error: "COMMAND_TIMEOUT" });
-    }, commandTimeout);
+    }, timeoutMs);
 
     const waiters = commandWaiters.get(id) ?? [];
     waiters.push({ resolve, timer });
@@ -213,7 +213,8 @@ export const startOrderConsumer = async (): Promise<void> => {
         decoded = parsed.value;
         commandSubject = `server.${(decoded.server ?? "bisquite").toLowerCase()}.command`;
 
-        const r = await nc.request(commandSubject, payload, { timeout });
+        const requestTimeout = decoded.event === "skinsApply" ? 15_000 : timeout;
+        const r = await nc.request(commandSubject, payload, { timeout: requestTimeout });
         const res = r.json<ResponseMsg>();
 
         if ("error" in res) {
@@ -309,8 +310,7 @@ export async function resolveTargetServer(recipient?: string, fallback?: string)
     : ENABLED_COMMAND_SERVERS[0];
 }
 
-export async function callServerCommand({ parent, value, meta }: CallServerCommand): Promise<{ result: "success" }> {
-  try {
+export async function callServerCommand({ parent, value, meta }: CallServerCommand): Promise<{ result: "success" }> {  try {
     const nc = natsService.getInstance()
 
     const { wait, recipient, fallbackServer, server, ...wireMeta } = meta ?? {};
@@ -358,4 +358,49 @@ export async function callServerCommand({ parent, value, meta }: CallServerComma
   } catch (e) {
     throw e
   }
+}
+
+/**
+ * Applies a skin selection on the backend that hosts the player. The plugin is
+ * the only writer of `sr_players` and history, so a failure means the change
+ * did not happen and the caller can retry.
+ */
+export async function callSkinsApply({
+  nickname, uuid, skinName, server,
+}: {
+  nickname: string,
+  uuid: string,
+  skinName: string,
+  server?: string,
+}): Promise<void> {
+  const nc = natsService.getInstance()
+  const js = jetstream(nc)
+  const target = server?.toLowerCase() ?? await resolveTargetServer(nickname)
+  const commandId = randomUUID()
+
+  const payload = {
+    event: "skinsApply",
+    commandId,
+    nickname,
+    uuid,
+    skinName,
+    server: target,
+  }
+
+  // Storage lookups on the game server can take longer than a console command.
+  const waiter = waitForCommand(commandId, 15_000)
+
+  try {
+    await js.publish(
+      "order",
+      JSON.stringify(payload),
+      { msgID: `${commandId}:${randomUUID()}` },
+    )
+  } catch (error) {
+    resolveCommand(commandId, { ok: false, error: "PUBLISH_FAILED" })
+    throw error
+  }
+
+  const result = await waiter
+  if (!result.ok) throw new Error(result.error)
 }
