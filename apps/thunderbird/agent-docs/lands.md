@@ -35,6 +35,10 @@ the rows, but an admin role still has to be granted them in the roles UI.
 - The game plugin owns the rest of the land lifecycle. The admin route inserts
   the `lands_lands` row only, exactly like the old create route; it does not
   write `lands_players`.
+- On an empty `lands_lands` the route builds a template itself: the latest
+  overworld from `lands_worlds` for the first `lands_servers` row, a `LAND` type,
+  zero stats and a minimal `area` JSON with a fresh Crockford ULID. This is what
+  makes creation work before the first player has ever created a land.
 
 ## Notes
 

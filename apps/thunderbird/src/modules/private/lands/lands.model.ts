@@ -12,6 +12,7 @@ import { t } from "elysia";
 import { sql, type Kysely, type Transaction } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import { nanoid } from "nanoid";
+import { randomBytes } from "node:crypto";
 
 export type LandMemberMap = Record<string, { chunks: number }>;
 
@@ -99,6 +100,8 @@ export const createManualLandSchema = t.Object({
 
 const LAND_ERRORS = {
 	NO_TEMPLATE: { msg: "No land template found", code: 500 },
+	NO_SERVER: { msg: "No lands server configured", code: 500 },
+	NO_WORLD: { msg: "No lands world configured", code: 500 },
 	PLAYER_NOT_FOUND: { msg: "Player not found", code: 404 },
 	PLAYER_IN_LAND: { msg: "Player already belongs to a land", code: 409 },
 	INVALID_PLAYERS: { msg: "Select at least one player", code: 400 },
@@ -291,6 +294,107 @@ export async function getEligiblePlayers({
 	}));
 }
 
+type LandTemplate = {
+	server: string;
+	world: string;
+	area: string;
+	type: string;
+	stats: string | null;
+	balance: number;
+	shield: number;
+	category: string | null;
+	nation: string | null;
+	spawn: string | null;
+	inbox: string | null;
+	limits: string | null;
+	icon: string | null;
+	storage: string | null;
+};
+
+const ULID_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+
+/** Crockford base32 ULID; Lands validates these identifiers. */
+function createUlid(): string {
+	const now = Date.now();
+	let timePart = "";
+	let time = now;
+
+	for (let index = 0; index < 10; index++) {
+		timePart = ULID_ALPHABET[time % 32] + timePart;
+		time = Math.floor(time / 32);
+	}
+
+	let random = 0n;
+	for (const byte of randomBytes(10)) random = (random << 8n) | BigInt(byte);
+
+	let randomPart = "";
+	for (let index = 0; index < 16; index++) {
+		randomPart = ULID_ALPHABET[Number(random & 31n)] + randomPart;
+		random >>= 5n;
+	}
+
+	return timePart + randomPart;
+}
+
+/**
+ * A fresh database has no lands to copy an area from. Build the same shape the
+ * Lands plugin serializes, using the latest overworld registered for the
+ * server. The plugin fills in roles and claims on load.
+ */
+async function createDefaultLandTemplate(
+	trx: Transaction<BisquiteDB>,
+): Promise<LandTemplate> {
+	const server = await trx
+		.selectFrom("lands_servers")
+		.select("server")
+		.orderBy("server", "asc")
+		.limit(1)
+		.executeTakeFirst();
+
+	if (!server) throw landAdminError.raise("NO_SERVER");
+
+	const worlds = await trx
+		.selectFrom("lands_worlds")
+		.select(["ulid", "name"])
+		.where("server", "=", server.server)
+		.orderBy("ulid", "desc")
+		.execute();
+
+	const world = worlds.find((entry) => !/(_nether|_the_end)$/i.test(entry.name)) ?? worlds[0];
+
+	if (!world) throw landAdminError.raise("NO_WORLD");
+
+	return {
+		server: server.server,
+		world: world.ulid,
+		area: JSON.stringify({
+			ulid: createUlid(),
+			holder: { roles: [], trusted: [] },
+			settings: [],
+			invites: [],
+			tax: { current: 0, time: 0, before: 0 },
+			banned: [],
+		}),
+		type: "LAND",
+		stats: JSON.stringify({
+			kills: 0,
+			deaths: 0,
+			wins: 0,
+			defeats: 0,
+			captures: 0,
+		}),
+		balance: 0,
+		shield: 0,
+		category: null,
+		nation: null,
+		spawn: null,
+		inbox: null,
+		limits: null,
+		icon: null,
+		storage: null,
+	};
+}
+
 type CreateLandInput = {
 	players: string[];
 	name?: string;
@@ -329,21 +433,35 @@ export async function createAdminLand(input: CreateLandInput): Promise<AdminLand
 			throw landAdminError.raise("PLAYER_IN_LAND");
 		}
 
-		const template = await trx
+		const existing = await trx
 			.selectFrom("lands_lands")
-			.selectAll()
+			.select([
+				"server",
+				"world",
+				"area",
+				"type",
+				"stats",
+				"balance",
+				"shield",
+				"category",
+				"nation",
+				"spawn",
+				"inbox",
+				"limits",
+				"icon",
+				"storage",
+			])
 			.orderBy(sql`RAND()`)
 			.limit(1)
 			.executeTakeFirst();
 
-		if (!template) throw landAdminError.raise("NO_TEMPLATE");
-
+		const template = existing ?? await createDefaultLandTemplate(trx);
 		const chunks = input.chunks ?? 4;
 		const members = JSON.stringify(Object.fromEntries(
 			playerUuids.map((uuid, index) => [uuid, { chunks: index === 0 ? chunks : 0 }]),
 		));
 
-		const ulid = nanoid(12);
+		const ulid = createUlid();
 
 		await trx
 			.insertInto("lands_lands")
