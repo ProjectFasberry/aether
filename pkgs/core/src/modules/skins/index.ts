@@ -416,10 +416,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         }
 
         logger.info({
-          message: "skins.metric",
-          metric: "cache_rebuild_ms",
-          value: Math.round(performance.now() - started),
-          nickname,
+          message: `skins.metric cache_rebuild_ms value=${Math.round(performance.now() - started)} nickname=${nickname}`,
         })
 
         return payload
@@ -1023,7 +1020,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
           try {
             await client.statObject(BUCKETS.AVATARS, key)
-            logger.debug({ message: "skins.metric", metric: "head_cache_hit", key })
+            logger.debug({ message: `skins.metric head_cache_hit key=${key}` })
             return
           } catch {
             // Missing: render below.
@@ -1033,10 +1030,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
           const target = await this._getHeadFromSkin(skinUrl)
           await client.putObject(BUCKETS.AVATARS, key, target)
           logger.info({
-            message: "skins.metric",
-            metric: "head_render_ms",
-            value: Math.round(performance.now() - started),
-            key,
+            message: `skins.metric head_render_ms value=${Math.round(performance.now() - started)} key=${key}`,
           })
         })
       )
