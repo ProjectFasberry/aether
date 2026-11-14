@@ -38,6 +38,30 @@ and returned by the history resolver, so Yggdrasil can emit
 
 Upload keeps the variant on duplicate player rows too; the old upsert dropped it.
 
+## Selection modes
+
+`SKINS_APPLY_MODE` decides who writes the player row:
+
+- `db` (default) - the API validates ownership and writes `sr_players` itself.
+- `command` - the API sends `skinsApply` over the command bridge to the backend
+  hosting the player. The `nats-spigot` plugin resolves the skin with
+  SkinsRestorer, stores the identifier, applies it to the live player and
+  publishes `events.skins.changed`. A missing plugin, no responders or a
+  timeout returns `503 SERVER_OFFLINE`.
+
+The plugin needs SkinsRestorer 15 (compile dependency `15.4.0`) and
+`softdepend: [SkinsRestorer]`. Rollout order: deploy the plugin to every backend
+first, then flip the env flag.
+
+## Upload
+
+- The bytes are validated, not the client MIME type: PNG signature plus
+  64x64/64x32 dimensions. A bad file returns `400 INVALID_SKIN_FILE` before a
+  MineSkin job is queued.
+- Per-account limits in Redis: 5 uploads per 24 hours and one per 30 seconds.
+  Over the limit returns `429 RATE_LIMITED`.
+- Capes are out of scope for v1; `capeUuid` was removed from the request.
+
 ## Ownership
 
 `skin_owners(skin_name PK, owner_uuid, is_public, created_at)` and

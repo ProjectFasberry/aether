@@ -13,6 +13,8 @@ const envSchema = z.object({
   NATS_USER: z.string().min(1),
   NATS_PASSWORD: z.string().min(1),
   SKINS_MYSQL_URI: z.url(),
+  /** `command` routes selections through the game server; `db` keeps the legacy write. */
+  SKINS_APPLY_MODE: z.enum(["db", "command"]).optional().default("db"),
   REPUTATION_MYSQL_URI: z.url(),
   PLAYERPOINTS_MYSQL_URI: z.url(),
   LOBBY_MYSQL_URI: z.url(),

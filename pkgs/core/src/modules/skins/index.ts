@@ -108,7 +108,16 @@ type SkinsParams = {
   redis: () => RedisClient,
   config: {
     VOLUME_URL: string
-  }
+  },
+  /**
+   * When set, the game server persists the selection (single writer). Without
+   * it, the service keeps the legacy database write.
+   */
+  applySelection?: (args: {
+    nickname: string,
+    uuid: string,
+    skinName: string,
+  }) => Promise<void>
 }
 
 type SkinsExecutor = Kysely<skinsDb> | Transaction<skinsDb>
@@ -149,7 +158,7 @@ export const recordSkinAudit = async (
   `.execute(db)
 }
 
-export const createSkinsService = ({ redis, databases, config }: SkinsParams) => {
+export const createSkinsService = ({ redis, databases, config, applySelection }: SkinsParams) => {
   const { general: generalDb, skins: skinsDb } = databases;
 
   const getCustomHead = (
@@ -460,7 +469,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       ok: true
     } | {
       ok: false,
-      error: "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND" | "SKIN_FORBIDDEN"
+      error: "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND" | "SKIN_FORBIDDEN" | "SERVER_OFFLINE"
     }> {
       let uuid: string
 
@@ -468,6 +477,39 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         uuid = await playerService.getUuid(nickname);
       } catch {
         return { ok: false, error: "PLAYER_NOT_FOUND" }
+      }
+
+      const owner = await getSkinOwner(skinsDb, identifier)
+
+      if (!canUseSkin({ skinName: identifier, nickname, uuid, owner })) {
+        return { ok: false, error: "SKIN_FORBIDDEN" }
+      }
+
+      // Single-writer mode: the plugin stores the selection and refreshes the
+      // live player, then the cache is rebuilt from the row it wrote.
+      if (applySelection) {
+        try {
+          await applySelection({ nickname, uuid, skinName: identifier })
+        } catch (e) {
+          const code = e instanceof Error ? e.message : ""
+
+          logger.warn({
+            message: "Skin apply command failed",
+            nickname,
+            skinName: identifier,
+            error: e,
+          })
+
+          return {
+            ok: false,
+            error: code === "SKIN_NOT_FOUND" ? "SKIN_NOT_FOUND" : "SERVER_OFFLINE",
+          }
+        }
+
+        await this.invalidate(nickname)
+        await this.initSkin({ nickname, uuid, minio })
+
+        return { ok: true }
       }
 
       const result = await skinsDb.transaction().execute(async (trx) => {
@@ -484,12 +526,6 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
           .execute()
 
         if (rows.length === 0) return { kind: "skin-not-found" as const }
-
-        const owner = await getSkinOwner(trx, identifier)
-
-        if (!canUseSkin({ skinName: identifier, nickname, uuid, owner })) {
-          return { kind: "forbidden" as const }
-        }
 
         const current = await trx
           .selectFrom("sr_players")
@@ -525,7 +561,6 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
       if (result.kind === "skin-not-found") return { ok: false, error: "SKIN_NOT_FOUND" }
       if (result.kind === "player-not-found") return { ok: false, error: "PLAYER_NOT_FOUND" }
-      if (result.kind === "forbidden") return { ok: false, error: "SKIN_FORBIDDEN" }
 
       // Drop the old entry first: if the rebuild fails, readers fall back to the
       // database instead of serving the previous skin.

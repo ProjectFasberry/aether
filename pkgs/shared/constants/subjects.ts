@@ -50,6 +50,7 @@ export const SUBJECTS = {
     },
     SKINS: {
       UPDATE: "events.skins.update",
+      CHANGED: "events.skins.changed",
     },
     USERS: {
       CONTROL: {
