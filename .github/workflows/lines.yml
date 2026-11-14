@@ -1,0 +1,32 @@
+name: Lines of code
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  count:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Count lines
+        run: node scripts/count-lines.mjs
+
+      - name: Publish badge data to the badges branch
+        run: |
+          mkdir -p "$RUNNER_TEMP/badge"
+          cp lines.json "$RUNNER_TEMP/badge/lines.json"
+          cd "$RUNNER_TEMP/badge"
+          git init -q -b badges
+          git add lines.json
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "update lines badge"
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
