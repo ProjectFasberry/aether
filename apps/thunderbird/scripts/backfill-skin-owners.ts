@@ -83,6 +83,54 @@ for (let i = 0; i < keys.length; i += CHUNK) {
 	}
 }
 
+/**
+ * Cross-check against the skins database: a rename changes the nickname in the
+ * asset name but not the UUID that used it. Several UUIDs for one name mean the
+ * asset is shared and must not be assigned automatically.
+ */
+const allNames = [...candidates.values()].flat();
+const referencedBy = new Map<string, Set<string>>();
+
+for (let i = 0; i < allNames.length; i += CHUNK) {
+	const chunk = allNames.slice(i, i + CHUNK);
+	const [historyRefs, playerRefs] = await Promise.all([
+		skins
+			.selectFrom("sr_player_history")
+			.select(["skin_identifier", "uuid"])
+			.where("skin_identifier", "in", chunk)
+			.execute(),
+		skins
+			.selectFrom("sr_players")
+			.select(["skin_identifier", "uuid"])
+			.where("skin_identifier", "in", chunk)
+			.execute(),
+	]);
+
+	for (const ref of [...historyRefs, ...playerRefs]) {
+		if (!ref.skin_identifier) continue;
+
+		const uuids = referencedBy.get(ref.skin_identifier) ?? new Set<string>();
+		uuids.add(ref.uuid);
+		referencedBy.set(ref.skin_identifier, uuids);
+	}
+}
+
+const referencedUuids = [...new Set([...referencedBy.values()].flatMap((set) => [...set]))];
+const accountsByUuid = new Map<string, { nickname: string; uuid: string }>();
+
+for (let i = 0; i < referencedUuids.length; i += CHUNK) {
+	const chunk = referencedUuids.slice(i, i + CHUNK);
+	const found = await general
+		.selectFrom("accounts")
+		.select(["nickname", "uuid", "lower_nickname"])
+		.where("uuid", "in", chunk)
+		.execute();
+
+	for (const account of found) {
+		accountsByUuid.set(account.uuid, { nickname: account.nickname, uuid: account.uuid });
+	}
+}
+
 const owners = await sql<{ skin_name: string; owner_uuid: string }>`
 	select skin_name, owner_uuid from skin_owners
 `.execute(skins);
@@ -91,26 +139,40 @@ const ownerBySkin = new Map(owners.rows.map((row) => [row.skin_name, row.owner_u
 const matched: { skinName: string; uuid: string }[] = [];
 const alreadyOwned: string[] = [];
 const conflicts: string[] = [];
+const ambiguous: string[] = [];
 const unmatched: string[] = [];
 
-for (const [lowerNickname, names] of candidates) {
-	const account = accounts.get(lowerNickname);
+for (const skinName of allNames) {
+	const nickname = parseSkinName(skinName) ?? "";
+	const refs = [...(referencedBy.get(skinName) ?? [])];
 
-	if (!account) {
-		unmatched.push(...names);
+	if (refs.length > 1) {
+		ambiguous.push(skinName);
 		continue;
 	}
 
-	for (const skinName of names) {
-		const existing = ownerBySkin.get(skinName);
+	const referenceUuid = refs[0];
+	const account = accounts.get(nickname.toLowerCase())
+		?? (referenceUuid ? accountsByUuid.get(referenceUuid) : undefined);
 
-		if (!existing) {
-			matched.push({ skinName, uuid: account.uuid });
-		} else if (existing === account.uuid) {
-			alreadyOwned.push(skinName);
-		} else {
-			conflicts.push(skinName);
-		}
+	if (!account) {
+		unmatched.push(skinName);
+		continue;
+	}
+
+	if (referenceUuid && referenceUuid !== account.uuid) {
+		conflicts.push(skinName);
+		continue;
+	}
+
+	const existing = ownerBySkin.get(skinName);
+
+	if (!existing) {
+		matched.push({ skinName, uuid: account.uuid });
+	} else if (existing === account.uuid) {
+		alreadyOwned.push(skinName);
+	} else {
+		conflicts.push(skinName);
 	}
 }
 
@@ -118,6 +180,7 @@ console.log(`total: ${customSkins.length}`);
 console.log(`matched: ${matched.length}`);
 console.log(`already owned: ${alreadyOwned.length}`);
 console.log(`conflict: ${conflicts.length}`);
+console.log(`ambiguous: ${ambiguous.length}`);
 console.log(`unmatched: ${unmatched.length}`);
 console.log(`unparseable: ${unparseable.length}`);
 
@@ -127,6 +190,7 @@ const sample = (label: string, values: string[]) => {
 };
 
 sample("conflict rows", conflicts);
+sample("ambiguous rows", ambiguous);
 sample("unmatched rows", unmatched);
 sample("unparseable rows", unparseable);
 
