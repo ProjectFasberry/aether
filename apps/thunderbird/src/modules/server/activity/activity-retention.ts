@@ -1,8 +1,8 @@
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 
-/** Raw presence rows feed the charts; 90 days is the agreed window. */
-export const ACTIVITY_RETENTION_DAYS = 90;
+/** Raw presence rows feed the yearly activity chart. */
+export const ACTIVITY_RETENTION_DAYS = 365;
 
 export async function cleanOldActivity(): Promise<number> {
 	const result = await general

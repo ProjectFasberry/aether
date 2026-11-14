@@ -3,6 +3,7 @@ import { general } from '#/shared/database/general-db';
 import dayjs from 'dayjs';
 import { withData } from '#/shared/schemas';
 import { buildRouteSummary } from '#/lib/routes';
+import { collectSessions, type ActivityRow } from './activity-sessions';
 
 export type PlayerActivitySummaryPayload = {
   [k: string]: {
@@ -10,20 +11,20 @@ export type PlayerActivitySummaryPayload = {
   };
 };
 
-type Heatmap = Map<string, Map<number, number>>;
+export type Heatmap = Map<string, Map<number, number>>;
 
-async function getPlayerHeatmap(
+export async function getPlayerHeatmap(
   nickname: string,
   { from, to }: { from?: Date, to?: Date } = {}
 ): Promise<Heatmap> {
   const now = dayjs();
 
-  const fromDate = from ? dayjs(from) : now.subtract(1, "month");
-  const toDate = to ? dayjs(to) : now.add(1, "month");
+  const fromDate = from ? dayjs(from) : now.subtract(1, 'month');
+  const toDate = to ? dayjs(to) : now.add(1, 'month');
 
   const rows = await general
     .selectFrom('activity_users')
-    .select(['event', 'type'])
+    .select(['event', 'type', 'session'])
     .where('nickname', '=', nickname)
     .where('event', '>=', fromDate.toDate())
     .where('event', '<', toDate.toDate())
@@ -34,15 +35,10 @@ async function getPlayerHeatmap(
 
   if (rows.length === 0) return heatmap;
 
-  for (let i = 0; i < rows.length; i++) {
-    const e = rows[i];
+  const cap = toDate.isBefore(now) ? toDate.toDate() : now.toDate();
+  const sessions = collectSessions(rows, cap);
 
-    if (e.type !== 'join') continue;
-
-    const start = new Date(e.event);
-    const quitEvent = rows.slice(i + 1).find(ev => ev.type === 'quit');
-    const end = quitEvent ? new Date(quitEvent.event) : new Date();
-
+  for (const { start, end } of sessions) {
     if (end <= start) {
       const dateKey = start.toISOString().split('T')[0];
       const hour = start.getUTCHours();

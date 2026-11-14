@@ -1,7 +1,7 @@
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
 
-/** Raw presence rows are kept for 90 days, so ranges beyond that are pointless. */
+/** Raw presence rows are kept for a year; the metrics UI caps ranges at 90 days. */
 export const MAX_RANGE_MS = 90 * 24 * 60 * 60 * 1000;
 export const DEFAULT_RANGE_MS = 24 * 60 * 60 * 1000;
 
