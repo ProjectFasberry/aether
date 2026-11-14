@@ -78,8 +78,10 @@ first, then flip the env flag.
 - Deploy order: apply the migration first, then the image; otherwise
   selection and upload fail with a missing table.
 - `0002_skins_indexes.sql` adds prefix indexes on the TEXT `signature` columns,
-  creates `skin_schema_version` and records versions 1 and 2. Boot checks the
-  version (`skins-schema` lifecycle step) and fails fast when the schema is old.
+  creates `skin_schema_version` and records versions 1 and 2.
+- `0003_skin_head_jobs.sql` adds the durable head queue and records version 3.
+  Boot checks the version (`skins-schema` lifecycle step) and fails fast when
+  the schema is old.
 
 Backfill (dry run by default):
 
@@ -101,6 +103,20 @@ static fallback head.
 `deleteOldSkins` keeps the last two history entries, deletes only `sr_url_skins`
 rows whose signature is no longer referenced by any custom skin, and removes
 MinIO objects after the transaction commits.
+
+## Moderation
+
+- `DELETE /privated/user/:nickname/skin` with `{ skinName }` removes one skin
+  from that player; `DELETE /privated/user/:nickname/skins` removes all of them.
+- Both require `skins.moderate` and write a `delete` audit row. The current
+  selection is cleared, history and ownership rows go, and an asset is deleted
+  only when nothing else references it.
+
+## Head outbox
+
+Missing heads are queued in `skin_head_jobs` before the inline render. The
+`process-skin-head-jobs` cron job retries pending rows every two minutes; after
+five attempts a row moves to `failed` with `last_error`.
 
 ## Metrics
 
