@@ -2,6 +2,7 @@ import pLimit from "p-limit";
 import { sql } from "kysely";
 import { type Static, t } from "elysia";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
+import { createHash } from "node:crypto";
 import { getStaticUrl } from "../../utils/url";
 import { safeJsonParse } from "@repo/shared/utils";
 import { buildRedisKey } from "../../utils/redis";
@@ -18,7 +19,7 @@ import type { Client as MinioClient } from "minio"
 import type { NatsConnection } from "@nats-io/nats-core"
 
 /** Bumped whenever the cached payload shape changes. */
-const CACHE_VERSION = "v3";
+const CACHE_VERSION = "v4";
 /** Hard TTL: an entry older than this is rebuilt on the next read. */
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 /** Soft TTL: a read after this age refreshes the entry in the background. */
@@ -33,7 +34,6 @@ export const getSkinsHistoryCacheRedisKey = (nickname: string) => buildRedisKey(
   target: "internal",
 });
 
-export const getAvatarName = (nickname: string, identifier: string) => `${nickname}-${identifier}.png`
 
 export const skinHistorySingleSchema = t.Object({
   skin_identifier: t.String(),
@@ -49,6 +49,22 @@ export type SkinsHistory = Static<typeof skinsHistorySchema>;
 
 const getDefaultSkinHeadUrl = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
 const isCustomSkin = (identifier: string) => identifier.startsWith("sr")
+
+/** Hosts the head renderer may fetch a texture from. */
+const SKIN_HOSTS = (Bun.env["SKIN_DOMAINS"] ?? "textures.minecraft.net")
+  .split(",")
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean)
+
+const isAllowedSkinHost = (url: string): boolean => {
+  try {
+    const { hostname } = new URL(url)
+
+    return SKIN_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`))
+  } catch {
+    return false
+  }
+}
 
 type PlayerSkinPayload = Pick<SkinsHistorySingle, "skin_identifier" | "skin_variant" | "timestamp"> & {
   value: string
@@ -163,9 +179,8 @@ export const recordSkinAudit = async (
 export const createSkinsService = ({ redis, databases, config, applySelection }: SkinsParams) => {
   const { general: generalDb, skins: skinsDb } = databases;
 
-  const getCustomHead = (
-    nickname: string, identifier: string
-  ) => `${config.API_URL.replace(/\/$/, "")}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
+  const getHeadUrl = (hash: string) =>
+    `${config.API_URL.replace(/\/$/, "")}/${BUCKETS.AVATARS}/heads-${hash}.png`
 
   const defaultHead = DEFAULT_HEAD(config.VOLUME_URL);
   const defaultSkinUrl = getStaticUrl(DEFAULT_SKIN, config.VOLUME_URL);
@@ -856,7 +871,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       const previousSkins = prevIds.length === 0
         ? []
         : skinsData.sort((a, b) => b.timestamp - a.timestamp)
-      const unique = new Map<string, PlayerSkinPayload & { skin: Skin }>()
+      const unique = new Map<string, PlayerSkinPayload & { skin: Skin, headKey: string }>()
 
       for (const entry of [current, ...previousSkins]) {
         // A signature join can repeat one skin; keep the first (current) entry.
@@ -876,13 +891,14 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
         unique.set(entry.skin_identifier, {
           ...entry,
-          skin: parsed.value
+          skin: parsed.value,
+          headKey: createHash("sha256").update(entry.value).digest("hex"),
         })
       }
 
       const data: SkinsHistory = Array.from(unique.values()).map(v => {
         const skin_head_url = isCustomSkin(v.skin_identifier)
-          ? getCustomHead(nickname, v.skin_identifier)
+          ? getHeadUrl(v.headKey)
           : v.skin_identifier === "default"
             ? defaultHead
             : getDefaultSkinHeadUrl(v.skin_identifier);
@@ -896,8 +912,12 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         }
       })
 
+      const headEntries = Array.from(unique.values())
+        .filter((v) => isCustomSkin(v.skin_identifier))
+        .map((v) => ({ hash: v.headKey, skinUrl: v.skin.textures.SKIN.url }))
+
       try {
-        await this._performHead({ data, nickname, minio })
+        await this._performHead({ entries: headEntries, minio })
       } catch (e) {
         // History is still valid when head rendering fails; the next rebuild
         // retries the missing objects.
@@ -907,10 +927,21 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       return data
     },
     /**
-     * Returns the head of a skin from a given URL
+     * Returns the head of a skin from a given URL. The host is allowlisted and
+     * the fetch is bounded: an untrusted texture URL must not hang a rebuild.
      */
     async _getHeadFromSkin(url: string, size = 128) {
-      const skin = await loadImage(url);
+      if (!isAllowedSkinHost(url)) {
+        throw new Error(`Skin host is not allowed: ${url}`)
+      }
+
+      const response = await fetch(url, { signal: AbortSignal.timeout(5_000) })
+
+      if (!response.ok) {
+        throw new Error(`Skin fetch failed: ${response.status}`)
+      }
+
+      const skin = await loadImage(Buffer.from(await response.arrayBuffer()));
 
       const canvas = createCanvas(size, size);
       const ctx = canvas.getContext('2d');
@@ -923,28 +954,33 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       return canvas.toBuffer('image/png');
     },
     /**
-     * Performs the head for a given nickname and skin data
+     * Renders only missing heads. Keys are content-addressed, so a repeated
+     * warm-up is a stat call per skin, not a full re-render.
      */
     async _performHead({
-      data, nickname, minio
+      entries, minio
     }: {
-      data: SkinsHistorySingle[],
-      nickname: string,
+      entries: { hash: string, skinUrl: string }[],
       minio: () => MinioClient,
     }): Promise<void> {
-      const history: SkinsHistory = data
-        .map(d => isCustomSkin(d.skin_identifier) ? d : null)
-        .filter(d => d !== null)
+      if (!entries.length) return;
 
-      if (!history.length) return;
+      const client = minio()
+      const uniqueEntries = [...new Map(entries.map((entry) => [entry.hash, entry])).values()]
 
       await Promise.all(
-        history.map(async (c) => {
-          const target = c.skin_url
-            ? await this._getHeadFromSkin(c.skin_url)
-            : defaultHead
+        uniqueEntries.map(async ({ hash, skinUrl }) => {
+          const key = `heads-${hash}.png`
 
-          await minio().putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
+          try {
+            await client.statObject(BUCKETS.AVATARS, key)
+            return
+          } catch {
+            // Missing: render below.
+          }
+
+          const target = await this._getHeadFromSkin(skinUrl)
+          await client.putObject(BUCKETS.AVATARS, key, target)
         })
       )
     }

@@ -101,11 +101,13 @@ MinIO objects after the transaction commits.
 
 ## Heads
 
-`_loadHistoryFromDB` awaits `_performHead`, and `_performHead` awaits every
-`putObject`, so a head exists when the history response is returned. A failed
-render is logged and does not fail the history read; the next rebuild retries.
-Rendering is still nickname-scoped and repeated per rebuild - the content
-addressed outbox is the Phase 2 target.
+- Object key `heads-<sha256>.png`, hashed from the signed texture value, so the
+  same texture is rendered once regardless of nickname or upload.
+- `_performHead` stats the object first and renders only missing heads.
+- Texture fetches are bounded to 5 seconds and restricted to `SKIN_DOMAINS`
+  (default `textures.minecraft.net`); a bad host fails the entry, not the read.
+- The old nickname-based keys are no longer written or read. Cache v4 rebuilds
+  every entry; the old objects stay in the bucket until a manual cleanup.
 
 ## Registration
 
