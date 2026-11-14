@@ -65,6 +65,37 @@ const current = new Elysia()
     }
   })
 
+const remove = new Elysia()
+  .use(defineRequiredUser())
+  .delete("/:skinName", async ({ params: { skinName }, nickname, status }) => {
+    try {
+      const removed = await skinsService.skin.removeOwnSkin(
+        nickname,
+        skinName,
+        minioService.getInstance,
+      )
+
+      if (!removed) return status(404, wrapError("SKIN_NOT_FOUND"))
+
+      return { data: { removed } }
+    } catch {
+      return status(500, wrapError("INTERNAL_SERVER_ERROR"))
+    }
+  }, {
+    params: t.Object({
+      skinName: skinNameSchema,
+    }),
+    response: {
+      200: withData(t.Object({ removed: t.Number() })),
+      404: withError(t.UnionEnum(["SKIN_NOT_FOUND"])),
+      500: withError(t.UnionEnum(["INTERNAL_SERVER_ERROR"])),
+    },
+    detail: {
+      summary: buildRouteSummary("Remove own skin from history"),
+      description: "Deleting the current skin clears the selection and refreshes the live player.",
+    },
+  })
+
 /**
  * @deprecated Replaced by `PUT /server/skin/current`; kept for one release so
  * the panel and older clients can roll out independently.
@@ -122,5 +153,6 @@ export const skinGroup = new Elysia()
     .use(download)
     .use(set)
     .use(current)
+    .use(remove)
     .use(history)
   )
