@@ -22,6 +22,7 @@ import { voteSites } from "./modules/server/votes/vote-sites.model";
 import { beginShutdown } from "./shared/shutdown";
 import { handleProcessOnEvent } from "./shared/observability/process";
 import { normalizeError } from "@repo/shared/utils";
+import { skinsService } from "./shared/services/skins";
 
 export const lifecycle = defineLifecycle()
   .add("db", {
@@ -35,6 +36,11 @@ export const lifecycle = defineLifecycle()
         }
       },
     }),
+  })
+  .add("skins-schema", {
+    critical: true,
+    dependsOn: "db",
+    start: () => skinsService.skin.checkSchema(),
   })
   .add("redis", {
     critical: true,

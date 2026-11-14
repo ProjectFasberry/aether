@@ -12,6 +12,7 @@ const skinNameSchema = t.String({ minLength: 1, maxLength: 36 })
 
 const setSkinResponses = {
   200: withData(t.Literal("OK")),
+  403: withError(t.UnionEnum(["SKIN_FORBIDDEN"])),
   404: withError(t.UnionEnum(["SKIN_NOT_FOUND", "PLAYER_NOT_FOUND"])),
   500: withError(t.UnionEnum(["INTERNAL_SERVER_ERROR"]))
 }
@@ -35,7 +36,9 @@ const current = new Elysia()
     try {
       const result = await skinsService.skin.setSkin(nickname, skinName, minioService.getInstance)
 
-      if (!result.ok) return status(404, wrapError(result.error))
+      if (!result.ok) {
+        return status(result.error === "SKIN_FORBIDDEN" ? 403 : 404, wrapError(result.error))
+      }
 
       return { data: "OK" as const }
     } catch {
@@ -61,7 +64,9 @@ const set = new Elysia()
     try {
       const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
 
-      if (!result.ok) return status(404, wrapError(result.error))
+      if (!result.ok) {
+        return status(result.error === "SKIN_FORBIDDEN" ? 403 : 404, wrapError(result.error))
+      }
 
       return { data: "OK" as const }
     } catch {

@@ -38,6 +38,43 @@ and returned by the history resolver, so Yggdrasil can emit
 
 Upload keeps the variant on duplicate player rows too; the old upsert dropped it.
 
+## Ownership
+
+`skin_owners(skin_name PK, owner_uuid, is_public, created_at)` and
+`skin_audit(id, actor_uuid, target_uuid, action, skin_name, created_at)` live in
+`0001_skins_ownership.sql`, applied by hand after the introspected baseline.
+
+- A selection is allowed when `owner_uuid` matches the player or `is_public` is
+  set. Before the backfill, a name that embeds the player's nickname
+  (`sr-<nickname>-...`) is accepted, so existing uploads keep working.
+- Uploads insert the owner row and both upload and selection append an audit
+  row. `deleteOldSkins` removes the owner row with the asset; audit rows stay.
+- The tables are read with raw SQL so `@gen/db/skins` does not need a
+  regeneration before the migration is applied.
+- Deploy order: apply the migration first, then the image; otherwise
+  selection and upload fail with a missing table.
+- `0002_skins_indexes.sql` adds prefix indexes on the TEXT `signature` columns,
+  creates `skin_schema_version` and records versions 1 and 2. Boot checks the
+  version (`skins-schema` lifecycle step) and fails fast when the schema is old.
+
+Backfill (dry run by default):
+
+```bash
+infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts
+infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts --apply
+```
+
+## History and cleanup
+
+`_loadHistoryFromDB` pins the current skin first and orders the rest by the real
+`sr_player_history` timestamp; there is no synthetic `10000000` value. Default
+skins use the UUID for the head, and the server-wide `default` row uses the
+static fallback head.
+
+`deleteOldSkins` keeps the last two history entries, deletes only `sr_url_skins`
+rows whose signature is no longer referenced by any custom skin, and removes
+MinIO objects after the transaction commits.
+
 ## Heads
 
 `_loadHistoryFromDB` awaits `_performHead`, and `_performHead` awaits every
