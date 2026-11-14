@@ -56,27 +56,14 @@ const isHttpUrl = (value: string | null | undefined): value is string =>
   Boolean(value) && typeof value === "string" && /^https?:\/\//i.test(value);
 
 /**
- * Current skin of a player. The history lives in Redis (no TTL) and is filled by
- * `initSkin` at registration and on every skin change, so a cold cache means the
- * key was evicted or the player never went through the client: rebuild it once
- * from the skins database instead of silently serving the default skin.
+ * Current skin of a player. The history is cached with a TTL and warmed on a
+ * miss, so a cold or evicted key is rebuilt from the skins database instead of
+ * silently serving the default skin.
  */
-async function currentSkin(nickname: string, uuid: string) {
-  const cached = await skinsService.skin.getCachedSkinsPayload(nickname);
+async function currentSkin(nickname: string) {
+  const cached = await skinsService.skin.getSkinsPayload(nickname, minioService.getInstance);
 
-  if (cached?.length) return cached[0];
-
-  const warmed = await skinsService.skin.initSkin({
-    nickname,
-    uuid,
-    minio: minioService.getInstance,
-  });
-
-  if (!warmed) return skinsService.skin.getFallbackSkin();
-
-  const fresh = await skinsService.skin.getCachedSkinsPayload(nickname);
-
-  return fresh?.[0] ?? skinsService.skin.getFallbackSkin();
+  return cached?.[0] ?? skinsService.skin.getFallbackSkin();
 }
 
 export const texturesService = {
@@ -85,7 +72,7 @@ export const texturesService = {
    * the account has no usable skin, so the client falls back to the default one.
    */
   async property(nickname: string, uuid: string): Promise<TexturesProperty | null> {
-    const skin = await currentSkin(nickname, uuid);
+    const skin = await currentSkin(nickname);
 
     if (!skin || !isHttpUrl(skin.skin_url)) return null;
 

@@ -8,6 +8,7 @@ import { buildRedisKey } from "../../utils/redis";
 import { createPlayerService } from "../player";
 import { SUBJECTS } from "@repo/shared/constants/subjects"
 import { BUCKETS } from "@repo/shared/constants/buckets";
+import { logger } from "@repo/shared/utils/logger";
 import type RedisClient from "ioredis";
 import type { Kysely } from "kysely";
 import type { DB as generalDb } from "@gen/db/general";
@@ -15,12 +16,20 @@ import type { DB as skinsDb } from "@gen/db/skins"
 import type { Client as MinioClient } from "minio"
 import type { NatsConnection } from "@nats-io/nats-core"
 
+/** Bumped whenever the cached payload shape changes. */
+const CACHE_VERSION = "v2";
+/** Hard TTL: an entry older than this is rebuilt on the next read. */
+const CACHE_TTL_SECONDS = 24 * 60 * 60;
+/** Soft TTL: a read after this age refreshes the entry in the background. */
+const CACHE_REFRESH_MS = 60 * 60 * 1000;
+/** Guards a single rebuild per nickname across processes. */
+const CACHE_LOCK_TTL_MS = 10_000;
+
 export const getSkinsHistoryCacheRedisKey = (nickname: string) => buildRedisKey({
-  name: `players:skins:${nickname}`,
+  name: `players:skins:${CACHE_VERSION}:${nickname.toLowerCase()}`,
   target: "internal",
 });
 
-export const getSkinName = (key: string) => `skin-${key}.png`
 export const getAvatarName = (nickname: string, identifier: string) => `${nickname}-${identifier}.png`
 
 export const skinHistorySingleSchema = t.Object({
@@ -55,6 +64,39 @@ export const DEFAULT_HEAD_PATH = "fallback/steve_head.png"
 export const DEFAULT_SKIN = "fallback/steve_skin.png"
 export const DEFAULT_HEAD = (volumeUrl: string) => getStaticUrl(DEFAULT_HEAD_PATH, volumeUrl)
 
+/** Cache envelope; arrays are accepted for entries written before `CACHE_VERSION`. */
+type CachedSkinsEntry = {
+  updatedAt: number,
+  data: SkinsHistory
+}
+
+export const parseCachedEntry = (raw: string | null | undefined): CachedSkinsEntry | null => {
+  if (!raw) return null;
+
+  const parsed = safeJsonParse<CachedSkinsEntry | SkinsHistory>(raw)
+  if (!parsed.ok) return null;
+
+  if (Array.isArray(parsed.value)) return { updatedAt: 0, data: parsed.value };
+
+  return parsed.value
+}
+
+/**
+ * A custom skin can be stored once per signature, while `sr_url_skins` keeps a
+ * row per upload. When the same texture was uploaded with different variants we
+ * prefer the variant the player already wears, then a stable alphabetical pick.
+ */
+export const pickSkinVariant = (
+  variants: Array<string | null | undefined>,
+  preferred?: string | null,
+): string => {
+  const unique = [...new Set(variants.filter((variant): variant is string => Boolean(variant)))].sort()
+
+  if (preferred && unique.includes(preferred)) return preferred;
+
+  return unique[0] ?? preferred ?? DEFAULT_SKIN_VARIANT
+}
+
 type SkinsParams = {
   databases: {
     general: Kysely<generalDb>,
@@ -84,15 +126,29 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
     skin_head_url: defaultHead,
   });
 
-  async function getCachedSkinsPayload(nickname: string): Promise<SkinsHistory | null> {
-    const str = await redis().get(getSkinsHistoryCacheRedisKey(nickname))
-    if (!str) return null;
+  /**
+   * Redis is a cache, not a dependency: a failed read degrades to a database
+   * read instead of failing the request.
+   */
+  const readCachedEntry = async (nickname: string): Promise<CachedSkinsEntry | null> => {
+    try {
+      return parseCachedEntry(await redis().get(getSkinsHistoryCacheRedisKey(nickname)))
+    } catch (e) {
+      logger.warn({ message: "Skins cache read failed", nickname, error: e })
+      return null
+    }
+  }
 
-    const result = safeJsonParse<SkinsHistory>(str)
-    if (!result.ok) return null;
+  const writeCachedEntry = async (nickname: string, data: SkinsHistory): Promise<void> => {
+    const entry: CachedSkinsEntry = { updatedAt: Date.now(), data }
 
-    return result.value
-  };
+    await redis().set(
+      getSkinsHistoryCacheRedisKey(nickname),
+      JSON.stringify(entry),
+      "EX",
+      CACHE_TTL_SECONDS,
+    )
+  }
 
   const playerService = createPlayerService({
     generalDb, redis
@@ -108,20 +164,18 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       const keys = nicknames.map(getSkinsHistoryCacheRedisKey);
       if (keys.length === 0) return {};
 
-      const resultsStr = await redis().mget(...keys);
+      let resultsStr: Array<string | null>
+      try {
+        resultsStr = await redis().mget(...keys);
+      } catch (e) {
+        logger.warn({ message: "Skins cache bulk read failed", error: e })
+        resultsStr = keys.map(() => null)
+      }
+
       const map: CachedSkinPayload = Object.create(null)
 
       for (let i = 0; i < resultsStr.length; i++) {
-        const val = resultsStr[i];
-        const nickname = nicknames[i];
-
-        if (!val) {
-          map[nickname] = null;
-          continue;
-        }
-
-        const parsed = safeJsonParse<SkinsHistory>(val);
-        map[nickname] = parsed.ok ? parsed.value : null;
+        map[nicknames[i]] = parseCachedEntry(resultsStr[i])?.data ?? null
       }
 
       return map;
@@ -153,8 +207,8 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
      * Returns the avatar URL for a given nickname
      */
     async getAvatar(nickname: string): Promise<string> {
-      const result = await getCachedSkinsPayload(nickname)
-      return result?.[0]?.skin_head_url ?? defaultHead
+      const result = await readCachedEntry(nickname)
+      return result?.data[0]?.skin_head_url ?? defaultHead
     }
   }
 
@@ -162,13 +216,96 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
     /**
      * Returns the cached skin payload for a given nickname
      */
-    getCachedSkinsPayload,
+    async getCachedSkinsPayload(nickname: string): Promise<SkinsHistory | null> {
+      return (await readCachedEntry(nickname))?.data ?? null
+    },
+    /**
+     * Returns the history and warms the cache on a miss. A stale entry is
+     * returned immediately and refreshed in the background.
+     */
+    async getSkinsPayload(
+      nickname: string,
+      minio: () => MinioClient,
+    ): Promise<SkinsHistory | null> {
+      const entry = await readCachedEntry(nickname)
+
+      if (entry && Date.now() - entry.updatedAt < CACHE_REFRESH_MS) return entry.data;
+
+      if (entry) {
+        void this._warm(nickname, minio).catch((e) => {
+          logger.warn({ message: "Skins background refresh failed", nickname, error: e })
+        })
+        return entry.data
+      }
+
+      return await this._warm(nickname, minio)
+    },
+    /**
+     * Rebuilds the cache behind a single-flight lock. A caller that loses the
+     * race reads the database directly instead of waiting on the winner.
+     */
+    async _warm(
+      nickname: string,
+      minio: () => MinioClient,
+    ): Promise<SkinsHistory | null> {
+      const lockKey = `${getSkinsHistoryCacheRedisKey(nickname)}:lock`
+      let locked = false
+
+      try {
+        locked = (await redis().set(lockKey, "1", "PX", CACHE_LOCK_TTL_MS, "NX")) === "OK"
+      } catch (e) {
+        logger.warn({ message: "Skins cache lock failed", nickname, error: e })
+      }
+
+      if (!locked) {
+        return (await readCachedEntry(nickname))?.data
+          ?? await this._loadHistoryFromDB(nickname, minio)
+      }
+
+      try {
+        let payload: SkinsHistory
+
+        try {
+          payload = await this._loadHistoryFromDB(nickname, minio)
+        } catch (e) {
+          logger.warn({ message: "Skins cache rebuild failed", nickname, error: e })
+          payload = [fallbackSkin()]
+        }
+
+        if (payload.length === 0) payload = [fallbackSkin()]
+
+        try {
+          await writeCachedEntry(nickname, payload)
+        } catch (e) {
+          // The caller still gets the fresh payload when Redis is unavailable.
+          logger.warn({ message: "Skins cache write failed", nickname, error: e })
+        }
+
+        return payload
+      } finally {
+        try {
+          await redis().del(lockKey)
+        } catch (e) {
+          logger.warn({ message: "Skins cache lock release failed", nickname, error: e })
+        }
+      }
+    },
+    /**
+     * Drops the cached history, e.g. before a rebuild after a skin change.
+     */
+    async invalidate(nickname: string): Promise<void> {
+      try {
+        await redis().del(getSkinsHistoryCacheRedisKey(nickname))
+      } catch (e) {
+        logger.warn({ message: "Skins cache invalidation failed", nickname, error: e })
+      }
+    },
     /**
      * Returns the skin URL for a given nickname
      */
     async getSkin(nickname: string): Promise<string> {
-      const result = await this.getCachedSkinsPayload(nickname)
-      return result?.[0]?.skin_url ?? defaultSkinUrl
+      const result = await readCachedEntry(nickname)
+      return result?.data[0]?.skin_url ?? defaultSkinUrl;
     },
     /** Static skin used when the player has no row or the cache/storage failed. */
     getFallbackSkin(): SkinsHistorySingle {
@@ -201,8 +338,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       if (payload.length === 0) payload = [fallbackSkin()]
 
       try {
-        const key = getSkinsHistoryCacheRedisKey(nickname)
-        await redis().set(key, JSON.stringify(payload))
+        await writeCachedEntry(nickname, payload)
         onFinish?.()
       } catch (e) {
         // Redis is optional for correctness: the caller falls back to
@@ -252,33 +388,64 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       nickname: string,
       identifier: string,
       minio: () => MinioClient,
-    ) {
-      const uuid = await playerService.getUuid(nickname);
+    ): Promise<{ ok: true } | { ok: false, error: "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND" }> {
+      let uuid: string
+
+      try {
+        uuid = await playerService.getUuid(nickname);
+      } catch {
+        return { ok: false, error: "PLAYER_NOT_FOUND" }
+      }
 
       const result = await skinsDb.transaction().execute(async (trx) => {
-        const query = await trx
+        const rows = await trx
           .selectFrom("sr_custom_skins")
-          .select("name as skin_identifier")
-          .where("name", "=", identifier)
+          .leftJoin("sr_url_skins", "sr_url_skins.signature", "sr_custom_skins.signature")
+          .select([
+            "sr_custom_skins.name as name",
+            "sr_url_skins.skin_variant as variant",
+          ])
+          .where("sr_custom_skins.name", "=", identifier)
+          .orderBy(sql`sr_url_skins.skin_variant is null`, "asc")
+          .orderBy("sr_url_skins.skin_variant", "asc")
+          .execute()
+
+        if (rows.length === 0) return { kind: "skin-not-found" as const }
+
+        const current = await trx
+          .selectFrom("sr_players")
+          .select("skin_variant")
+          .where("uuid", "=", uuid)
           .executeTakeFirst()
 
-        if (!query) throw new Error("Selected skin not found")
+        // The plugin keeps the variant on the player row; preserve it instead of
+        // resetting every custom skin to CLASSIC.
+        const variant = pickSkinVariant(rows.map((row) => row.variant), current?.skin_variant)
 
-        const skinResult = await trx
+        const updated = await trx
           .updateTable("sr_players")
           .set({
-            skin_identifier: query.skin_identifier,
+            skin_identifier: identifier,
+            skin_variant: variant,
             skin_type: "CUSTOM",
           })
           .where("uuid", "=", uuid)
           .executeTakeFirst()
 
-        return skinResult
+        if (!updated.numUpdatedRows) return { kind: "player-not-found" as const }
+
+        return { kind: "ok" as const }
       })
 
-      if (!result.numUpdatedRows) return false;
+      if (result.kind === "skin-not-found") return { ok: false, error: "SKIN_NOT_FOUND" }
+      if (result.kind === "player-not-found") return { ok: false, error: "PLAYER_NOT_FOUND" }
 
-      return await this.initSkin({ nickname, minio })
+      // Drop the old entry first: if the rebuild fails, readers fall back to the
+      // database instead of serving the previous skin.
+      await this.invalidate(nickname)
+      await this.initSkin({ nickname, uuid, minio })
+
+      return { ok: true }
     },
     /**
      * Updates skins for a given list of nicknames
@@ -374,7 +541,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       const resolveCurrentSkin = async (uuid: string): Promise<PlayerSkinPayload | null> => {
         const row = await skinsDb
           .selectFrom("sr_players")
-          .select("skin_identifier")
+          .select(["skin_identifier", "skin_variant"])
           .where("sr_players.uuid", "=", uuid)
           .executeTakeFirst()
 
@@ -389,15 +556,24 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         if (isCustomSkin(id)) {
           const skin = await skinsDb
             .selectFrom("sr_custom_skins")
-            .select(["value"])
-            .where("name", "=", id)
-            .executeTakeFirst()
+            .leftJoin("sr_url_skins", "sr_url_skins.signature", "sr_custom_skins.signature")
+            .select([
+              "sr_custom_skins.value",
+              "sr_url_skins.skin_variant",
+            ])
+            .where("sr_custom_skins.name", "=", id)
+            .orderBy(sql`sr_url_skins.skin_variant is null`, "asc")
+            .orderBy("sr_url_skins.skin_variant", "asc")
+            .execute()
 
-          if (skin) {
+          if (skin.length > 0) {
             return {
-              value: skin.value,
+              value: skin[0].value,
               skin_identifier: id,
-              skin_variant: DEFAULT_SKIN_VARIANT,
+              skin_variant: pickSkinVariant(
+                skin.map((entry) => entry.skin_variant),
+                row?.skin_variant,
+              ),
               timestamp: 10000000
             }
           }
@@ -456,6 +632,8 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
             sql<number>`${10000000}`.as('timestamp')
           ])
           .where("sr_custom_skins.name", "in", ids)
+          .orderBy(sql`sr_url_skins.skin_variant is null`, "asc")
+          .orderBy("sr_url_skins.skin_variant", "asc")
           .execute()
       }
 
@@ -485,10 +663,18 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       const unique = new Map<string, PlayerSkinPayload & { skin: Skin }>()
 
       for (const entry of [current, ...previousSkins]) {
+        // A signature join can repeat one skin; keep the first (current) entry.
+        if (unique.has(entry.skin_identifier)) continue;
+
         const parsed = safeJsonParse<Skin>(atob(entry.value))
 
         if (!parsed.ok) {
-          console.warn(`For ${uuid} skin don't updated`, parsed.error.message)
+          logger.warn({
+            message: "Skins history entry skipped: invalid texture",
+            uuid,
+            skinIdentifier: entry.skin_identifier,
+            error: parsed.error.message,
+          })
           continue;
         }
 
@@ -512,7 +698,13 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         }
       })
 
-      this._performHead({ data, nickname, minio })
+      try {
+        await this._performHead({ data, nickname, minio })
+      } catch (e) {
+        // History is still valid when head rendering fails; the next rebuild
+        // retries the missing objects.
+        logger.warn({ message: "Skins head render failed", nickname, error: e })
+      }
 
       return data
     },
@@ -554,7 +746,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
             ? await this._getHeadFromSkin(c.skin_url)
             : defaultHead
 
-          minio().putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
+          await minio().putObject(BUCKETS.AVATARS, getAvatarName(nickname, c.skin_identifier), target);
         })
       )
     }

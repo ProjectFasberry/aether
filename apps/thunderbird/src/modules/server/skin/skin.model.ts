@@ -796,7 +796,8 @@ export async function upload(
       .values(resultPayload)
       .onDuplicateKeyUpdate({
         skin_identifier,
-        skin_type: "CUSTOM"
+        skin_type: "CUSTOM",
+        skin_variant: resultPayload.skin_variant
       })
       .executeTakeFirstOrThrow()
 
@@ -824,7 +825,10 @@ export async function upload(
     return { url: urlPayload.url }
   })
 
-  skinsService.skin.initSkin({
+  // Drop the stale entry first, then rebuild it: the panel refetches history
+  // right after the upload and must not see the previous skin.
+  await skinsService.skin.invalidate(nickname)
+  await skinsService.skin.initSkin({
     nickname,
     minio: minioService.getInstance,
   })

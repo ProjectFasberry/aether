@@ -8,9 +8,17 @@ import { skinsService } from "../../../shared/services/skins";
 import { buildRouteSummary } from "#/lib/routes";
 import { minioService } from "#/shared/services/minio";
 
+const skinNameSchema = t.String({ minLength: 1, maxLength: 36 })
+
+const setSkinResponses = {
+  200: withData(t.Literal("OK")),
+  404: withError(t.UnionEnum(["SKIN_NOT_FOUND", "PLAYER_NOT_FOUND"])),
+  500: withError(t.UnionEnum(["INTERNAL_SERVER_ERROR"]))
+}
+
 const history = new Elysia()
   .get("/history/:nickname", async ({ params: { nickname } }) => {
-    const data = await skinsService.skin.getCachedSkinsPayload(nickname)
+    const data = await skinsService.skin.getSkinsPayload(nickname, minioService.getInstance)
     return { data }
   }, {
     response: {
@@ -21,41 +29,72 @@ const history = new Elysia()
     }
   })
 
+const current = new Elysia()
+  .use(defineRequiredUser())
+  .put("/current", async ({ body: { skinName }, nickname, status }) => {
+    try {
+      const result = await skinsService.skin.setSkin(nickname, skinName, minioService.getInstance)
+
+      if (!result.ok) return status(404, wrapError(result.error))
+
+      return { data: "OK" as const }
+    } catch {
+      return status(500, wrapError("INTERNAL_SERVER_ERROR"))
+    }
+  }, {
+    body: t.Object({
+      skinName: skinNameSchema,
+    }),
+    response: setSkinResponses,
+    detail: {
+      summary: buildRouteSummary("Set current skin")
+    }
+  })
+
+/**
+ * @deprecated Replaced by `PUT /server/skin/current`; kept for one release so
+ * the panel and older clients can roll out independently.
+ */
 const set = new Elysia()
   .use(defineRequiredUser())
   .get("/set", async ({ query, nickname, status }) => {
-    const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
-    if (!result) return status(500, wrapError("THIRDPARTY_ERROR"))
+    try {
+      const result = await skinsService.skin.setSkin(nickname, query.id, minioService.getInstance)
 
-    return { data: "OK" }
+      if (!result.ok) return status(404, wrapError(result.error))
+
+      return { data: "OK" as const }
+    } catch {
+      return status(500, wrapError("INTERNAL_SERVER_ERROR"))
+    }
   }, {
     query: t.Object({
-      id: t.String({ minLength: 1 })
+      id: skinNameSchema,
     }),
-    response: {
-      200: withData(t.Literal("OK")),
-      400: withError(),
-      500: withError(
-        t.UnionEnum([
-          "THIRDPARTY_ERROR",
-          "INTERNAL_SERVER_ERROR"
-        ])
-      )
-    },
+    response: setSkinResponses,
     detail: {
-      summary: buildRouteSummary("Set skin")
+      summary: buildRouteSummary("Set skin (deprecated)"),
+      deprecated: true,
     }
   })
 
 const download = new Elysia()
-  .get('/download/:nickname', async ({ set, params: { nickname } }) => {
+  .get('/download/:nickname', async ({ set, params: { nickname }, status }) => {
     const skin = await skinsService.skin.getSkin(nickname)
 
-    set.headers["content-type"] = 'image/png'
-    set.headers['content-disposition'] = `attachment; filename=${nickname}-skin.png`
+    // Texture URLs are public; redirect instead of proxying the image through
+    // the API. The fallback is a full skin, not a head.
+    if (!/^https?:\/\//i.test(skin)) return status(404, wrapError("NOT_FOUND"))
 
-    return skin
+    set.status = 302
+    set.headers["location"] = skin
+    set.headers["cache-control"] = "public, max-age=300"
+
+    return ""
   }, {
+    response: {
+      404: withError(t.UnionEnum(["NOT_FOUND"])),
+    },
     detail: {
       summary: buildRouteSummary("Download skin")
     }
@@ -66,5 +105,6 @@ export const skinGroup = new Elysia()
     .use(upload)
     .use(download)
     .use(set)
+    .use(current)
     .use(history)
   )
