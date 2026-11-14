@@ -50,17 +50,36 @@ export type SkinsHistory = Static<typeof skinsHistorySchema>;
 const getDefaultSkinHeadUrl = (identifier: string) => `https://mc-heads.net/avatar/${identifier}`
 const isCustomSkin = (identifier: string) => identifier.startsWith("sr")
 
-/** Hosts the head renderer may fetch a texture from. */
-const SKIN_HOSTS = (Bun.env["SKIN_DOMAINS"] ?? "textures.minecraft.net")
-  .split(",")
-  .map((host) => host.trim().toLowerCase())
-  .filter(Boolean)
+export const DEFAULT_SKIN_PAGE_LIMIT = 50
+export const MAX_SKIN_PAGE_LIMIT = 100
 
-const isAllowedSkinHost = (url: string): boolean => {
+/** Cursor is a plain offset; the history is small and already ordered. */
+export const paginateSkins = <T>(
+  data: T[],
+  cursor?: string | null,
+  limit?: number | string | null,
+): { data: T[], nextCursor: string | null } => {
+  const parsed = Number(cursor ?? 0)
+  const start = Number.isInteger(parsed) && parsed > 0 ? parsed : 0
+  const parsedLimit = Number(limit ?? DEFAULT_SKIN_PAGE_LIMIT)
+  const size = Math.min(
+    Math.max(Number.isFinite(parsedLimit) ? Math.trunc(parsedLimit) : DEFAULT_SKIN_PAGE_LIMIT, 1),
+    MAX_SKIN_PAGE_LIMIT,
+  )
+  const page = data.slice(start, start + size)
+  const next = start + size < data.length ? String(start + size) : null
+
+  return { data: page, nextCursor: next }
+}
+
+export const skinHeadKey = (value: string) =>
+  createHash("sha256").update(value).digest("hex")
+
+export const isAllowedHost = (url: string, hosts: string[]): boolean => {
   try {
     const { hostname } = new URL(url)
 
-    return SKIN_HOSTS.some((host) => hostname === host || hostname.endsWith(`.${host}`))
+    return hosts.some((host) => hostname === host || hostname.endsWith(`.${host}`))
   } catch {
     return false
   }
@@ -115,6 +134,14 @@ export const pickSkinVariant = (
 
   return unique[0] ?? preferred ?? DEFAULT_SKIN_VARIANT
 }
+
+/** Hosts the head renderer may fetch a texture from. */
+const SKIN_HOSTS = (Bun.env["SKIN_DOMAINS"] ?? "textures.minecraft.net")
+  .split(",")
+  .map((host) => host.trim().toLowerCase())
+  .filter(Boolean)
+
+const isAllowedSkinHost = (url: string): boolean => isAllowedHost(url, SKIN_HOSTS)
 
 type SkinsParams = {
   databases: {
@@ -312,6 +339,19 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       return (await readCachedEntry(nickname))?.data ?? null
     },
     /**
+     * Paginated history. The cursor is an offset; the panel requests the first
+     * page by default and the list is ordered current-first.
+     */
+    async getSkinsPage(
+      nickname: string,
+      query: { cursor?: string | null, limit?: number | string | null },
+      minio: () => MinioClient,
+    ): Promise<{ data: SkinsHistory, nextCursor: string | null }> {
+      const data = await this.getSkinsPayload(nickname, minio) ?? []
+
+      return paginateSkins(data, query.cursor, query.limit)
+    },
+    /**
      * Returns the history and warms the cache on a miss. A stale entry is
      * returned immediately and refreshed in the background.
      */
@@ -354,6 +394,8 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
           ?? await this._loadHistoryFromDB(nickname, minio)
       }
 
+      const started = performance.now()
+
       try {
         let payload: SkinsHistory
 
@@ -372,6 +414,13 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
           // The caller still gets the fresh payload when Redis is unavailable.
           logger.warn({ message: "Skins cache write failed", nickname, error: e })
         }
+
+        logger.info({
+          message: "skins.metric",
+          metric: "cache_rebuild_ms",
+          value: Math.round(performance.now() - started),
+          nickname,
+        })
 
         return payload
       } finally {
@@ -892,7 +941,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         unique.set(entry.skin_identifier, {
           ...entry,
           skin: parsed.value,
-          headKey: createHash("sha256").update(entry.value).digest("hex"),
+          headKey: skinHeadKey(entry.value),
         })
       }
 
@@ -974,13 +1023,21 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
           try {
             await client.statObject(BUCKETS.AVATARS, key)
+            logger.debug({ message: "skins.metric", metric: "head_cache_hit", key })
             return
           } catch {
             // Missing: render below.
           }
 
+          const started = performance.now()
           const target = await this._getHeadFromSkin(skinUrl)
           await client.putObject(BUCKETS.AVATARS, key, target)
+          logger.info({
+            message: "skins.metric",
+            metric: "head_render_ms",
+            value: Math.round(performance.now() - started),
+            key,
+          })
         })
       )
     }

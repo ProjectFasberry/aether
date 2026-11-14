@@ -3,7 +3,7 @@ import { defineRequiredUser } from '#/lib/define';
 import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
-import { skinsHistorySchema } from "@repo/core/modules/skins/index"
+import { skinsHistorySchema, type SkinsHistory } from "@repo/core/modules/skins/index"
 import { skinsService } from "../../../shared/services/skins";import { buildRouteSummary } from "#/lib/routes";
 import { minioService } from "#/shared/services/minio";
 
@@ -21,15 +21,23 @@ const setSkinStatus = (error: "SKIN_FORBIDDEN" | "SERVER_OFFLINE" | "SKIN_NOT_FO
   error === "SKIN_FORBIDDEN" ? 403 : error === "SERVER_OFFLINE" ? 503 : 404
 
 const history = new Elysia()
-  .get("/history/:nickname", async ({ params: { nickname } }) => {
-    const data = await skinsService.skin.getSkinsPayload(nickname, minioService.getInstance)
-    return { data }
+  .get("/history/:nickname", async ({ params: { nickname }, request, set }) => {
+    const url = new URL(request.url)
+    const page = await skinsService.skin.getSkinsPage(nickname, {
+      cursor: url.searchParams.get("cursor"),
+      limit: url.searchParams.get("limit"),
+    }, minioService.getInstance)
+
+    if (page.nextCursor) set.headers["x-next-cursor"] = page.nextCursor
+
+    return { data: page.data }
   }, {
     response: {
       200: withData(t.Nullable(skinsHistorySchema))
     },
     detail: {
-      summary: buildRouteSummary("Get skin history")
+      summary: buildRouteSummary("Get skin history"),
+      description: "Paginated with ?cursor=<offset>&limit=<1..100>; the next offset is returned in x-next-cursor.",
     }
   })
 

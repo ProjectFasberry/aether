@@ -90,6 +90,9 @@ infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-own
 
 ## History and cleanup
 
+`GET /server/skin/history/:nickname` accepts `?cursor=<offset>&limit=<1..100>`
+(default 50) and returns the next offset in the `x-next-cursor` header.
+
 `_loadHistoryFromDB` pins the current skin first and orders the rest by the real
 `sr_player_history` timestamp; there is no synthetic `10000000` value. Default
 skins use the UUID for the head, and the server-wide `default` row uses the
@@ -98,6 +101,12 @@ static fallback head.
 `deleteOldSkins` keeps the last two history entries, deletes only `sr_url_skins`
 rows whose signature is no longer referenced by any custom skin, and removes
 MinIO objects after the transaction commits.
+
+## Metrics
+
+Structured `skins.metric` log lines feed Loki/Grafana: `head_render_ms`,
+`head_cache_hit`, `cache_rebuild_ms` and `mineskin_error`. Dashboards and alerts
+are still to be wired; the old path had no metrics at all.
 
 ## Heads
 
