@@ -3,7 +3,7 @@ import { general as generalDb } from "#/shared/database/general-db";
 import { skins as skinsDb } from "#/shared/database/skins-db";
 import { redisService } from "#/shared/redis/client";
 import { getEnv } from "#/shared/env";
-import { callSkinsApply } from "#/shared/nats/command";
+import { callSkinsApply, callSkinsClear } from "#/shared/nats/command";
 
 export const skinsService = createSkinsService({
   databases: {
@@ -16,4 +16,5 @@ export const skinsService = createSkinsService({
     API_URL: getEnv().PUBLIC_API_URL,
   },
   applySelection: getEnv().SKINS_APPLY_MODE === "command" ? callSkinsApply : undefined,
+  clearSelection: getEnv().SKINS_APPLY_MODE === "command" ? callSkinsClear : undefined,
 })

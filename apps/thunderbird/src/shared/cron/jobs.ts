@@ -227,7 +227,7 @@ export const CRON_JOBS = [
       const removed = await cleanOldActivity();
 
       if (removed > 0) {
-        cronLogger.info(`Activity: removed ${removed} rows older than 90 days`);
+        cronLogger.info(`Activity: removed ${removed} rows outside the retention window`);
       }
     },
     immediately: false,
@@ -262,7 +262,7 @@ export const CRON_JOBS = [
       await updateSeemsLikeList();
     },
     immediately: true,
-    schedule: false,
+    schedule: true,
     allowIsDev: true,
     lockTtlMs: 60 * 60_000
   })

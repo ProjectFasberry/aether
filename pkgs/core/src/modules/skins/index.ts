@@ -19,7 +19,7 @@ import type { Client as MinioClient } from "minio"
 import type { NatsConnection } from "@nats-io/nats-core"
 
 /** Bumped whenever the cached payload shape changes. */
-const CACHE_VERSION = "v4";
+const CACHE_VERSION = "v5";
 /** Hard TTL: an entry older than this is rebuilt on the next read. */
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 /** Soft TTL: a read after this age refreshes the entry in the background. */
@@ -163,6 +163,14 @@ type SkinsParams = {
     uuid: string,
     skinName: string,
   }) => Promise<void>
+  /**
+   * When set, the game server clears the player's selection so the live client
+   * immediately falls back to its own/default skin.
+   */
+  clearSelection?: (args: {
+    nickname: string,
+    uuid: string,
+  }) => Promise<void>
 }
 
 type SkinsExecutor = Kysely<skinsDb> | Transaction<skinsDb>
@@ -228,7 +236,7 @@ const finishHeadJob = async (db: SkinsExecutor, hash: string): Promise<void> => 
   await sql`delete from skin_head_jobs where hash = ${hash}`.execute(db)
 }
 
-export const createSkinsService = ({ redis, databases, config, applySelection }: SkinsParams) => {
+export const createSkinsService = ({ redis, databases, config, applySelection, clearSelection }: SkinsParams) => {
   const { general: generalDb, skins: skinsDb } = databases;
 
   const getHeadUrl = (hash: string) =>
@@ -333,30 +341,38 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
   /**
    * Removes one custom skin from a player: history row, ownership, current
-   * selection and the asset when nothing else references it. Returns false when
-   * the skin is not part of that player's history.
+   * selection and the asset when nothing else references it. `removed` is false
+   * when the skin is not part of that player's history; `wasCurrent` tells the
+   * caller to clear the live selection on the game server.
    */
   const removePlayerSkin = async (
     trx: Transaction<skinsDb>,
     uuid: string,
     skinName: string,
     actorUuid: string,
-  ): Promise<boolean> => {
-    const row = await trx
+  ): Promise<{ removed: boolean, wasCurrent: boolean }> => {
+    const normalized = skinName.toLowerCase()
+    const rows = await trx
       .selectFrom("sr_custom_skins")
       .select(["name", "signature"])
-      .where(sql`lower(sr_custom_skins.name)`, "=", skinName.toLowerCase())
-      .executeTakeFirst()
+      .where(sql`lower(sr_custom_skins.name)`, "=", normalized)
+      .execute()
 
-    if (!row) return false
+    if (rows.length === 0) return { removed: false, wasCurrent: false }
 
-    const canonical = row.name
+    const canonical = rows[0].name
+    const signatures = Array.from(new Set(
+      rows
+        .map((row) => row.signature)
+        .filter((signature): signature is string => Boolean(signature)),
+    ))
+
     const [history, current] = await Promise.all([
       trx
         .selectFrom("sr_player_history")
         .select("uuid")
         .where("uuid", "=", uuid)
-        .where("skin_identifier", "=", canonical)
+        .where(sql`lower(sr_player_history.skin_identifier)`, "=", normalized)
         .executeTakeFirst(),
       trx
         .selectFrom("sr_players")
@@ -365,15 +381,15 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         .executeTakeFirst(),
     ])
 
-    const isCurrent = current?.skin_identifier?.toLowerCase() === canonical.toLowerCase()
+    const isCurrent = current?.skin_identifier?.toLowerCase() === normalized
 
-    if (!history && !isCurrent) return false
+    if (!history && !isCurrent) return { removed: false, wasCurrent: false }
 
     if (history) {
       await trx
         .deleteFrom("sr_player_history")
         .where("uuid", "=", uuid)
-        .where("skin_identifier", "=", canonical)
+        .where(sql`lower(sr_player_history.skin_identifier)`, "=", normalized)
         .execute()
     }
 
@@ -385,21 +401,24 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         .execute()
     }
 
-    await sql`delete from skin_owners where skin_name = ${canonical}`.execute(trx)
+    await sql`delete from skin_owners where lower(skin_name) = ${normalized}`.execute(trx)
 
     const references = await trx
       .selectFrom("sr_player_history")
       .select("skin_identifier")
-      .where("skin_identifier", "=", canonical)
+      .where(sql`lower(sr_player_history.skin_identifier)`, "=", normalized)
       .execute()
 
     if (references.length === 0) {
-      await trx.deleteFrom("sr_custom_skins").where("name", "=", canonical).execute()
+      await trx
+        .deleteFrom("sr_custom_skins")
+        .where(sql`lower(sr_custom_skins.name)`, "=", normalized)
+        .execute()
 
-      if (row.signature) {
+      for (const signature of signatures) {
         await sql`
           delete from sr_url_skins
-          where signature = ${row.signature}
+          where signature = ${signature}
             and not exists (
               select 1 from sr_custom_skins
               where sr_custom_skins.signature = sr_url_skins.signature
@@ -415,7 +434,18 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       skinName: canonical,
     })
 
-    return true
+    return { removed: true, wasCurrent: isCurrent }
+  }
+
+  /** Best-effort live refresh; the database is already the source of truth. */
+  const clearLiveSelection = async (nickname: string, uuid: string): Promise<void> => {
+    if (!clearSelection) return
+
+    try {
+      await clearSelection({ nickname, uuid })
+    } catch (e) {
+      logger.warn({ message: "Skin clear command failed", nickname, error: e })
+    }
   }
 
   const skin = {
@@ -668,6 +698,39 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         .execute()
     },
     /**
+     * Removes one custom skin from the player's own history. Deleting the
+     * current skin clears the selection and refreshes the live player.
+     */
+    async removeOwnSkin(
+      nickname: string,
+      skinName: string,
+      minio: () => MinioClient,
+    ): Promise<number> {
+      let uuid: string
+
+      try {
+        uuid = await playerService.getUuid(nickname)
+      } catch {
+        return 0
+      }
+
+      let wasCurrent = false
+      const removed = await skinsDb.transaction().execute(async (trx) => {
+        const result = await removePlayerSkin(trx, uuid, skinName, uuid)
+        wasCurrent = result.wasCurrent
+
+        return result.removed ? 1 : 0
+      })
+
+      if (removed) {
+        await this.invalidate(nickname)
+        if (wasCurrent) await clearLiveSelection(nickname, uuid)
+        await this.initSkin({ nickname, uuid, minio })
+      }
+
+      return removed
+    },
+    /**
      * Admin moderation: removes one skin from the target player.
      */
     async rejectSkin(
@@ -684,14 +747,17 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         return 0
       }
 
+      let wasCurrent = false
       const removed = await skinsDb.transaction().execute(async (trx) => {
-        const ok = await removePlayerSkin(trx, uuid, skinName, actorUuid)
+        const result = await removePlayerSkin(trx, uuid, skinName, actorUuid)
+        wasCurrent = result.wasCurrent
 
-        return ok ? 1 : 0
+        return result.removed ? 1 : 0
       })
 
       if (removed) {
         await this.invalidate(targetNickname)
+        if (wasCurrent) await clearLiveSelection(targetNickname, uuid)
         await this.initSkin({ nickname: targetNickname, uuid, minio })
       }
 
@@ -731,11 +797,14 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         player?.skin_identifier ?? "",
       ].filter((id): id is string => Boolean(id) && isCustomSkin(id)))]
 
+      let wasCurrent = false
       const removed = await skinsDb.transaction().execute(async (trx) => {
         let count = 0
 
         for (const id of ids) {
-          if (await removePlayerSkin(trx, uuid, id, actorUuid)) count++
+          const result = await removePlayerSkin(trx, uuid, id, actorUuid)
+          if (result.removed) count++
+          if (result.wasCurrent) wasCurrent = true
         }
 
         return count
@@ -743,6 +812,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
       if (removed) {
         await this.invalidate(targetNickname)
+        if (wasCurrent) await clearLiveSelection(targetNickname, uuid)
         await this.initSkin({ nickname: targetNickname, uuid, minio })
       }
 
@@ -977,8 +1047,11 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         const id = row?.skin_identifier
 
         /** The plugin appends history rows; aether selections may not have one. */
-        const timestampFor = (skinIdentifier: string, fallback = 0) =>
-          history.find((entry) => entry.skin_identifier === skinIdentifier)?.timestamp ?? fallback
+        const timestampFor = (skinIdentifier: string, fallback = 0) => {
+          const key = skinIdentifier.toLowerCase()
+
+          return history.find((entry) => entry.skin_identifier.toLowerCase() === key)?.timestamp ?? fallback
+        }
 
         if (!id) {
           const defaultSkin = await this.getDefaultSkin({ skinsDb });
@@ -1043,9 +1116,19 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
       if (!current) return []
 
-      const prevIds = history
-        .map(h => h.skin_identifier)
-        .filter(id => id !== current.skin_identifier)
+      // The plugin may store the same identifier in a different case. Dedupe by
+      // the normalized key, but keep the first spelling for the payload.
+      const seenIds = new Set([current.skin_identifier.toLowerCase()])
+      const prevIds: string[] = []
+
+      for (const entry of history) {
+        const key = entry.skin_identifier.toLowerCase()
+
+        if (seenIds.has(key)) continue
+
+        seenIds.add(key)
+        prevIds.push(entry.skin_identifier)
+      }
 
       const customIds: string[] = []
       const defaultIds: string[] = []
@@ -1058,9 +1141,14 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         }
       }
 
-      const historyTimestamp = new Map(
-        history.map((entry) => [entry.skin_identifier, entry.timestamp]),
-      )
+      const historyTimestamp = new Map<string, number>()
+
+      for (const entry of history) {
+        const key = entry.skin_identifier.toLowerCase()
+
+        // History is newest-first; keep the latest timestamp for a duplicate.
+        if (!historyTimestamp.has(key)) historyTimestamp.set(key, entry.timestamp)
+      }
 
       const getCustomSkins = async (ids: string[]) => {
         if (ids.length === 0) return []
@@ -1073,14 +1161,14 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
             "sr_custom_skins.name as skin_identifier",
             "sr_url_skins.skin_variant",
           ])
-          .where("sr_custom_skins.name", "in", ids)
+          .where(sql`lower(sr_custom_skins.name)`, "in", ids.map((id) => id.toLowerCase()))
           .orderBy(sql`sr_url_skins.skin_variant is null`, "asc")
           .orderBy("sr_url_skins.skin_variant", "asc")
           .execute()
 
         return rows.map((row) => ({
           ...row,
-          timestamp: historyTimestamp.get(row.skin_identifier) ?? 0,
+          timestamp: historyTimestamp.get(row.skin_identifier.toLowerCase()) ?? 0,
         }))
       }
 
@@ -1113,8 +1201,10 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       const unique = new Map<string, PlayerSkinPayload & { skin: Skin, headKey: string }>()
 
       for (const entry of [current, ...previousSkins]) {
-        // A signature join can repeat one skin; keep the first (current) entry.
-        if (unique.has(entry.skin_identifier)) continue;
+        // A signature join or a case difference can repeat one skin; keep the
+        // first (current) entry.
+        const key = entry.skin_identifier.toLowerCase()
+        if (unique.has(key)) continue;
 
         const parsed = safeJsonParse<Skin>(atob(entry.value))
 
@@ -1128,7 +1218,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
           continue;
         }
 
-        unique.set(entry.skin_identifier, {
+        unique.set(key, {
           ...entry,
           skin: parsed.value,
           headKey: skinHeadKey(entry.value),

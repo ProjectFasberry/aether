@@ -213,7 +213,9 @@ export const startOrderConsumer = async (): Promise<void> => {
         decoded = parsed.value;
         commandSubject = `server.${(decoded.server ?? "bisquite").toLowerCase()}.command`;
 
-        const requestTimeout = decoded.event === "skinsApply" ? 15_000 : timeout;
+        const requestTimeout = decoded.event === "skinsApply" || decoded.event === "skinsClear"
+          ? 15_000
+          : timeout;
         const r = await nc.request(commandSubject, payload, { timeout: requestTimeout });
         const res = r.json<ResponseMsg>();
 
@@ -390,6 +392,47 @@ export async function callSkinsApply({
   }
 
   // Storage lookups on the game server can take longer than a console command.
+  const waiter = waitForCommand(commandId, 15_000)
+
+  try {
+    await js.publish(
+      "order",
+      JSON.stringify(payload),
+      { msgID: `${commandId}:${randomUUID()}` },
+    )
+  } catch (error) {
+    resolveCommand(commandId, { ok: false, error: "PUBLISH_FAILED" })
+    throw error
+  }
+
+  const result = await waiter
+  if (!result.ok) throw new Error(result.error)
+}
+
+/**
+ * Clears the player's SkinsRestorer selection and asks the backend to refresh
+ * the live client, so a deleted active skin falls back immediately.
+ */
+export async function callSkinsClear({
+  nickname, uuid, server,
+}: {
+  nickname: string,
+  uuid: string,
+  server?: string,
+}): Promise<void> {
+  const nc = natsService.getInstance()
+  const js = jetstream(nc)
+  const target = server?.toLowerCase() ?? await resolveTargetServer(nickname, "lobby")
+  const commandId = randomUUID()
+
+  const payload = {
+    event: "skinsClear",
+    commandId,
+    nickname,
+    uuid,
+    server: target,
+  }
+
   const waiter = waitForCommand(commandId, 15_000)
 
   try {

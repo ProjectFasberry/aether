@@ -48,6 +48,10 @@ Upload keeps the variant on duplicate player rows too; the old upsert dropped it
   SkinsRestorer, stores the identifier, applies it to the live player and
   publishes `events.skins.changed`. A missing plugin, no responders or a
   timeout returns `503 SERVER_OFFLINE`.
+- Deleting the current skin sends `skinsClear` (nats-spigot 1.4.1+). The plugin
+  removes the SkinsRestorer selection and applies the server default to the live
+  player, so the fallback is visible without a rejoin. On 1.4.0 the deletion
+  still succeeds; the live refresh happens on the next join.
 
 The plugin needs SkinsRestorer 15 (compile dependency `15.4.0`) and
 `softdepend: [SkinsRestorer]`. Rollout order: deploy the plugin to every backend
