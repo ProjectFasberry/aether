@@ -556,7 +556,7 @@ export async function uploadSkin(
     const result = await pollMineSkinJob(job.id, waitMs);
     return result
   } catch (e) {
-    logger.error({ message: "MineSkin upload failed", error: e });
+    logger.error({ message: "MineSkin upload failed", metric: "mineskin_error", error: e });
     throw e
   }
 }
