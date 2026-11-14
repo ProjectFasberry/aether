@@ -53,6 +53,9 @@ Upload keeps the variant on duplicate player rows too; the old upsert dropped it
   regeneration before the migration is applied.
 - Deploy order: apply the migration first, then the image; otherwise
   selection and upload fail with a missing table.
+- `0002_skins_indexes.sql` adds prefix indexes on the TEXT `signature` columns,
+  creates `skin_schema_version` and records versions 1 and 2. Boot checks the
+  version (`skins-schema` lifecycle step) and fails fast when the schema is old.
 
 Backfill (dry run by default):
 
@@ -60,6 +63,17 @@ Backfill (dry run by default):
 infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts
 infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts --apply
 ```
+
+## History and cleanup
+
+`_loadHistoryFromDB` pins the current skin first and orders the rest by the real
+`sr_player_history` timestamp; there is no synthetic `10000000` value. Default
+skins use the UUID for the head, and the server-wide `default` row uses the
+static fallback head.
+
+`deleteOldSkins` keeps the last two history entries, deletes only `sr_url_skins`
+rows whose signature is no longer referenced by any custom skin, and removes
+MinIO objects after the transaction commits.
 
 ## Heads
 

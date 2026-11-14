@@ -639,10 +639,10 @@ export async function uploadSkin(
 }
 
 export async function deleteOldSkins({
-  trx, uuid, nickname
+  trx, uuid
 }: {
-  trx: Transaction<DB>, uuid: string, nickname: string
-}) {
+  trx: Transaction<DB>, uuid: string
+}): Promise<string[]> {
   const historyExist = await trx
     .selectFrom("sr_player_history")
     .select([
@@ -655,43 +655,48 @@ export async function deleteOldSkins({
 
   const toDelete = historyExist.length > 2 ? historyExist.slice(0, -2) : [];
 
-  if (toDelete.length) {
-    const ids = toDelete.map(d => d.skin_identifier)
+  if (!toDelete.length) return [];
 
-    const cs = await trx
-      .selectFrom("sr_custom_skins")
-      .select(["signature"])
-      .where("name", "in", ids)
-      .execute()
+  const ids = toDelete.map(d => d.skin_identifier)
 
-    const signatures = cs.map(d => d.signature);
+  const cs = await trx
+    .selectFrom("sr_custom_skins")
+    .select(["signature"])
+    .where("name", "in", ids)
+    .execute()
 
-    await Promise.all([
-      trx
-        .deleteFrom("sr_url_skins")
-        .where("signature", "in", signatures)
-        .execute(),
-      trx
-        .deleteFrom("sr_player_history")
-        .where("skin_identifier", "in", ids)
-        .execute(),
-      trx
-        .deleteFrom("sr_custom_skins")
-        .where("name", "in", ids)
-        .execute(),
-      // Ownership rows follow the asset; audit rows are history and stay.
-      sql`
-        delete from skin_owners
-        where skin_name in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
-      `.execute(trx)
-    ])
+  const signatures = [...new Set(cs.map(d => d.signature))];
 
-    const client = minioService.getInstance();
+  await trx
+    .deleteFrom("sr_player_history")
+    .where("skin_identifier", "in", ids)
+    .execute()
 
-    for (const identifier of ids) {
-      await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
-    }
+  await trx
+    .deleteFrom("sr_custom_skins")
+    .where("name", "in", ids)
+    .execute()
+
+  // `sr_url_skins` is keyed by signature, which another custom skin can share:
+  // only orphan rows may go.
+  if (signatures.length) {
+    await sql`
+      delete from sr_url_skins
+      where signature in (${sql.join(signatures.map((signature) => sql`${signature}`), sql`, `)})
+        and not exists (
+          select 1 from sr_custom_skins
+          where sr_custom_skins.signature = sr_url_skins.signature
+        )
+    `.execute(trx)
   }
+
+  // Ownership rows follow the asset; audit rows are history and stay.
+  await sql`
+    delete from skin_owners
+    where skin_name in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
+  `.execute(trx)
+
+  return ids
 }
 
 type UploadPayload = {
@@ -739,7 +744,7 @@ export async function upload(
   const { signature, value } = skin.texture.data
 
   const updateResult = await skins.transaction().execute(async (trx) => {
-    await deleteOldSkins({ trx, uuid, nickname });
+    const removedIdentifiers = await deleteOldSkins({ trx, uuid });
 
     type CustomPayload = {
       name: string, // equals skin_identifier
@@ -842,8 +847,22 @@ export async function upload(
       skinName: name,
     })
 
-    return { url: urlPayload.url }
+    return { url: urlPayload.url, removedIdentifiers }
   })
+
+  // Storage cleanup happens after the commit: a rollback must not leave rows
+  // pointing at deleted objects.
+  if (updateResult.removedIdentifiers.length) {
+    const client = minioService.getInstance()
+
+    for (const identifier of updateResult.removedIdentifiers) {
+      try {
+        await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
+      } catch (e) {
+        logger.warn({ message: "Skin avatar cleanup failed", nickname, identifier, error: e })
+      }
+    }
+  }
 
   // Drop the stale entry first, then rebuild it: the panel refetches history
   // right after the upload and must not see the previous skin.

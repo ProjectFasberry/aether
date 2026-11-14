@@ -25,6 +25,8 @@ const CACHE_TTL_SECONDS = 24 * 60 * 60;
 const CACHE_REFRESH_MS = 60 * 60 * 1000;
 /** Guards a single rebuild per nickname across processes. */
 const CACHE_LOCK_TTL_MS = 10_000;
+/** Highest applied file in `pkgs/config-drizzle/drizzle/skins/`. */
+const SKINS_SCHEMA_VERSION = 2;
 
 export const getSkinsHistoryCacheRedisKey = (nickname: string) => buildRedisKey({
   name: `players:skins:${CACHE_VERSION}:${nickname.toLowerCase()}`,
@@ -253,6 +255,31 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
   const skin = {
     /**
+     * Fails fast when the database predates the aether migrations.
+     */
+    async checkSchema(): Promise<void> {
+      let version = 0
+
+      try {
+        const result = await sql<{ version: number | null }>`
+          select max(version) as version from skin_schema_version
+        `.execute(skinsDb)
+
+        version = Number(result.rows[0]?.version ?? 0)
+      } catch (e) {
+        throw new Error(
+          "Skins schema is missing: apply 0001_skins_ownership.sql and 0002_skins_indexes.sql",
+          { cause: e },
+        )
+      }
+
+      if (version < SKINS_SCHEMA_VERSION) {
+        throw new Error(
+          `Skins schema is outdated: found ${version}, need ${SKINS_SCHEMA_VERSION}`,
+        )
+      }
+    },
+    /**
      * Returns the cached skin payload for a given nickname
      */
     async getCachedSkinsPayload(nickname: string): Promise<SkinsHistory | null> {
@@ -400,7 +427,9 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         .innerJoin("sr_url_skins", "sr_url_skins.value", "sr_custom_skins.value")
         .select([
           "sr_custom_skins.value",
-          "sr_url_skins.url as skin_identifier",
+          // The row is the server-wide fallback, not a player skin: a URL here
+          // would become an invalid head identifier and avatar object key.
+          sql<string>`'default'`.as("skin_identifier"),
           "sr_url_skins.skin_variant",
         ])
         .where("sr_custom_skins.name", "=", "default")
@@ -596,7 +625,10 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
     ): Promise<SkinsHistory> {
       const uuid = uuidOpt ?? await playerService.getUuid(nickname);
 
-      const resolveCurrentSkin = async (uuid: string): Promise<PlayerSkinPayload | null> => {
+      const resolveCurrentSkin = async (
+        uuid: string,
+        history: Omit<PlayerSkinPayload, "value">[],
+      ): Promise<PlayerSkinPayload | null> => {
         const row = await skinsDb
           .selectFrom("sr_players")
           .select(["skin_identifier", "skin_variant"])
@@ -605,10 +637,14 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         const id = row?.skin_identifier
 
+        /** The plugin appends history rows; aether selections may not have one. */
+        const timestampFor = (skinIdentifier: string, fallback = 0) =>
+          history.find((entry) => entry.skin_identifier === skinIdentifier)?.timestamp ?? fallback
+
         if (!id) {
           const defaultSkin = await this.getDefaultSkin({ skinsDb });
 
-          return defaultSkin ? { ...defaultSkin, timestamp: 10000000 } : null;
+          return defaultSkin ? { ...defaultSkin, timestamp: 0 } : null;
         }
 
         if (isCustomSkin(id)) {
@@ -632,7 +668,7 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
                 skin.map((entry) => entry.skin_variant),
                 row?.skin_variant,
               ),
-              timestamp: 10000000
+              timestamp: timestampFor(id),
             }
           }
         }
@@ -649,16 +685,22 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
           .where("sr_players.uuid", "=", uuid)
           .executeTakeFirst()
 
-        if (resolved) return resolved
+        if (resolved) {
+          return {
+            ...resolved,
+            timestamp: timestampFor(resolved.skin_identifier, resolved.timestamp),
+          }
+        }
 
         const defaultSkin = await this.getDefaultSkin({ skinsDb });
 
-        return defaultSkin ? { ...defaultSkin, timestamp: 10000000 } : null;
+        return defaultSkin ? { ...defaultSkin, timestamp: 0 } : null;
       }
 
-      const [current, history] = await Promise.all([
-        resolveCurrentSkin(uuid), this._getSkinsHistory(uuid)
-      ])
+      // History carries the real timestamps; the current skin is resolved
+      // against it so the panel does not get a synthetic value.
+      const history = await this._getSkinsHistory(uuid)
+      const current = await resolveCurrentSkin(uuid, history)
 
       if (!current) return []
 
@@ -677,22 +719,30 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
         }
       }
 
+      const historyTimestamp = new Map(
+        history.map((entry) => [entry.skin_identifier, entry.timestamp]),
+      )
+
       const getCustomSkins = async (ids: string[]) => {
         if (ids.length === 0) return []
 
-        return await skinsDb
+        const rows = await skinsDb
           .selectFrom("sr_custom_skins")
           .innerJoin("sr_url_skins", "sr_url_skins.signature", "sr_custom_skins.signature")
           .select([
             "sr_custom_skins.value",
             "sr_custom_skins.name as skin_identifier",
             "sr_url_skins.skin_variant",
-            sql<number>`${10000000}`.as('timestamp')
           ])
           .where("sr_custom_skins.name", "in", ids)
           .orderBy(sql`sr_url_skins.skin_variant is null`, "asc")
           .orderBy("sr_url_skins.skin_variant", "asc")
           .execute()
+
+        return rows.map((row) => ({
+          ...row,
+          timestamp: historyTimestamp.get(row.skin_identifier) ?? 0,
+        }))
       }
 
       const getDefaultSkins = async (ids: string[]) => {
@@ -717,7 +767,10 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
       const skinsData = [...customSkins, ...defaultSkins]
 
-      const previousSkins = prevIds.length === 0 ? [] : skinsData
+      // Current stays first; the rest is newest-first by the real timestamp.
+      const previousSkins = prevIds.length === 0
+        ? []
+        : skinsData.sort((a, b) => b.timestamp - a.timestamp)
       const unique = new Map<string, PlayerSkinPayload & { skin: Skin }>()
 
       for (const entry of [current, ...previousSkins]) {
@@ -745,7 +798,9 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       const data: SkinsHistory = Array.from(unique.values()).map(v => {
         const skin_head_url = isCustomSkin(v.skin_identifier)
           ? getCustomHead(nickname, v.skin_identifier)
-          : getDefaultSkinHeadUrl(v.skin_identifier);
+          : v.skin_identifier === "default"
+            ? defaultHead
+            : getDefaultSkinHeadUrl(v.skin_identifier);
 
         return {
           skin_identifier: v.skin_identifier,
