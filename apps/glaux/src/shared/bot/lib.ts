@@ -22,6 +22,7 @@ const skinsService = createSkinsService({
   },
   config: {
     VOLUME_URL: getEnv().VOLUME_URL,
+    API_URL: getEnv().PUBLIC_API_URL ?? "https://api.fasberry.fun",
   },
   redis: redis.getInstance,
 });

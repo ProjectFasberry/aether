@@ -18,7 +18,7 @@ import type { Client as MinioClient } from "minio"
 import type { NatsConnection } from "@nats-io/nats-core"
 
 /** Bumped whenever the cached payload shape changes. */
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v3";
 /** Hard TTL: an entry older than this is rebuilt on the next read. */
 const CACHE_TTL_SECONDS = 24 * 60 * 60;
 /** Soft TTL: a read after this age refreshes the entry in the background. */
@@ -107,7 +107,9 @@ type SkinsParams = {
   }
   redis: () => RedisClient,
   config: {
-    VOLUME_URL: string
+    VOLUME_URL: string,
+    /** Public API origin; avatars are private and served through `/avatars/:file`. */
+    API_URL: string,
   },
   /**
    * When set, the game server persists the selection (single writer). Without
@@ -163,7 +165,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
 
   const getCustomHead = (
     nickname: string, identifier: string
-  ) => `${config.VOLUME_URL}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
+  ) => `${config.API_URL.replace(/\/$/, "")}/${BUCKETS.AVATARS}/${getAvatarName(nickname, identifier)}`
 
   const defaultHead = DEFAULT_HEAD(config.VOLUME_URL);
   const defaultSkinUrl = getStaticUrl(DEFAULT_SKIN, config.VOLUME_URL);
@@ -459,6 +461,40 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         .execute()
     },
     /**
+     * SkinsRestorer writes the player row itself but lowercases the custom skin
+     * name and leaves `skin_variant` empty. Put both back from the asset tables.
+     */
+    async _normalizeSelection({
+      uuid, skinName,
+    }: {
+      uuid: string,
+      skinName: string,
+    }): Promise<void> {
+      const canonical = await skinsDb
+        .selectFrom("sr_custom_skins")
+        .select(["name"])
+        .where(sql`lower(sr_custom_skins.name)`, "=", skinName.toLowerCase())
+        .executeTakeFirst()
+
+      if (!canonical) return
+
+      const variants = await skinsDb
+        .selectFrom("sr_custom_skins")
+        .innerJoin("sr_url_skins", "sr_url_skins.signature", "sr_custom_skins.signature")
+        .select(["sr_url_skins.skin_variant"])
+        .where("sr_custom_skins.name", "=", canonical.name)
+        .execute()
+
+      await skinsDb
+        .updateTable("sr_players")
+        .set({
+          skin_identifier: canonical.name,
+          skin_variant: pickSkinVariant(variants.map((entry) => entry.skin_variant)),
+        })
+        .where("uuid", "=", uuid)
+        .execute()
+    },
+    /**
      * Sets a skin for a given nickname
      */
     async setSkin(
@@ -506,11 +542,14 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
           }
         }
 
+        // SkinsRestorer stores the identifier lowercased and drops the variant;
+        // restore the canonical name and variant so heads and slim models work.
+        await this._normalizeSelection({ uuid, skinName: identifier })
+
         await this.invalidate(nickname)
         await this.initSkin({ nickname, uuid, minio })
 
-        return { ok: true }
-      }
+        return { ok: true }      }
 
       const result = await skinsDb.transaction().execute(async (trx) => {
         const rows = await trx
