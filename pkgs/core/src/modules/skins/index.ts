@@ -27,7 +27,7 @@ const CACHE_REFRESH_MS = 60 * 60 * 1000;
 /** Guards a single rebuild per nickname across processes. */
 const CACHE_LOCK_TTL_MS = 10_000;
 /** Highest applied file in `pkgs/config-drizzle/drizzle/skins/`. */
-const SKINS_SCHEMA_VERSION = 2;
+const SKINS_SCHEMA_VERSION = 3;
 
 export const getSkinsHistoryCacheRedisKey = (nickname: string) => buildRedisKey({
   name: `players:skins:${CACHE_VERSION}:${nickname.toLowerCase()}`,
@@ -203,6 +203,31 @@ export const recordSkinAudit = async (
   `.execute(db)
 }
 
+type HeadJob = {
+  hash: string,
+  skin_url: string,
+  attempts: number,
+}
+
+/** A head is queued before the inline render, so a crash leaves a retryable row. */
+const enqueueHeadJob = async (
+  db: SkinsExecutor,
+  hash: string,
+  skinUrl: string,
+): Promise<void> => {
+  const now = Math.floor(Date.now() / 1000)
+
+  await sql`
+    insert ignore into skin_head_jobs
+      (hash, skin_url, status, attempts, created_at, updated_at)
+    values (${hash}, ${skinUrl}, 'pending', 0, ${now}, ${now})
+  `.execute(db)
+}
+
+const finishHeadJob = async (db: SkinsExecutor, hash: string): Promise<void> => {
+  await sql`delete from skin_head_jobs where hash = ${hash}`.execute(db)
+}
+
 export const createSkinsService = ({ redis, databases, config, applySelection }: SkinsParams) => {
   const { general: generalDb, skins: skinsDb } = databases;
 
@@ -304,6 +329,93 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
       const result = await readCachedEntry(nickname)
       return result?.data[0]?.skin_head_url ?? defaultHead
     }
+  }
+
+  /**
+   * Removes one custom skin from a player: history row, ownership, current
+   * selection and the asset when nothing else references it. Returns false when
+   * the skin is not part of that player's history.
+   */
+  const removePlayerSkin = async (
+    trx: Transaction<skinsDb>,
+    uuid: string,
+    skinName: string,
+    actorUuid: string,
+  ): Promise<boolean> => {
+    const row = await trx
+      .selectFrom("sr_custom_skins")
+      .select(["name", "signature"])
+      .where(sql`lower(sr_custom_skins.name)`, "=", skinName.toLowerCase())
+      .executeTakeFirst()
+
+    if (!row) return false
+
+    const canonical = row.name
+    const [history, current] = await Promise.all([
+      trx
+        .selectFrom("sr_player_history")
+        .select("uuid")
+        .where("uuid", "=", uuid)
+        .where("skin_identifier", "=", canonical)
+        .executeTakeFirst(),
+      trx
+        .selectFrom("sr_players")
+        .select("skin_identifier")
+        .where("uuid", "=", uuid)
+        .executeTakeFirst(),
+    ])
+
+    const isCurrent = current?.skin_identifier?.toLowerCase() === canonical.toLowerCase()
+
+    if (!history && !isCurrent) return false
+
+    if (history) {
+      await trx
+        .deleteFrom("sr_player_history")
+        .where("uuid", "=", uuid)
+        .where("skin_identifier", "=", canonical)
+        .execute()
+    }
+
+    if (isCurrent) {
+      await trx
+        .updateTable("sr_players")
+        .set({ skin_identifier: null, skin_type: null, skin_variant: null })
+        .where("uuid", "=", uuid)
+        .execute()
+    }
+
+    await sql`delete from skin_owners where skin_name = ${canonical}`.execute(trx)
+
+    const references = await trx
+      .selectFrom("sr_player_history")
+      .select("skin_identifier")
+      .where("skin_identifier", "=", canonical)
+      .execute()
+
+    if (references.length === 0) {
+      await trx.deleteFrom("sr_custom_skins").where("name", "=", canonical).execute()
+
+      if (row.signature) {
+        await sql`
+          delete from sr_url_skins
+          where signature = ${row.signature}
+            and not exists (
+              select 1 from sr_custom_skins
+              where sr_custom_skins.signature = sr_url_skins.signature
+            )
+        `.execute(trx)
+      }
+    }
+
+    await recordSkinAudit(trx, {
+      actorUuid,
+      targetUuid: uuid,
+      action: "delete",
+      skinName: canonical,
+    })
+
+    return true
   }
 
   const skin = {
@@ -554,6 +666,87 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         })
         .where("uuid", "=", uuid)
         .execute()
+    },
+    /**
+     * Admin moderation: removes one skin from the target player.
+     */
+    async rejectSkin(
+      targetNickname: string,
+      skinName: string,
+      actorUuid: string,
+      minio: () => MinioClient,
+    ): Promise<number> {
+      let uuid: string
+
+      try {
+        uuid = await playerService.getUuid(targetNickname)
+      } catch {
+        return 0
+      }
+
+      const removed = await skinsDb.transaction().execute(async (trx) => {
+        const ok = await removePlayerSkin(trx, uuid, skinName, actorUuid)
+
+        return ok ? 1 : 0
+      })
+
+      if (removed) {
+        await this.invalidate(targetNickname)
+        await this.initSkin({ nickname: targetNickname, uuid, minio })
+      }
+
+      return removed
+    },
+    /**
+     * Admin moderation: removes every custom skin of the target player.
+     */
+    async rejectAllSkins(
+      targetNickname: string,
+      actorUuid: string,
+      minio: () => MinioClient,
+    ): Promise<number> {
+      let uuid: string
+
+      try {
+        uuid = await playerService.getUuid(targetNickname)
+      } catch {
+        return 0
+      }
+
+      const [history, player] = await Promise.all([
+        skinsDb
+          .selectFrom("sr_player_history")
+          .select("skin_identifier")
+          .where("uuid", "=", uuid)
+          .execute(),
+        skinsDb
+          .selectFrom("sr_players")
+          .select("skin_identifier")
+          .where("uuid", "=", uuid)
+          .executeTakeFirst(),
+      ])
+
+      const ids = [...new Set([
+        ...history.map((entry) => entry.skin_identifier),
+        player?.skin_identifier ?? "",
+      ].filter((id): id is string => Boolean(id) && isCustomSkin(id)))]
+
+      const removed = await skinsDb.transaction().execute(async (trx) => {
+        let count = 0
+
+        for (const id of ids) {
+          if (await removePlayerSkin(trx, uuid, id, actorUuid)) count++
+        }
+
+        return count
+      })
+
+      if (removed) {
+        await this.invalidate(targetNickname)
+        await this.initSkin({ nickname: targetNickname, uuid, minio })
+      }
+
+      return removed
     },
     /**
      * Sets a skin for a given nickname
@@ -1023,17 +1216,68 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
             logger.debug({ message: `skins.metric head_cache_hit key=${key}` })
             return
           } catch {
-            // Missing: render below.
+            // Missing: queue it, then try the inline render.
           }
 
+          await enqueueHeadJob(skinsDb, hash, skinUrl)
+
           const started = performance.now()
-          const target = await this._getHeadFromSkin(skinUrl)
-          await client.putObject(BUCKETS.AVATARS, key, target)
-          logger.info({
-            message: `skins.metric head_render_ms value=${Math.round(performance.now() - started)} key=${key}`,
-          })
+
+          try {
+            const target = await this._getHeadFromSkin(skinUrl)
+            await client.putObject(BUCKETS.AVATARS, key, target)
+            await finishHeadJob(skinsDb, hash)
+            logger.info({
+              message: `skins.metric head_render_ms value=${Math.round(performance.now() - started)} key=${key}`,
+            })
+          } catch (e) {
+            // The job stays pending for the cron retry.
+            logger.warn({ message: `skins.metric head_render_failed key=${key}`, error: e })
+          }
         })
       )
+    },
+    /**
+     * Retries queued head renders. Failures stay pending until five attempts,
+     * then move to `failed` for inspection.
+     */
+    async processHeadJobs(
+      minio: () => MinioClient,
+      limit = 20,
+    ): Promise<number> {
+      const jobs = await sql<HeadJob>`
+        select hash, skin_url, attempts
+        from skin_head_jobs
+        where status = 'pending' and attempts < 5
+        order by updated_at
+        limit ${limit}
+      `.execute(skinsDb)
+
+      if (jobs.rows.length === 0) return 0
+
+      const client = minio()
+      let done = 0
+
+      for (const job of jobs.rows) {
+        try {
+          const target = await this._getHeadFromSkin(job.skin_url)
+          await client.putObject(BUCKETS.AVATARS, `heads-${job.hash}.png`, target)
+          await finishHeadJob(skinsDb, job.hash)
+          done++
+        } catch (e) {
+          const attempts = job.attempts + 1
+          const status = attempts >= 5 ? "failed" : "pending"
+          const message = e instanceof Error ? e.message : String(e)
+
+          await sql`
+            update skin_head_jobs
+            set attempts = ${attempts}, status = ${status}, last_error = ${message}, updated_at = ${Math.floor(Date.now() / 1000)}
+            where hash = ${job.hash}
+          `.execute(skinsDb)
+        }
+      }
+
+      return done
     }
   }
 

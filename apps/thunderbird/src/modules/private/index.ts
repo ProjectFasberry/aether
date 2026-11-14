@@ -18,6 +18,7 @@ import { economy } from "./economy";
 import { servers } from "./servers";
 import { metrics } from "./metrics";
 import { teamPrivate } from "./team";
+import { skinsPrivate } from "./skins";
 
 const infra = new Elysia()
   .group("", app => app
@@ -44,6 +45,7 @@ const entities = new Elysia()
     .use(releases)
     .use(economy)
     .use(servers)
+    .use(skinsPrivate)
   );
 
 export const privated = new Elysia()

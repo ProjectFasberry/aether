@@ -236,6 +236,25 @@ export const CRON_JOBS = [
     lockTtlMs: 60 * 60_000
   }),
   defineJob({
+    name: "process-skin-head-jobs",
+    cron: "*/2 * * * *",
+    callback: async () => {
+      const [{ skinsService }, { minioService }] = await Promise.all([
+        import("#/shared/services/skins"),
+        import("#/shared/services/minio"),
+      ]);
+      const rendered = await skinsService.skin.processHeadJobs(minioService.getInstance, 20);
+
+      if (rendered > 0) {
+        cronLogger.info(`Skins: rendered ${rendered} queued heads`);
+      }
+    },
+    immediately: true,
+    schedule: true,
+    allowIsDev: true,
+    lockTtlMs: 110_000
+  }),
+  defineJob({
     name: "update-seems-like",
     cron: "0 0 */3 * * *",
     callback: async () => {

@@ -41,6 +41,7 @@ export const PERMISSION_NAMES = [
   "roles.update",
   "servers.read",
   "servers.update",
+  "skins.moderate",
   "store.item.create",
   "store.item.delete",
   "store.item.update",
