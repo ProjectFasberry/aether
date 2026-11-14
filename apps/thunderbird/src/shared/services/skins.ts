@@ -12,7 +12,8 @@ export const skinsService = createSkinsService({
   },
   redis: redisService.getInstance,
   config: {
-    VOLUME_URL: getEnv().VOLUME_URL
+    VOLUME_URL: getEnv().VOLUME_URL,
+    API_URL: getEnv().PUBLIC_API_URL,
   },
   applySelection: getEnv().SKINS_APPLY_MODE === "command" ? callSkinsApply : undefined,
 })

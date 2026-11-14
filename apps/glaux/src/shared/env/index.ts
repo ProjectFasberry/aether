@@ -35,6 +35,7 @@ const envSchema = Type.Object({
 	NATS_PASSWORD: Type.String(),
 	NATS_HOST: Type.String(),
 	VOLUME_URL: Type.String(),
+	PUBLIC_API_URL: Type.Optional(Type.String({ default: "https://api.fasberry.fun" })),
 	MINIO_HOST: Type.String(),
 	MINIO_PORT: CoerceNumber,
 	MINIO_ACCESS_KEY: Type.String(),

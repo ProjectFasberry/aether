@@ -26,6 +26,8 @@ const envSchema = z.object({
   LUCKPERMS_POSTGRES_URI: z.url(),
   PLAN_MYSQL_URI: z.url(),
   VOLUME_URL: z.url(),
+  /** Public API origin used for presigned avatar URLs in skin payloads. */
+  PUBLIC_API_URL: z.url().optional().default("https://api.fasberry.fun"),
   MINIO_ACCESS_KEY: z.string().min(1),
   MINIO_SECRET_KEY: z.string().min(1),
   REDIS_HOST: z.string().min(1),
