@@ -1,6 +1,4 @@
 import { skins } from "#/shared/database/skins-db";
-import { getAvatarName } from "#/helpers/volume";
-import { BUCKETS } from "#/shared/minio/client";
 import { isProduction, getEnv } from "#/shared/env";
 import * as z from "zod";
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
@@ -698,7 +696,7 @@ export async function upload(
   const { signature, value } = skin.texture.data
 
   const updateResult = await skins.transaction().execute(async (trx) => {
-    const removedIdentifiers = await deleteOldSkins({ trx, uuid });
+    await deleteOldSkins({ trx, uuid });
 
     type CustomPayload = {
       name: string, // equals skin_identifier
@@ -801,22 +799,9 @@ export async function upload(
       skinName: name,
     })
 
-    return { url: urlPayload.url, removedIdentifiers }
+    return { url: urlPayload.url }
   })
 
-  // Storage cleanup happens after the commit: a rollback must not leave rows
-  // pointing at deleted objects.
-  if (updateResult.removedIdentifiers.length) {
-    const client = minioService.getInstance()
-
-    for (const identifier of updateResult.removedIdentifiers) {
-      try {
-        await client.removeObject(BUCKETS.AVATARS, getAvatarName(nickname, identifier))
-      } catch (e) {
-        logger.warn({ message: "Skin avatar cleanup failed", nickname, identifier, error: e })
-      }
-    }
-  }
 
   // Drop the stale entry first, then rebuild it: the panel refetches history
   // right after the upload and must not see the previous skin.
