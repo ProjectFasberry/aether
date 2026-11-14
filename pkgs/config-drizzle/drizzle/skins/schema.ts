@@ -1,4 +1,4 @@
-import { mysqlTable, mysqlSchema, AnyMySqlColumn, varchar, text } from "drizzle-orm/mysql-core"
+import { mysqlTable, mysqlSchema, AnyMySqlColumn, varchar, text, bigint, tinyint } from "drizzle-orm/mysql-core"
 import { sql } from "drizzle-orm"
 
 export const srCache = mysqlTable("sr_cache", {
@@ -63,4 +63,21 @@ export const srUrlSkins = mysqlTable("sr_url_skins", {
 	value: text().notNull(),
 	signature: text().notNull(),
 	skinVariant: varchar("skin_variant", { length: 20 }).default('NULL'),
+});
+
+/** Side tables owned by aether; see `0001_skins_ownership.sql`. */
+export const skinOwners = mysqlTable("skin_owners", {
+	skinName: varchar("skin_name", { length: 36 }).notNull(),
+	ownerUuid: varchar("owner_uuid", { length: 36 }).notNull(),
+	isPublic: tinyint("is_public").notNull().default(0),
+	createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+
+export const skinAudit = mysqlTable("skin_audit", {
+	id: bigint({ mode: "number" }).autoincrement().notNull(),
+	actorUuid: varchar("actor_uuid", { length: 36 }).notNull(),
+	targetUuid: varchar("target_uuid", { length: 36 }),
+	action: varchar({ length: 16 }).notNull(),
+	skinName: varchar("skin_name", { length: 36 }).notNull(),
+	createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });

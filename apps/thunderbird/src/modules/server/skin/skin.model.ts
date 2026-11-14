@@ -6,7 +6,7 @@ import * as z from "zod";
 import { createCipheriv, createHash, randomBytes } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { URL } from "node:url";
-import type { Transaction } from "kysely";
+import { sql, type Transaction } from "kysely";
 import type { DB } from "@gen/db/skins";
 import { client as inheritClient } from "#/shared/api/client";
 import { wrapError } from "@repo/shared/lib/helpers";
@@ -17,6 +17,7 @@ import { skinsService } from "../../../shared/services/skins";
 import { playerService } from "#/shared/services/player";
 import { minioService } from "#/shared/services/minio";
 import { logger } from "@repo/shared/utils/logger";
+import { recordSkinAudit } from "@repo/core/modules/skins/index";
 
 const MINESKIN_BASE_URL = "https://api.mineskin.org/v2";
 const MINESKIN_USER_AGENT = "Axolotl-MineSkin-Proxy/1.0";
@@ -677,7 +678,12 @@ export async function deleteOldSkins({
       trx
         .deleteFrom("sr_custom_skins")
         .where("name", "in", ids)
-        .execute()
+        .execute(),
+      // Ownership rows follow the asset; audit rows are history and stay.
+      sql`
+        delete from skin_owners
+        where skin_name in (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
+      `.execute(trx)
     ])
 
     const client = minioService.getInstance();
@@ -821,6 +827,20 @@ export async function upload(
       .insertInto("sr_player_history")
       .values(historyPayload)
       .executeTakeFirstOrThrow()
+
+    // Ownership and audit are side tables added in `0001_skins_ownership.sql`;
+    // raw SQL keeps them out of the generated `@gen/db/skins` types for now.
+    await sql`
+      insert ignore into skin_owners (skin_name, owner_uuid, is_public, created_at)
+      values (${name}, ${uuid}, 0, ${Math.floor(Date.now() / 1000)})
+    `.execute(trx)
+
+    await recordSkinAudit(trx, {
+      actorUuid: uuid,
+      targetUuid: null,
+      action: "upload",
+      skinName: name,
+    })
 
     return { url: urlPayload.url }
   })

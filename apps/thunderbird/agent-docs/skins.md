@@ -38,6 +38,29 @@ and returned by the history resolver, so Yggdrasil can emit
 
 Upload keeps the variant on duplicate player rows too; the old upsert dropped it.
 
+## Ownership
+
+`skin_owners(skin_name PK, owner_uuid, is_public, created_at)` and
+`skin_audit(id, actor_uuid, target_uuid, action, skin_name, created_at)` live in
+`0001_skins_ownership.sql`, applied by hand after the introspected baseline.
+
+- A selection is allowed when `owner_uuid` matches the player or `is_public` is
+  set. Before the backfill, a name that embeds the player's nickname
+  (`sr-<nickname>-...`) is accepted, so existing uploads keep working.
+- Uploads insert the owner row and both upload and selection append an audit
+  row. `deleteOldSkins` removes the owner row with the asset; audit rows stay.
+- The tables are read with raw SQL so `@gen/db/skins` does not need a
+  regeneration before the migration is applied.
+- Deploy order: apply the migration first, then the image; otherwise
+  selection and upload fail with a missing table.
+
+Backfill (dry run by default):
+
+```bash
+infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts
+infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts --apply
+```
+
 ## Heads
 
 `_loadHistoryFromDB` awaits `_performHead`, and `_performHead` awaits every

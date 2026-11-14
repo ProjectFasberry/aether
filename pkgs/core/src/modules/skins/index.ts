@@ -9,8 +9,9 @@ import { createPlayerService } from "../player";
 import { SUBJECTS } from "@repo/shared/constants/subjects"
 import { BUCKETS } from "@repo/shared/constants/buckets";
 import { logger } from "@repo/shared/utils/logger";
+import { canUseSkin, type SkinOwner } from "./ownership";
 import type RedisClient from "ioredis";
-import type { Kysely } from "kysely";
+import type { Kysely, Transaction } from "kysely";
 import type { DB as generalDb } from "@gen/db/general";
 import type { DB as skinsDb } from "@gen/db/skins"
 import type { Client as MinioClient } from "minio"
@@ -106,6 +107,44 @@ type SkinsParams = {
   config: {
     VOLUME_URL: string
   }
+}
+
+type SkinsExecutor = Kysely<skinsDb> | Transaction<skinsDb>
+
+/** Ownership lives in a side table, so the introspected schema stays untouched. */
+export const getSkinOwner = async (
+  db: SkinsExecutor,
+  skinName: string,
+): Promise<SkinOwner | null> => {
+  const result = await sql<SkinOwner>`
+    select owner_uuid, is_public
+    from skin_owners
+    where skin_name = ${skinName}
+    limit 1
+  `.execute(db)
+
+  return result.rows[0] ?? null
+}
+
+export const recordSkinAudit = async (
+  db: SkinsExecutor,
+  entry: {
+    actorUuid: string,
+    targetUuid: string | null,
+    action: "select" | "upload" | "delete",
+    skinName: string,
+  },
+): Promise<void> => {
+  await sql`
+    insert into skin_audit (actor_uuid, target_uuid, action, skin_name, created_at)
+    values (
+      ${entry.actorUuid},
+      ${entry.targetUuid},
+      ${entry.action},
+      ${entry.skinName},
+      ${Math.floor(Date.now() / 1000)}
+    )
+  `.execute(db)
 }
 
 export const createSkinsService = ({ redis, databases, config }: SkinsParams) => {
@@ -388,7 +427,12 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
       nickname: string,
       identifier: string,
       minio: () => MinioClient,
-    ): Promise<{ ok: true } | { ok: false, error: "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND" }> {
+    ): Promise<{
+      ok: true
+    } | {
+      ok: false,
+      error: "SKIN_NOT_FOUND" | "PLAYER_NOT_FOUND" | "SKIN_FORBIDDEN"
+    }> {
       let uuid: string
 
       try {
@@ -412,6 +456,12 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         if (rows.length === 0) return { kind: "skin-not-found" as const }
 
+        const owner = await getSkinOwner(trx, identifier)
+
+        if (!canUseSkin({ skinName: identifier, nickname, uuid, owner })) {
+          return { kind: "forbidden" as const }
+        }
+
         const current = await trx
           .selectFrom("sr_players")
           .select("skin_variant")
@@ -434,11 +484,19 @@ export const createSkinsService = ({ redis, databases, config }: SkinsParams) =>
 
         if (!updated.numUpdatedRows) return { kind: "player-not-found" as const }
 
+        await recordSkinAudit(trx, {
+          actorUuid: uuid,
+          targetUuid: null,
+          action: "select",
+          skinName: identifier,
+        })
+
         return { kind: "ok" as const }
       })
 
       if (result.kind === "skin-not-found") return { ok: false, error: "SKIN_NOT_FOUND" }
       if (result.kind === "player-not-found") return { ok: false, error: "PLAYER_NOT_FOUND" }
+      if (result.kind === "forbidden") return { ok: false, error: "SKIN_FORBIDDEN" }
 
       // Drop the old entry first: if the rebuild fails, readers fall back to the
       // database instead of serving the previous skin.
