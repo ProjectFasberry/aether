@@ -546,6 +546,17 @@ export const createSkinsService = ({ redis, databases, config, applySelection }:
         // restore the canonical name and variant so heads and slim models work.
         await this._normalizeSelection({ uuid, skinName: identifier })
 
+        try {
+          await recordSkinAudit(skinsDb, {
+            actorUuid: uuid,
+            targetUuid: null,
+            action: "select",
+            skinName: identifier,
+          })
+        } catch (e) {
+          logger.warn({ message: "Skin audit write failed", nickname, skinName: identifier, error: e })
+        }
+
         await this.invalidate(nickname)
         await this.initSkin({ nickname, uuid, minio })
 
