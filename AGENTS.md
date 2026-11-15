@@ -24,8 +24,9 @@ deploy model live here; each service keeps its own details:
   Docker builds only as the BuildKit secret `npm_token`, never as `ARG`/`ENV`.
 - **Deploy only on an explicit request.** Production is not a place for
   "while I was here" changes.
-- **No direct host access.** Do not ssh/scp/docker against deploy or production
-  hosts; ship through CI and the pull-based rollout.
+- **No direct host access for changes.** Do not ssh/scp/docker against deploy or
+  production hosts to edit code or config; ship through CI. The operator may run
+  `fasberry deploy` on `i-m` for a rollout.
 - **Do not edit generated files.** DB types in `pkgs/shared/.out` and the `dist`
   build output are generated.
 
@@ -101,10 +102,9 @@ Conventional commits (`.cz.toml`), short and lowercase, e.g.
 
 ## Deploy model
 
-Deploys are pull-based: a push to `main` (prod) or `dev` (staging) builds the
-image in GitHub Actions and pushes it to `registry.fasberry.fun/<stage>/<app>`;
-the deploy host runs `scripts/pull-update.sh` from `ProjectFasberry/infra` (local
-checkout: `../infra-host`) on a two-minute timer and recreates the container only
-when the digest changed. There is no manual deploy path from this workstation.
-Image names, workflows and health checks are in the per-app docs; first response
-steps are in [agent-docs/incident-triage.md](agent-docs/incident-triage.md).
+CI builds and pushes `registry.fasberry.fun/<stage>/<app>` on `main` (prod),
+`staging` (staging) or `dev` (dev). Rollout is manual: run
+`ssh i-m '/opt/main/fasberry deploy <stack> [service]'` after the image is
+pushed. The `fasberry-pull-update.timer` is not installed. Image names,
+workflows and health checks are in the per-app docs; first response steps are
+in [agent-docs/incident-triage.md](agent-docs/incident-triage.md).

@@ -28,8 +28,10 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 | Servers | `src/modules/{server,server-ip}` | - |
 | Content | `src/modules/{news,wiki,rules,banner,modpack,releases,content}` | - |
 | Players | `src/modules/{user,avatars,fact,misc}` | - |
+| Activity | `src/modules/server/activity` | - |
+| Lands | `src/modules/{server,private}/lands` | [lands.md](agent-docs/lands.md) |
 | Skins | `src/modules/server/skin`, `pkgs/core/src/modules/skins` | [skins.md](agent-docs/skins.md) |
-| Private panel | `src/modules/private/*` | - |
+| Private panel | `src/modules/private/*` | [lands.md](agent-docs/lands.md) |
 
 ## Layout
 
@@ -66,12 +68,15 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 ## Deploy
 
 - `.github/workflows/build-thunderbird.yml` builds `linux/amd64` on push to
-  `main` (prod) and `dev` (staging) and pushes
+  `main` (prod), `staging` (staging) or `dev` (dev) and pushes
   `registry.fasberry.fun/<stage>/thunderbird:latest` plus `:sha-<commit>`.
   Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
 - The Dockerfile pins `INFISICAL_VERSION` and downloads the CLI from the GitHub
   release with SHA-256 verification; the apt repository on
   `artifacts-cli.infisical.com` hangs behind the deploy network. Bump it with
   `--build-arg INFISICAL_VERSION=<version>`.
+- Rollout is manual: after CI pushes the image, run
+  `ssh i-m '/opt/main/fasberry deploy prod thunderbird'`. The pull-update timer
+  is not installed.
 - Verify from outside: `https://api.fasberry.fun/server/status` (200) and
   `/openapi/json` when the contract changed.
