@@ -32,5 +32,5 @@
 ## Contracts
 
 - Every route declares `body`, `response` and `detail.summary`; OpenAPI is the
-  contract (`/openapi/json`) and `api-contracts` generates clients from it.
+  contract (`/openapi/json`); clients are generated from it.
 - Add fields as optional; do not repurpose existing names.

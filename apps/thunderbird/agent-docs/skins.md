@@ -1,8 +1,7 @@
 # Skins
 
-Player skin selection, upload and head rendering. The design review and the
-target architecture live in the Plane page "Skins system"; this file records how
-the current code behaves.
+Player skin selection, upload and head rendering. This file records how the
+current code behaves.
 
 ## Routes
 

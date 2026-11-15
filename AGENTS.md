@@ -77,7 +77,7 @@ script and exit non-zero if any of them fails. Per-service commands (`dev`,
   regenerate. `.out` is git-ignored, so a stale copy only shows up in a local
   `type-check`.
 - OpenAPI is the contract: `GET /openapi/json`. Route `body`, `response` and
-  `detail` are the source of truth; `api-contracts` syncs from the deployed spec.
+  `detail` are the source of truth; the contract snapshot syncs from the deployed spec.
   A route without them is an undocumented route.
 - Env vars are a zod schema validated at boot
   (`apps/thunderbird/src/shared/env`): a new variable must be added there, and a
