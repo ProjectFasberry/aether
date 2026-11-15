@@ -65,6 +65,11 @@ first, then flip the env flag.
 - The `textures` value is built and signed locally with the Yggdrasil key
   (`modules/yggdrasil/sign.ts`), so no external skin service is involved. The
   volume hostname is part of `skinDomains`, so clients accept the URL.
+- The `skins` bucket is public-read with a permissive CORS rule (needed by the
+  browser skin viewer); `scripts/bucket-policy.ts` and
+  `scripts/set-bucket-cors.ts` are the one-off ops tools. The head renderer
+  allowlist also includes the volume host, otherwise `skin_head_jobs` fails
+  with `Skin host is not allowed`.
 - Per-account limits in Redis: 5 uploads per 24 hours and one per 30 seconds.
   Over the limit returns `429 RATE_LIMITED`.
 - Capes are out of scope for v1; `capeUuid` was removed from the request.
