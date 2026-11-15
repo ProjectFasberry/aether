@@ -133,7 +133,10 @@ export const volume = new Elysia()
           delimiter: delimiter || "/",
         })
 
-        if (!data.contents || data.contents.length === 0) {
+        const hasObjects = !!data.contents?.length
+        const hasFolders = !!data.commonPrefixes?.length
+
+        if (!hasObjects && !hasFolders) {
           return { data: null }
         }
 
