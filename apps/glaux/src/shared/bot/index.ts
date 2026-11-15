@@ -34,8 +34,18 @@ export const bot = {
 		// be visible to the alert fan-out even if `start()` is slow: the boot pipe
 		// has a timeout and would otherwise leave Telegram dead.
 		instance = conn;
-		await this._init(conn);
-		await conn.start();
+
+		// Telegram is an external dependency: an outage of the API relay must
+		// degrade alerts, not take the whole panel API down at boot.
+		try {
+			await this._init(conn);
+			await conn.start();
+		} catch (error) {
+			this.logger.error({
+				message: "Telegram bot failed to start; continuing without polling",
+				error,
+			});
+		}
 	},
 	async _init(instance: Bot) {
 		try {
