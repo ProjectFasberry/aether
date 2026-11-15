@@ -1,5 +1,5 @@
 import { validatePermission } from "#/lib/validators";
-import { S3 } from "#/shared/minio/client";
+import { S3, presignPath } from "#/shared/minio/client";
 import { withData } from "#/shared/schemas";
 import { minioService } from "#/shared/services/minio";
 import { buildRouteSummary } from "#/lib/routes";
@@ -47,6 +47,7 @@ const S3ObjectSchema = t.Object({
 
 const S3ListObjectsResponseSchema = t.Object({
   contents: t.Optional(t.Array(S3ObjectSchema)),
+  commonPrefixes: t.Optional(t.Array(t.Object({ prefix: t.String() }))),
   continuationToken: t.Optional(t.String()),
   delimiter: t.Optional(t.String()),
   encodingType: t.Optional(t.Union([t.Literal("url")])),
@@ -63,12 +64,14 @@ export const volume = new Elysia()
   .use(validatePermission("volume.control"))
   .group("/volume", app => app
     .get("/buckets/list", async () => {
-      const buckets = await minioService.getInstance().listBuckets()
+      const instance = minioService.getInstance()
+      const buckets = await instance.listBuckets()
 
-      const data = buckets.map(bucket => ({
+      const data = await Promise.all(buckets.map(async (bucket) => ({
         name: bucket.name,
-        creationDate: bucket.creationDate.toString()
-      }))
+        creationDate: bucket.creationDate.toString(),
+        available: await instance.bucketExists(bucket.name).catch(() => false),
+      })))
 
       return { data }
     }, {
@@ -78,6 +81,7 @@ export const volume = new Elysia()
             t.Object({
               name: t.String(),
               creationDate: t.String(),
+              available: t.Boolean(),
             })
           )
         )
@@ -123,9 +127,10 @@ export const volume = new Elysia()
           summary: buildRouteSummary("Get bucket details")
         }
       })
-      .get("/list", async ({ params: { bucket }, query: { folder } }) => {
+      .get("/list", async ({ params: { bucket }, query: { folder, delimiter } }) => {
         const data = await S3.getClient(bucket).list({
-          prefix: folder
+          prefix: folder,
+          delimiter: delimiter ?? "/",
         })
 
         if (!data.contents || data.contents.length === 0) {
@@ -135,7 +140,8 @@ export const volume = new Elysia()
         return { data };
       }, {
         query: t.Object({
-          folder: t.Optional(t.String({ minLength: 1 }))
+          folder: t.Optional(t.String({ minLength: 1 })),
+          delimiter: t.Optional(t.String({ minLength: 1 })),
         }),
         response: {
           200: withData(
@@ -144,6 +150,23 @@ export const volume = new Elysia()
         },
         detail: {
           summary: buildRouteSummary("List bucket objects")
+        }
+      })
+      .get("/presign", async ({ params: { bucket }, query: { key } }) => {
+        const data = {
+          url: presignPath(bucket, key, 300),
+        }
+
+        return { data };
+      }, {
+        query: t.Object({
+          key: t.String({ minLength: 1 })
+        }),
+        response: {
+          200: withData(t.Object({ url: t.String() }))
+        },
+        detail: {
+          summary: buildRouteSummary("Presign a bucket object")
         }
       })
     )
