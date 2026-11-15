@@ -10,9 +10,9 @@ Read the boot log first: every resource logs
 1. `GET /health` - public, 200 or 503 `SHUTTING_DOWN`.
 2. `GET /health/ready` - needs an API key (`defineBearer`); 200 with per-database
    health, or 503 `DB_UNAVAILABLE` when a required database is down.
-3. Restart loop: compare the boot log across restarts. `pull-update` recreates the
-   container only when the image tag digest changes, so repeated restarts with the
-   same digest are the app, not the rollout.
+3. Restart loop: compare the boot log across restarts. Rollout is manual
+   (`fasberry deploy`), so repeated restarts with the same image digest are the
+   app, not the rollout.
 
 ## Common signatures
 
@@ -38,9 +38,9 @@ otherwise the process exits on purpose.
 ## Rollback
 
 The workflow publishes `registry.fasberry.fun/<stage>/thunderbird:latest` and
-`:sha-<commit>`. To roll back, pin the previous `sha-` tag on the host; there is no
-separate rollback tag. There is no direct host access from a workstation - ask the
-operator.
+`:sha-<commit>`. `fasberry deploy` tags the running image `:deploy-rollback` before
+pulling, so rollback can restore that tag or pin the previous `sha-` tag. Ask the
+operator to run it on `i-m`; do not edit the host from a workstation.
 
 ## Logs
 

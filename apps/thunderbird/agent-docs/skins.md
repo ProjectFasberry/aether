@@ -13,19 +13,17 @@ the current code behaves.
 | `GET /server/skin/set?id=` | yes | Deprecated alias of the PUT, kept for one release. |
 | `POST /server/skin/upload` | yes | MineSkin job, then assets, player row and history in one transaction. |
 | `GET /server/skin/download/:nickname` | no | 302 to the skin texture URL; falls back to the default skin. |
+| `DELETE /server/skin/:skinName` | yes | Removes one custom skin from the caller's history; deleting the active skin clears the selection. |
 
 ## Cache
 
-- Key `cache:internal:players:skins:v2:<lowercase nickname>`.
+- Key `cache:internal:players:skins:v5:<lowercase nickname>`.
 - Envelope `{ updatedAt, data }`; arrays are still parsed for old entries.
 - TTL 24 hours, background refresh after one hour, `SET NX PX` lock around a
   rebuild. A caller that loses the lock reads the database directly.
 - Redis failures degrade to a database read instead of failing the request.
 - `setSkin` and upload invalidate the key before rebuilding, so a failed rebuild
   never serves the previous skin.
-
-The old `players:skins:<nickname>` keys have no TTL and are no longer read; purge
-them once with `SCAN`/`DEL` after the rollout.
 
 ## Selection and variants
 
@@ -76,7 +74,7 @@ first, then flip the env flag.
   set. Before the backfill, a name that embeds the player's nickname
   (`sr-<nickname>-...`) is accepted, so existing uploads keep working.
 - Uploads insert the owner row and both upload and selection append an audit
-  row. `deleteOldSkins` removes the owner row with the asset; audit rows stay.
+  row. Deleting a skin removes its owner row with the asset; audit rows stay.
 - The tables are read with raw SQL so `@gen/db/skins` does not need a
   regeneration before the migration is applied.
 - Deploy order: apply the migration first, then the image; otherwise
@@ -99,22 +97,23 @@ infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-own
 `GET /server/skin/history/:nickname` accepts `?cursor=<offset>&limit=<1..100>`
 (default 50) and returns the next offset in the `x-next-cursor` header.
 
-`_loadHistoryFromDB` pins the current skin first and orders the rest by the real
-`sr_player_history` timestamp; there is no synthetic `10000000` value. Default
-skins use the UUID for the head, and the server-wide `default` row uses the
-static fallback head.
+`_loadHistoryFromDB` pins the current skin first, orders the rest by the real
+`sr_player_history` timestamp, and deduplicates identifiers case-insensitively.
+Default skins use the UUID for the head, and the server-wide `default` row uses
+the static fallback head. Removed skins delete their history and ownership rows;
+assets are removed only when no custom skin references the signature.
 
-`deleteOldSkins` keeps the last two history entries, deletes only `sr_url_skins`
-rows whose signature is no longer referenced by any custom skin, and removes
-MinIO objects after the transaction commits.
+## Moderation and self-service
 
-## Moderation
-
+- `DELETE /server/skin/:skinName` removes one skin from the caller's own
+  history. Deleting the active skin clears the selection and refreshes the live
+  player through `skinsClear`.
 - `DELETE /privated/user/:nickname/skin` with `{ skinName }` removes one skin
-  from that player; `DELETE /privated/user/:nickname/skins` removes all of them.
-- Both require `skins.moderate` and write a `delete` audit row. The current
-  selection is cleared, history and ownership rows go, and an asset is deleted
-  only when nothing else references it.
+  from another player; `DELETE /privated/user/:nickname/skins` removes all of
+  them.
+- The private routes require `skins.moderate`. Every path writes a `delete`
+  audit row; history and ownership rows go, and an asset is deleted only when
+  nothing else references it.
 
 ## Head outbox
 
@@ -125,8 +124,9 @@ five attempts a row moves to `failed` with `last_error`.
 ## Metrics
 
 Structured `skins.metric` log lines feed Loki/Grafana: `head_render_ms`,
-`head_cache_hit`, `cache_rebuild_ms` and `mineskin_error`. Dashboards and alerts
-are still to be wired; the old path had no metrics at all.
+`head_cache_hit`, `cache_rebuild_ms` and `mineskin_error`. The provisioned
+Grafana "Skins" dashboard reads them; alert rules for `mineskin_error` and
+`head_render_failed` are still open.
 
 ## Heads
 
@@ -135,8 +135,8 @@ are still to be wired; the old path had no metrics at all.
 - `_performHead` stats the object first and renders only missing heads.
 - Texture fetches are bounded to 5 seconds and restricted to `SKIN_DOMAINS`
   (default `textures.minecraft.net`); a bad host fails the entry, not the read.
-- The old nickname-based keys are no longer written or read. Cache v4 rebuilds
-  every entry; the old objects stay in the bucket until a manual cleanup.
+- The old nickname-based keys are no longer written or read. Cache v5 rebuilds
+  every entry; old objects stay in the bucket until a manual cleanup.
 
 ## Registration
 

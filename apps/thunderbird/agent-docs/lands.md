@@ -11,7 +11,7 @@ panel config page.
 - `lands.delete` - delete a land.
 
 The names are declared in `src/shared/constants/permissions.ts`; boot creates
-the rows, but an admin role still has to be granted them in the roles UI.
+the rows. The production admin role has all three.
 
 ## Routes
 
@@ -19,7 +19,7 @@ the rows, but an admin role still has to be granted them in the roles UI.
 | --- | --- |
 | `GET /privated/lands/list?limit&endCursor&searchQuery` | Cursor-paginated list with owner and members. |
 | `GET /privated/lands/eligible-players?limit&searchQuery` | Players whose UUID is not a key in any `lands_lands.members`. |
-| `POST /privated/lands/random` | Pick a random existing land as the area/type/stats template and create a land. |
+| `POST /privated/lands/random` | Pick an existing land or the built-in template as the area/type/stats source and create a land. |
 | `POST /privated/lands/manual` | Same template for `area`, but `name`, `title`, `type`, `level` and `stats` come from the request. |
 | `DELETE /privated/lands/:ulid` | Delete a land, its banner/gallery rows; claims cascade. |
 
