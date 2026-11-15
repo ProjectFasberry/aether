@@ -264,6 +264,7 @@ export async function getLandsByNickname(
     .select("uuid")
     .where("name", "=", nickname)
     .executeTakeFirst()
+    .catch(() => undefined)
 
   let recipientUUID = recipient?.uuid
 

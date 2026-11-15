@@ -40,7 +40,8 @@ async function ownerUuidFor(nickname: string): Promise<string | null> {
     .selectFrom("lands_players")
     .select("uuid")
     .where("name", "=", nickname)
-    .executeTakeFirst();
+    .executeTakeFirst()
+    .catch(() => undefined);
 
   if (row?.uuid) return row.uuid;
 
