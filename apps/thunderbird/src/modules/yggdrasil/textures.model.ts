@@ -17,7 +17,7 @@ export { signaturePublicKey };
 
 const SLIM_VARIANTS = new Set(["SLIM", "slim"]);
 
-export type TexturesProperty = {
+type TexturesProperty = {
   name: "textures";
   value: string;
   signature: string;

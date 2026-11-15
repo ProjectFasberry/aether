@@ -4,7 +4,8 @@ import { skinUpload as upload } from './skin-upload.route';
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { skinsHistorySchema, type SkinsHistory } from "@repo/core/modules/skins/index"
-import { skinsService } from "../../../shared/services/skins";import { buildRouteSummary } from "#/lib/routes";
+import { skinsService } from "../../../shared/services/skins";
+import { buildRouteSummary } from "#/lib/routes";
 import { minioService } from "#/shared/services/minio";
 
 const skinNameSchema = t.String({ minLength: 1, maxLength: 36 })

@@ -19,11 +19,8 @@ export { InvalidSkinFileError } from "./skin-file";
 
 const MAX_SKIN_FILE_SIZE = 1024 * 1024
 
-const uploadNameSchema = z.string().trim().min(1).max(64).optional();
-
 const uploadFormSchema = z.object({
   variant: z.enum(["classic", "slim"]),
-  name: uploadNameSchema,
 });
 
 export class RateLimitedError extends Error {
@@ -33,35 +30,19 @@ export class RateLimitedError extends Error {
   }
 }
 
-function isFileLike(value: unknown): value is Blob {
-  return typeof value === "object"
-    && value !== null
-    && "arrayBuffer" in value
-    && typeof (value as Blob).arrayBuffer === "function"
-}
-
-export const uploadQuerySchema = z.object({});
-
 export const uploadBodySchema = z.object({
   file: z.file().min(1).max(MAX_SKIN_FILE_SIZE).mime("image/png"),
   variant: uploadFormSchema.shape.variant,
-  name: uploadNameSchema,
 })
 
 export type SkinVariant = "CLASSIC" | "SLIM"
 export type SkinType = "PLAYER" | "CUSTOM"
 
 type UploadPayload = {
-  job: {
-    id: string,
-    status: string
-  },
-  result: {
-    url: string
-  } | null
+  url: string
 }
 
-export type LocalSkinUpload = {
+type LocalSkinUpload = {
   /** Short id for the varchar(36) `mine_skin_id` column. */
   id: string
   key: string
@@ -76,15 +57,11 @@ export type LocalSkinUpload = {
  * Yggdrasil key. MineSkin is no longer involved: the client trusts our key, so
  * the value/signature pair is generated here.
  */
-export async function uploadSkin(
+async function uploadSkin(
   body: z.infer<typeof uploadBodySchema>,
   profile: { uuid: string, nickname: string },
 ): Promise<LocalSkinUpload> {
   const { file, variant } = body
-
-  if (!isFileLike(file)) {
-    throw new InvalidSkinFileError("A skin file must be provided")
-  }
 
   await assertValidSkinFile(file)
 
@@ -93,11 +70,12 @@ export async function uploadSkin(
   const key = `textures/${hash}.png`
   const url = getObjectUrl(BUCKETS.SKINS, key)
 
+  const skinVariant = variant.toUpperCase() as SkinVariant
+
   let signed: { value: string, signature: string }
   try {
     await S3.getClient(BUCKETS.SKINS).write(key, bytes, { type: "image/png" })
 
-    const skinVariant = variant.toUpperCase() as SkinVariant
     signed = signTextureValue({
       url,
       variant: skinVariant,
@@ -109,7 +87,6 @@ export async function uploadSkin(
     throw error
   }
 
-  const skinVariant = variant.toUpperCase() as SkinVariant
   const { value, signature } = signed
 
   return { id: hash.slice(0, 32), key, url, value, signature, variant: skinVariant }
@@ -340,11 +317,5 @@ export async function upload(
     logger.warn({ message: "Skin head init failed after upload", nickname, error });
   })
 
-  return {
-    result: updateResult,
-    job: {
-      id: local.id,
-      status: "completed",
-    },
-  }
+  return { url: updateResult.url }
 }

@@ -11,8 +11,8 @@ const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0
 const SKIN_SIZES = new Set(["64x64", "64x32"]);
 
 /**
- * Validates the actual bytes: the client-provided MIME type is not trusted and
- * The API validates the bytes before anything is stored.
+ * Validates the actual bytes: the client-provided MIME type is not trusted.
+ * The API runs this before anything is stored.
  */
 export async function assertValidSkinFile(file: Blob): Promise<void> {
   const buffer = Buffer.from(await file.arrayBuffer());

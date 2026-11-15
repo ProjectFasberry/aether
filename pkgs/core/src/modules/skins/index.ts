@@ -480,9 +480,6 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
     /**
      * Returns the cached skin payload for a given nickname
      */
-    async getCachedSkinsPayload(nickname: string): Promise<SkinsHistory | null> {
-      return (await readCachedEntry(nickname))?.data ?? null
-    },
     /**
      * Paginated history. The cursor is an offset; the panel requests the first
      * page by default and the list is ordered current-first.
@@ -518,6 +515,39 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
       return await this._warm(nickname, minio)
     },
     /**
+     * Loads the history and writes it to the cache, falling back to the
+     * default skin. Shared by the warm path and explicit rebuilds after a
+     * mutation; `uuid` skips the account lookup when the caller knows it.
+     */
+    async _rebuild(
+      nickname: string,
+      minio: () => MinioClient,
+      uuid?: string,
+      onError?: (e: unknown) => void,
+    ): Promise<SkinsHistory> {
+      let payload: SkinsHistory
+
+      try {
+        payload = await this._loadHistoryFromDB(nickname, minio, uuid)
+      } catch (e) {
+        logger.warn({ message: "Skins cache rebuild failed", nickname, error: e })
+        onError?.(e)
+        payload = [fallbackSkin()]
+      }
+
+      if (payload.length === 0) payload = [fallbackSkin()]
+
+      try {
+        await writeCachedEntry(nickname, payload)
+      } catch (e) {
+        // The caller still gets the fresh payload when Redis is unavailable.
+        logger.warn({ message: "Skins cache write failed", nickname, error: e })
+        onError?.(e)
+      }
+
+      return payload
+    },
+    /**
      * Rebuilds the cache behind a single-flight lock. A caller that loses the
      * race reads the database directly instead of waiting on the winner.
      */
@@ -542,23 +572,7 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
       const started = performance.now()
 
       try {
-        let payload: SkinsHistory
-
-        try {
-          payload = await this._loadHistoryFromDB(nickname, minio)
-        } catch (e) {
-          logger.warn({ message: "Skins cache rebuild failed", nickname, error: e })
-          payload = [fallbackSkin()]
-        }
-
-        if (payload.length === 0) payload = [fallbackSkin()]
-
-        try {
-          await writeCachedEntry(nickname, payload)
-        } catch (e) {
-          // The caller still gets the fresh payload when Redis is unavailable.
-          logger.warn({ message: "Skins cache write failed", nickname, error: e })
-        }
+        const payload = await this._rebuild(nickname, minio)
 
         logger.info({
           message: `skins.metric cache_rebuild_ms value=${Math.round(performance.now() - started)} nickname=${nickname}`,
@@ -607,27 +621,9 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
       onError?: (e: unknown) => void,
       uuid?: string
     }): Promise<boolean> {
-      let payload: SkinsHistory;
-
-      try {
-        onStart?.()
-        payload = await this._loadHistoryFromDB(nickname, minio, uuid)
-      } catch (e) {
-        onError?.(e)
-        payload = [fallbackSkin()]
-      }
-
-      // A player without a row or with a broken cache still gets a valid skin.
-      if (payload.length === 0) payload = [fallbackSkin()]
-
-      try {
-        await writeCachedEntry(nickname, payload)
-        onFinish?.()
-      } catch (e) {
-        // Redis is optional for correctness: the caller falls back to
-        // `getFallbackSkin` when the cache cannot be written.
-        onError?.(e)
-      }
+      onStart?.()
+      await this._rebuild(nickname, minio, uuid, onError)
+      onFinish?.()
 
       return true
     },

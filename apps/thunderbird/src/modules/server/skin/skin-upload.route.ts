@@ -5,32 +5,20 @@ import {
   RateLimitedError,
   upload,
   uploadBodySchema,
-  uploadQuerySchema,
 } from "./skin.model"
 import { buildRouteSummary } from "#/lib/routes"
 import { wrapError } from "@repo/shared/lib/helpers"
 import { withData, withError } from "#/shared/schemas"
 
 const uploadDataSchema = t.Object({
-  job: t.Object({
-    id: t.String(),
-    status: t.String(),
-  }),
-  url: t.Nullable(t.String()),
+  url: t.String(),
 })
 
 export const skinUpload = new Elysia()
   .use(defineRequiredUser())
-  .post('/upload', async ({ query, status, nickname, body }) => {
+  .post('/upload', async ({ status, nickname, body }) => {
     try {
-      const uploadResult = await upload(nickname, body)
-
-      const data = {
-        job: uploadResult.job,
-        url: uploadResult.result?.url ?? null,
-      }
-
-      return { data }
+      return { data: await upload(nickname, body) }
     } catch (e) {
       if (e instanceof RateLimitedError) {
         return status(429, wrapError("RATE_LIMITED"));
@@ -44,7 +32,6 @@ export const skinUpload = new Elysia()
     }
   }, {
     parse: "multipart/form-data",
-    query: uploadQuerySchema,
     body: uploadBodySchema,
     response: {
       200: withData(uploadDataSchema),
