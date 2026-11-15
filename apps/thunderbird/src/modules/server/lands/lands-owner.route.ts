@@ -124,10 +124,11 @@ export const landsOwner = new Elysia()
 
     const key = await putImage(body.file, "banners", ulid);
 
+    // `ulid` has no unique key in the Lands schema: replace the row by hand.
+    await bisquite.deleteFrom("lands_banners").where("ulid", "=", ulid).execute();
     await bisquite
       .insertInto("lands_banners")
       .values({ ulid, banner_url: key })
-      .onDuplicateKeyUpdate({ banner_url: key })
       .execute();
 
     await removeObject(previous?.banner_url);
