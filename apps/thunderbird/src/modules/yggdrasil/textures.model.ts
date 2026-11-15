@@ -1,50 +1,21 @@
-import { createPrivateKey, createPublicKey, sign } from "node:crypto";
 import { skinsService } from "#/shared/services/skins";
 import { minioService } from "#/shared/services/minio";
 import { undash } from "./profile.model";
-import { signingKeys } from "./signing-keys.model";
+import { signTextureValue, signaturePublicKey } from "./sign";
+
+export { signaturePublicKey };
 
 /**
  * `textures` property for the Yggdrasil profile.
  *
  * The client verifies texture signatures against `signaturePublickey` from our
- * API metadata, so the property must be signed by us: Mojang/MineSkin signatures
- * (what SkinsRestorer serves) do not pass that check. The skin itself still
- * points at the URL stored in the skins database, which is why
- * `textures.minecraft.net` stays in `skinDomains`.
- *
- * The key lives in `signing_keys` (see signing-keys.model.ts) and must be
- * stable: a new key on every boot invalidates every signature the client has
- * already cached.
+ * API metadata, so the property must be signed by us: Mojang signatures (what
+ * SkinsRestorer may still carry for old rows) do not pass that check. The skin
+ * itself points at the URL stored in the skins database, which is our `skins`
+ * bucket for every upload since the MineSkin removal.
  */
 
-
-/** Yggdrasil signs the base64 value string with RSA-SHA1. */
-const SIGN_ALGORITHM = "sha1";
-
 const SLIM_VARIANTS = new Set(["SLIM", "slim"]);
-
-let cachedPrivateKey: ReturnType<typeof createPrivateKey> | null = null;
-let cachedPublicKeyPem: string | null = null;
-
-function loadPrivateKey(): ReturnType<typeof createPrivateKey> {
-  if (cachedPrivateKey) return cachedPrivateKey;
-
-  cachedPrivateKey = createPrivateKey(signingKeys.get().privateKey);
-
-  return cachedPrivateKey;
-}
-
-/** RSAPublicKey in SPKI PEM, served by `GET /yggdrasil`. */
-export function signaturePublicKey(): string {
-  if (cachedPublicKeyPem) return cachedPublicKeyPem;
-
-  cachedPublicKeyPem = createPublicKey(loadPrivateKey())
-    .export({ type: "spki", format: "pem" })
-    .toString();
-
-  return cachedPublicKeyPem;
-}
 
 export type TexturesProperty = {
   name: "textures";
@@ -77,22 +48,12 @@ export const texturesService = {
     if (!skin || !isHttpUrl(skin.skin_url)) return null;
 
     const slim = SLIM_VARIANTS.has(skin.skin_variant ?? "");
-    const textures: Record<string, unknown> = {
-      SKIN: {
-        url: skin.skin_url,
-        ...(slim ? { metadata: { model: "slim" } } : {}),
-      },
-    };
-
-    const payload = {
-      timestamp: Date.now(),
+    const { value, signature } = signTextureValue({
+      url: skin.skin_url,
+      variant: slim ? "SLIM" : "CLASSIC",
       profileId: undash(uuid),
       profileName: nickname,
-      textures,
-    };
-
-    const value = Buffer.from(JSON.stringify(payload)).toString("base64");
-    const signature = sign(SIGN_ALGORITHM, Buffer.from(value), loadPrivateKey()).toString("base64");
+    });
 
     return { name: "textures", value, signature };
   },

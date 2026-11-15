@@ -1,14 +1,11 @@
 import Elysia, { t } from "elysia"
 import { defineRequiredUser } from "#/lib/define"
 import {
-  ConfigurationError,
   InvalidSkinFileError,
-  normalizeStatus,
   RateLimitedError,
   upload,
   uploadBodySchema,
   uploadQuerySchema,
-  UpstreamError
 } from "./skin.model"
 import { buildRouteSummary } from "#/lib/routes"
 import { wrapError } from "@repo/shared/lib/helpers"
@@ -26,7 +23,7 @@ export const skinUpload = new Elysia()
   .use(defineRequiredUser())
   .post('/upload', async ({ query, status, nickname, body }) => {
     try {
-      const uploadResult = await upload(nickname, query, body)
+      const uploadResult = await upload(nickname, body)
 
       const data = {
         job: uploadResult.job,
@@ -43,23 +40,7 @@ export const skinUpload = new Elysia()
         return status(400, wrapError("INVALID_SKIN_FILE"));
       }
 
-      if (e instanceof ConfigurationError) {
-        return status(500, wrapError(e));
-      }
-
-      if (e instanceof UpstreamError) {
-        const statuss = normalizeStatus(e.status, [400, 502, 504], 502);
-
-        if (statuss === 400) {
-          return status(400, wrapError(e));
-        }
-        if (statuss === 504) {
-          return status(504, wrapError(e));
-        }
-        return status(502, wrapError(e));
-      }
-
-      return status(500, wrapError(e));
+      return status(500, wrapError("INTERNAL_SERVER_ERROR"));
     }
   }, {
     parse: "multipart/form-data",
@@ -70,8 +51,6 @@ export const skinUpload = new Elysia()
       400: withError(),
       429: withError(t.UnionEnum(["RATE_LIMITED"])),
       500: withError(),
-      502: withError(),
-      504: withError(),
     },
     detail: {
       summary: buildRouteSummary("Upload skin")

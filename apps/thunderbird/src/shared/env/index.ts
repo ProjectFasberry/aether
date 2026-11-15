@@ -41,7 +41,6 @@ const envSchema = z.object({
   PANEL_PASSWORD: z.string().min(1),
   /** Shared secret for the Velocity join gate; when unset, verification is off. */
   GATE_SECRET: z.optional(z.string().min(16)),
-  MINESKIN_API_KEY: z.string().min(1),
   /** Payments. A provider without credentials stays disabled. */
   SBP_PROVIDER_URL: z.optional(z.url()),
   SBP_MERCHANT_ID: z.optional(z.string().min(1)),
@@ -54,7 +53,6 @@ const envSchema = z.object({
   LUCKPERMS_BRIDGE: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
   /** Send a chat debug message to the recipient after a bridge grant/revoke. */
   LUCKPERMS_BRIDGE_DEBUG: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),
-  MINESKIN_AES_SECRET_KEY: z.string().min(1),
   /** Optional: without it application notices are only logged. */
   ALERT_URL: z.optional(z.url()),
   ALERT_KEY: z.optional(z.string().min(1)),

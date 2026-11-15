@@ -11,7 +11,7 @@ the current code behaves.
 | `GET /server/skin/history/:nickname` | no | Cached history; warms the cache on a miss or when the entry is older than an hour. |
 | `PUT /server/skin/current` | yes | Body `{ skinName }`; writes `sr_players` and rebuilds the cache. |
 | `GET /server/skin/set?id=` | yes | Deprecated alias of the PUT, kept for one release. |
-| `POST /server/skin/upload` | yes | MineSkin job, then assets, player row and history in one transaction. |
+| `POST /server/skin/upload` | yes | PNG stored in the `skins` bucket, texture value/signature signed with the Yggdrasil key, then assets, player row and history in one transaction. |
 | `GET /server/skin/download/:nickname` | no | 302 to the skin texture URL; falls back to the default skin. |
 | `DELETE /server/skin/:skinName` | yes | Removes one custom skin from the caller's history; deleting the active skin clears the selection. |
 
@@ -58,8 +58,13 @@ first, then flip the env flag.
 ## Upload
 
 - The bytes are validated, not the client MIME type: PNG signature plus
-  64x64/64x32 dimensions. A bad file returns `400 INVALID_SKIN_FILE` before a
-  MineSkin job is queued.
+  64x64/64x32 dimensions. A bad file returns `400 INVALID_SKIN_FILE` before
+  anything is stored.
+- The PNG goes to the public `skins` bucket as `textures/<sha256>.png`; the
+  content hash deduplicates identical uploads.
+- The `textures` value is built and signed locally with the Yggdrasil key
+  (`modules/yggdrasil/sign.ts`), so no external skin service is involved. The
+  volume hostname is part of `skinDomains`, so clients accept the URL.
 - Per-account limits in Redis: 5 uploads per 24 hours and one per 30 seconds.
   Over the limit returns `429 RATE_LIMITED`.
 - Capes are out of scope for v1; `capeUuid` was removed from the request.
@@ -124,9 +129,9 @@ five attempts a row moves to `failed` with `last_error`.
 ## Metrics
 
 Structured `skins.metric` log lines feed Loki/Grafana: `head_render_ms`,
-`head_cache_hit`, `cache_rebuild_ms` and `mineskin_error`. The provisioned
+`head_cache_hit`, `cache_rebuild_ms` and `upload_error`. The provisioned
 Grafana "Skins" dashboard reads them, and `scripts/skins-alert.py` on the host
-turns `mineskin_error` and `head_render_failed` into Gotify alerts.
+turns `upload_error` and `head_render_failed` into Gotify alerts.
 
 ## Heads
 

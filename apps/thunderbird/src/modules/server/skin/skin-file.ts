@@ -12,7 +12,7 @@ const SKIN_SIZES = new Set(["64x64", "64x32"]);
 
 /**
  * Validates the actual bytes: the client-provided MIME type is not trusted and
- * MineSkin rejects malformed files only after the job is queued.
+ * The API validates the bytes before anything is stored.
  */
 export async function assertValidSkinFile(file: Blob): Promise<void> {
   const buffer = Buffer.from(await file.arrayBuffer());
