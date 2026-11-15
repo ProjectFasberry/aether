@@ -129,8 +129,8 @@ export const volume = new Elysia()
       })
       .get("/list", async ({ params: { bucket }, query: { folder, delimiter } }) => {
         const data = await S3.getClient(bucket).list({
-          prefix: folder,
-          delimiter: delimiter ?? "/",
+          prefix: folder || undefined,
+          delimiter: delimiter || "/",
         })
 
         if (!data.contents || data.contents.length === 0) {
@@ -140,8 +140,10 @@ export const volume = new Elysia()
         return { data };
       }, {
         query: t.Object({
-          folder: t.Optional(t.String({ minLength: 1 })),
-          delimiter: t.Optional(t.String({ minLength: 1 })),
+          // Empty values come from clients that always send the field; treat
+          // them as "not set" instead of rejecting the request.
+          folder: t.Optional(t.String()),
+          delimiter: t.Optional(t.String()),
         }),
         response: {
           200: withData(
