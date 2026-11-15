@@ -10,6 +10,5 @@ Module: `src/modules/yggdrasil` (`profile`, `token`, `textures`,
 - Textures and profiles are served from MinIO-backed storage.
 - Requests are rate limited per endpoint; the limits live in
   `rate-limit.model.ts`.
-- Design and migration progress log:
-  [`docs/auth/auth-migration.md`](../../../../docs/auth/auth-migration.md) in the
-  workspace parent.
+- Design and migration progress log: Plane → Fasberry project (link in the
+  workspace root `README.md`).
