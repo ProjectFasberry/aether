@@ -416,7 +416,7 @@ function getMineSkinClient(): KyInstance {
 
   const client = inheritClient.extend((opts) => ({
     ...opts,
-    prefixUrl: MINESKIN_BASE_URL,
+    baseUrl: MINESKIN_BASE_URL,
     headers: {
       "User-Agent": MINESKIN_USER_AGENT,
       Authorization: keyT.startsWith("Bearer ") ? keyT : `Bearer ${keyT}`,
