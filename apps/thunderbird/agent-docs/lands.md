@@ -46,3 +46,22 @@ the rows. The production admin role has all three.
   the same source the panel reads.
 - `getAdminLands` does not use the public `getLands` route: the public one
   returns an empty page when member UUIDs are missing from `general.players`.
+
+## Public lands and owner control
+
+The public routes live in `src/modules/server/lands/`. The owner is the first
+key of the `lands_lands.members` JSON object, which is also the order the
+plugin writes; the API keeps that order instead of sorting members.
+
+| Route | Auth | Purpose |
+| --- | --- | --- |
+| `GET /server/lands/:ulid` | optional | Land card; `isOwner` is computed from the first member and the session nickname. |
+| `GET /server/lands/similar?variant=by-player&target=<nickname>` | no | Lands the player belongs to. The UUID comes from `lands_players` first, then `accounts`. |
+| `PATCH /server/lands/:ulid` | owner | `{ title }` - the description shown on the land page, up to 300 characters, `&`/`§` colour codes allowed. |
+| `POST /server/lands/:ulid/banner` | owner | Multipart image, stored in the `lands` bucket; the previous object is deleted. |
+| `DELETE /server/lands/:ulid/banner` | owner | Removes the row and the object. |
+| `POST /server/lands/:ulid/gallery` | owner | Multipart image; up to 12 rows. |
+| `DELETE /server/lands/:ulid/gallery` | owner | Body `{ url }` with the stored key; removes the row and the object. |
+
+Images are PNG/JPEG/WebP up to 2 MB. `S3.getClient(BUCKETS.LANDS)` requires the
+bucket to be listed in `pkgs/shared/constants/buckets.ts`.

@@ -32,7 +32,7 @@ export const landsSimilar = new Elysia()
         exclude: t.Optional(
           t.String({ description: "Exclude a land by id" })
         ),
-        target: t.Optional(t.String({ min: 4, description: "Must be a nickname or land id" })),
+        target: t.Optional(t.String({ min: 1, description: "Must be a nickname or land id" })),
         limit: t.Optional(t.Number({ description: "Limit the number of results" }))
       })
     ),
