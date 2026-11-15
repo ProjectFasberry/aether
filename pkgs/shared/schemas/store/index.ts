@@ -48,6 +48,7 @@ export const storeItemEditSchema = z.array(
 
 export const storeItemCreateSchema = z.object({
 	title: z.string(),
+	description: z.string().nullable(),
 	price: z.string(),
 	type: z.string(),
 	value: z.string(),
