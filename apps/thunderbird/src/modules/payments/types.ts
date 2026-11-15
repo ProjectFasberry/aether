@@ -1,14 +1,12 @@
 import type { Context } from "elysia";
 
-export const PROVIDER_NAMES = ["fake", "sbp", "heleket"] as const;
+export const PROVIDER_NAMES = ["fake", "sbp"] as const;
 export type PaymentProviderName = typeof PROVIDER_NAMES[number];
 export type PaymentStatus = "pending" | "succeeded" | "failed" | "expired" | "refunded";
 
-/** Minor units per currency; RUB in kopecks, stablecoins with six decimals. */
+/** Minor units per currency; RUB in kopecks. */
 export const CURRENCY_EXPONENT: Record<string, number> = {
 	RUB: 2,
-	USDT: 6,
-	USDC: 6,
 };
 
 export type CreateInvoiceInput = {

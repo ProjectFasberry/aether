@@ -20,7 +20,7 @@ import { getProvider, listProviders } from "./providers";
 const invoiceSchema = t.Object({
 	provider: t.UnionEnum(PROVIDER_NAMES),
 	amountMinor: t.Integer({ minimum: 1, maximum: 100_000_000_000 }),
-	currency: t.UnionEnum(["RUB", "USDT", "USDC"]),
+	currency: t.UnionEnum(["RUB"]),
 });
 
 /** Behind Traefik the internal request URL is localhost; use the forwarded host. */

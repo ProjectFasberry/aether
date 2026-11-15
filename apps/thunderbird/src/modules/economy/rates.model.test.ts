@@ -39,7 +39,7 @@ describe("convert", () => {
 	});
 
 	it("returns null when no path exists", async () => {
-		expect(await rates.convert({ amount: 1, from: "RUB", to: "USDT" })).toBeNull();
+		expect(await rates.convert({ amount: 1, from: "RUB", to: "CHARISM" })).toBeNull();
 	});
 
 	it("rounds a top-up value down to whole BELKOIN", async () => {

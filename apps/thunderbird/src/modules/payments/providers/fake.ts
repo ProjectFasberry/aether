@@ -7,7 +7,7 @@ import type { PaymentProvider } from "../types";
  */
 export const fakeProvider: PaymentProvider = {
 	name: "fake",
-	currencies: ["RUB", "USDT", "USDC"],
+	currencies: ["RUB"],
 
 	isConfigured() {
 		return true;

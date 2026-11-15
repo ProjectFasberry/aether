@@ -1,12 +1,10 @@
 import { fakeProvider } from "./fake";
-import { heleketProvider } from "./heleket";
 import { sbpProvider } from "./sbp";
 import type { PaymentProvider, PaymentProviderName } from "../types";
 
 const registry: Record<PaymentProviderName, PaymentProvider> = {
 	fake: fakeProvider,
 	sbp: sbpProvider,
-	heleket: heleketProvider,
 };
 
 export function getProvider(name: string): PaymentProvider | null {

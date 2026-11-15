@@ -45,9 +45,6 @@ const envSchema = z.object({
   SBP_PROVIDER_URL: z.optional(z.url()),
   SBP_MERCHANT_ID: z.optional(z.string().min(1)),
   SBP_API_KEY: z.optional(z.string().min(1)),
-  HELEKET_API_URL: z.optional(z.url()),
-  HELEKET_MERCHANT_UUID: z.optional(z.string().min(1)),
-  HELEKET_API_KEY: z.optional(z.string().min(1)),
   PAYMENT_INVOICE_TTL_MINUTES: z.optional(z.coerce.number().min(1).max(1440)),
   /** Use the structured LuckPerms bridge in nats-spigot instead of direct SQL. */
   LUCKPERMS_BRIDGE: z.optional(z.enum(["true", "false"]).transform((value) => value === "true")),

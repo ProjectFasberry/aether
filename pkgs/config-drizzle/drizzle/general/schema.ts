@@ -24,14 +24,6 @@ import {
 import { sql } from "drizzle-orm";
 
 export const donationType = pgEnum("donation_type", ["authentic", "loyal", "arkhont"]);
-export const paymentCryptoTonStatus = pgEnum("payment_crypto_ton_status", [
-	"created",
-	"received",
-	"captured",
-	"cancelled",
-	"failed",
-]);
-
 export const playerActivityEvent = pgEnum("player_activity_event", ["join", "quit"]);
 export const storeCurrency = pgEnum("store_currency", ["CHARISM", "BELKOIN"]);
 

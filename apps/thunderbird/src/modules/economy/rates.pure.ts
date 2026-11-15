@@ -1,5 +1,5 @@
 /** BELKOIN is the hub: every other currency is priced through it. */
-export const RATE_CURRENCIES = ["RUB", "USDT", "USDC", "BELKOIN", "CHARISM"] as const;
+export const RATE_CURRENCIES = ["RUB", "BELKOIN", "CHARISM"] as const;
 export type RateCurrency = typeof RATE_CURRENCIES[number];
 
 export function isRateCurrency(value: string): value is RateCurrency {
