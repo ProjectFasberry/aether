@@ -62,6 +62,8 @@ type UploadPayload = {
 }
 
 export type LocalSkinUpload = {
+  /** Short id for the varchar(36) `mine_skin_id` column. */
+  id: string
   key: string
   url: string
   value: string
@@ -110,7 +112,7 @@ export async function uploadSkin(
   const skinVariant = variant.toUpperCase() as SkinVariant
   const { value, signature } = signed
 
-  return { key, url, value, signature, variant: skinVariant }
+  return { id: hash.slice(0, 32), key, url, value, signature, variant: skinVariant }
 }
 
 export async function deleteOldSkins({
@@ -243,7 +245,7 @@ export async function upload(
       signature: local.signature,
       value: local.value,
       url: local.url,
-      mine_skin_id: local.key,
+      mine_skin_id: local.id,
       skin_variant: local.variant,
     }
 
@@ -341,7 +343,7 @@ export async function upload(
   return {
     result: updateResult,
     job: {
-      id: local.key,
+      id: local.id,
       status: "completed",
     },
   }

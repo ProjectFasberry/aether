@@ -79,8 +79,25 @@ async function download(textureUrl: string): Promise<Uint8Array> {
 }
 
 const rows = await pool.query(
-	`select url, signature, skin_variant from sr_url_skins order by url${LIMIT > 0 ? ` limit ${LIMIT}` : ""}`,
+	`select u.url, u.signature, u.skin_variant, c.value as custom_value
+	 from sr_url_skins u
+	 left join sr_custom_skins c on c.signature = u.signature
+	 order by u.url${LIMIT > 0 ? ` limit ${LIMIT}` : ""}`,
 )
+
+/** `sr_url_skins.url` may be a short link; the signed value has the real PNG. */
+function textureUrlFromValue(value: unknown): string | null {
+	if (typeof value !== "string" || value.length === 0) return null
+
+	try {
+		const parsed = JSON.parse(Buffer.from(value, "base64").toString("utf8"))
+		const url = parsed?.textures?.SKIN?.url
+
+		return typeof url === "string" && url.startsWith("http") ? url : null
+	} catch {
+		return null
+	}
+}
 
 let migrated = 0
 let skipped = 0
@@ -96,7 +113,8 @@ for (const row of rows) {
 	}
 
 	try {
-		const bytes = await download(oldUrl)
+		const source = textureUrlFromValue(row.custom_value) ?? oldUrl
+		const bytes = await download(source)
 		const hash = createHash("sha256").update(bytes).digest("hex")
 		const key = `textures/${hash}.png`
 		const newUrl = `${prefix}${key}`
@@ -126,7 +144,7 @@ for (const row of rows) {
 				} else {
 					await connection.query(
 						"update sr_url_skins set url = ?, value = ?, signature = ?, mine_skin_id = ? where url = ?",
-						[signed.url, signed.value, signed.signature, key, oldUrl],
+						[signed.url, signed.value, signed.signature, hash.slice(0, 32), oldUrl],
 					)
 				}
 
