@@ -125,8 +125,8 @@ five attempts a row moves to `failed` with `last_error`.
 
 Structured `skins.metric` log lines feed Loki/Grafana: `head_render_ms`,
 `head_cache_hit`, `cache_rebuild_ms` and `mineskin_error`. The provisioned
-Grafana "Skins" dashboard reads them; alert rules for `mineskin_error` and
-`head_render_failed` are still open.
+Grafana "Skins" dashboard reads them, and `scripts/skins-alert.py` on the host
+turns `mineskin_error` and `head_render_failed` into Gotify alerts.
 
 ## Heads
 
