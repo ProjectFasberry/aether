@@ -136,6 +136,13 @@ export const volume = new Elysia()
         const hasObjects = !!data.contents?.length
         const hasFolders = !!data.commonPrefixes?.length
 
+        console.log("volume.list.debug", JSON.stringify({
+          bucket, folder, delimiter,
+          keys: Object.keys(data),
+          contents: data.contents?.length ?? 0,
+          folders: data.commonPrefixes?.length ?? 0,
+        }))
+
         if (!hasObjects && !hasFolders) {
           return { data: null }
         }
