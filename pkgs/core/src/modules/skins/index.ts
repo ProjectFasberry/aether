@@ -136,8 +136,11 @@ export const pickSkinVariant = (
 }
 
 /** Hosts the head renderer may fetch a texture from. */
-const SKIN_HOSTS = (Bun.env["SKIN_DOMAINS"] ?? "textures.minecraft.net")
-  .split(",")
+const SKIN_HOSTS = [
+  ...(Bun.env["SKIN_DOMAINS"] ?? "textures.minecraft.net").split(","),
+  // Uploads live in our own bucket now; the renderer fetches them from there.
+  ...(Bun.env["VOLUME_URL"] ? [new URL(Bun.env["VOLUME_URL"]).hostname] : []),
+]
   .map((host) => host.trim().toLowerCase())
   .filter(Boolean)
 
