@@ -803,12 +803,17 @@ export async function upload(
   })
 
 
-  // Drop the stale entry first, then rebuild it: the panel refetches history
-  // right after the upload and must not see the previous skin.
-  await skinsService.skin.invalidate(nickname)
+  // The rows are committed: a cache or head-render failure must not turn a
+  // successful upload into a 5xx, or the panel shows an error for a skin the
+  // game already has. The next history request rebuilds both.
+  await skinsService.skin.invalidate(nickname).catch((error) => {
+    logger.warn({ message: "Skin cache invalidate failed after upload", nickname, error });
+  })
   await skinsService.skin.initSkin({
     nickname,
     minio: minioService.getInstance,
+  }).catch((error) => {
+    logger.warn({ message: "Skin head init failed after upload", nickname, error });
   })
 
   const payload = {
