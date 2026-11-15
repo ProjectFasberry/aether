@@ -60,7 +60,7 @@ plugin writes; the API keeps that order instead of sorting members.
 | `PATCH /server/lands/:ulid` | owner | `{ title }` - the description shown on the land page, up to 300 characters, `&`/`§` colour codes allowed. |
 | `POST /server/lands/:ulid/banner` | owner | Multipart image, stored in the `lands` bucket; the previous object is deleted. |
 | `DELETE /server/lands/:ulid/banner` | owner | Removes the row and the object. |
-| `POST /server/lands/:ulid/gallery` | owner | Multipart image; up to 12 rows. |
+| `POST /server/lands/:ulid/gallery` | owner | Multipart image; up to 3 rows. |
 | `DELETE /server/lands/:ulid/gallery` | owner | Body `{ url }` with the stored key; removes the row and the object. |
 
 Images are PNG/JPEG/WebP up to 2 MB. `S3.getClient(BUCKETS.LANDS)` requires the

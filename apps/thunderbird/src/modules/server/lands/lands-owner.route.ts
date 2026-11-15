@@ -11,7 +11,7 @@ import { safeJsonParse } from "#/utils";
 
 const LANDS_BUCKET = BUCKETS.LANDS;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const MAX_GALLERY = 12;
+const MAX_GALLERY = 3;
 
 const EXT = {
   "image/png": "png",
