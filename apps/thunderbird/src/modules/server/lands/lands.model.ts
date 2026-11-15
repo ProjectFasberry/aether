@@ -122,7 +122,19 @@ async function getMembersByUUIDs(uuids: string[]) {
     .where("uuid", "in", uuids)
     .execute();
 
-  return membersList
+  // Lands knows the members it has seen; cmi_users covers the rest.
+  const known = new Set(membersList.map((member) => member.uuid));
+  const missing = uuids.filter((uuid) => !known.has(uuid));
+  if (missing.length === 0) return membersList;
+
+  const users = await bisquite
+    .selectFrom("cmi_users")
+    .select(["player_uuid as uuid", "username as name"])
+    .where("player_uuid", "in", missing)
+    .$narrowType<{ uuid: string, name: string }>()
+    .execute();
+
+  return [...membersList, ...users]
 }
 
 type RawMembers = Record<string, { chunks: number }>;
