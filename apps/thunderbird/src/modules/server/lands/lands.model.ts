@@ -259,9 +259,20 @@ export async function getLandsByNickname(
   nickname: string,
   { exclude, limit }: Static<typeof landsByNicknameSchema> & { limit?: number }
 ): Promise<Static<typeof landsByPlayerSchema>> {
-  const recipientUUID = await playerService.getUuid(nickname);
+  const recipient = await bisquite
+    .selectFrom("lands_players")
+    .select("uuid")
+    .where("name", "=", nickname)
+    .executeTakeFirst()
+
+  let recipientUUID = recipient?.uuid
+
+  if (!recipientUUID) {
+    recipientUUID = await playerService.getUuid(nickname).catch(() => undefined)
+  }
 
   let result: Static<typeof landsByPlayerSchema> = { data: [], meta: { count: 0 } }
+  if (!recipientUUID) return result
 
   let query = bisquite
     .selectFrom("lands_lands")
@@ -323,11 +334,16 @@ export async function getLandsByNickname(
   const membersAvatarsMap = await skinsService.players.getAvatar(membersNicknames);
 
   const data = landsWithMembers.map((land) => {
-    const nickname = membersNicknamesByUUIDMap.get(recipientUUID)!;
+    const members = Object.entries(land.members).map(([uuid, { chunks }]) => {
+      const nickname = membersNicknamesByUUIDMap.get(uuid) ?? "unknown"
 
-    const members = Object.entries(land.members).map(([uuid, { chunks }]) => ({
-      uuid, nickname, chunks, avatar: membersAvatarsMap[nickname]
-    }))
+      return {
+        uuid,
+        nickname,
+        chunks,
+        avatar: membersAvatarsMap[nickname] ?? ""
+      }
+    })
 
     return {
       ...land,
@@ -366,7 +382,8 @@ export const landSingleSchema = t.Composite([
     ),
     privated: t.Nullable(
       t.Pick(landSchema, ["spawn", "balance", "limits"])
-    )
+    ),
+    isOwner: t.Boolean()
   })
 ])
 
@@ -382,18 +399,26 @@ export async function getLand(
     .where('ulid', '=', ulid)
     .executeTakeFirstOrThrow();
 
-  const membersObject = safeJsonParse<{ [key: string]: { chunks: number } }>(landRow.members);
-  if (!membersObject.ok) {
-    logger.error({ message: "Failed to parse land members", error: membersObject.error })
+  const parsedMembers = safeJsonParse<{ [key: string]: { chunks: number } }>(landRow.members);
+  if (!parsedMembers.ok) {
+    logger.error({ message: "Failed to parse land members", error: parsedMembers.error })
     return null;
   }
+
+  const membersMap = parsedMembers.value
+  const memberUuids = Object.keys(membersMap)
+  const ownerUuid = memberUuids[0] ?? null
 
   const membersRaw = await bisquite
     .selectFrom('cmi_users')
     .select(['player_uuid as uuid', 'username as nickname'])
-    .where('player_uuid', 'in', Object.keys(membersObject.value))
+    .where('player_uuid', 'in', memberUuids)
     .$narrowType<{ nickname: string, uuid: string }>()
     .execute()
+
+  const membersByUuid = new Map(membersRaw.map(member => [member.uuid, member]))
+  const isOwner = !!initiator && !!ownerUuid
+    && membersByUuid.get(ownerUuid)?.nickname === initiator
 
   if (initiator) {
     if (membersRaw.some(m => m.nickname === initiator)) {
@@ -404,14 +429,20 @@ export async function getLand(
   async function getMembers() {
     const avatarsMap = await skinsService.players.getAvatar(membersRaw.map(r => r.nickname));
 
-    const data = membersRaw.map((member, idx) => ({
-      uuid: member.uuid,
-      nickname: member.nickname,
-      chunks: 0,
-      // 4 = owner, 1 = member
-      role: idx === 0 ? 4 : 1,
-      avatar: avatarsMap[member.nickname]
-    }))
+    // Keep the JSON order: the first member is the owner in the Lands plugin.
+    const data = memberUuids.map((uuid) => {
+      const member = membersByUuid.get(uuid)
+      const nickname = member?.nickname ?? "unknown"
+
+      return {
+        uuid,
+        nickname,
+        chunks: Number(membersMap[uuid]?.chunks ?? 0),
+        // 4 = owner, 1 = member
+        role: uuid === ownerUuid ? 4 : 1,
+        avatar: avatarsMap[nickname] ?? ""
+      }
+    })
 
     return data
   }
@@ -499,7 +530,8 @@ export async function getLand(
     areas_amount: base.areas_amount ?? 0,
     stats: base.stats ? JSON.parse(base.stats) : null,
     area: JSON.parse(base.area),
-    privated
+    privated,
+    isOwner
   }
 
   return result
