@@ -3,11 +3,13 @@ import { storeItemCreate } from "./store-item-create.route";
 import { storeItemDelete } from "./store-item-delete.route";
 import { storeMethodsEdit, storeMethodsList } from "./store-methods.route";
 import { storeItemEditGroup } from "./store-item-edit.route";
+import { storeItemImage } from "./store-item-image.route";
 
 export const storePrivate = new Elysia()
   .group("/store", app => app
     .group("/item", app => app
       .use(storeItemCreate)
+      .use(storeItemImage)
       .use(storeItemDelete)
       .use(storeItemEditGroup)
     )

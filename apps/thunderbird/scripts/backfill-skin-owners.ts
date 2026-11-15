@@ -8,8 +8,8 @@
  * matched only when exactly one account has that nickname. Ambiguous, missing
  * and conflicting rows are reported and left untouched.
  *
- * `DB_TARGET` / `SKINS_DB_TARGET` rewrite the URI host the same way
- * `seed-activity.ts` does, for runs outside the container network.
+ * `DB_TARGET` / `SKINS_DB_TARGET` rewrite the URI host so the script can run
+ * outside the container network.
  */
 import { sql } from "kysely";
 
