@@ -4,23 +4,26 @@ import type { Donate } from "@repo/shared/types/entities/donate";
 import type { Player } from "@repo/shared/types/entities/user";
 import dayjs from "dayjs";
 import { sql } from "kysely";
+import { resolveDonateGroup } from "./player-donate";
+
+/**
+ * The primary LuckPerms group is authoritative: a player can inherit or keep
+ * stale `group.*` permissions from several groups at once, and picking the
+ * first permission row used to return a random one.
+ */
+export function getDonateQuery(db: typeof luckperms, recipient: string) {
+  return db
+    .selectFrom("luckperms_players")
+    .select(["primary_group"])
+    .where("username", "=", recipient)
+}
 
 export async function getDonate(
   { recipient }: { recipient: string }
 ): Promise<Donate> {
-  const query = await luckperms
-    .selectFrom("luckperms_user_permissions")
-    .innerJoin("luckperms_players", "luckperms_players.uuid", "luckperms_user_permissions.uuid")
-    .select([
-      "luckperms_user_permissions.permission as group"
-    ])
-    .where("luckperms_user_permissions.permission", "like", `%group%`)
-    .where("luckperms_players.username", "=", recipient)
-    .executeTakeFirst()
+  const query = await getDonateQuery(luckperms, recipient).executeTakeFirst()
 
-  if (!query) return "default" as Donate
-
-  return query.group.slice(6) as Donate
+  return resolveDonateGroup(query?.primary_group)
 }
 
 type PlayerRatePayload = {
