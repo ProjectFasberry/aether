@@ -38,7 +38,7 @@ export const registerRoute = new Elysia()
     .use(registerValidator())
     .use(validateAuthStatus())
     .use(ipValidator())
-    .post("/", async ({ status, body: { findout, nickname, password: passInputPass, findoutType }, ip }) => {
+    .post("/", async ({ status, body: { findout, nickname, password: passInputPass }, ip }) => {
       const existsUser = await auth.getExistsUser(nickname);
       if (existsUser.result) {
         throw status(400, wrapError("USER_EXISTS"));
@@ -57,7 +57,6 @@ export const registerRoute = new Elysia()
       const data = await register.createUser({
         nickname,
         findout,
-        findoutType,
         password: passHash,
         ip,
       });

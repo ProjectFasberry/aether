@@ -5,6 +5,7 @@ import { invalidate } from "./invalidate.route";
 import { registerRoute } from "./register.route";
 import { validate } from "./validate.route";
 import { session } from "./session.route";
+import { authLinks } from "./links.route";
 
 export const auth = new Elysia()
   .group("/auth", app => app
@@ -12,6 +13,7 @@ export const auth = new Elysia()
     .use(clientAuth)
     .use(invalidate)
     .use(registerRoute)
+    .use(authLinks)
     .use(validate)
     .use(session),
   );

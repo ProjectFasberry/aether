@@ -17,8 +17,6 @@ export const passwordSchema = z
 		error: "Пароль не должен содержать пробельные символы (пробелы, табы и т.д.)",
 	});
 
-export const referrerSchema = z.nullable(z.string());
-
 /**
  * Nicknames that the proxy accepts (`allowed-nickname-regex` in LimboAuth and
  * the vanilla client): 3-16 ASCII letters, digits and underscore. Registration
@@ -40,22 +38,6 @@ export const authSchema = z.object({
 export const registerSchema = z.object({
 	...authSchema.shape,
 	nickname: registerNicknameSchema,
-	...z.object({
-		findout: z.string().min(1).max(128),
-		findoutType: z.enum(["custom", "referrer"]),
-	}).superRefine((data, ctx) => {
-		if (data.findoutType === "referrer") {
-			const { error, success } = registerNicknameSchema.safeParse(data.findout);
-
-			if (!success) {
-				const msg = JSON.parse(error.message)[0];
-
-				ctx.addIssue({
-					path: ["findout"],
-					code: "custom",
-					message: msg.message,
-				});
-			}
-		}
-	}).shape,
+	/** Optional "how did you hear about us?" answer; referrals use links only. */
+	findout: z.string().min(1).max(128),
 });

@@ -1,13 +1,15 @@
 import Elysia, { t } from "elysia";
 import {
-  changeRoleUsers, restrictUser, editPlayerRole, controlPayloadSchema, userRestrictSchema, userRolesSchema, playersPermissionsSchema,
+  changeRoleUsers, restrictUser, controlPayloadSchema, userRestrictSchema, userRolesSchema,
 } from "./users-control.model";
 import { validatePermission } from "#/lib/validators";
 import { createAdminActivityLog } from "../private.model";
 import { natsService } from "#/shared/nats/client";
 import { SUBJECTS } from "#/shared/nats/subjects";
-import { withData } from "#/shared/schemas";
+import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
+import { wrapError } from "@repo/shared/lib/helpers";
+import { userControlError } from "./users-control.model";
 
 function publish(event: string, data: { initiator: string, payload: string }) {
   const nc = natsService.getInstance()
@@ -86,9 +88,14 @@ const playersControlRestrict = new Elysia()
 
 const playersControlRoles = new Elysia()
   .use(validatePermission("players.role.update", { withExternal: true }))
-  .post("/roles", async ({ body: { nicknames, ...base } }) => {
-    const data = await changeRoleUsers(nicknames, base)
-    return { data }
+  .post("/roles", async ({ body: { nicknames, ...base }, status }) => {
+    try {
+      const data = await changeRoleUsers(nicknames, base)
+      return { data }
+    } catch (error) {
+      const err = userControlError.reader(error)
+      return status(err.code as 400 | 500, wrapError(err.msg))
+    }
   }, {
     body: userRolesSchema,
     afterResponse: ({ nickname: initiator, permission, responseValue }) => {
@@ -99,32 +106,12 @@ const playersControlRoles = new Elysia()
     response: {
       200: withData(
         controlPayloadSchema
-      )
+      ),
+      400: withError(t.String()),
+      500: withError(t.String()),
     },
     detail: {
       summary: buildRouteSummary("Change player role")
-    }
-  })
-
-const playersControlPermissions = new Elysia()
-  .use(validatePermission("players.permission.update", { withExternal: true }))
-  .post("/permission", async ({ body: { nicknames, ...base } }) => {
-    const data = await editPlayerRole({ nicknames, ...base })
-    return { data }
-  }, {
-    body: playersPermissionsSchema,
-    afterResponse: ({ nickname: initiator, permission, responseValue }) => {
-      if (!initiator) return
-      createAdminActivityLog({ initiator, event: permission })
-      publish(permission, { initiator, payload: JSON.stringify(responseValue) })
-    },
-    response: {
-      200: withData(
-        t.Object({})
-      )
-    },
-    detail: {
-      summary: buildRouteSummary("Change player permission")
     }
   })
 
@@ -132,5 +119,4 @@ export const playersControl = new Elysia()
   .group("", app => app
     .use(playersControlRestrict)
     .use(playersControlRoles)
-    .use(playersControlPermissions)
   )

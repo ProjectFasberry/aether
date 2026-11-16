@@ -176,7 +176,6 @@ async function registerSteve(password = "hunter22") {
 		nickname: "Steve",
 		password,
 		findout: "friend",
-		findoutType: "custom",
 	});
 }
 
@@ -194,19 +193,20 @@ describe("POST /auth/register", () => {
 		expect(state.findout).toEqual([{ nickname: "Steve", value: "friend" }]);
 	});
 
-	it("registers a referral when the referrer is a player", async () => {
+	it("never creates referrals from the register body", async () => {
 		state.players.push({ nickname: "Alex", uuid: "uuid-alex", created_at: new Date() });
 
+		// A nickname in `findout` is just an answer to "how did you hear about us";
+		// referrals are link-only so the yearly limit cannot be claimed by others.
 		const response = await post("/auth/register", {
 			nickname: "Steve",
 			password: "hunter22",
 			findout: "Alex",
-			findoutType: "referrer",
 		});
 
 		expect(response.status).toBe(200);
-		expect(state.referrals).toEqual([{ referrer: "Alex", referral: "Steve" }]);
-		expect(state.findout).toHaveLength(0);
+		expect(state.referrals).toHaveLength(0);
+		expect(state.findout).toEqual([{ nickname: "Steve", value: "Alex" }]);
 	});
 
 	it("rejects a duplicate nickname", async () => {
