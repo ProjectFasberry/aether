@@ -152,6 +152,8 @@ type SkinsParams = {
     skins: Kysely<skinsDb>
   }
   redis: () => RedisClient,
+  /** Needed to rebuild a missing cache entry from the skins database. */
+  minio?: () => MinioClient,
   config: {
     VOLUME_URL: string,
     /** Public API origin; avatars are private and served through `/avatars/:file`. */
@@ -239,7 +241,7 @@ const finishHeadJob = async (db: SkinsExecutor, hash: string): Promise<void> => 
   await sql`delete from skin_head_jobs where hash = ${hash}`.execute(db)
 }
 
-export const createSkinsService = ({ redis, databases, config, applySelection, clearSelection }: SkinsParams) => {
+export const createSkinsService = ({ redis, databases, config, minio, applySelection, clearSelection }: SkinsParams) => {
   const { general: generalDb, skins: skinsDb } = databases;
 
   const getHeadUrl = (hash: string) =>
@@ -286,6 +288,13 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
 
   type CachedSkinPayload = Record<string, SkinsHistory | null>;
 
+  /**
+   * Assigned after the `skin` service is created: the bulk cache read cannot
+   * reference it directly. When set, a cache miss is rebuilt from the database
+   * instead of silently returning the Steve fallback for up to 24h.
+   */
+  let loadPayload: ((nickname: string) => Promise<SkinsHistory | null>) | null = null;
+
   const players = {
     /**
      * Returns a map of nicknames to cached skin payloads
@@ -303,9 +312,24 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
       }
 
       const map: CachedSkinPayload = Object.create(null)
+      const misses: string[] = []
 
       for (let i = 0; i < resultsStr.length; i++) {
-        map[nicknames[i]] = parseCachedEntry(resultsStr[i])?.data ?? null
+        const data = parseCachedEntry(resultsStr[i])?.data ?? null
+        map[nicknames[i]] = data
+        if (!data) misses.push(nicknames[i])
+      }
+
+      if (loadPayload && misses.length > 0) {
+        await Promise.all(
+          misses.map(async (nickname) => {
+            try {
+              map[nickname] = await loadPayload!(nickname)
+            } catch (e) {
+              logger.warn({ message: "Skins cache miss rebuild failed", nickname, error: e })
+            }
+          }),
+        )
       }
 
       return map;
@@ -338,7 +362,18 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
      */
     async getAvatar(nickname: string): Promise<string> {
       const result = await readCachedEntry(nickname)
-      return result?.data[0]?.skin_head_url ?? defaultHead
+      if (result) return result.data[0]?.skin_head_url ?? defaultHead
+
+      if (loadPayload) {
+        try {
+          const payload = await loadPayload(nickname)
+          return payload?.[0]?.skin_head_url ?? defaultHead
+        } catch (e) {
+          logger.warn({ message: "Skins avatar rebuild failed", nickname, error: e })
+        }
+      }
+
+      return defaultHead
     }
   }
 
@@ -1368,6 +1403,10 @@ export const createSkinsService = ({ redis, databases, config, applySelection, c
 
       return done
     }
+  }
+
+  if (minio) {
+    loadPayload = (nickname) => skin.getSkinsPayload(nickname, minio)
   }
 
   return {
