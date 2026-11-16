@@ -13,7 +13,7 @@ never block the HTTP response.
 
 | event | forwarded when |
 | --- | --- |
-| `push` | branch is `main`/`dev`, not deleted, has a head commit |
+| `push` | branch is `main`, not deleted, has a head commit |
 | `workflow_run` | `action=completed` and `conclusion` is `failure`, `timed_out` or `startup_failure` |
 
 Successful, pending, cancelled and unknown runs are ignored. `GITHUB_REPOS`
