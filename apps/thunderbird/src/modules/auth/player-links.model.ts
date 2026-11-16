@@ -4,6 +4,7 @@ import { general } from "#/shared/database/general-db";
 import { createError, withShared } from "#/helpers/error";
 import { auth, authLogger } from "./auth.model";
 import { createAccountRows, offlineUuid, register } from "./register.model";
+import { REFERRALS_PER_WINDOW, toReferralStats, type ReferralStats } from "./referrals-stats";
 
 /**
  * Invites and referrals share one table and one link format:
@@ -32,8 +33,7 @@ export const linkError = createError(withShared(LINK_ERRORS), "INTERNAL_UNKNOWN"
 
 export type CreatedLink = { token: string; expiresAt: Date };
 
-/** Max accepted referrals per referrer in a rolling 12-month window. */
-export const REFERRALS_PER_WINDOW = 5;
+export { REFERRALS_PER_WINDOW, type ReferralStats } from "./referrals-stats";
 
 const DEFAULT_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** Referral payouts open one day after registration (anti alt-account). */
@@ -322,8 +322,6 @@ export async function acceptReferral({
 	return { nickname: result.nickname };
 }
 
-export type ReferralStats = { used: number; remaining: number; limit: number };
-
 export async function referralStats(referrer: string): Promise<ReferralStats> {
 	const used = await general
 		.selectFrom("referrals")
@@ -332,13 +330,5 @@ export async function referralStats(referrer: string): Promise<ReferralStats> {
 		.where("created_at", ">", REFERRAL_WINDOW_START)
 		.executeTakeFirst();
 
-	// Postgres returns bigint counts as strings, so coerce before arithmetic
-	// and before the number-typed response schema encodes the value.
-	const count = Number(used?.count ?? 0);
-
-	return {
-		used: count,
-		remaining: Math.max(0, REFERRALS_PER_WINDOW - count),
-		limit: REFERRALS_PER_WINDOW,
-	};
+	return toReferralStats(used?.count);
 }
