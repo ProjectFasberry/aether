@@ -12,6 +12,8 @@ import { buildRouteSummary } from "#/lib/routes";
 import { withData, withError } from "#/shared/schemas";
 import { DateTime } from "#/helpers/typebox";
 import { allowRequest } from "#/shared/services/rate-limit";
+import { grantGameSession, hasGameSession } from "#/shared/services/game-session";
+import { isBannedNickname } from "#/shared/database/roles";
 
 /**
  * Join gate: the launcher asks for a one-shot ticket right before the game
@@ -22,8 +24,6 @@ import { allowRequest } from "#/shared/services/rate-limit";
 const TICKET_TTL_S = 180;
 /** After a successful verify the nickname may reconnect without a new ticket. */
 const RECONNECT_TTL_S = 1800;
-/** Password-authenticated game session (the "other launcher" door). */
-const MC_SESSION_TTL_S = 24 * 60 * 60;
 /** Dummy bcrypt hash keeps the timing equal for unknown nicknames. */
 const DUMMY_HASH = "$2b$10$1Pk3Hp5dHx0B45pPvSlDyu9FNpFN2U84l8LYcdkcVr/oZRtRg/05K";
 /** RFC 4648 base32, lowercase, no padding: 32 random bytes -> 52 chars. */
@@ -40,14 +40,6 @@ type TicketPayload = {
 
 const ticketKey = (ticket: string) => `join:ticket:${ticket}`;
 const passKey = (nickname: string) => `join:pass:${nickname.toLowerCase()}`;
-const mcSessionKey = (nickname: string) => `mc:session:${nickname.toLowerCase()}`;
-
-/** Grants the 24h game session used when the login carries no launcher ticket. */
-async function grantMcSession(nickname: string): Promise<void> {
-  await redisService
-    .getInstance()
-    .set(mcSessionKey(nickname), "1", "EX", MC_SESSION_TTL_S);
-}
 
 /** GET + DEL in one round trip so a ticket cannot be used twice. */
 const CONSUME_SCRIPT = `
@@ -191,7 +183,7 @@ const verifyRoute = new Elysia()
     await redisService
       .getInstance()
       .set(passKey(record.nickname), JSON.stringify(record), "EX", RECONNECT_TTL_S);
-    await grantMcSession(record.nickname);
+    await grantGameSession(record.nickname);
 
     return { data: { nickname: record.nickname } };
   }, {
@@ -251,7 +243,7 @@ const reconnectRoute = new Elysia()
 
     // Sliding window: an active player is never kicked out by the pass expiring.
     await redisService.getInstance().expire(key, RECONNECT_TTL_S);
-    await grantMcSession(record.nickname);
+    await grantGameSession(record.nickname);
 
     return {
       data: {
@@ -284,8 +276,7 @@ const sessionCheckRoute = new Elysia()
     if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
     if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
 
-    const alive = await redisService.getInstance().get(mcSessionKey(body.nickname));
-    if (!alive) return status(403, wrapError("NO_SESSION"));
+    if (!(await hasGameSession(body.nickname))) return status(403, wrapError("NO_SESSION"));
 
     return { data: { nickname: body.nickname } };
   }, {
@@ -313,7 +304,8 @@ const limboAuthRoute = new Elysia()
     if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
     if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
 
-    if (!(await allowRequest("limbo:ip", ip, 30, 15 * 60))) {
+    // The API only sees the limbo server's IP, so the limiter is per account.
+    if (!(await allowRequest("limbo:account", body.nickname.toLowerCase(), 10, 15 * 60))) {
       return status(429, wrapError("TOO_MANY_REQUESTS"));
     }
 
@@ -324,10 +316,14 @@ const limboAuthRoute = new Elysia()
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
     }
 
+    if (await isBannedNickname(account.nickname)) {
+      return status(403, wrapError("RESTRICT_BY_BAN"));
+    }
+
     const valid = await Bun.password.verify(body.password, account.hash).catch(() => false);
     if (!valid) return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
-    await grantMcSession(account.nickname);
+    await grantGameSession(account.nickname);
 
     return { data: { nickname: account.nickname } };
   }, {

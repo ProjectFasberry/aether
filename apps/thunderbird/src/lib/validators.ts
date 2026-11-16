@@ -13,9 +13,8 @@ import { ipPlugin } from "./plugins/index";
 import { client } from "#/shared/api/client";
 import { getEnv } from "#/shared/env";
 import { logErrorMsg, logValidators } from "#/shared/observability/log";
-import { libertybans } from "#/shared/database/libertybans-db";
 import { urlsService } from "#/shared/services/urls";
-import { isAdminNickname } from "#/shared/database/roles";
+import { isBannedNickname } from "#/shared/database/roles";
 import { safeJsonParse } from "#/utils";
 import { getOption } from "#/shared/constants/options";
 import type { Permission } from "#/shared/constants/permissions";
@@ -100,17 +99,7 @@ export const validateBannedStatus = () =>
 
       if (!nickname) return;
 
-      if (await isAdminNickname(nickname)) return;
-
-      const ban = await libertybans
-        .selectFrom("libertybans_victims")
-        .innerJoin("libertybans_names", "libertybans_names.uuid", "libertybans_victims.uuid")
-        .innerJoin("libertybans_bans", "libertybans_bans.victim", "libertybans_victims.id")
-        .select("libertybans_victims.id")
-        .where("libertybans_names.lower_name", "=", nickname.toLowerCase())
-        .executeTakeFirst();
-
-      if (ban?.id) throw status(400, "RESTRICT_BY_BAN");
+      if (await isBannedNickname(nickname)) throw status(400, "RESTRICT_BY_BAN");
     })
     .as("scoped");
 

@@ -1,4 +1,5 @@
 import { general } from "#/shared/database/general-db"
+import { revokeGameSession } from "#/shared/services/game-session"
 import { createError, withShared } from "#/helpers/error"
 import { callServerCommand } from "#/shared/nats/command"
 import { clearPermissionCache } from "#/shared/services/permission-cache";
@@ -85,6 +86,8 @@ const RESTRICT_EVENTS: Record<UserRestrictSchema["type"], (t: Nicknames, a: unkn
   ban: async (nicknames, args) => {
     const type = "ban"
     await execCmd({ type, nicknames, args: { ...args as Omit<BanCmdArgs, "type">, type } })
+    // The 24h game session must not outlive the ban.
+    await Promise.all(nicknames.map((nickname) => revokeGameSession(nickname).catch(() => undefined)))
     return { ok: true, type, payload: nicknames }
   },
   unban: async (nicknames) => {

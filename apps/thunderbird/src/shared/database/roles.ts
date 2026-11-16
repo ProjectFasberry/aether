@@ -45,3 +45,23 @@ export async function isAdminNickname(nickname: string): Promise<boolean> {
 
   return row?.role_id === LEGACY_ADMIN_ROLE_ID;
 }
+
+/**
+ * Ban check shared by the HTTP guard and the server-to-server limbo login
+ * (which has no session cookie). Admins bypass the ban, same as the guard.
+ */
+export async function isBannedNickname(nickname: string): Promise<boolean> {
+  if (await isAdminNickname(nickname)) return false;
+
+  const { libertybans } = await import("./libertybans-db");
+
+  const ban = await libertybans
+    .selectFrom("libertybans_victims")
+    .innerJoin("libertybans_names", "libertybans_names.uuid", "libertybans_victims.uuid")
+    .innerJoin("libertybans_bans", "libertybans_bans.victim", "libertybans_victims.id")
+    .select("libertybans_victims.id")
+    .where("libertybans_names.lower_name", "=", nickname.toLowerCase())
+    .executeTakeFirst();
+
+  return Boolean(ban?.id);
+}

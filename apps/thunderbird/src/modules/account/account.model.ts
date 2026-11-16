@@ -9,6 +9,7 @@ import { auth, authLogger } from "#/modules/auth/auth.model";
 import { session } from "#/modules/auth/login.model";
 import { tokenService } from "#/modules/yggdrasil/token.model";
 import { redisService } from "#/shared/redis/client";
+import { revokeGameSession } from "#/shared/services/game-session";
 import { type Static, t } from "elysia";
 
 type Base = {
@@ -45,6 +46,7 @@ export async function deleteAccount({
 	const revokedSessions = await session.deleteAll(account.nickname);
 
 	await redisService.getInstance().del(getPlayerUUIDCacheRedisKey(nickname)).catch(() => undefined);
+	await revokeGameSession(nickname).catch(() => undefined);
 
 	authLogger.info(
 		`Account deleted: ${account.nickname} (uuid=${uuid}, ip=${ip}); ${revokedTokens} game token(s), ${revokedSessions} session(s) revoked`,
@@ -90,8 +92,9 @@ export async function changePassword({
 		.where("account_id", "=", account.id)
 		.execute();
 
-	// A password change ends every existing credential: launcher/web sessions and
-	// game tokens issued before it.
+	// A password change ends every existing credential: launcher/web sessions,
+	// the 24h game session and game tokens issued before it.
+	await revokeGameSession(nickname).catch(() => undefined);
 	const revokedTokens = await tokenService.revokeAccount(account.id);
 	const revokedSessions = await session.deleteAll(account.nickname);
 
