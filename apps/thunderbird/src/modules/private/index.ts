@@ -10,6 +10,7 @@ import { modpacks } from "./modpacks";
 import { events } from "./events";
 import { history } from "./history";
 import { dictionaries } from "./dictionaries";
+import { socials } from "./socials";
 import { volume } from "./volume";
 import { lands } from "./lands";
 import { api } from "./api";
@@ -42,6 +43,7 @@ const entities = new Elysia()
     .use(events)
     .use(history)
     .use(dictionaries)
+    .use(socials)
     .use(lands)
     .use(releases)
     .use(economy)

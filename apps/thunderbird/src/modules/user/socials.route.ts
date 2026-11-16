@@ -8,6 +8,7 @@ import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
+import { pickAvailableSocials } from "#/shared/socials";
 import { DateTime } from "#/helpers/typebox";
 
 type PlayerSocialsValuePayload = {
@@ -30,27 +31,21 @@ type Initial = {
 const playerSocialsAvailable = new Elysia()
   .use(defineRequiredUser())
   .get("/available", async ({ nickname }) => {
-    const query = await general
-      .selectFrom("players_socials")
-      .select(["social"])
-      .where("nickname", "=", nickname)
-      .execute();
+    const [rows, linked] = await Promise.all([
+      general
+        .selectFrom("players_socials_available")
+        .select(["value", "isAvailable"])
+        .orderBy("id", "asc")
+        .execute(),
+      general
+        .selectFrom("players_socials")
+        .select(["social"])
+        .where("nickname", "=", nickname)
+        .execute(),
+    ]);
 
-    const all = [
-      { title: "Telegram", social: "telegram" },
-      { title: "Discord", social: "discord" },
-    ];
-
-    if (!query.length) {
-      return { data: all }
-    }
-
-    const data = query
-      .map((i) =>
-        all.map((t) => t.social).includes(i.social) &&
-        all.find((t) => t.social !== i.social)
-      )
-      .filter(Boolean);
+    const data = pickAvailableSocials(rows, linked.map((item) => item.social))
+      .map(({ title, value }) => ({ title, social: value }));
 
     return { data };
   }, {
@@ -91,11 +86,11 @@ const playerSocialsAdd = new Elysia()
   .post("/add", async ({ status, nickname, body: { social } }) => {
     const socialIsExist = await general
       .selectFrom("players_socials_available")
-      .select("value")
+      .select(["value", "isAvailable"])
       .where("value", "=", social)
       .executeTakeFirst();
 
-    if (!socialIsExist || !socialIsExist.value) {
+    if (!socialIsExist || socialIsExist.isAvailable === false) {
       throw status(400, wrapError("SOCIAL_NOT_FOUND"));
     }
 
