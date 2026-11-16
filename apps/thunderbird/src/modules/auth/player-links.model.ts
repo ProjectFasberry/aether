@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
 import { createError, withShared } from "#/helpers/error";
-import { authLogger } from "./auth.model";
+import { auth, authLogger } from "./auth.model";
 import { createAccountRows, offlineUuid, register } from "./register.model";
 
 /**
@@ -24,6 +24,7 @@ const LINK_ERRORS = {
 	NICKNAME_TAKEN: { msg: "Nickname is already taken", code: 409 },
 	ACCOUNT_MISSING: { msg: "Account for this link is missing", code: 404 },
 	REFERRAL_LIMIT: { msg: "Referral limit reached", code: 409 },
+	PASSWORD_IS_UNSAFE: { msg: "Password is unsafe", code: 400 },
 } as const;
 
 /** One registry for every link failure; routes read it with `reader`. */
@@ -43,6 +44,13 @@ const REFERRAL_WINDOW_START = sql<Date>`now() - interval '12 months'`;
 const linkLogger = authLogger.child({ name: "player-links" });
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+/** Credentials are stored hashed exactly like the password registration route. */
+export async function hashLinkPassword(password: string) {
+	if (!auth.validatePasswordSafe(password)) throw linkError.raise("PASSWORD_IS_UNSAFE");
+
+	return Bun.password.hash(password, { algorithm: "bcrypt", cost: 10 });
+}
 const newToken = () => randomBytes(32).toString("base64url");
 
 async function insertLink({
@@ -168,6 +176,8 @@ export async function acceptInvite({
 	const nickname = link.nickname;
 	if (!nickname) throw linkError.raise("ACCOUNT_MISSING");
 
+	const passwordHash = await hashLinkPassword(password);
+
 	const result = await general.transaction().execute(async (trx) => {
 		// Lock the link row: two parallel accepts must not both set a password.
 		const current = await trx
@@ -199,7 +209,7 @@ export async function acceptInvite({
 
 		await trx
 			.insertInto("account_credentials")
-			.values({ account_id: account.id, password_hash: password })
+			.values({ account_id: account.id, password_hash: passwordHash })
 			.execute();
 
 		await trx.insertInto("findout").values({ nickname, value: link.findout }).execute();
@@ -235,6 +245,8 @@ export async function acceptReferral({
 
 	const referrer = link.referrer;
 	if (!referrer) throw linkError.raise("ACCOUNT_MISSING");
+
+	const passwordHash = await hashLinkPassword(password);
 
 	const result = await general.transaction().execute(async (trx) => {
 		// Lock the link first, then the referrer: one token must produce exactly
@@ -281,7 +293,7 @@ export async function acceptReferral({
 
 		if (playerExists) throw linkError.raise("NICKNAME_TAKEN");
 
-		const rows = await createAccountRows(trx, { nickname, password });
+		const rows = await createAccountRows(trx, { nickname, password: passwordHash });
 
 		await trx
 			.insertInto("referrals")

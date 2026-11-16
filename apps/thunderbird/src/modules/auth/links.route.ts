@@ -7,7 +7,7 @@ import { allowRequest } from "#/shared/services/rate-limit";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { acceptInvite, acceptReferral, checkLink, linkError } from "./player-links.model";
 
-const errorStatus = (code: number) => code as 404 | 409 | 410 | 500;
+const errorStatus = (code: number) => code as 400 | 404 | 409 | 410 | 500;
 
 const linkCheck = new Elysia()
 	.get("/link/check", async ({ query: { token }, status }) => {
@@ -26,6 +26,7 @@ const linkCheck = new Elysia()
 					nickname: t.Nullable(t.String()),
 				}),
 			),
+			400: withError(t.String()),
 			404: withError(t.String()),
 			409: withError(t.String()),
 			410: withError(t.String()),
