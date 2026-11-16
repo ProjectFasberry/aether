@@ -8,7 +8,7 @@ import { nanoid } from "nanoid";
 import { withData, withError } from "#/shared/schemas";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
-import { pickAvailableSocials } from "#/shared/socials";
+import { buildSocials, pickAvailableSocials, SOCIAL_TITLES } from "#/shared/socials";
 import { DateTime } from "#/helpers/typebox";
 
 type PlayerSocialsValuePayload = {
@@ -44,8 +44,10 @@ const playerSocialsAvailable = new Elysia()
         .execute(),
     ]);
 
-    const data = pickAvailableSocials(rows, linked.map((item) => item.social))
-      .map(({ title, value }) => ({ title, social: value }));
+    const data = pickAvailableSocials(
+      buildSocials(rows),
+      linked.map((item) => item.social),
+    ).map(({ title, value }) => ({ title, social: value }));
 
     return { data };
   }, {
@@ -90,7 +92,7 @@ const playerSocialsAdd = new Elysia()
       .where("value", "=", social)
       .executeTakeFirst();
 
-    if (!socialIsExist || socialIsExist.isAvailable === false) {
+    if (!Object.hasOwn(SOCIAL_TITLES, social) || socialIsExist?.isAvailable === false) {
       throw status(400, wrapError("SOCIAL_NOT_FOUND"));
     }
 

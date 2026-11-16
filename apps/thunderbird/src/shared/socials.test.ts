@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { pickAvailableSocials, toSocialPayload } from "./socials";
+import { buildSocials, pickAvailableSocials, toSocialPayload } from "./socials";
 
 describe("toSocialPayload", () => {
 	it("adds the display title and treats a missing flag as enabled", () => {
@@ -24,18 +24,28 @@ describe("toSocialPayload", () => {
 	});
 });
 
-describe("pickAvailableSocials", () => {
-	const rows = [
-		{ value: "telegram", isAvailable: true },
-		{ value: "discord", isAvailable: false },
-		{ value: "vk", isAvailable: null },
-	];
+describe("buildSocials", () => {
+	it("returns every known social, enabled unless a row disables it", () => {
+		const socials = buildSocials([{ value: "discord", isAvailable: false }]);
 
-	it("drops disabled and already linked socials", () => {
-		expect(pickAvailableSocials(rows, ["vk"]).map((item) => item.value)).toEqual(["telegram"]);
+		expect(socials).toEqual([
+			{ value: "telegram", title: "Telegram", isAvailable: true },
+			{ value: "discord", title: "Discord", isAvailable: false },
+		]);
 	});
 
-	it("keeps the database order", () => {
-		expect(pickAvailableSocials(rows, []).map((item) => item.value)).toEqual(["telegram", "vk"]);
+	it("ignores unknown rows", () => {
+		const socials = buildSocials([{ value: "vk", isAvailable: true }]);
+
+		expect(socials.map((item) => item.value)).toEqual(["telegram", "discord"]);
+	});
+});
+
+describe("pickAvailableSocials", () => {
+	const socials = buildSocials([{ value: "discord", isAvailable: false }]);
+
+	it("drops disabled and already linked socials", () => {
+		expect(pickAvailableSocials(socials, []).map((item) => item.value)).toEqual(["telegram"]);
+		expect(pickAvailableSocials(socials, ["telegram"])).toEqual([]);
 	});
 });

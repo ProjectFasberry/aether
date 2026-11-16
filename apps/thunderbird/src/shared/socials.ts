@@ -18,14 +18,20 @@ export function toSocialPayload(value: string, isAvailable: boolean | null): Soc
 	};
 }
 
-/** Available for linking: enabled and not linked yet. */
-export function pickAvailableSocials(
+/** Known socials with their availability; missing rows default to enabled. */
+export function buildSocials(
 	rows: { value: string; isAvailable: boolean | null }[],
-	linked: string[],
 ): SocialPayload[] {
+	const availability = new Map(rows.map((row) => [row.value, row.isAvailable]));
+
+	return Object.keys(SOCIAL_TITLES).map((value) =>
+		toSocialPayload(value, availability.get(value) ?? true)
+	);
+}
+
+/** Available for linking: enabled and not linked yet. */
+export function pickAvailableSocials(socials: SocialPayload[], linked: string[]): SocialPayload[] {
 	const linkedSet = new Set(linked);
 
-	return rows
-		.filter((row) => row.isAvailable !== false && !linkedSet.has(row.value))
-		.map((row) => toSocialPayload(row.value, row.isAvailable));
+	return socials.filter((social) => social.isAvailable && !linkedSet.has(social.value));
 }
