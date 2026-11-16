@@ -2,7 +2,7 @@ name: Build glaux
 
 on:
   push:
-    branches: [main, dev, staging]
+    branches: [main]
     paths:
       - "apps/glaux/**"
       - "pkgs/**"
@@ -15,7 +15,7 @@ on:
       stage:
         description: Image stage
         type: choice
-        options: [prod, staging, dev]
+        options: [prod]
         default: prod
 
 concurrency:
@@ -33,16 +33,8 @@ jobs:
       - name: Resolve stage
         id: stage
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            stage="${{ inputs.stage }}"
-          else
-            case "${{ github.ref_name }}" in
-              main) stage=prod ;;
-              staging) stage=staging ;;
-              *) stage=dev ;;
-            esac
-          fi
-          echo "stage=$stage" >> "$GITHUB_OUTPUT"
+          # Only the production stage is deployed until the first paying client.
+          echo "stage=prod" >> "$GITHUB_OUTPUT"
 
       - uses: docker/login-action@v3
         with:
