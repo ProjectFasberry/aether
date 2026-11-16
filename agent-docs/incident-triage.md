@@ -18,7 +18,7 @@ Read the boot log first: every resource logs
 
 | log | meaning |
 | --- | --- |
-| `resource failed: db (critical=true)` + `Access denied ... (using password: NO)` | malformed DB URI in Infisical (user or password missing) |
+| `resource failed: db (critical=true)` + `Access denied ... (using password: NO)` | malformed DB URI in the host env file (user or password missing) |
 | `Unknown system variable 'max_execution_time'` | MySQL variable sent to MariaDB; the timeout helper must try both names |
 | `No command executor for <subject>` | no NATS responder (game server/plugin down); messages are acked as `NO_RESPONDERS`, not an app crash |
 | `notify-keyspace-events is "unset"` | QR expiry falls back to WebSocket timers; expected |

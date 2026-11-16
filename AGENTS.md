@@ -17,11 +17,11 @@ deploy model live here; each service keeps its own details:
   local commits.
 - **Bun only.** `bun install`, `bun run ...`. Never create a second lockfile
   (`npm`, `pnpm`, `yarn` are forbidden); the lockfile is `bun.lock`.
-- **Secrets stay out of the repo and images.** Runtime secrets come from
-  Infisical (`/thunderbird`, `/glaux`; database URLs are also under `/shared`;
-  envs `dev`/`staging`/`prod`). The `NODE_AUTH_TOKEN` for private
-  `@projectfasberry/*` packages lives in the gitignored `.env` and goes into
-  Docker builds only as the BuildKit secret `npm_token`, never as `ARG`/`ENV`.
+- **Secrets stay out of the repo and images.** Runtime secrets live in the
+  host-only `/opt/main/env/prod/<service>.env` files. The `NODE_AUTH_TOKEN` for
+  private `@projectfasberry/*` packages lives in the gitignored `.env` and goes
+  into Docker builds only as the BuildKit secret `npm_token`, never as
+  `ARG`/`ENV`.
 - **Deploy only on an explicit request.** Production is not a place for
   "while I was here" changes.
 - **No direct host access for changes.** Do not ssh/scp/docker against deploy or
@@ -102,8 +102,8 @@ Conventional commits (`.cz.toml`), short and lowercase, e.g.
 
 ## Deploy model
 
-CI builds and pushes `registry.fasberry.fun/<stage>/<app>` on `main` (prod),
-`staging` (staging) or `dev` (dev). Rollout is manual: run
+CI builds and pushes `registry.fasberry.fun/prod/<app>` on `main`. Rollout is
+manual: run
 `ssh i-m '/opt/main/fasberry deploy <stack> [service]'` after the image is
 pushed. The `fasberry-pull-update.timer` is not installed. Image names,
 workflows and health checks are in the per-app docs; first response steps are

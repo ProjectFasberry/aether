@@ -27,7 +27,7 @@ limits both event types to a comma-separated repository allowlist.
 | `GITHUB_REPOS` | comma-separated repository allowlist for fan-out |
 | `GITHUB_TG_TARGET` | Telegram chat override, default `g_infra` |
 
-Secrets live in Infisical under `/glaux`.
+Secrets live in the host `/opt/main/env/prod/glaux.env`.
 
 ## Webhook setup
 

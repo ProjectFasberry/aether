@@ -18,4 +18,4 @@ the table is created on boot.
 | `BUILD_METRICS_POSTGRES_URI` | `build_metrics` database |
 | `BUILD_METRICS_TOKEN` | bearer token expected by the route |
 
-Both live in Infisical under `/glaux`.
+Both live in the host `/opt/main/env/prod/glaux.env`.

@@ -6,7 +6,7 @@ in the [root AGENTS.md](../../AGENTS.md).
 ## Commands
 
 ```bash
-bun run dev          # infisical /thunderbird, watch mode
+bun run dev          # watch mode (needs a local .env)
 bun run type-check
 bun run test
 bun run circular-check
@@ -68,13 +68,9 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 ## Deploy
 
 - `.github/workflows/build-thunderbird.yml` builds `linux/amd64` on push to
-  `main` (prod), `staging` (staging) or `dev` (dev) and pushes
-  `registry.fasberry.fun/<stage>/thunderbird:latest` plus `:sha-<commit>`.
-  Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`, `NODE_AUTH_TOKEN`.
-- The Dockerfile pins `INFISICAL_VERSION` and downloads the CLI from the GitHub
-  release with SHA-256 verification; the apt repository on
-  `artifacts-cli.infisical.com` hangs behind the deploy network. Bump it with
-  `--build-arg INFISICAL_VERSION=<version>`.
+  `main` and pushes `registry.fasberry.fun/prod/thunderbird:latest` plus
+  `:sha-<commit>`. Repo secrets: `REGISTRY_USERNAME`, `REGISTRY_PASSWORD`,
+  `NODE_AUTH_TOKEN`.
 - Rollout is manual: after CI pushes the image, run
   `ssh i-m '/opt/main/fasberry deploy prod thunderbird'`. The pull-update timer
   is not installed.

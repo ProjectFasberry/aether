@@ -14,23 +14,20 @@ Introspects a live database with `kysely-codegen` and writes
 bun run gen:types:db   # repo root; prompts for environment and database
 ```
 
-Requires `apps/workers/generate-types/.env.infisical` with
-`INFISICAL_CLIENT_ID`, `INFISICAL_CLIENT_SECRET`, `INFISICAL_PROJECT_ID` and
-`INFISICAL_API_URL`. Secrets are fetched from the `/shared` path through the
-Infisical SDK.
+Requires the database URLs in the process environment (or a local
+`apps/workers/generate-types/.env`).
 
 ## Non-interactive
 
 ```bash
-infisical run --env=prod --path=/shared -- \
-  bun run apps/workers/generate-types/src/index.ts \
+bun run apps/workers/generate-types/src/index.ts \
   --type=db --no-interactive --env=prod --scoped --host=192.168.1.103
 ```
 
 | flag | meaning |
 | --- | --- |
 | `--no-interactive` | no prompts, no SDK: URLs are read from `process.env` |
-| `--env=dev\|prod` | required with `--no-interactive` |
+| `--env=prod` | required with `--no-interactive` |
 | `--scoped` | every declared database |
 | `--target=<name>` | one database instead of `--scoped` |
 | `--host=<host>` | rewrites the URL host |

@@ -97,8 +97,8 @@ first, then flip the env flag.
 Backfill (dry run by default):
 
 ```bash
-infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts
-infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts --apply
+bun run scripts/backfill-skin-owners.ts
+bun run scripts/backfill-skin-owners.ts --apply
 ```
 
 ## History and cleanup
