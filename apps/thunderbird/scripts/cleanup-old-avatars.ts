@@ -1,7 +1,7 @@
 /**
  * Removes the pre-content-addressed player heads from the avatars bucket.
  *
- *   infisical run --env=prod --path=/thunderbird -- bun run scripts/cleanup-old-avatars.ts
+ *   bun run scripts/cleanup-old-avatars.ts
  *   ... --apply
  *
  * Dry run by default. New heads are `heads-<sha256>.png`; everything else is

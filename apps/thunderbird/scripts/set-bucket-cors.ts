@@ -4,8 +4,7 @@
  * RustFS does not expose CORS in the MinIO JS client, so the request is signed
  * by hand. Run inside the API container (host network):
  *
- *   infisical run --env=prod --path=/thunderbird -- \
- *     bun run scripts/set-bucket-cors.ts skins avatars
+ *   bun run scripts/set-bucket-cors.ts skins avatars
  */
 import { createHash, createHmac } from "node:crypto"
 

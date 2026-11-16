@@ -5,19 +5,18 @@
 	"license": "MIT",
 	"type": "module",
 	"scripts": {
-		"dev": "infisical run --env=dev --path=/thunderbird -- bun run --watch ./src/index.ts",
+		"dev": "bun run --watch ./src/index.ts",
 		"build": "STAGE=staging bun run ./scripts/build.ts",
 		"build:prod": "STAGE=prod bun run ./scripts/build.ts",
-		"start:dev": "infisical run --env=dev --path=/thunderbird -- bun run ./dist/index.js",
-		"start:prod": "infisical run --env=prod --path=/thunderbird -- bun run ./dist/index.js",
+		"start:dev": "bun run ./dist/index.js",
+		"start:prod": "bun run ./dist/index.js",
 		"-------------": "",
 		"type-check": "tsc --build",
 		"test": "bun test",
 		"lint": "bunx biome lint",
 		"circular-check": "bunx dpdm --no-warning ./src/index.ts",
 		"--------------------": "",
-		"release:prod": "bun run type-check && infisical run --env=common --path=/root -- make all STAGE=prod NAME=thunderbird",
-		"release:staging": "bun run type-check && infisical run --env=common --path=/root -- make all STAGE=staging NAME=thunderbird"
+		"release:prod": "bun run type-check && make all STAGE=prod NAME=thunderbird"
 	},
 	"dependencies": {
 		"@elysia/bearer": "1.4.4",

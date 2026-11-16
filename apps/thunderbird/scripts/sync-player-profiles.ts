@@ -1,7 +1,7 @@
 /**
  * Backfills and reconciles player rows across the plugin databases.
  *
- *   infisical run --env=prod --path=/thunderbird -- bun run scripts/sync-player-profiles.ts
+ *   bun run scripts/sync-player-profiles.ts
  *   ... --apply
  *
  * Dry run by default. For every player it reports:

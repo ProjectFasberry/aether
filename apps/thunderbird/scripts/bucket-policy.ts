@@ -1,8 +1,7 @@
 /**
  * Reads or sets the public-read policy of a volume bucket.
  *
- *   infisical run --env=prod --path=/thunderbird -- \
- *     bun run scripts/bucket-policy.ts <bucket> [get|public]
+ *   bun run scripts/bucket-policy.ts <bucket> [get|public]
  */
 import * as Minio from "minio"
 

@@ -1,6 +1,5 @@
 import { commonPrompts } from "@repo/shared/lib/cli";
 import * as p from "@clack/prompts";
-import { getOrCreateClient } from "@repo/shared/lib/infisical";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -12,7 +11,6 @@ import { parseArgs } from "node:util";
     bun run db
 
   Non-interactive (secrets come from process.env, no Infisical SDK calls):
-    infisical run --env=prod --path=/shared -- bun run ./src/index.ts \
       --type=db --no-interactive --env=prod --scoped
 
   Flags:
@@ -135,7 +133,7 @@ function finish(mode: string, failures: string[], generated: number): void {
   console.log(`Generated ${generated} database(s) for "${mode}"`);
 }
 
-/** Non-interactive: URLs are already in the environment injected by `infisical run`. */
+/** Non-interactive: URLs come from the environment. */
 async function runFromEnv(mode: "dev" | "prod"): Promise<void> {
   const requested = flags.target ? [flags.target] : scoped ? Object.keys(dbs) : [];
 
@@ -181,29 +179,15 @@ async function runInteractive(): Promise<void> {
     ? Object.values(dbs)
     : [answers.target as Dbs[DbName] & { name: DbName }];
 
-  const client = await getOrCreateClient();
-  const infisicalOptions = {
-    environment: mode,
-    projectId: process.env.INFISICAL_PROJECT_ID,
-    secretPath: "/shared",
-  };
-
   const failures: string[] = [];
   let generated = 0;
 
   for (const unit of selected) {
     const envVar = getEnvVar(unit.name, unit.dialect);
-    let dbUrl: string | undefined;
+    const dbUrl = process.env[envVar];
 
-    try {
-      const { secretValue } = await client.secrets().getSecret({
-        ...infisicalOptions,
-        secretName: envVar,
-      });
-
-      dbUrl = secretValue;
-    } catch (error) {
-      failures.push(`${unit.name}: ${envVar} is not available (${error instanceof Error ? error.message : String(error)})`);
+    if (!dbUrl) {
+      failures.push(`${unit.name}: ${envVar} is not set in the environment`);
       continue;
     }
 

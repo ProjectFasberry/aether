@@ -1,7 +1,7 @@
 /**
  * Backfills `skin_owners` from the names in `sr_custom_skins`.
  *
- *   infisical run --env=dev --path=/thunderbird -- bun run scripts/backfill-skin-owners.ts
+ *   bun run scripts/backfill-skin-owners.ts
  *   ... --apply
  *
  * Dry run by default. Uploads name skins `sr-<nickname>-<suffix>`; a name is

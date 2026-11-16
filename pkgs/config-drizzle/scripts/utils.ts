@@ -1,51 +1,11 @@
 import { DATABASES } from "./databases";
-import { InfisicalSDK } from "@infisical/sdk";
-import * as z from "zod";
 
-const infisicalSchema = z.object({
-	INFISICAL_CLIENT_ID: z.string(),
-	INFISICAL_CLIENT_SECRET: z.string(),
-  INFISICAL_PROJECT_ID: z.string(),
-	INFISICAL_API_URL: z.string()
-});
-
-const infisicalEnv = infisicalSchema.parse(process.env);
-
-export async function getDatabaseUrl(databaseName: string, mode: "dev" | "prod") {
-	const { INFISICAL_CLIENT_ID, INFISICAL_API_URL, INFISICAL_CLIENT_SECRET, INFISICAL_PROJECT_ID } = infisicalEnv;
-
-	const client = new InfisicalSDK({
-		siteUrl: INFISICAL_API_URL
-	});
-
-	await client.auth().universalAuth.login({
-		clientId: INFISICAL_CLIENT_ID,
-		clientSecret: INFISICAL_CLIENT_SECRET,
-	});
-
+export async function getDatabaseUrl(databaseName: string, _mode: "dev" | "prod") {
 	const secretName = getDatabase(databaseName).urlEnvName;
+	const value = process.env[secretName];
 
-	try {
-		const singleSecret = await client.secrets().getSecret({
-			environment: mode,
-			projectId: INFISICAL_PROJECT_ID,
-			secretName,
-			expandSecretReferences: true,
-			viewSecretValue: true,
-			includeImports: true,
-			secretPath: "/thunderbird",
-		});
-
-		return singleSecret.secretValue;
-	} catch (e) {
-		if (e instanceof Error) {
-			if (e.message.includes("StatusCode=404")) {
-				throw new Error(`Secret "${secretName}" not found in environment "${mode}"`);
-			}
-		}
-
-		throw e;
-	}
+	if (!value) throw new Error(`${secretName} is not set in the environment`);
+	return value;
 }
 
 export function getDatabase(name: keyof typeof DATABASES) {
