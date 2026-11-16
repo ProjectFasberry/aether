@@ -273,7 +273,7 @@ export async function acceptReferral({
 			.where("created_at", ">", REFERRAL_WINDOW_START)
 			.executeTakeFirst();
 
-		if ((used?.count ?? 0) >= REFERRALS_PER_WINDOW) throw linkError.raise("REFERRAL_LIMIT");
+		if (Number(used?.count ?? 0) >= REFERRALS_PER_WINDOW) throw linkError.raise("REFERRAL_LIMIT");
 
 		const lowerNickname = nickname.toLowerCase();
 
@@ -332,7 +332,9 @@ export async function referralStats(referrer: string): Promise<ReferralStats> {
 		.where("created_at", ">", REFERRAL_WINDOW_START)
 		.executeTakeFirst();
 
-	const count = used?.count ?? 0;
+	// Postgres returns bigint counts as strings, so coerce before arithmetic
+	// and before the number-typed response schema encodes the value.
+	const count = Number(used?.count ?? 0);
 
 	return {
 		used: count,

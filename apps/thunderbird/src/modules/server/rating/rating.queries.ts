@@ -1,0 +1,73 @@
+import type { Kysely } from "kysely"
+import type { DB as bisquiteDB } from "@gen/db/bisquite"
+import type { DB as lobbyDB } from "@gen/db/lobby"
+import type { DB as playerpointsDB } from "@gen/db/playerpoints"
+import type { DB as reputationDB } from "@gen/db/reputation"
+
+/**
+ * Cursor pagination encodes the value of the sort column into the cursor, and
+ * `kysely-paginate` cannot encode `null`. A row with a null sort value would
+ * therefore turn the whole page into a 500, so every rating query drops those
+ * rows instead of ranking them.
+ */
+
+export const belkoinRatingQuery = (db: Kysely<playerpointsDB>) =>
+	db
+		.selectFrom("playerpoints_points")
+		.innerJoin("playerpoints_username_cache", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
+		.select([
+			"playerpoints_points.points",
+			"playerpoints_username_cache.username as nickname",
+		])
+		.where("playerpoints_points.points", "is not", null)
+
+export const parkourRatingQuery = (db: Kysely<lobbyDB>) =>
+	db
+		.selectFrom("ajparkour_scores")
+		.innerJoin("ajparkour_players", "ajparkour_players.id", "ajparkour_scores.player")
+		.select([
+			"ajparkour_players.gamesplayed",
+			"ajparkour_scores.player",
+			"ajparkour_scores.score",
+			"ajparkour_players.name as nickname",
+			"ajparkour_scores.area",
+		])
+		// overall - scores from all areas
+		.where("ajparkour_scores.area", "!=", "overall")
+		.where("ajparkour_scores.score", "is not", null)
+
+export const playtimeRatingQuery = (db: Kysely<bisquiteDB>) =>
+	db
+		.selectFrom("cmi_users")
+		.select(["TotalPlayTime as total", "username as nickname"])
+		.where("TotalPlayTime", "is not", null)
+
+export const charismRatingQuery = (db: Kysely<bisquiteDB>) =>
+	db
+		.selectFrom("cmi_users")
+		.select(["Balance as balance", "username as nickname"])
+		.where("Balance", "is not", null)
+
+export const reputationRatingQuery = (db: Kysely<reputationDB>) =>
+	db
+		.selectFrom("reputation")
+		.select(["reputation", "reputation.uuid"])
+		.where("reputation.reputation", "is not", null)
+
+export const landsRatingQuery = (db: Kysely<bisquiteDB>) =>
+	db
+		.selectFrom("lands_lands_claims")
+		.innerJoin("lands_lands", "lands_lands_claims.land", "lands_lands.ulid")
+		.select([
+			"lands_lands_claims.land",
+			"lands_lands.ulid",
+			"lands_lands_claims.chunks_amount",
+			"lands_lands_claims.blocks",
+			"lands_lands.name",
+			"lands_lands.members",
+			"lands_lands.type",
+		])
+		.where("lands_lands_claims.chunks_amount", "is not", null)
+
+/** Player-scoped ratings fall back to the main server when none is given. */
+export const resolveRatingServer = (server?: string): string => server ?? "bisquite"

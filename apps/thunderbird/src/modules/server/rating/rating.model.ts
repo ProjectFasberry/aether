@@ -13,6 +13,10 @@ import { type Static, t, type TSchema } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { skinsService } from "../../../shared/services/skins";
 import { invariant } from "#/utils";
+import {
+	belkoinRatingQuery, charismRatingQuery, landsRatingQuery, parkourRatingQuery,
+	playtimeRatingQuery, reputationRatingQuery, resolveRatingServer,
+} from "./rating.queries";
 
 export const ratingSchema = t.Composite([
 	t.Pick(metaSchema, ["asc", "limit", "endCursor"]),
@@ -22,8 +26,8 @@ export const ratingSchema = t.Composite([
 ]);
 
 function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
-	invariant(server, "Server is not defined")
-	const dbInstance = dbs[server];
+	const key = resolveRatingServer(server)
+	const dbInstance = dbs[key];
 	invariant(dbInstance, "Target db instance is not defined")
 	return { dbInstance };
 }
@@ -144,13 +148,7 @@ export const ratingPayload = t.Union(allSchemas);
 async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
-	const query = playerpoints
-		.selectFrom("playerpoints_points")
-		.innerJoin("playerpoints_username_cache", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
-		.select([
-			"playerpoints_points.points",
-			"playerpoints_username_cache.username as nickname"
-		]);
+	const query = belkoinRatingQuery(playerpoints)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
@@ -175,17 +173,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
-	const query = lobby
-		.selectFrom("ajparkour_scores")
-		.innerJoin("ajparkour_players", "ajparkour_players.id", "ajparkour_scores.player")
-		.select([
-			"ajparkour_players.gamesplayed",
-			"ajparkour_scores.player",
-			"ajparkour_scores.score",
-			"ajparkour_players.name as nickname",
-			"ajparkour_scores.area",
-		])
-		.where("ajparkour_scores.area", "!=", "overall"); // overall - scores from all areas
+	const query = parkourRatingQuery(lobby)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
@@ -217,18 +205,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof r
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const landsQuery = dbInstance
-		.selectFrom("lands_lands_claims")
-		.innerJoin("lands_lands", "lands_lands_claims.land", "lands_lands.ulid")
-		.select([
-			"lands_lands_claims.land",
-			"lands_lands.ulid",
-			"lands_lands_claims.chunks_amount",
-			"lands_lands_claims.blocks",
-			"lands_lands.name",
-			"lands_lands.members",
-			"lands_lands.type",
-		]);
+	const landsQuery = landsRatingQuery(dbInstance)
 
 	const landsRes = await executeWithCursorPagination(landsQuery, {
 		perPage: limit,
@@ -281,12 +258,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const query = dbInstance
-		.selectFrom("cmi_users")
-		.select([
-			"Balance as balance",
-			"username as nickname"
-		]);
+	const query = charismRatingQuery(dbInstance)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
@@ -317,9 +289,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 	const { dbInstance } = getServerDBInstance<reputationDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const query = dbInstance
-		.selectFrom("reputation")
-		.select(["reputation", "reputation.uuid"]);
+	const query = reputationRatingQuery(dbInstance)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
@@ -364,9 +334,7 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const query = dbInstance
-		.selectFrom("cmi_users")
-		.select(["TotalPlayTime as total", "username as nickname"]);
+	const query = playtimeRatingQuery(dbInstance)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,

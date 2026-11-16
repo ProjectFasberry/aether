@@ -259,9 +259,9 @@ export async function grantJobsReport(): Promise<GrantJobsReport> {
 	]);
 
 	return {
-		pending: pending?.count ?? 0,
-		failed: failed?.count ?? 0,
-		stuck: stuck?.count ?? 0,
+		pending: Number(pending?.count ?? 0),
+		failed: Number(failed?.count ?? 0),
+		stuck: Number(stuck?.count ?? 0),
 		oldestPendingAt: oldest?.created_at ?? null,
 		failedSamples: samples.map((row) => ({
 			orderId: row.order_id,
