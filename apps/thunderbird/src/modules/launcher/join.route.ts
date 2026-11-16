@@ -22,6 +22,10 @@ import { allowRequest } from "#/shared/services/rate-limit";
 const TICKET_TTL_S = 180;
 /** After a successful verify the nickname may reconnect without a new ticket. */
 const RECONNECT_TTL_S = 1800;
+/** Password-authenticated game session (the "other launcher" door). */
+const MC_SESSION_TTL_S = 24 * 60 * 60;
+/** Dummy bcrypt hash keeps the timing equal for unknown nicknames. */
+const DUMMY_HASH = "$2b$10$1Pk3Hp5dHx0B45pPvSlDyu9FNpFN2U84l8LYcdkcVr/oZRtRg/05K";
 /** RFC 4648 base32, lowercase, no padding: 32 random bytes -> 52 chars. */
 const TICKET_PATTERN = /^[a-z2-7]{52}$/;
 const SERVER_ID_PATTERN = /^[a-z0-9_-]{1,32}$/;
@@ -36,6 +40,14 @@ type TicketPayload = {
 
 const ticketKey = (ticket: string) => `join:ticket:${ticket}`;
 const passKey = (nickname: string) => `join:pass:${nickname.toLowerCase()}`;
+const mcSessionKey = (nickname: string) => `mc:session:${nickname.toLowerCase()}`;
+
+/** Grants the 24h game session used when the login carries no launcher ticket. */
+async function grantMcSession(nickname: string): Promise<void> {
+  await redisService
+    .getInstance()
+    .set(mcSessionKey(nickname), "1", "EX", MC_SESSION_TTL_S);
+}
 
 /** GET + DEL in one round trip so a ticket cannot be used twice. */
 const CONSUME_SCRIPT = `
@@ -179,6 +191,7 @@ const verifyRoute = new Elysia()
     await redisService
       .getInstance()
       .set(passKey(record.nickname), JSON.stringify(record), "EX", RECONNECT_TTL_S);
+    await grantMcSession(record.nickname);
 
     return { data: { nickname: record.nickname } };
   }, {
@@ -238,6 +251,7 @@ const reconnectRoute = new Elysia()
 
     // Sliding window: an active player is never kicked out by the pass expiring.
     await redisService.getInstance().expire(key, RECONNECT_TTL_S);
+    await grantMcSession(record.nickname);
 
     return {
       data: {
@@ -260,7 +274,82 @@ const reconnectRoute = new Elysia()
     },
   });
 
+/**
+ * `POST /launcher/session/check` answers whether the nickname has a live 24h
+ * session. 200 means "let the player in"; 403 means "send them to the auth
+ * limbo". The gate treats any non-2xx as a denial.
+ */
+const sessionCheckRoute = new Elysia()
+  .post("/launcher/session/check", async ({ body, headers, status }) => {
+    if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
+    if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
+
+    const alive = await redisService.getInstance().get(mcSessionKey(body.nickname));
+    if (!alive) return status(403, wrapError("NO_SESSION"));
+
+    return { data: { nickname: body.nickname } };
+  }, {
+    body: t.Object({
+      nickname: t.String({ minLength: 1, maxLength: 32 }),
+    }),
+    response: {
+      200: withData(t.Object({ nickname: t.String() })),
+      403: withError(t.String()),
+      503: withError(t.String()),
+    },
+    detail: {
+      summary: buildRouteSummary("Check the 24h game session for the proxy gate"),
+    },
+  });
+
+/**
+ * `POST /launcher/session/limbo` is called by the auth limbo plugin after the
+ * player typed the password in game. It verifies the same bcrypt hash as the
+ * web login and grants the 24h session.
+ */
+const limboAuthRoute = new Elysia()
+  .use(ipPlugin())
+  .post("/launcher/session/limbo", async ({ body, headers, ip, status }) => {
+    if (!gateSecret()) return status(503, wrapError("GATE_DISABLED"));
+    if (!secretMatches(headers[GATE_HEADER])) return status(403, wrapError("FORBIDDEN"));
+
+    if (!(await allowRequest("limbo:ip", ip, 30, 15 * 60))) {
+      return status(429, wrapError("TOO_MANY_REQUESTS"));
+    }
+
+    const account = await auth.getAccount(body.nickname);
+
+    if (!account) {
+      await Bun.password.verify(body.password, DUMMY_HASH).catch(() => false);
+      return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+    }
+
+    const valid = await Bun.password.verify(body.password, account.hash).catch(() => false);
+    if (!valid) return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+
+    await grantMcSession(account.nickname);
+
+    return { data: { nickname: account.nickname } };
+  }, {
+    body: t.Object({
+      nickname: t.String({ minLength: 1, maxLength: 32 }),
+      password: t.String({ minLength: 1, maxLength: 72 }),
+    }),
+    response: {
+      200: withData(t.Object({ nickname: t.String() })),
+      400: withError(t.UnionEnum(["PASSWORD_OR_LOGIN_INCORRECT"])),
+      403: withError(t.String()),
+      429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
+      503: withError(t.String()),
+    },
+    detail: {
+      summary: buildRouteSummary("Authenticate a player from the auth limbo"),
+    },
+  });
+
 export const joinGate = new Elysia()
   .use(ticketRoute)
   .use(verifyRoute)
-  .use(reconnectRoute);
+  .use(reconnectRoute)
+  .use(sessionCheckRoute)
+  .use(limboAuthRoute);
