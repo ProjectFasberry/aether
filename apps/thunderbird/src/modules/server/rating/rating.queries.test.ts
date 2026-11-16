@@ -53,6 +53,13 @@ describe("rating queries with cursor pagination", () => {
 		expect(sql).toContain('"ajparkour_scores"."area" != ');
 	});
 
+	it("keeps one parkour row per nickname and map", () => {
+		const sql = compile(parkourRatingQuery(dummyDb<lobbyDB>()));
+		expect(sql).toContain("row_number() over");
+		expect(sql).toContain('partition by lower("ajparkour_players"."name"), "ajparkour_scores"."area"');
+		expect(sql).toContain('"ranked"."rn" = ');
+	});
+
 	it("drops playtime rows with null TotalPlayTime", () => {
 		const sql = compile(playtimeRatingQuery(dummyDb<bisquiteDB>()));
 		expect(sql).toContain('"totalplaytime" is not null');

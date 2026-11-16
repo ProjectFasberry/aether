@@ -1,4 +1,4 @@
-import type { Kysely } from "kysely"
+import { sql, type Kysely } from "kysely"
 import type { DB as bisquiteDB } from "@gen/db/bisquite"
 import type { DB as lobbyDB } from "@gen/db/lobby"
 import type { DB as playerpointsDB } from "@gen/db/playerpoints"
@@ -21,8 +21,11 @@ export const belkoinRatingQuery = (db: Kysely<playerpointsDB>) =>
 		])
 		.where("playerpoints_points.points", "is not", null)
 
-export const parkourRatingQuery = (db: Kysely<lobbyDB>) =>
-	db
+export const parkourRatingQuery = (db: Kysely<lobbyDB>) => {
+	// The same nickname can exist twice in the plugin tables (a premium and an
+	// offline UUID), so one player produced two rows on the same map. Keep the
+	// best result per lowercased nickname and area.
+	const ranked = db
 		.selectFrom("ajparkour_scores")
 		.innerJoin("ajparkour_players", "ajparkour_players.id", "ajparkour_scores.player")
 		.select([
@@ -31,10 +34,20 @@ export const parkourRatingQuery = (db: Kysely<lobbyDB>) =>
 			"ajparkour_scores.score",
 			"ajparkour_players.name as nickname",
 			"ajparkour_scores.area",
+			sql<number>`row_number() over (
+				partition by lower(${sql.ref("ajparkour_players.name")}), ${sql.ref("ajparkour_scores.area")}
+				order by ${sql.ref("ajparkour_scores.score")} desc
+			)`.as("rn"),
 		])
 		// overall - scores from all areas
 		.where("ajparkour_scores.area", "!=", "overall")
 		.where("ajparkour_scores.score", "is not", null)
+
+	return db
+		.selectFrom(ranked.as("ranked"))
+		.select(["gamesplayed", "player", "score", "nickname", "area"])
+		.where("ranked.rn", "=", 1)
+}
 
 export const playtimeRatingQuery = (db: Kysely<bisquiteDB>) =>
 	db
