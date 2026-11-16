@@ -25,7 +25,7 @@ const appConfig: ElysiaConfig<string> = {
   aot: true,
 };
 
-const app = new Elysia(appConfig)
+export const app = new Elysia(appConfig)
   .use(requestIdPlugin())
   .use(openApiPlugin())
   .use(serverTimingPlugin())
