@@ -13,12 +13,18 @@ import type { DB as reputationDB } from "@gen/db/reputation";
 import {
 	belkoinRatingQuery,
 	charismRatingQuery,
+	landsMembersRatingQuery,
 	landsRatingQuery,
 	parkourRatingQuery,
 	playtimeRatingQuery,
+	purchasesRatingQuery,
+	referralsRatingQuery,
 	reputationRatingQuery,
 	resolveRatingServer,
+	votesRatingQuery,
+	wikiRatingQuery,
 } from "./rating.queries";
+import type { DB as generalDB } from "@gen/db/general";
 
 /** Compiles a query without a connection: the Postgres driver is never used. */
 function dummyDb<T>(): Kysely<T> {
@@ -78,6 +84,37 @@ describe("rating queries with cursor pagination", () => {
 	it("drops lands rows with null chunks amount", () => {
 		const sql = compile(landsRatingQuery(dummyDb<bisquiteDB>()));
 		expect(sql).toContain('"lands_lands_claims"."chunks_amount" is not null');
+	});
+});
+
+describe("aggregated rating queries", () => {
+	it("counts votes per nickname in a subquery", () => {
+		const sql = compile(votesRatingQuery(dummyDb<generalDB>()));
+		expect(sql).toContain("count(*)");
+		expect(sql).toContain("group by");
+		expect(sql).toContain('from (');
+	});
+
+	it("counts only completed referrals", () => {
+		const sql = compile(referralsRatingQuery(dummyDb<generalDB>()));
+		expect(sql).toContain("count(*)");
+		expect(sql).toContain('"completed" = ');
+	});
+
+	it("ignores wiki revisions without an author", () => {
+		const sql = compile(wikiRatingQuery(dummyDb<generalDB>()));
+		expect(sql).toContain('"author" is not null');
+	});
+
+	it("counts paid orders only", () => {
+		const sql = compile(purchasesRatingQuery(dummyDb<generalDB>()));
+		expect(sql).toContain('"paid_at" is not null');
+	});
+
+	it("ranks lands by the number of members", () => {
+		const sql = compile(landsMembersRatingQuery(dummyDb<bisquiteDB>()));
+		expect(sql).toContain("json_length");
+		expect(sql).toContain('"members" is not null');
 	});
 });
 

@@ -84,3 +84,67 @@ export const landsRatingQuery = (db: Kysely<bisquiteDB>) =>
 
 /** Player-scoped ratings fall back to the main server when none is given. */
 export const resolveRatingServer = (server?: string): string => server ?? "bisquite"
+
+type GeneralDB = import("@gen/db/general").DB
+
+/**
+ * Grouped queries are wrapped in a subquery: cursor pagination filters on the
+ * aggregate column, and a bare alias cannot be used in WHERE.
+ */
+export const votesRatingQuery = (db: Kysely<GeneralDB>) =>
+	db
+		.selectFrom(
+			db
+				.selectFrom("voted_users")
+				.select("nickname")
+				.select((eb) => eb.fn.countAll<number>().as("votes"))
+				.groupBy("nickname")
+				.as("counted"),
+		)
+		.selectAll()
+
+export const referralsRatingQuery = (db: Kysely<GeneralDB>) =>
+	db
+		.selectFrom(
+			db
+				.selectFrom("referrals")
+				.select("referrer as nickname")
+				.select((eb) => eb.fn.countAll<number>().as("referrals"))
+				.where("completed", "=", true)
+				.groupBy("referrer")
+				.as("counted"),
+		)
+		.selectAll()
+
+export const wikiRatingQuery = (db: Kysely<GeneralDB>) =>
+	db
+		.selectFrom(
+			db
+				.selectFrom("wiki_revisions")
+				.select("author as nickname")
+				.select((eb) => eb.fn.countAll<number>().as("revisions"))
+				.where("author", "is not", null)
+				.groupBy("author")
+				.as("counted"),
+		)
+		.selectAll()
+
+export const purchasesRatingQuery = (db: Kysely<GeneralDB>) =>
+	db
+		.selectFrom(
+			db
+				.selectFrom("orders")
+				.select("nickname")
+				.select((eb) => eb.fn.countAll<number>().as("purchases"))
+				.where("paid_at", "is not", null)
+				.groupBy("nickname")
+				.as("counted"),
+		)
+		.selectAll()
+
+export const landsMembersRatingQuery = (db: Kysely<bisquiteDB>) =>
+	db
+		.selectFrom("lands_lands")
+		.select(["ulid", "name"])
+		.select(sql<number>`JSON_LENGTH(${sql.ref("members")})`.as("members_count"))
+		.where("members", "is not", null)

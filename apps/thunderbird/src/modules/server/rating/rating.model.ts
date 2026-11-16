@@ -6,7 +6,7 @@ import { metaSchema, withMeta } from "#/shared/schemas";
 import { getDirection } from "#/helpers/pagination";
 import { toPageMeta } from "#/helpers/pagination";
 import type { DB as bisquiteDB } from "@gen/db/bisquite";
-import type { Kysely } from "kysely";
+import { sql, type Kysely } from "kysely";
 import { executeWithCursorPagination } from "kysely-paginate";
 import type { DB as reputationDB } from "@gen/db/reputation";
 import { type Static, t, type TSchema } from "elysia";
@@ -14,8 +14,9 @@ import { general } from "#/shared/database/general-db";
 import { skinsService } from "../../../shared/services/skins";
 import { invariant } from "#/utils";
 import {
-	belkoinRatingQuery, charismRatingQuery, landsRatingQuery, parkourRatingQuery,
-	playtimeRatingQuery, reputationRatingQuery, resolveRatingServer,
+	belkoinRatingQuery, charismRatingQuery, landsMembersRatingQuery, landsRatingQuery,
+	parkourRatingQuery, playtimeRatingQuery, purchasesRatingQuery, referralsRatingQuery,
+	reputationRatingQuery, resolveRatingServer, votesRatingQuery, wikiRatingQuery,
 } from "./rating.queries";
 
 export const ratingSchema = t.Composite([
@@ -38,7 +39,8 @@ interface RatingEntry {
 }
 
 export const bySchema = t.UnionEnum([
-	"belkoin", "charism", "lands", "reputation", "playtime", "parkour"
+	"belkoin", "charism", "lands", "lands-members", "reputation", "playtime", "parkour",
+	"votes", "wiki", "referrals", "purchases",
 ]);
 
 type AllowedKeys = Static<typeof bySchema>;
@@ -49,6 +51,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("belkoin"),
 					nickname: t.String(),
 					balance: t.Number(),
 					avatar: t.String()
@@ -62,6 +65,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("parkour"),
 					player: t.String(),
 					area: t.Nullable(t.String()),
 					score: t.Number(),
@@ -78,6 +82,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("playtime"),
 					nickname: t.String(),
 					avatar: t.String(),
 					total: t.Number()
@@ -91,6 +96,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("reputation"),
 					reputation: t.Number(),
 					uuid: t.Nullable(t.String()),
 					avatar: t.String(),
@@ -105,6 +111,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("charism"),
 					nickname: t.String(),
 					balance: t.Number(),
 					avatar: t.String()
@@ -118,6 +125,7 @@ const ratingConfig = defineRatingConfig({
 		schema: t.Object({
 			data: t.Array(
 				t.Object({
+					kind: t.Literal("lands"),
 					land: t.String(),
 					ulid: t.String(),
 					chunks_amount: t.Number(),
@@ -137,6 +145,76 @@ const ratingConfig = defineRatingConfig({
 			meta: withMeta
 		}),
 		fn: getLandsRating
+	},
+	"lands-members": {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					kind: t.Literal("lands-members"),
+					ulid: t.String(),
+					name: t.String(),
+					members_count: t.Number(),
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getLandsMembersRating
+	},
+	votes: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					kind: t.Literal("votes"),
+					nickname: t.String(),
+					votes: t.Number(),
+					avatar: t.String(),
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getVotesRating
+	},
+	wiki: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					kind: t.Literal("wiki"),
+					nickname: t.String(),
+					revisions: t.Number(),
+					avatar: t.String(),
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getWikiRating
+	},
+	referrals: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					kind: t.Literal("referrals"),
+					nickname: t.String(),
+					referrals: t.Number(),
+					avatar: t.String(),
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getReferralsRating
+	},
+	purchases: {
+		schema: t.Object({
+			data: t.Array(
+				t.Object({
+					kind: t.Literal("purchases"),
+					nickname: t.String(),
+					purchases: t.Number(),
+					avatar: t.String(),
+				})
+			),
+			meta: withMeta
+		}),
+		fn: getPurchasesRating
 	}
 })
 
@@ -162,6 +240,7 @@ async function getBelkoinRating({ asc, limit, endCursor }: Static<typeof ratingS
 	const avatarsMap = await skinsService.players.getAvatar(result.rows.map(r => r.nickname));
 
 	const data = result.rows.map((row) => ({
+		kind: "belkoin" as const,
 		nickname: row.nickname,
 		avatar: avatarsMap[row.nickname],
 		balance: row.points
@@ -178,13 +257,17 @@ async function getParkourRating({ asc, limit, endCursor }: Static<typeof ratingS
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{ key: "score", direction, expression: "score" }],
-		parseCursor: (cursor) => ({ score: Number(cursor.score) }),
+		fields: [
+			{ key: "score", direction, expression: "score" },
+			{ key: "player", direction, expression: "player" },
+		],
+		parseCursor: (cursor) => ({ score: Number(cursor.score), player: cursor.player }),
 	});
 
 	const avatarsMap = await skinsService.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
+		kind: "parkour" as const,
 		player: row.player ?? "unknown",
 		nickname: row.nickname ?? "unknown",
 		area: row.area,
@@ -238,6 +321,7 @@ async function getLandsRating({ asc, limit, endCursor, server }: Static<typeof r
 			const members = Object.fromEntries(membersMap)
 
 			return {
+				kind: "lands" as const,
 				...row,
 				members,
 				chunks_amount: Number(row.chunks_amount),
@@ -272,6 +356,7 @@ async function getCharismRating({ asc, limit, endCursor, server }: Static<typeof
 	const avatarsMap = await skinsService.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
+		kind: "charism" as const,
 		nickname: row.nickname ?? "unknown",
 		balance: Number(row.balance ?? 0),
 		avatar: avatarsMap[row.nickname!]
@@ -314,6 +399,7 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 			const nickname = query.nickname ?? "unknown"
 
 			return {
+				kind: "reputation" as const,
 				reputation: row.reputation ?? 0,
 				uuid: row.uuid ?? query.uuid,
 				avatar: await skinsService.player.getAvatar(nickname),
@@ -348,12 +434,144 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 	const avatarsMap = await skinsService.players.getAvatar(result.rows.map(r => r.nickname!));
 
 	const data = result.rows.map((row) => ({
+		kind: "playtime" as const,
 		nickname: row.nickname ?? "unknown",
 		avatar: avatarsMap[row.nickname!],
 		total: Number(row.total ?? 0)
 	}))
 
 	return { data, meta: toPageMeta(result) };
+}
+
+async function getVotesRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
+	const direction = getDirection(asc);
+
+	const result = await executeWithCursorPagination(votesRatingQuery(general), {
+		perPage: limit,
+		after: endCursor,
+		fields: [
+			{ key: "votes", direction, expression: "votes" },
+			{ key: "nickname", direction, expression: "nickname" },
+		],
+		parseCursor: (cursor) => ({ votes: Number(cursor.votes), nickname: cursor.nickname }),
+	});
+
+	const avatarsMap = await skinsService.players.getAvatar(result.rows.map((r) => r.nickname ?? ""));
+
+	return {
+		data: result.rows.map((row) => ({
+			kind: "votes" as const,
+			nickname: row.nickname ?? "unknown",
+			votes: Number(row.votes ?? 0),
+			avatar: avatarsMap[row.nickname ?? ""],
+		})),
+		meta: toPageMeta(result),
+	};
+}
+
+async function getReferralsRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
+	const direction = getDirection(asc);
+
+	const result = await executeWithCursorPagination(referralsRatingQuery(general), {
+		perPage: limit,
+		after: endCursor,
+		fields: [
+			{ key: "referrals", direction, expression: "referrals" },
+			{ key: "nickname", direction, expression: "nickname" },
+		],
+		parseCursor: (cursor) => ({ referrals: Number(cursor.referrals), nickname: cursor.nickname }),
+	});
+
+	const avatarsMap = await skinsService.players.getAvatar(result.rows.map((r) => r.nickname ?? ""));
+
+	return {
+		data: result.rows.map((row) => ({
+			kind: "referrals" as const,
+			nickname: row.nickname ?? "unknown",
+			referrals: Number(row.referrals ?? 0),
+			avatar: avatarsMap[row.nickname ?? ""],
+		})),
+		meta: toPageMeta(result),
+	};
+}
+
+async function getWikiRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
+	const direction = getDirection(asc);
+
+	const result = await executeWithCursorPagination(wikiRatingQuery(general), {
+		perPage: limit,
+		after: endCursor,
+		fields: [
+			{ key: "revisions", direction, expression: "revisions" },
+			{ key: "nickname", direction, expression: "nickname" },
+		],
+		parseCursor: (cursor) => ({ revisions: Number(cursor.revisions), nickname: cursor.nickname }),
+	});
+
+	const avatarsMap = await skinsService.players.getAvatar(result.rows.map((r) => r.nickname ?? ""));
+
+	return {
+		data: result.rows.map((row) => ({
+			kind: "wiki" as const,
+			nickname: row.nickname ?? "unknown",
+			revisions: Number(row.revisions ?? 0),
+			avatar: avatarsMap[row.nickname ?? ""],
+		})),
+		meta: toPageMeta(result),
+	};
+}
+
+async function getPurchasesRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
+	const direction = getDirection(asc);
+
+	const result = await executeWithCursorPagination(purchasesRatingQuery(general), {
+		perPage: limit,
+		after: endCursor,
+		fields: [
+			{ key: "purchases", direction, expression: "purchases" },
+			{ key: "nickname", direction, expression: "nickname" },
+		],
+		parseCursor: (cursor) => ({ purchases: Number(cursor.purchases), nickname: cursor.nickname }),
+	});
+
+	const avatarsMap = await skinsService.players.getAvatar(result.rows.map((r) => r.nickname ?? ""));
+
+	return {
+		data: result.rows.map((row) => ({
+			kind: "purchases" as const,
+			nickname: row.nickname ?? "unknown",
+			purchases: Number(row.purchases ?? 0),
+			avatar: avatarsMap[row.nickname ?? ""],
+		})),
+		meta: toPageMeta(result),
+	};
+}
+
+async function getLandsMembersRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
+	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
+		bisquite: bisquite,
+		muffin: null,
+	};
+
+	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
+	const direction = getDirection(asc);
+
+	const result = await executeWithCursorPagination(landsMembersRatingQuery(dbInstance), {
+		perPage: limit,
+		after: endCursor,
+		fields: [{ key: "members_count", direction, expression: sql<number>`JSON_LENGTH(${sql.ref("members")})` }],
+		parseCursor: (cursor) => ({ members_count: Number(cursor.members_count) }),
+	});
+
+	return {
+		data: result.rows.map((row) => ({
+			kind: "lands-members" as const,
+			ulid: row.ulid,
+			name: row.name,
+			members_count: Number(row.members_count ?? 0),
+		})),
+		meta: toPageMeta(result),
+	};
 }
 
 export async function getRating(by: AllowedKeys, query: Static<typeof ratingSchema>) {
@@ -363,12 +581,12 @@ export async function getRating(by: AllowedKeys, query: Static<typeof ratingSche
 const RATINGS_SECTIONS = {
 	global: {
 		title: "Глобальные",
-		childs: ["parkour", "belkoin"],
+		childs: ["parkour", "belkoin", "votes", "wiki", "referrals", "purchases"],
 	},
 	servers: {
 		bisquite: {
 			title: "Bisquite",
-			childs: ["charism", "playtime", "lands", "reputation"],
+			childs: ["charism", "playtime", "lands", "lands-members", "reputation"],
 		},
 		muffin: {
 			title: "Muffin",
@@ -384,6 +602,11 @@ const RATINGS_SECTIONS_BY_KEY: Record<string, string> = {
 	belkoin: "Белкоин",
 	playtime: "Время игры",
 	parkour: "Паркур",
+	votes: "Голоса",
+	wiki: "Вики",
+	referrals: "Рефералы",
+	purchases: "Покупки",
+	"lands-members": "Команды земель",
 };
 
 type Node = Pick<typeof RATINGS_SECTIONS.global, "title"> & {
