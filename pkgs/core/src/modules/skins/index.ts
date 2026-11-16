@@ -891,7 +891,7 @@ export const createSkinsService = ({ redis, databases, config, minio, applySelec
             message: "Skin apply command failed",
             nickname,
             skinName: identifier,
-            error: e,
+            error: e instanceof Error ? e.message : String(e),
           })
 
           return {

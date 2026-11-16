@@ -172,23 +172,46 @@ async function deadLetter(
   }));
 }
 
+/**
+ * A durable pull consumer can lose its stream while the API keeps running (a
+ * NATS reconnect, a missed heartbeat). The loop is supervised: it restarts
+ * instead of leaving the command pipeline dead until the next deploy.
+ */
 export const startOrderConsumer = async (): Promise<void> => {
-  const nc = natsService.getInstance()
-  const js = jetstream(nc);
+  void superviseOrderConsumer();
+};
 
+async function superviseOrderConsumer(): Promise<void> {
+  const js = jetstream(natsService.getInstance());
+
+  while (true) {
+    try {
+      await runOrderConsumer(js);
+      appLogger.warn("Order consumer stopped; restarting in 5s");
+    } catch (error) {
+      appLogger.error({ message: "Order consumer crashed; restarting in 5s", error });
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+  }
+}
+
+async function runOrderConsumer(
+  js: ReturnType<typeof jetstream>,
+): Promise<void> {
+  const nc = natsService.getInstance()
   const orderCons = NATS_CONSUMERS["order"][0]
   const consumer = await js.consumers.get(orderCons.stream_name, orderCons.name);
 
   const msgs = await consumer.consume({ max_messages: 20, expires: 5000 });
 
-  (async () => {
+  void (async () => {
     try {
       for await (const s of msgs.status()) {
+        // Heartbeats are advisory: a miss is logged, the consumer is not
+        // stopped, otherwise every command after it times out.
         if (s.type === "heartbeats_missed") {
-          appLogger.warn(`${s.count} heartbeats missed`);
-          if (s.count === 2) {
-            msgs.stop();
-          }
+          appLogger.warn(`${s.count} heartbeats missed on the order consumer`);
         }
       }
     } catch (err) {
@@ -278,6 +301,7 @@ export const startOrderConsumer = async (): Promise<void> => {
     }
   } catch (e) {
     appLogger.error({ message: "Consumer loop stopped due to critical error", error: e });
+    throw e;
   }
 }
 
