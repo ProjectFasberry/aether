@@ -127,10 +127,11 @@ export const volume = new Elysia()
           summary: buildRouteSummary("Get bucket details")
         }
       })
-      .get("/list", async ({ params: { bucket }, query: { folder, delimiter } }) => {
+      .get("/list", async ({ params: { bucket }, query: { folder, delimiter, continuationToken } }) => {
         const data = await S3.getClient(bucket).list({
           prefix: folder || undefined,
           delimiter: delimiter || "/",
+          continuationToken: continuationToken || undefined,
         })
 
         const hasObjects = !!data.contents?.length
@@ -148,6 +149,7 @@ export const volume = new Elysia()
           // them as "not set" instead of rejecting the request.
           folder: t.Optional(t.String()),
           delimiter: t.Optional(t.String()),
+          continuationToken: t.Optional(t.String()),
         }),
         response: {
           200: withData(
