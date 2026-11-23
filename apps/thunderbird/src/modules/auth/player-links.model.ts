@@ -144,7 +144,7 @@ async function findLink(token: string, kind: PlayerLinkKind): Promise<{ id: numb
 	if (row.used_at) throw linkError.raise("LINK_USED");
 	if (new Date(row.expires_at).getTime() <= Date.now()) throw linkError.raise("LINK_EXPIRED");
 
-	return { id: row.id, nickname: row.nickname, referrer: row.referrer, findout: row.findout };
+	return { id: Number(row.id), nickname: row.nickname, referrer: row.referrer, findout: row.findout };
 }
 
 export async function checkLink(token: string): Promise<{ kind: PlayerLinkKind; nickname: string | null }> {
@@ -158,7 +158,7 @@ export async function checkLink(token: string): Promise<{ kind: PlayerLinkKind; 
 	if (row.used_at) throw linkError.raise("LINK_USED");
 	if (new Date(row.expires_at).getTime() <= Date.now()) throw linkError.raise("LINK_EXPIRED");
 
-	return { kind: row.kind, nickname: row.nickname };
+	return { kind: row.kind as PlayerLinkKind, nickname: row.nickname };
 }
 
 /** Invite acceptance: the account exists, only the password is missing. */
@@ -183,7 +183,7 @@ export async function acceptInvite({
 		const current = await trx
 			.selectFrom("player_links")
 			.select(["used_at", "expires_at"])
-			.where("id", "=", link.id)
+			.where("id", "=", String(link.id))
 			.forUpdate()
 			.executeTakeFirst();
 
@@ -217,7 +217,7 @@ export async function acceptInvite({
 		await trx
 			.updateTable("player_links")
 			.set({ used_at: new Date(), used_by: nickname, ip: ip ?? null })
-			.where("id", "=", link.id)
+			.where("id", "=", String(link.id))
 			.execute();
 
 		return { nickname };
@@ -254,7 +254,7 @@ export async function acceptReferral({
 		const current = await trx
 			.selectFrom("player_links")
 			.select(["used_at", "expires_at"])
-			.where("id", "=", link.id)
+			.where("id", "=", String(link.id))
 			.forUpdate()
 			.executeTakeFirst();
 
@@ -310,7 +310,7 @@ export async function acceptReferral({
 		await trx
 			.updateTable("player_links")
 			.set({ used_at: new Date(), used_by: nickname, ip: ip ?? null })
-			.where("id", "=", link.id)
+			.where("id", "=", String(link.id))
 			.execute();
 
 		return { nickname, uuid: rows.uuid };
