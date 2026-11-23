@@ -12,12 +12,12 @@ export async function getRules() {
   return rules
 }
 
-export const rulesPayloadSchema = t.Array(
-  t.Object({
-    id: t.Number(),
-    created_at: DateTime,
-    updated_at: t.Nullable(DateTime),
-    content: t.Any(),
-    category: t.String()
-  })
-)
+export const ruleSchema = t.Object({
+  id: t.Number(),
+  created_at: DateTime,
+  updated_at: t.Nullable(DateTime),
+  content: t.Any(),
+  category: t.String()
+})
+
+export const rulesPayloadSchema = t.Array(ruleSchema)

@@ -22,6 +22,7 @@ import { teamPrivate } from "./team";
 import { skinsPrivate } from "./skins";
 import { tasksPanel } from "./tasks";
 import { content } from "./content";
+import { rules } from "./rules";
 
 const infra = new Elysia()
   .group("", app => app
@@ -51,6 +52,7 @@ const entities = new Elysia()
     .use(servers)
     .use(skinsPrivate)
     .use(content)
+    .use(rules)
     .use(tasksPanel)
   );
 
