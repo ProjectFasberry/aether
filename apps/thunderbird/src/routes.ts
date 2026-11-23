@@ -27,6 +27,7 @@ import { avatars } from "./modules/avatars";
 import { contentManifest } from "./modules/content/manifest.route";
 import { releases } from "./modules/releases";
 import { yggdrasil } from "./modules/yggdrasil";
+import { site } from "./modules/site";
 import { html } from '@elysia/html';
 import previewHtml from "../static/preview.html" with { type: "text" }
 
@@ -45,6 +46,7 @@ export const main = new Elysia()
     .use(contentManifest)
     .use(releases)
     .use(yggdrasil)
+    .use(site)
   )
   .use(auth)
   .use(me)

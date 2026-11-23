@@ -833,6 +833,24 @@ export const servers = pgTable("servers", {
 	clientMod: text("client_mod").default("required").notNull(),
 });
 
+/**
+ * Editable site copy, one JSON document per page and locale. Only overridden
+ * fields are stored; the site falls back to its bundled translations.
+ */
+export const siteContent = pgTable(
+	"site_content",
+	{
+		page: text().notNull(),
+		locale: text().notNull(),
+		draft: jsonb(),
+		published: jsonb(),
+		version: integer().default(0).notNull(),
+		updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+		updatedBy: text("updated_by"),
+	},
+	(table) => [primaryKey({ columns: [table.page, table.locale] })],
+);
+
 export const rolePermissions = pgTable(
 	"role_permissions",
 	{
