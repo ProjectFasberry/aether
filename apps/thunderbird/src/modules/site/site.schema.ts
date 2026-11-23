@@ -46,11 +46,21 @@ const sectionSchema = t.Object({
 /** Extra text sections every page can carry, ordered by the array. */
 const sectionsSchema = t.Optional(t.Array(sectionSchema, { maxItems: 20 }));
 
+/** Overrides for the built-in sections, keyed by their stable id. */
+const blockSchema = t.Object({
+  title: t.Optional(t.String({ maxLength: 200 })),
+  description: t.Optional(t.String({ maxLength: 2048 })),
+  hidden: t.Optional(t.Boolean()),
+});
+
+const blocksSchema = t.Optional(t.Record(t.String({ minLength: 1, maxLength: 64 }), blockSchema));
+
 /** Page registry: keys are the public `page` slug, values validate the document. */
 export const SITE_PAGES = {
   home: t.Object({
     carousel: t.Optional(t.Array(carouselItemSchema, { maxItems: 20 })),
     sections: sectionsSchema,
+    blocks: blocksSchema,
   }),
   servers: t.Object({
     /** Shared page intro above the per-server sections. */
@@ -58,11 +68,12 @@ export const SITE_PAGES = {
     description: t.Optional(t.String({ maxLength: 1024 })),
     items: t.Optional(t.Record(t.String({ minLength: 1, maxLength: 64 }), serverItemSchema)),
     sections: sectionsSchema,
+    blocks: blocksSchema,
   }),
   /** Pages whose editable part is just the custom sections for now. */
-  start: t.Object({ sections: sectionsSchema }),
-  support: t.Object({ sections: sectionsSchema }),
-  modpack: t.Object({ sections: sectionsSchema }),
+  start: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
+  support: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
+  modpack: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
 } as const;
 
 export type SitePage = keyof typeof SITE_PAGES;

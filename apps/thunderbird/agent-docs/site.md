@@ -25,6 +25,11 @@ per `(page, locale)`, not a full copy:
 `{ id, title, body, hidden? }`: the site renders non-hidden sections at the end of
 the page, the panel edits all of them.
 
+`blocks` overrides the built-in sections by their stable id
+(`hero`, `news`, `support-faq`, ...): `{ title?, description?, hidden? }`. The
+site keeps its translated copy as the fallback, so an empty field means "use the
+default"; `hidden` removes the section from the public page.
+
 `image`/`icon` are keys inside the `static` bucket (`images/offenburg-1.webp`),
 resolved by the site through `VITE_VOLUME_URL`. Missing fields fall back to the
 site defaults, so an empty document renders the current page.
