@@ -1,4 +1,3 @@
-import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
 import { urlsService } from "./urls";
 
@@ -21,11 +20,15 @@ export async function ensureUrlConfig(): Promise<void> {
   for (const [name, value] of Object.entries(SEEDS) as [UrlConfigKey, string | undefined][]) {
     if (!value) continue;
 
-    await sql`
-      insert into ip_list (name, ip)
-      select ${name}, ${value}
-      where not exists (select 1 from ip_list where name = ${name})
-    `.execute(general);
+    const existing = await general
+      .selectFrom("ip_list")
+      .select("id")
+      .where("name", "=", name)
+      .executeTakeFirst();
+
+    if (!existing) {
+      await general.insertInto("ip_list").values({ name, ip: value }).execute();
+    }
   }
 }
 

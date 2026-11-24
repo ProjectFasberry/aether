@@ -156,23 +156,24 @@ export async function deleteOldSkins({
       .execute()
 
     // Ownership rows follow the asset; audit rows are history and stay.
-    await sql`
-      delete from skin_owners
-      where skin_name in (${sql.join(removableIds.map((id) => sql`${id}`), sql`, `)})
-    `.execute(trx)
+    await trx
+      .deleteFrom("skin_owners")
+      .where("skin_name", "in", removableIds)
+      .execute()
   }
 
   // `sr_url_skins` is keyed by signature, which another custom skin can share:
   // only orphan rows may go.
   if (signatures.length) {
-    await sql`
-      delete from sr_url_skins
-      where signature in (${sql.join(signatures.map((signature) => sql`${signature}`), sql`, `)})
-        and not exists (
-          select 1 from sr_custom_skins
-          where sr_custom_skins.signature = sr_url_skins.signature
-        )
-    `.execute(trx)
+    await trx
+      .deleteFrom("sr_url_skins")
+      .where("signature", "in", signatures)
+      .where((eb) => eb.not(eb.exists(
+        eb.selectFrom("sr_custom_skins")
+          .select("sr_custom_skins.signature")
+          .whereRef("sr_custom_skins.signature", "=", "sr_url_skins.signature"),
+      )))
+      .execute()
   }
 
   return removableIds
@@ -288,11 +289,17 @@ export async function upload(
       .executeTakeFirstOrThrow()
 
     // Ownership and audit are side tables added in `0001_skins_ownership.sql`;
-    // raw SQL keeps them out of the generated `@gen/db/skins` types for now.
-    await sql`
-      insert ignore into skin_owners (skin_name, owner_uuid, is_public, created_at)
-      values (${name}, ${uuid}, 0, ${Math.floor(Date.now() / 1000)})
-    `.execute(trx)
+    // `overlay.ts` declares them until the generated types catch up.
+    await trx
+      .insertInto("skin_owners")
+      .values({
+        skin_name: name,
+        owner_uuid: uuid,
+        is_public: 0,
+        created_at: Math.floor(Date.now() / 1000),
+      })
+      .ignore()
+      .execute()
 
     await recordSkinAudit(trx, {
       actorUuid: uuid,

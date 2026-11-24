@@ -68,7 +68,7 @@ async function postVoted(nickname: string, period: string): Promise<void> {
     if (Number(updated.numUpdatedRows) === 0) throw new Error("VOTE_PLAYER_NOT_FOUND");
   } catch (error) {
     // The row is the idempotency key: drop it so a retry can credit.
-    await sql`delete from voted_users where id = ${id}`.execute(general).catch(() => undefined);
+    await general.deleteFrom("voted_users").where("id", "=", id).execute().catch(() => undefined);
     throw error;
   }
 

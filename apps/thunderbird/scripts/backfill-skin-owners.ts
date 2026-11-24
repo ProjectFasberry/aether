@@ -204,13 +204,16 @@ const now = Math.floor(Date.now() / 1000);
 for (let i = 0; i < matched.length; i += CHUNK) {
 	const batch = matched.slice(i, i + CHUNK);
 
-	await sql`
-		insert ignore into skin_owners (skin_name, owner_uuid, is_public, created_at)
-		values ${sql.join(
-			batch.map((row) => sql`(${row.skinName}, ${row.uuid}, 0, ${now})`),
-			sql`, `,
-		)}
-	`.execute(skins);
+	await skins
+		.insertInto("skin_owners")
+		.values(batch.map((row) => ({
+			skin_name: row.skinName,
+			owner_uuid: row.uuid,
+			is_public: 0,
+			created_at: now,
+		})))
+		.ignore()
+		.execute();
 }
 
 console.log(`written: ${matched.length}`);

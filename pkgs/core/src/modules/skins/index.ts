@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { type Static, t } from "elysia";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { createHash } from "node:crypto";
+import "./overlay";
 import { getStaticUrl } from "../../utils/url";
 import { safeJsonParse } from "@repo/shared/utils";
 import { buildRedisKey } from "../../utils/redis";
@@ -204,16 +205,16 @@ export const recordSkinAudit = async (
     skinName: string,
   },
 ): Promise<void> => {
-  await sql`
-    insert into skin_audit (actor_uuid, target_uuid, action, skin_name, created_at)
-    values (
-      ${entry.actorUuid},
-      ${entry.targetUuid},
-      ${entry.action},
-      ${entry.skinName},
-      ${Math.floor(Date.now() / 1000)}
-    )
-  `.execute(db)
+  await db
+    .insertInto("skin_audit")
+    .values({
+      actor_uuid: entry.actorUuid,
+      target_uuid: entry.targetUuid,
+      action: entry.action,
+      skin_name: entry.skinName,
+      created_at: Math.floor(Date.now() / 1000),
+    })
+    .execute()
 }
 
 type HeadJob = {
@@ -230,15 +231,22 @@ const enqueueHeadJob = async (
 ): Promise<void> => {
   const now = Math.floor(Date.now() / 1000)
 
-  await sql`
-    insert ignore into skin_head_jobs
-      (hash, skin_url, status, attempts, created_at, updated_at)
-    values (${hash}, ${skinUrl}, 'pending', 0, ${now}, ${now})
-  `.execute(db)
+  await db
+    .insertInto("skin_head_jobs")
+    .values({
+      hash,
+      skin_url: skinUrl,
+      status: "pending",
+      attempts: 0,
+      created_at: now,
+      updated_at: now,
+    })
+    .ignore()
+    .execute()
 }
 
 const finishHeadJob = async (db: SkinsExecutor, hash: string): Promise<void> => {
-  await sql`delete from skin_head_jobs where hash = ${hash}`.execute(db)
+  await db.deleteFrom("skin_head_jobs").where("hash", "=", hash).execute()
 }
 
 export const createSkinsService = ({ redis, databases, config, minio, applySelection, clearSelection }: SkinsParams) => {
@@ -439,7 +447,10 @@ export const createSkinsService = ({ redis, databases, config, minio, applySelec
         .execute()
     }
 
-    await sql`delete from skin_owners where lower(skin_name) = ${normalized}`.execute(trx)
+    await trx
+      .deleteFrom("skin_owners")
+      .where(sql`lower(skin_name)`, "=", normalized)
+      .execute()
 
     const references = await trx
       .selectFrom("sr_player_history")
@@ -454,14 +465,15 @@ export const createSkinsService = ({ redis, databases, config, minio, applySelec
         .execute()
 
       for (const signature of signatures) {
-        await sql`
-          delete from sr_url_skins
-          where signature = ${signature}
-            and not exists (
-              select 1 from sr_custom_skins
-              where sr_custom_skins.signature = sr_url_skins.signature
-            )
-        `.execute(trx)
+        await trx
+          .deleteFrom("sr_url_skins")
+          .where("signature", "=", signature)
+          .where((eb) => eb.not(eb.exists(
+            eb.selectFrom("sr_custom_skins")
+              .select("sr_custom_skins.signature")
+              .whereRef("sr_custom_skins.signature", "=", "sr_url_skins.signature"),
+          )))
+          .execute()
       }
     }
 
@@ -1393,20 +1405,26 @@ export const createSkinsService = ({ redis, databases, config, minio, applySelec
           const status = attempts >= 5 ? "failed" : "pending"
           const message = e instanceof Error ? e.message : String(e)
 
-          await sql`
-            update skin_head_jobs
-            set attempts = ${attempts}, status = ${status}, last_error = ${message}, updated_at = ${Math.floor(Date.now() / 1000)}
-            where hash = ${job.hash}
-          `.execute(skinsDb)
+          await skinsDb
+            .updateTable("skin_head_jobs")
+            .set({
+              attempts,
+              status,
+              last_error: message,
+              updated_at: Math.floor(Date.now() / 1000),
+            })
+            .where("hash", "=", job.hash)
+            .execute()
         }
       }
 
       // Failed renders are inspection material, not a queue: keep a week.
       const staleBefore = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60
-      await sql`
-        delete from skin_head_jobs
-        where status = 'failed' and updated_at < ${staleBefore}
-      `.execute(skinsDb)
+      await skinsDb
+        .deleteFrom("skin_head_jobs")
+        .where("status", "=", "failed")
+        .where("updated_at", "<", staleBefore)
+        .execute()
 
       return done
     }

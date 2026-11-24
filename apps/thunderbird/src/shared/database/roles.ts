@@ -1,4 +1,3 @@
-import { sql } from "kysely";
 import { general } from "./general-db";
 import { appLogger } from "#/shared/constants/logger";
 
@@ -14,7 +13,7 @@ let hasAdminFlag: boolean | null = null;
 
 export async function detectRoleAdminFlag(): Promise<void> {
   try {
-    await sql`select is_admin from roles limit 1`.execute(general);
+    await general.selectFrom("roles").select("is_admin").limit(1).executeTakeFirst();
     hasAdminFlag = true;
   } catch (error) {
     hasAdminFlag = false;
@@ -27,14 +26,14 @@ export async function detectRoleAdminFlag(): Promise<void> {
 
 export async function isAdminNickname(nickname: string): Promise<boolean> {
   if (hasAdminFlag === true) {
-    const result = await sql<{ is_admin: boolean }>`
-      select coalesce(roles.is_admin, false) as is_admin
-      from players
-      join roles on roles.id = players.role_id
-      where players.nickname = ${nickname}
-    `.execute(general);
+    const row = await general
+      .selectFrom("players")
+      .innerJoin("roles", "roles.id", "players.role_id")
+      .select("roles.is_admin")
+      .where("players.nickname", "=", nickname)
+      .executeTakeFirst();
 
-    return result.rows[0]?.is_admin === true;
+    return row?.is_admin === true;
   }
 
   const row = await general

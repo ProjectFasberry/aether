@@ -1,5 +1,6 @@
 import { general } from "#/shared/database/general-db";
 import { sql } from "kysely";
+import type { Json } from "@gen/db/general";
 import type { SiteContentPayload, SiteLocale, SitePage } from "./site.schema";
 
 export * from "./site.schema";
@@ -22,24 +23,15 @@ export type SiteContentRow = {
   updated_by: string | null;
 };
 
-const CONTENT_COLUMNS = sql`
-  page, locale, draft, published, version, updated_at, updated_by
-`;
-
-/**
- * The generated Kysely types predate `site_content`, so this module talks to the
- * table through tagged SQL. Regenerate `pkgs/shared/.out` and the query can move
- * to the typed builder without changing the routes.
- */
 export async function getSiteContent(page: SitePage, locale: SiteLocale): Promise<SiteContentRow | null> {
-  const result = await sql<SiteContentRow>`
-    SELECT ${CONTENT_COLUMNS}
-    FROM site_content
-    WHERE page = ${page} AND locale = ${locale}
-    LIMIT 1
-  `.execute(general);
+  const row = await general
+    .selectFrom("site_content")
+    .selectAll()
+    .where("page", "=", page)
+    .where("locale", "=", locale)
+    .executeTakeFirst();
 
-  return result.rows[0] ?? null;
+  return row ?? null;
 }
 
 export async function getPublishedContent(page: SitePage, locale: SiteLocale): Promise<SiteContentPayload> {
@@ -54,15 +46,14 @@ export async function getPublishedBatch(
 ): Promise<Record<string, SiteContentPayload>> {
   if (pages.length === 0) return {};
 
-  const pageList = sql.join(pages.map((page) => sql`${page}`), sql`, `);
+  const rows = await general
+    .selectFrom("site_content")
+    .selectAll()
+    .where("page", "in", pages)
+    .where("locale", "=", locale)
+    .execute();
 
-  const result = await sql<SiteContentRow>`
-    SELECT ${CONTENT_COLUMNS}
-    FROM site_content
-    WHERE page IN (${pageList}) AND locale = ${locale}
-  `.execute(general);
-
-  const byPage = new Map(result.rows.map((row) => [row.page, row]));
+  const byPage = new Map(rows.map((row) => [row.page, row]));
 
   return Object.fromEntries(
     pages.map((page) => [page, toPublicPayload(page, locale, byPage.get(page) ?? null)]),
@@ -92,19 +83,29 @@ export async function saveDraft(input: {
   version: number;
   nickname: string;
 }): Promise<SiteContentRow | null> {
-  const result = await sql<SiteContentRow>`
-    INSERT INTO site_content AS sc (page, locale, draft, version, updated_at, updated_by)
-    VALUES (${input.page}, ${input.locale}, ${JSON.stringify(input.content)}::jsonb, 1, now(), ${input.nickname})
-    ON CONFLICT (page, locale) DO UPDATE
-      SET draft = EXCLUDED.draft,
-          version = sc.version + 1,
-          updated_at = now(),
-          updated_by = EXCLUDED.updated_by
-      WHERE sc.version = ${input.version}
-    RETURNING ${CONTENT_COLUMNS}
-  `.execute(general);
+  const row = await general
+    .insertInto("site_content")
+    .values({
+      page: input.page,
+      locale: input.locale,
+      draft: input.content as Json,
+      version: 1,
+      updated_at: new Date(),
+      updated_by: input.nickname,
+    })
+    .onConflict((oc) => oc
+      .columns(["page", "locale"])
+      .doUpdateSet((eb) => ({
+        draft: eb.ref("excluded.draft"),
+        version: sql`site_content.version + 1`,
+        updated_at: new Date(),
+        updated_by: eb.ref("excluded.updated_by"),
+      }))
+      .where("site_content.version", "=", input.version))
+    .returningAll()
+    .executeTakeFirst();
 
-  return result.rows[0] ?? null;
+  return row ?? null;
 }
 
 export async function publishDraft(input: {
@@ -113,20 +114,22 @@ export async function publishDraft(input: {
   version: number;
   nickname: string;
 }): Promise<SiteContentRow | null> {
-  const result = await sql<SiteContentRow>`
-    UPDATE site_content
-    SET published = draft,
-        version = version + 1,
-        updated_at = now(),
-        updated_by = ${input.nickname}
-    WHERE page = ${input.page}
-      AND locale = ${input.locale}
-      AND draft IS NOT NULL
-      AND version = ${input.version}
-    RETURNING ${CONTENT_COLUMNS}
-  `.execute(general);
+  const row = await general
+    .updateTable("site_content")
+    .set({
+      published: sql`draft`,
+      version: sql`site_content.version + 1`,
+      updated_at: new Date(),
+      updated_by: input.nickname,
+    })
+    .where("page", "=", input.page)
+    .where("locale", "=", input.locale)
+    .where("draft", "is not", null)
+    .where("version", "=", input.version)
+    .returningAll()
+    .executeTakeFirst();
 
-  return result.rows[0] ?? null;
+  return row ?? null;
 }
 
 export async function discardDraft(input: {
@@ -135,19 +138,21 @@ export async function discardDraft(input: {
   version: number;
   nickname: string;
 }): Promise<SiteContentRow | null> {
-  const result = await sql<SiteContentRow>`
-    UPDATE site_content
-    SET draft = NULL,
-        version = version + 1,
-        updated_at = now(),
-        updated_by = ${input.nickname}
-    WHERE page = ${input.page}
-      AND locale = ${input.locale}
-      AND version = ${input.version}
-    RETURNING ${CONTENT_COLUMNS}
-  `.execute(general);
+  const row = await general
+    .updateTable("site_content")
+    .set({
+      draft: null,
+      version: sql`site_content.version + 1`,
+      updated_at: new Date(),
+      updated_by: input.nickname,
+    })
+    .where("page", "=", input.page)
+    .where("locale", "=", input.locale)
+    .where("version", "=", input.version)
+    .returningAll()
+    .executeTakeFirst();
 
-  return result.rows[0] ?? null;
+  return row ?? null;
 }
 
 export function toAdminPayload(row: SiteContentRow) {
