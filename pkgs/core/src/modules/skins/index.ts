@@ -1401,6 +1401,13 @@ export const createSkinsService = ({ redis, databases, config, minio, applySelec
         }
       }
 
+      // Failed renders are inspection material, not a queue: keep a week.
+      const staleBefore = Math.floor(Date.now() / 1000) - 7 * 24 * 60 * 60
+      await sql`
+        delete from skin_head_jobs
+        where status = 'failed' and updated_at < ${staleBefore}
+      `.execute(skinsDb)
+
       return done
     }
   }
