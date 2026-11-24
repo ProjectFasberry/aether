@@ -152,8 +152,7 @@ export async function changeRoleUsers(
   { type, targetRoleId }: Omit<UserRolesSchema, "nicknames">
 ) {
   if (type === 'change_role') {
-    // `luckperms_group` comes from migration `0034`; the overlay keeps it typed
-    // until `bun gen:types:db` runs against the migrated database.
+    // `luckperms_group` comes from migration `0034`.
     const role = await general
       .selectFrom("roles")
       .select(["id", "luckperms_group"])

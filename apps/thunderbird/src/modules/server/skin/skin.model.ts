@@ -288,8 +288,7 @@ export async function upload(
       .values(historyPayload)
       .executeTakeFirstOrThrow()
 
-    // Ownership and audit are side tables added in `0001_skins_ownership.sql`;
-    // `overlay.ts` declares them until the generated types catch up.
+    // Ownership and audit are side tables added in `0001_skins_ownership.sql`.
     await trx
       .insertInto("skin_owners")
       .values({

@@ -3,7 +3,6 @@ import { sql } from "kysely";
 import { type Static, t } from "elysia";
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { createHash } from "node:crypto";
-import "./overlay";
 import { getStaticUrl } from "../../utils/url";
 import { safeJsonParse } from "@repo/shared/utils";
 import { buildRedisKey } from "../../utils/redis";
