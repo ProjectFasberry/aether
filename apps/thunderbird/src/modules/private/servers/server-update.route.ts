@@ -40,7 +40,7 @@ export const serverUpdate = new Elysia()
           body.client_version ?? existing.client_version,
           body.resource_pack !== undefined ? body.resource_pack : existing.resource_pack,
         );
-        if (problem) return status(422, wrapError(problem));
+        if (problem) return status(400, wrapError(problem));
       }
 
       // Exactly one default: the unique index rejects a second true row.
@@ -61,7 +61,7 @@ export const serverUpdate = new Elysia()
       response: {
         200: withData(serverSchema),
         404: withError(t.String()),
-        422: withError(t.String()),
+        400: withError(t.String()),
       },
       detail: {
         summary: buildRouteSummary("Update a server: availability, runtime and presentation"),

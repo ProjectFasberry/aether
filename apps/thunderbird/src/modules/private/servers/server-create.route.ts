@@ -46,7 +46,7 @@ export const serverCreate = new Elysia()
       if (taken) return status(409, wrapError(`A server with origin "${origin}" already exists`));
 
       const problem = await validateServerContent(body.client_version, body.resource_pack ?? null);
-      if (problem) return status(422, wrapError(problem));
+      if (problem) return status(400, wrapError(problem));
 
       const existing = await general
         .selectFrom("servers")
@@ -87,7 +87,7 @@ export const serverCreate = new Elysia()
       response: {
         200: withData(serverSchema),
         409: withError(t.String()),
-        422: withError(t.String()),
+        400: withError(t.String()),
       },
       detail: {
         summary: buildRouteSummary("Create a server: runtime, availability and presentation"),
