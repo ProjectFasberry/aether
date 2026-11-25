@@ -8,6 +8,7 @@ import { sleep } from "@repo/shared/utils";
  * is a code change only.
  */
 export const PERMISSION_NAMES = [
+  "anticheat.read",
   "api.keys.control",
   "api.keys.list",
   "banners.create",

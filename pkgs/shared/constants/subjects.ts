@@ -58,6 +58,10 @@ export const SUBJECTS = {
       },
     }
   },
+  GRIM: {
+    BASE: "grim",
+    FLAG: "general.grim.flag",
+  },
   INTERNAL: {
     HEALTH: "internal.health",
   },

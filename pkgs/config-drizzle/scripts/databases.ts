@@ -1,5 +1,6 @@
 export const DATABASES: Record<string, { urlEnvName: string; dialect: "postgresql" | "mysql" }> = {
 	general: { urlEnvName: "GENERAL_POSTGRES_URI", dialect: "postgresql" },
+	grim: { urlEnvName: "GRIM_POSTGRES_URI", dialect: "postgresql" },
 	bisquite: { urlEnvName: "BISQUITE_MYSQL_URI", dialect: "mysql" },
 	plan: { urlEnvName: "PLAN_MYSQL_URI", dialect: "mysql" },
 	luckperms: { urlEnvName: "LUCKPERMS_POSTGRES_URI", dialect: "postgresql" },

@@ -9,7 +9,53 @@ type Sub = {
   subject: string;
 };
 
+/** One alert per player+check per minute; a cheating player flags constantly. */
+const grimThrottle = new Map<string, number>()
+
 export const SUBSCRIBERS: Sub[] = [
+  {
+    subject: SUBJECTS.GRIM.FLAG,
+    cb(nc) {
+      const sub = nc.subscribe(this.subject, {
+        callback: (e, msg) => {
+          if (e) {
+            natsService.logger.error(this.subject, e.message);
+            return;
+          }
+
+          const json = msg.json() as {
+            nickname?: string;
+            check?: string;
+            violations?: string | number;
+            server?: string;
+            suppressed?: string | number;
+          };
+
+          const nickname = json.nickname ?? "?";
+          const check = json.check ?? "?";
+          const key = `${nickname}|${check}`;
+          const now = Date.now();
+
+          if (now - (grimThrottle.get(key) ?? 0) < 60_000) return
+          grimThrottle.set(key, now)
+
+          const suppressed = Number(json.suppressed ?? 0);
+          const suffix = suppressed > 0 ? ` (+${suppressed} suppressed)` : "";
+
+          void sendAlert({
+            from: `grim/${json.server ?? "?"}`,
+            title: `GrimAC: ${check}`,
+            message: `${nickname} · VL ${json.violations ?? 0}${suffix}`,
+            severity: "warning",
+          }).catch((err) => {
+            natsService.logger.error(`${this.subject}: alert failed: ${isError(err) ? err.message : String(err)}`)
+          });
+        },
+      });
+
+      return sub;
+    },
+  },
   {
     subject: SUBJECTS.INTERNAL.HEALTH,
     cb(nc) {

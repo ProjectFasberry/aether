@@ -22,6 +22,7 @@ const envSchema = z.object({
   /** Optional Muffin/CMI database; without it the server is unavailable. */
   MUFFIN_MYSQL_URI: z.optional(z.url()),
   GENERAL_POSTGRES_URI: z.url(),
+  GRIM_POSTGRES_URI: z.url(),
   LIBERTYBANS_POSTGRES_URI: z.url(),
   LUCKPERMS_POSTGRES_URI: z.url(),
   PLAN_MYSQL_URI: z.url(),

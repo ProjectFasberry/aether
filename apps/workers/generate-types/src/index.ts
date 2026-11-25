@@ -51,6 +51,7 @@ const scoped = flags.scoped;
 // where all variable with uppercase
 const DECLARED_DATABASES = {
   general: { dialect: "postgres" },
+  grim: { dialect: "postgres" },
   payments: { dialect: "postgres" },
   skins: { dialect: "mysql" },
   bisquite: { dialect: "mysql" },

@@ -5,6 +5,7 @@ import { subscribeReferralCheck } from "./subscribers/sub-referals";
 import { subscribeReferralReward } from "./subscribers/sub-referals";
 import { subscribeConfig } from "./subscribers/sub-config";
 import { subscribeSkinsChanged } from "./subscribers/sub-skins-changed";
+import { subscribeGrimFlag } from "./subscribers/sub-grim-flag";
 
 export const SUBSCRIBERS: NatsSubscription[] = [
 	{
@@ -28,5 +29,9 @@ export const SUBSCRIBERS: NatsSubscription[] = [
   {
     name: "Skins changed",
     cb: (nc) => subscribeSkinsChanged(nc, SUBJECTS.EVENTS.SKINS.CHANGED),
+  },
+  {
+    name: "Grim flags",
+    cb: (nc) => subscribeGrimFlag(nc, SUBJECTS.GRIM.FLAG),
   }
 ]

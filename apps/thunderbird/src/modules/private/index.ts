@@ -23,6 +23,7 @@ import { skinsPrivate } from "./skins";
 import { tasksPanel } from "./tasks";
 import { content } from "./content";
 import { rules } from "./rules";
+import { anticheat } from "./anticheat";
 
 const infra = new Elysia()
   .group("", app => app
@@ -53,6 +54,7 @@ const entities = new Elysia()
     .use(skinsPrivate)
     .use(content)
     .use(rules)
+    .use(anticheat)
     .use(tasksPanel)
   );
 
