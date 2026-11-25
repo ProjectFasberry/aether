@@ -69,3 +69,30 @@ export async function validateServerContent(
 
 	return null;
 }
+
+/**
+ * Client versions the launcher can actually install: a version exists when its
+ * `base:<version>` bundle was published. Legacy `base` counts as 1.20.4, the
+ * only version the pre-runtime launcher understood.
+ */
+export async function publishedClientVersions(): Promise<string[]> {
+	const manifest = await readContentManifest();
+	const versions = new Set<string>();
+
+	for (const name of Object.keys(manifest.bundles ?? {})) {
+		const match = /^base:(.+)$/.exec(name);
+		if (match) versions.add(match[1]);
+	}
+
+	if (!versions.has("1.20.4") && manifest.bundles?.base) versions.add("1.20.4");
+
+	return [...versions].sort((a, b) => {
+		const left = a.split(".").map(Number);
+		const right = b.split(".").map(Number);
+		for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+			const diff = (left[i] ?? 0) - (right[i] ?? 0);
+			if (diff !== 0) return diff;
+		}
+		return a.localeCompare(b);
+	});
+}
