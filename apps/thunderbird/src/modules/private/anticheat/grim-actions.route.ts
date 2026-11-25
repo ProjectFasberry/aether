@@ -2,6 +2,7 @@ import Elysia, { t } from "elysia";
 import { validatePermission } from "#/lib/validators";
 import { withData } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
+import { randomUUID } from "node:crypto";
 import { callServerCommand } from "#/shared/nats/command";
 import { createAdminActivityLog } from "../private.model";
 
@@ -21,6 +22,8 @@ export const grimActions = new Elysia()
       const meta = {
         recipient: body.target,
         fallbackServer: body.server?.toLowerCase(),
+        // Wait for the backend reply, so a rejected command is not reported as success.
+        commandId: randomUUID(),
       };
 
       if (body.action === "exempt") {
