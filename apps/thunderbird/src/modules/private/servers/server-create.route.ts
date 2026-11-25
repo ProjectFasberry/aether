@@ -37,15 +37,26 @@ export const serverCreate = new Elysia()
     async ({ body, status }) => {
       const origin = body.origin.trim().toLowerCase();
 
+      // Case-insensitive: the unique index compares bytes, and a row added by
+      // hand as "Lobby" must still block "lobby".
       const taken = await general
         .selectFrom("servers")
         .select("id")
-        .where("origin", "=", origin)
+        .where("origin", "ilike", origin)
         .executeTakeFirst();
 
       if (taken) return status(409, wrapError(`A server with origin "${origin}" already exists`));
 
-      const problem = await validateServerContent(body.client_version, body.resource_pack ?? null);
+      if (body.loader !== "vanilla" && !body.loader_version?.trim()) {
+        return status(400, wrapError(`loader_version is required for ${body.loader}`));
+      }
+
+      let problem: string | null;
+      try {
+        problem = await validateServerContent(body.client_version, body.resource_pack ?? null);
+      } catch {
+        return status(503, wrapError("Content manifest is unavailable, try again"));
+      }
       if (problem) return status(400, wrapError(problem));
 
       const existing = await general
@@ -88,6 +99,7 @@ export const serverCreate = new Elysia()
         200: withData(serverSchema),
         409: withError(t.String()),
         400: withError(t.String()),
+        503: withError(t.String()),
       },
       detail: {
         summary: buildRouteSummary("Create a server: runtime, availability and presentation"),

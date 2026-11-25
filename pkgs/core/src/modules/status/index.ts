@@ -181,15 +181,12 @@ export const createServerStatusService = ({
           return result
         }
 
-        // Servers known to the panel or the database always stay in the list: a
-        // stopped backend is shown as unavailable instead of disappearing.
+        // Only catalog servers are user-facing. The proxy also reports internal
+        // backends (limbo) and those must not surface as "unknown" entries.
         const liveServers = new Map(
           Object.entries(proxyStats.servers).map(([server, online]) => [server.toLowerCase(), { server, online }]),
         );
-        const serverKeys = new Set([
-          ...liveServers.keys(),
-          ...serversStats.map((server) => server.origin.toLowerCase()),
-        ]);
+        const serverKeys = new Set(serversStats.map((server) => server.origin.toLowerCase()));
 
         const serverEntries = [...serverKeys].map((key) => {
           const live = liveServers.get(key);

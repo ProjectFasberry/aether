@@ -33,13 +33,26 @@ export const serverUpdate = new Elysia()
 
       if (Object.keys(body).length === 0) return { data: existing };
 
+      // A non-vanilla loader without a version cannot be installed by the
+      // launcher, so the pair is checked even when only the loader changes.
+      const loader = body.loader ?? existing.loader;
+      const loaderVersion = body.loader_version !== undefined ? body.loader_version : existing.loader_version;
+      if (loader !== "vanilla" && !loaderVersion?.trim()) {
+        return status(400, wrapError(`loader_version is required for ${loader}`));
+      }
+
       // A runtime or pack that was never published would leave the launcher
       // with a server it cannot install and cannot launch.
       if (body.client_version !== undefined || body.resource_pack !== undefined) {
-        const problem = await validateServerContent(
-          body.client_version ?? existing.client_version,
-          body.resource_pack !== undefined ? body.resource_pack : existing.resource_pack,
-        );
+        let problem: string | null;
+        try {
+          problem = await validateServerContent(
+            body.client_version ?? existing.client_version,
+            body.resource_pack !== undefined ? body.resource_pack : existing.resource_pack,
+          );
+        } catch {
+          return status(503, wrapError("Content manifest is unavailable, try again"));
+        }
         if (problem) return status(400, wrapError(problem));
       }
 
@@ -62,6 +75,7 @@ export const serverUpdate = new Elysia()
         200: withData(serverSchema),
         404: withError(t.String()),
         400: withError(t.String()),
+        503: withError(t.String()),
       },
       detail: {
         summary: buildRouteSummary("Update a server: availability, runtime and presentation"),
