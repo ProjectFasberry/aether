@@ -23,6 +23,9 @@ export const serverListQuerySchema = t.Object({
 	excluded: t.Optional(t.Boolean()),
 });
 
+export const loaderSchema = t.UnionEnum(["fabric", "quilt", "neoforge", "forge", "vanilla"]);
+export const clientModSchema = t.UnionEnum(["required", "optional"]);
+
 export type ServerListQuery = Static<typeof serverListQuerySchema>;
 export type ServerPayload = Static<typeof serverSchema>;
 

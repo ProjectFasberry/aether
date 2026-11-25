@@ -4,10 +4,8 @@ import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
 import Elysia, { t } from "elysia";
-import { getServer, serverSchema } from "./server.model";
-
-const loaderSchema = t.UnionEnum(["fabric", "quilt", "neoforge", "forge", "vanilla"]);
-const clientModSchema = t.UnionEnum(["required", "optional"]);
+import { validateServerContent } from "#/modules/content/manifest.model";
+import { clientModSchema, getServer, loaderSchema, serverSchema } from "./server.model";
 
 const serverUpdateBody = t.Object({
   fullname: t.Optional(t.String({ minLength: 1, maxLength: 64 })),
@@ -35,6 +33,16 @@ export const serverUpdate = new Elysia()
 
       if (Object.keys(body).length === 0) return { data: existing };
 
+      // A runtime or pack that was never published would leave the launcher
+      // with a server it cannot install and cannot launch.
+      if (body.client_version !== undefined || body.resource_pack !== undefined) {
+        const problem = await validateServerContent(
+          body.client_version ?? existing.client_version,
+          body.resource_pack !== undefined ? body.resource_pack : existing.resource_pack,
+        );
+        if (problem) return status(422, wrapError(problem));
+      }
+
       // Exactly one default: the unique index rejects a second true row.
       if (body.is_default === true) {
         await general.transaction().execute(async (trx) => {
@@ -53,6 +61,7 @@ export const serverUpdate = new Elysia()
       response: {
         200: withData(serverSchema),
         404: withError(t.String()),
+        422: withError(t.String()),
       },
       detail: {
         summary: buildRouteSummary("Update a server: availability, runtime and presentation"),

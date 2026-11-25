@@ -1,33 +1,13 @@
 import Elysia, { t } from "elysia";
-import { BUCKETS, presignPath, S3 } from "#/shared/minio/client";
+import { BUCKETS, presignPath } from "#/shared/minio/client";
 import { defineOptionalBearerSession } from "#/lib/define";
 import { wrapError } from "@repo/shared/lib/helpers";
 import { buildRouteSummary } from "#/lib/routes";
 import { withData } from "#/shared/schemas";
+import { CONTENT_PREFIX, readContentManifest } from "./manifest.model";
 
-/** Object key of the content manifest inside the `static` bucket. */
-const MANIFEST_KEY = "resourcepack/manifest.json";
-/** Everything listed in the manifest lives under this prefix. */
-const CONTENT_PREFIX = "resourcepack/";
 /** Long enough for slow connections: a big pack or the asset set can take a while. */
 const PRESIGN_TTL_S = 60 * 60;
-
-type ManifestEntry = {
-  path: string;
-  hash: string;
-  /** Content bundle: omitted and `base` are installed always, `server:<id>` per backend. */
-  bundle?: string;
-};
-
-type ManifestBundle = {
-  version: string;
-  files: string[];
-};
-
-type Manifest = {
-  files: ManifestEntry[];
-  bundles?: Record<string, ManifestBundle>;
-};
 
 const manifestPayloadSchema = t.Object({
   files: t.Array(
@@ -36,6 +16,7 @@ const manifestPayloadSchema = t.Object({
       hash: t.String(),
       url: t.String(),
       bundle: t.Optional(t.String()),
+      minecraft: t.Optional(t.Array(t.String())),
     }),
   ),
   bundles: t.Optional(
@@ -61,8 +42,7 @@ export const contentManifest = new Elysia()
     .get("/manifest", async ({ session, status }) => {
       if (!session) return status(401, wrapError("UNAUTHORIZED"));
 
-      const bucket = S3.getClient(BUCKETS.STATIC);
-      const manifest = (await bucket.file(MANIFEST_KEY).json()) as Manifest;
+      const manifest = await readContentManifest();
 
       const files = manifest.files.map(file => ({
         ...file,
