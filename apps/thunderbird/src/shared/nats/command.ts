@@ -14,6 +14,8 @@ type CommandType =
   | "sudo" // cmi sudo
   | "cmi" // cmi
   | "p" // player points
+  | "kick" // vanilla/console kick
+  | "ban" // libertybans
 
 export type CommandMeta = {
   /** Stable id used by the game side for idempotency. */
