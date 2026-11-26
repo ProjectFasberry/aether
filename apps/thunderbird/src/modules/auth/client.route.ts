@@ -50,7 +50,7 @@ const validatePayloadSchema = t.Object({
 
 const changePasswordSchema = t.Object({
   currentPass: t.String({ minLength: 1, maxLength: 72 }),
-  newPass: t.String({ minLength: 6, maxLength: 72 }),
+  newPass: t.String({ minLength: 8, maxLength: 32 }),
 });
 
 const loginRoute = new Elysia()

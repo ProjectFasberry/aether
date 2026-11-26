@@ -57,7 +57,7 @@ export async function deleteAccount({
 
 export const changePasswordSchema = t.Object({
 	currentPass: t.String({ minLength: 1 }),
-	newPass: t.String({ minLength: 8, maxLength: 72 }),
+	newPass: t.String({ minLength: 8, maxLength: 32 }),
 });
 
 export type ChangePasswordError = "NOT_FOUND" | "PASSWORD_OR_LOGIN_INCORRECT" | "PASSWORD_IS_UNSAFE";

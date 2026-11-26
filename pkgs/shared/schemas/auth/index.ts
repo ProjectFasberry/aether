@@ -11,7 +11,7 @@ export const nicknameSchema = z
 
 export const passwordSchema = z
 	.string()
-	.min(4, { error: "Пароль не должен содержать менее 4 символов" })
+	.min(8, { error: "Пароль не должен содержать менее 8 символов" })
 	.max(32, { error: "Пароль не должен превышать 32 символа" })
 	.regex(/^\S*$/, {
 		error: "Пароль не должен содержать пробельные символы (пробелы, табы и т.д.)",
@@ -36,8 +36,8 @@ export const authSchema = z.object({
 });
 
 export const registerSchema = z.object({
-	...authSchema.shape,
 	nickname: registerNicknameSchema,
+	password: passwordSchema,
 	/** Optional "how did you hear about us?" answer; referrals use links only. */
 	findout: z.string().min(1).max(128),
 });

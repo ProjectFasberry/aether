@@ -59,7 +59,7 @@ const linkAccept = new Elysia()
 	}, {
 		body: t.Object({
 			token: t.String({ minLength: 16 }),
-			password: t.String({ minLength: 4, maxLength: 72 }),
+			password: t.String({ minLength: 8, maxLength: 32 }),
 			/** Referral links only: the nickname the player picks. */
 			nickname: t.Optional(t.String({ minLength: 3, maxLength: 16 })),
 		}),
