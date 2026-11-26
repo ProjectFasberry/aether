@@ -422,35 +422,3 @@ export async function getPackMeta(): Promise<ResourcePackMeta | null> {
 		updated_at: payload.created_at,
 	};
 }
-
-/** Number of versions to keep besides the current one. */
-export const PACK_RETENTION = 5;
-
-/**
- * Deletes old non-current versions beyond the retention window. Files are
- * removed after the rows, so a failed delete only leaves an orphaned object.
- */
-export async function pruneResourcePacks(): Promise<number> {
-	const rows = (await general
-		.selectFrom("resource_packs")
-		.selectAll()
-		.orderBy("id", "desc")
-		.execute()) as unknown as ResourcePackRow[];
-
-	// Newest N versions by id, and the current one even if it fell out of that window.
-	const keep = new Set(rows.slice(0, PACK_RETENTION).map((row) => row.id));
-	const current = rows.find((row) => row.is_current);
-	if (current) keep.add(current.id);
-
-	const stale = rows.filter((row) => !keep.has(row.id));
-	if (stale.length === 0) return 0;
-
-	await general.deleteFrom("resource_packs").where("id", "in", stale.map((row) => row.id)).execute();
-
-	for (const row of stale) {
-		await S3.getClient(BUCKETS.STATIC).delete(row.object_key).catch(() => undefined);
-	}
-
-	return stale.length;
-}
-

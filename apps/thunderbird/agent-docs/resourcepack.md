@@ -61,8 +61,4 @@ key first, then the manifest, then flips `is_current`, and finally publishes
 - ItemsAdder: keeps `external-host` on the canonical URL, which the publish step
   overwrites in place, so its config does not change per version.
 
-## Retention
-
-`pruneResourcePacks()` keeps the newest `PACK_RETENTION` versions plus the
-current one and deletes the rest (rows first, then objects). It is not scheduled
-yet; call it when the list grows.
+Old versions are kept indefinitely: there is no automatic retention job.
