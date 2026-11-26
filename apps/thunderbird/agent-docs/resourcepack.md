@@ -43,6 +43,8 @@ Private (session + permission):
   `409`, an invalid archive is `400`.
 - `POST /privated/resourcepack/:id/current` - publish a version or roll back;
   `resourcepack.publish`.
+- `GET /privated/servers/resource-packs` - `{ name, versions }[]` from the
+  manifest; the server form uses it instead of a free-text pack field.
 - `POST /privated/resourcepack/adopt` - register and publish the archive already
   live at the public key (falls back to the manifest path). One-time repair for
   the hand-uploaded pack.
