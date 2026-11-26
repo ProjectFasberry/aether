@@ -14,10 +14,11 @@ export const serverPayloadSchema = t.Array(
 
 export async function getServers(): Promise<Static<typeof serverPayloadSchema>> {
   const template = mapUrl();
-  const getServerMapUrl = (v: string) => template.replace("[X]", v);
+  if (!template) return [];
 
+  // Only Bisquite has a published web map today. Per-server map hosts are a
+  // later step; a single card must not point at a dead host in the meantime.
   return [
-    { name: "Bisquite", value: "bisquite", href: getServerMapUrl("bisquite"), img: "" },
-    { name: "Muffin", value: "muffin", href: getServerMapUrl("muffin"), img: "" },
-  ]
+    { name: "Bisquite", value: "bisquite", href: template.replace("[X]", "bisquite"), img: "" },
+  ];
 }
