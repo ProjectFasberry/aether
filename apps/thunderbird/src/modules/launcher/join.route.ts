@@ -296,6 +296,10 @@ const sessionCheckRoute = new Elysia()
 
     if (!(await hasGameSession(body.nickname))) return status(403, wrapError("NO_SESSION"));
 
+    // Re-mark on every session join: the backend marker lives in memory and is
+    // lost on a restart, while the 24h session keeps working.
+    publishAuthMode(body.nickname, "session");
+
     return { data: { nickname: body.nickname } };
   }, {
     body: t.Object({
