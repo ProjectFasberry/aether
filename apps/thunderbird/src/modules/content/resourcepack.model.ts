@@ -27,6 +27,11 @@ import {
 export const PACK_FILE_NAME = "generated.zip";
 /** Canonical object read by the launcher (path from the manifest). */
 export const PACK_CANONICAL_KEY = `${CONTENT_PREFIX}${PACK_MANIFEST_PATH}`;
+/**
+ * Public key ItemsAdder's `external-host` and older configs point at. Publishing
+ * refreshes it together with the manifest path so both stay one pack.
+ */
+export const PACK_PUBLIC_KEY = `${CONTENT_PREFIX}${PACK_FILE_NAME}`;
 /** Manifest path (`resourcepacks/<name>`). */
 export const PACK_MANIFEST_ENTRY = PACK_MANIFEST_PATH;
 /** Immutable per-version objects. */
@@ -98,7 +103,7 @@ function toPayload(row: ResourcePackRow): ResourcePackPayload {
 		sha256: row.sha256,
 		size: Number(row.size),
 		url: objectUrl(row.object_key),
-		stable_url: objectUrl(PACK_CANONICAL_KEY),
+		stable_url: objectUrl(PACK_PUBLIC_KEY),
 		minecraft: row.minecraft ?? [],
 		pack_format: row.pack_format,
 		notes: row.notes,
@@ -237,12 +242,15 @@ export async function uploadResourcePack(input: PackUploadInput): Promise<PackUp
 }
 
 /**
- * Registers the archive already sitting at the canonical path. Used once when
- * adopting the pack that ItemsAdder used to upload by hand; safe to repeat
- * because the same SHA-256 maps to the same row.
+ * Registers the live pack that ItemsAdder used to upload by hand. Reads the
+ * public key first (that is the file `/iazip` produced) and falls back to the
+ * manifest path; safe to repeat because the same SHA-256 maps to the same row.
  */
 export async function adoptCurrentPack(uploadedBy: string): Promise<PackUploadResult> {
-	const source = S3.getClient(BUCKETS.STATIC).file(PACK_CANONICAL_KEY);
+	const client = S3.getClient(BUCKETS.STATIC);
+	const publicFile = client.file(PACK_PUBLIC_KEY);
+	const source = (await publicFile.exists()) ? publicFile : client.file(PACK_CANONICAL_KEY);
+
 	if (!(await source.exists())) throw new Error("the canonical pack object is missing");
 
 	const data = new Uint8Array(await source.arrayBuffer());
@@ -293,7 +301,9 @@ async function storeArchive(
 			sha256: digest256,
 			size: data.byteLength,
 			object_key: key,
-			minecraft,
+			// pg sends plain arrays as Postgres array literals, not JSON; the
+			// column is jsonb, so the value is serialised explicitly.
+			minecraft: JSON.stringify(minecraft),
 			pack_format: packFormat,
 			notes: input.notes?.trim() || null,
 			uploaded_by: input.uploadedBy,
@@ -338,7 +348,9 @@ export async function publishResourcePack(id: number): Promise<ResourcePackPaylo
 	const source = S3.getClient(BUCKETS.STATIC).file(row.object_key);
 	if (!(await source.exists())) throw new Error("pack object is missing from the volume");
 
-	await S3.getClient(BUCKETS.STATIC).write(PACK_CANONICAL_KEY, source, { type: "application/zip" });
+	const client = S3.getClient(BUCKETS.STATIC);
+	await client.write(PACK_CANONICAL_KEY, source, { type: "application/zip" });
+	await client.write(PACK_PUBLIC_KEY, source, { type: "application/zip" });
 
 	const manifest = await readContentManifest();
 	const next = upsertManifestEntry(manifest, {
@@ -348,7 +360,7 @@ export async function publishResourcePack(id: number): Promise<ResourcePackPaylo
 		minecraft: row.minecraft.length > 0 ? row.minecraft : DEFAULT_PACK_VERSIONS,
 	});
 
-	await S3.getClient(BUCKETS.STATIC).write(MANIFEST_KEY, JSON.stringify(next, null, 2), {
+	await client.write(MANIFEST_KEY, JSON.stringify(next, null, 2), {
 		type: "application/json",
 	});
 	invalidateContentManifest();

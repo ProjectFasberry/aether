@@ -16,6 +16,7 @@ rollback publishes an older version.
 | --- | --- |
 | `resourcepack/packs/<sha256>.zip` | immutable archive of one version |
 | `resourcepack/resourcepacks/generated.zip` | canonical file the launcher manifest points at |
+| `resourcepack/generated.zip` | public key ItemsAdder's `external-host` uses; written together with the manifest path |
 | `resourcepack/manifest.json` | content manifest, entry rewritten on publish |
 
 `resource_packs` holds `sha1`, `sha256`, `size`, `object_key`, `minecraft`
@@ -28,7 +29,8 @@ Public:
 
 - `GET /server/resourcepack/meta` - `{ version, sha1, sha256, size, url, stable_url,
   minecraft, pack_format, updated_at }` for the current pack; `url` is the
-  immutable versioned object. `404` when nothing is published.
+  immutable versioned object, `stable_url` the public key ItemsAdder serves.
+  `404` when nothing is published.
 - `GET /server/resourcepack/latest.zip` - `302` to `url` with
   `Cache-Control: no-store`; the redirect target never changes.
 
@@ -42,10 +44,12 @@ Private (session + permission):
 - `POST /privated/resourcepack/:id/current` - publish a version or roll back;
   `resourcepack.publish`.
 - `POST /privated/resourcepack/adopt` - register and publish the archive already
-  at the canonical path. One-time repair for the hand-uploaded pack.
+  live at the public key (falls back to the manifest path). One-time repair for
+  the hand-uploaded pack.
 
-Publishing writes the archive first, then the manifest, then flips `is_current`,
-and finally publishes `general.resourcepack.updated` on NATS.
+Publishing writes the versioned archive to both the manifest path and the public
+key first, then the manifest, then flips `is_current`, and finally publishes
+`general.resourcepack.updated` on NATS.
 
 ## Consumers
 
