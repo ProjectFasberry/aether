@@ -22,6 +22,7 @@ import { teamPrivate } from "./team";
 import { skinsPrivate } from "./skins";
 import { tasksPanel } from "./tasks";
 import { content } from "./content";
+import { resourcePack } from "./resourcepack";
 import { rules } from "./rules";
 import { anticheat } from "./anticheat";
 
@@ -53,6 +54,7 @@ const entities = new Elysia()
     .use(servers)
     .use(skinsPrivate)
     .use(content)
+    .use(resourcePack)
     .use(rules)
     .use(anticheat)
     .use(tasksPanel)

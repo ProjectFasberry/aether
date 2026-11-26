@@ -11,6 +11,10 @@ export const SUBJECTS = {
     BASE: "general.player",
     COMPAT: "general.player.compat",
   },
+  RESOURCEPACK: {
+    /** Published pack changed: backends drop their cached URL/SHA-1. */
+    UPDATED: "general.resourcepack.updated",
+  },
   LUCKPERMS: {
     BASE: "luckperms",
     UPDATE: "luckperms:update",

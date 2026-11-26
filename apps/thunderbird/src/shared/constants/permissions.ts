@@ -45,6 +45,8 @@ export const PERMISSION_NAMES = [
   "players.restrict.delete",
   "players.role.update",
   "releases.read",
+  "resourcepack.publish",
+  "resourcepack.read",
   "rules.read",
   "rules.update",
   "roles.read",

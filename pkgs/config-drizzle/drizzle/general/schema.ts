@@ -834,6 +834,37 @@ export const servers = pgTable("servers", {
 });
 
 /**
+ * Uploaded resource pack versions. One row is current: its archive is copied to
+ * the canonical launcher path and written into the content manifest.
+ */
+export const resourcePacks = pgTable(
+	"resource_packs",
+	{
+		id: integer()
+			.primaryKey()
+			.generatedAlwaysAsIdentity({
+				name: "resource_packs_id_seq",
+				startWith: 1,
+				increment: 1,
+				minValue: 1,
+				maxValue: 2147483647,
+				cache: 1,
+			}),
+		sha1: text().notNull(),
+		sha256: text().notNull(),
+		size: bigint({ mode: "number" }).notNull(),
+		objectKey: text("object_key").notNull(),
+		minecraft: jsonb().$type<string[]>().default([]).notNull(),
+		packFormat: integer("pack_format"),
+		notes: text(),
+		uploadedBy: text("uploaded_by"),
+		createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+		isCurrent: boolean("is_current").default(false).notNull(),
+	},
+	(table) => [uniqueIndex("resource_packs_sha256_key").on(table.sha256)],
+);
+
+/**
  * Editable site copy, one JSON document per page and locale. Only overridden
  * fields are stored; the site falls back to its bundled translations.
  */

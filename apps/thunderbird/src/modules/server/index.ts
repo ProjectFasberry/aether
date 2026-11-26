@@ -9,6 +9,7 @@ import { tasks } from "./tasks";
 import { validateBannedStatus } from "#/lib/validators";
 import { skinGroup } from "./skin";
 import { referrals } from "./referals";
+import { resourcePack } from "#/modules/server/resourcepack";
 
 export const serverGroup = new Elysia()
 	.group("/server", (app) => app
@@ -16,6 +17,7 @@ export const serverGroup = new Elysia()
 			.use(rating)
 			.use(lands)
 			.use(catalog)
+			.use(resourcePack)
 			.use(status)
 			.use(events)
 			.use(tasks)

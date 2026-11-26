@@ -27,6 +27,7 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 | Economy | `src/modules/{economy,referrals}` | - |
 | Servers | `src/modules/{server,server-ip}` | - |
 | Content | `src/modules/{news,wiki,rules,banner,modpack,releases,content,site}` | [site.md](agent-docs/site.md) |
+| Resource packs | `src/modules/content/resourcepack.model.ts`, `src/modules/{private,server}/resourcepack` | [resourcepack.md](agent-docs/resourcepack.md) |
 | Players | `src/modules/{user,avatars,fact,misc}` | - |
 | Activity | `src/modules/server/activity` | - |
 | Lands | `src/modules/{server,private}/lands` | [lands.md](agent-docs/lands.md) |
