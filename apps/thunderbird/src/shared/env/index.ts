@@ -25,7 +25,6 @@ const envSchema = z.object({
   GRIM_POSTGRES_URI: z.url(),
   LIBERTYBANS_POSTGRES_URI: z.url(),
   LUCKPERMS_POSTGRES_URI: z.url(),
-  PLAN_MYSQL_URI: z.url(),
   VOLUME_URL: z.url(),
   /** Public API origin used for presigned avatar URLs in skin payloads. */
   PUBLIC_API_URL: z.url().optional().default("https://api.fasberry.fun"),

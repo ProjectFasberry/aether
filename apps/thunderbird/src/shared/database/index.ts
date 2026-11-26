@@ -4,7 +4,6 @@ import { generalPool } from "./general-db";
 import { libertybansPool } from "./libertybans-db";
 import { lobbyPool } from "./lobby-db";
 import { luckpermsPool } from "./luckperms-db";
-import { planPool } from "./plan-db";
 import { playerPointsPool } from "./playerpoints-db";
 import { reputationPool } from "./reputation-db";
 import { skinsPool } from "./skins-db";
@@ -41,8 +40,5 @@ export const DATABASES_FOR_CHECK: Record<string, AppDatabaseItem> = {
   },
   libertybans: {
     pool: libertybansPool, dialect: "postgres", required: true,
-  },
-  plan: {
-    pool: planPool, dialect: "mysql", required: false,
   },
 };
