@@ -14,6 +14,23 @@ import { DateTime } from "#/helpers/typebox";
 import { allowRequest } from "#/shared/services/rate-limit";
 import { grantGameSession, hasGameSession } from "#/shared/services/game-session";
 import { isBannedNickname } from "#/shared/database/roles";
+import { SUBJECTS } from "@repo/shared/constants/subjects";
+import { natsService } from "#/shared/nats/client";
+
+/**
+ * Tells the backends how the player got in: a launcher ticket means the assets
+ * are already installed and the server must not send its resource pack again.
+ */
+function publishAuthMode(nickname: string, mode: "launcher" | "session"): void {
+  try {
+    natsService.getInstance().publish(
+      SUBJECTS.PLAYER.COMPAT,
+      JSON.stringify({ nickname, mode }),
+    );
+  } catch {
+    // A failed marker only costs one extra or missing pack; never block the join.
+  }
+}
 
 /**
  * Join gate: the launcher asks for a one-shot ticket right before the game
@@ -184,6 +201,7 @@ const verifyRoute = new Elysia()
       .getInstance()
       .set(passKey(record.nickname), JSON.stringify(record), "EX", RECONNECT_TTL_S);
     await grantGameSession(record.nickname);
+    publishAuthMode(record.nickname, "launcher");
 
     return { data: { nickname: record.nickname } };
   }, {
@@ -324,6 +342,7 @@ const limboAuthRoute = new Elysia()
     if (!valid) return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
     await grantGameSession(account.nickname);
+    publishAuthMode(account.nickname, "session");
 
     return { data: { nickname: account.nickname } };
   }, {

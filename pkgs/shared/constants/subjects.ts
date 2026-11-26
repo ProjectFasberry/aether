@@ -7,6 +7,10 @@ export const SUBJECTS = {
     },
     FIAT: "payment.start.fiat",
   },
+  PLAYER: {
+    BASE: "general.player",
+    COMPAT: "general.player.compat",
+  },
   LUCKPERMS: {
     BASE: "luckperms",
     UPDATE: "luckperms:update",
