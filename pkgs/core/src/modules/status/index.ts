@@ -36,6 +36,8 @@ export const serverSchema = t.Object({
 });
 
 export const statusSchema = t.Object({
+  /** When the snapshot was collected; absent in snapshots written before it was added. */
+  updatedAt: t.Optional(t.String()),
   proxy: t.Object({
     status: t.String(),
     online: t.Number(),
@@ -73,7 +75,15 @@ const SERVER_STATUS_KEY = buildRedisKey({
 type WithPanelCredentials = { panelUser: string; panelPassword: string };
 
 type CreateServerStatus = {
-  config: { VOLUME_URL: string },
+  config: {
+    VOLUME_URL: string;
+    /**
+     * Real backend liveness, e.g. a NATS ping. The proxy reports every
+     * registered server, so a stopped backend must not look online. `null`
+     * means liveness cannot be checked (NATS down) and the proxy view wins.
+     */
+    isServerAlive?: (origin: string) => Promise<boolean | null>;
+  },
   generalDb: Kysely<DB>
 }
 
@@ -188,19 +198,28 @@ export const createServerStatusService = ({
         );
         const serverKeys = new Set(serversStats.map((server) => server.origin.toLowerCase()));
 
-        const serverEntries = [...serverKeys].map((key) => {
+        const serverEntries = await Promise.all([...serverKeys].map(async (key) => {
           const live = liveServers.get(key);
+
+          // Registered in the proxy is not the same as running: Velocity keeps
+          // Lobby/Bisquite/Limbo listed after the backend stops. Ping the
+          // backend, and treat players still connected as a fallback.
+          const alive = live && config.isServerAlive
+            ? await config.isServerAlive(live.server).catch(() => null)
+            : null;
+          const running = Boolean(live) && (alive === null ? true : alive || (live?.online ?? 0) > 0);
 
           return mapServerData(
             live?.server ?? key,
             live?.online ?? 0,
             proxyStats.playersList.players,
             serversStats,
-            Boolean(live),
+            running,
           );
-        });
+        }));
 
         return {
+          updatedAt: new Date().toISOString(),
           proxy: {
             status: "online",
             online: proxyStats.playersList.count,

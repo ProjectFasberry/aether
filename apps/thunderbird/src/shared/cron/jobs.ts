@@ -101,7 +101,9 @@ export const CRON_JOBS = [
       })
     },
     immediately: true,
-    schedule: false,
+    // The snapshot feeds every launcher and the site, so it must follow the
+    // proxy, not only the API restart.
+    schedule: true,
     allowIsDev: false,
     lockTtlMs: 55_000
   }),

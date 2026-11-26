@@ -25,7 +25,7 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 | Access control | `src/shared/constants/permissions.ts`, `src/lib/validators.ts` | [permissions.md](agent-docs/permissions.md) |
 | Store and orders | `src/modules/{store,payments}` | - |
 | Economy | `src/modules/{economy,referrals}` | - |
-| Servers | `src/modules/{server,server-ip}` | - |
+| Servers | `src/modules/{server,server-ip}` | [status.md](agent-docs/status.md) |
 | Content | `src/modules/{news,wiki,rules,banner,modpack,releases,content,site}` | [site.md](agent-docs/site.md) |
 | Resource packs | `src/modules/content/resourcepack.model.ts`, `src/modules/{private,server}/resourcepack` | [resourcepack.md](agent-docs/resourcepack.md) |
 | Players | `src/modules/{user,avatars,fact,misc}` | - |
