@@ -54,6 +54,7 @@ export const PERMISSION_NAMES = [
   "skins.moderate",
   "store.item.create",
   "store.item.delete",
+  "store.item.read",
   "store.item.update",
   "store.methods.read",
   "store.methods.update",

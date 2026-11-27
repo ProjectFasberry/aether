@@ -43,6 +43,11 @@ export const editorFieldSchema = z
 	.loose()
 	.transform((v) => v as JsonValue);
 
+/** Prices are whole units of a game currency, never fractions or negatives. */
+export const storePriceStringSchema = z
+	.string()
+	.regex(/^\d+$/, "Price must be a whole number");
+
 export const STORE_COMMAND_PARENTS = ["lp", "sudo", "cmi", "p"] as const;
 export type StoreCommandParent = (typeof STORE_COMMAND_PARENTS)[number];
 
@@ -94,7 +99,7 @@ export const storeItemSchema = z.object({
 	refund_cmd: nullableStoreCommandSchema,
 	value: z.string(),
 	currency: z.string(),
-	price: z.number(),
+	price: z.number().int().nonnegative(),
 	content: editorFieldSchema,
 });
 

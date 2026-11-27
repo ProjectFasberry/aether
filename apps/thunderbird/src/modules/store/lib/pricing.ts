@@ -8,7 +8,7 @@ export function parsePrice(currency: string, price: string): number {
 
   const value = Number(price);
 
-  if (Number.isNaN(value) || !Number.isFinite(value)) {
+  if (!Number.isInteger(value) || value < 0) {
     throw new Error(`Invalid transformed price for currency "${currency}": ${price}`);
   }
 

@@ -4,6 +4,7 @@ import {
 	GAME_CURRENCIES,
 	nullableStoreCommandSchema,
 	storeItemSchema,
+	storePriceStringSchema,
 } from "./payment";
 import type { JsonValue } from "@gen/db/general";
 
@@ -49,7 +50,7 @@ export const storeItemEditSchema = z.array(
 export const storeItemCreateSchema = z.object({
 	title: z.string(),
 	description: z.string().nullable(),
-	price: z.string(),
+	price: storePriceStringSchema,
 	type: z.string(),
 	value: z.string(),
 	currency: z.enum(GAME_CURRENCIES),

@@ -1,7 +1,7 @@
 import Elysia, { t } from "elysia";
 import * as z from "zod";
 import { BUCKETS, S3 } from "#/shared/minio/client";
-import { validatePermission } from "#/lib/validators";
+import { validateAnyPermission } from "#/lib/validators";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
@@ -27,7 +27,7 @@ const imageBodySchema = z.object({
  * key (`store/<uuid>.<ext>`) and the panel prefixes it with `VITE_VOLUME_URL`.
  */
 export const storeItemImage = new Elysia()
-  .use(validatePermission("store.item.create"))
+  .use(validateAnyPermission(["store.item.create", "store.item.update"]))
   .post("/image", async ({ body, status }) => {
     const ext = EXT[body.file.type as keyof typeof EXT];
     if (!ext) return status(400, wrapError("IMAGE_TYPE_NOT_ALLOWED"));

@@ -77,6 +77,30 @@ export const validatePermission = <T extends boolean = false>(
   })
   .as("scoped");
 
+/**
+ * Accepts a user holding any of the listed permissions. Used where one action
+ * is reachable from screens guarded by different rights, such as store images
+ * from both the create and the edit form.
+ */
+export const validateAnyPermission = (permissions: Permission[]) => new Elysia()
+  .use(defineOptionalUser())
+  .derive(async ({ nickname, status }) => {
+    logValidators("validateAnyPermission");
+
+    if (!nickname) throw status(401, "UNAUTHORIZED");
+
+    const role = await getUserRole(nickname);
+    if (!role) throw status(401, "UNAUTHORIZED");
+
+    const perms = await getPermissions(nickname, role.id);
+    if (!permissions.some((permission) => perms.has(permission))) {
+      throw status(400, "PERMISSION_DENIED");
+    }
+
+    return { nickname, permission: permissions.find((permission) => perms.has(permission))! };
+  })
+  .as("scoped");
+
 export const validateAuthStatus = () =>
   new Elysia({name: "validateAuthStatus"
 })

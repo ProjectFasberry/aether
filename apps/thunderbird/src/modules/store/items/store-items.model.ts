@@ -84,7 +84,8 @@ export const store = {
       .executeTakeFirst() ?? null;
   },
   async getItems(
-    { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>
+    { wallet, category, endCursor, searchQuery }: Static<typeof storeListSchema>,
+    perPage = 32,
   ): Promise<Static<typeof storeItemsSchema>> {
     let storeQuery = general
       .selectFrom("store_items")
@@ -131,7 +132,7 @@ export const store = {
 
     const result = await executeWithCursorPagination(storeQuery, {
       after: endCursor,
-      perPage: 32,
+      perPage,
       fields: [
         { key: "id", expression: "id", direction }
       ],
