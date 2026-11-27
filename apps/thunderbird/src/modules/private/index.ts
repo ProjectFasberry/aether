@@ -24,6 +24,7 @@ import { tasksPanel } from "./tasks";
 import { content } from "./content";
 import { resourcePack } from "./resourcepack";
 import { rules } from "./rules";
+import { faqPrivate } from "./faq";
 import { anticheat } from "./anticheat";
 
 const infra = new Elysia()
@@ -56,6 +57,7 @@ const entities = new Elysia()
     .use(content)
     .use(resourcePack)
     .use(rules)
+    .use(faqPrivate)
     .use(anticheat)
     .use(tasksPanel)
   );

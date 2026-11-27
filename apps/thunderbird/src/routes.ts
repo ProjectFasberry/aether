@@ -28,6 +28,7 @@ import { contentManifest } from "./modules/content/manifest.route";
 import { releases } from "./modules/releases";
 import { yggdrasil } from "./modules/yggdrasil";
 import { site } from "./modules/site";
+import { faq } from "./modules/faq";
 import { html } from '@elysia/html';
 import previewHtml from "../static/preview.html" with { type: "text" }
 
@@ -47,6 +48,7 @@ export const main = new Elysia()
     .use(releases)
     .use(yggdrasil)
     .use(site)
+    .use(faq)
   )
   .use(auth)
   .use(me)
