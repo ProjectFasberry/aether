@@ -16,9 +16,10 @@ export async function getServers(): Promise<Static<typeof serverPayloadSchema>> 
   const template = mapUrl();
   if (!template) return [];
 
-  // Only Bisquite has a published web map today. Per-server map hosts are a
-  // later step; a single card must not point at a dead host in the meantime.
+  // Bisquite has a published web map today; Muffin is listed so the map page
+  // shows what is coming, but an empty href marks the card as unavailable.
   return [
     { name: "Bisquite", value: "bisquite", href: template.replace("[X]", "bisquite"), img: "" },
+    { name: "Muffin", value: "muffin", href: "", img: "" },
   ];
 }
