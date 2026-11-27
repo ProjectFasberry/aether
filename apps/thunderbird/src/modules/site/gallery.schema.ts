@@ -6,6 +6,9 @@ export type GalleryTag = (typeof GALLERY_TAGS)[number];
 
 export const galleryTagSchema = t.UnionEnum(GALLERY_TAGS);
 
+/** `t.UnionEnum` injects a default (its first value), which a query filter must not have. */
+export const galleryTagFilterSchema = t.Union(GALLERY_TAGS.map((tag) => t.Literal(tag)));
+
 /** One screenshot in the landing gallery. */
 const galleryItemSchema = t.Object({
   /** Stable id and the image name in the `static/community` folder. */

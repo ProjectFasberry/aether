@@ -6,7 +6,7 @@ import { getSiteContent, siteLocaleSchema, type SiteLocale } from "./site.model"
 import {
   asGalleryItems,
   GALLERY_SEED,
-  GALLERY_TAGS,
+  galleryTagFilterSchema,
   galleryTagSchema,
   type GalleryItemInput,
   type GalleryTag,
@@ -14,7 +14,7 @@ import {
 
 const galleryQuerySchema = t.Object({
   locale: t.Optional(siteLocaleSchema),
-  tag: t.Optional(galleryTagSchema),
+  tag: t.Optional(galleryTagFilterSchema),
   limit: t.Optional(t.Number({ minimum: 1, maximum: 48 })),
   /** Offset cursor; the gallery is a curated list, not a live feed. */
   cursor: t.Optional(t.String({ pattern: "^\\d+$" })),
