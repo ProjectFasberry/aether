@@ -14,7 +14,6 @@ import { privated } from "./modules/private";
 import { account } from "./modules/account";
 import { team } from "./modules/team";
 import { news } from "./modules/news";
-import { modpack } from "./modules/modpack";
 import { rules } from "./modules/rules";
 import { serversWithMap } from "./modules/server-ip";
 import { launcher } from "./modules/launcher";
@@ -35,7 +34,6 @@ import previewHtml from "../static/preview.html" with { type: "text" }
 export const main = new Elysia()
   .group("", app => app
     .use(news)
-    .use(modpack)
     .use(rules)
     .use(serversWithMap)
     .use(launcher)

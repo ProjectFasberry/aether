@@ -74,7 +74,6 @@ export const SITE_PAGES = {
   /** Pages whose editable part is just the custom sections for now. */
   start: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
   support: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
-  modpack: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
   gallery: galleryPageSchema,
 } as const;
 

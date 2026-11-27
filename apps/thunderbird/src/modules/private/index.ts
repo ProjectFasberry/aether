@@ -6,7 +6,6 @@ import { users } from "./users";
 import { roles } from "./roles";
 import { news } from "./news";
 import { banners } from "./banners";
-import { modpacks } from "./modpacks";
 import { events } from "./events";
 import { history } from "./history";
 import { dictionaries } from "./dictionaries";
@@ -44,7 +43,6 @@ const entities = new Elysia()
     .use(roles)
     .use(news)
     .use(banners)
-    .use(modpacks)
     .use(events)
     .use(history)
     .use(dictionaries)

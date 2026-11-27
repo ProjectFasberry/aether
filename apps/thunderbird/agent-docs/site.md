@@ -19,7 +19,7 @@ per `(page, locale)`, not a full copy:
 | --- | --- |
 | `home` | `{ carousel?: [{ image, alt? }], sections? }` |
 | `servers` | `{ title?, description?, items?: { [serverOrigin]: { name?, tagline?, description?, image?, icon?, features? } }, sections? }` |
-| `start`, `support`, `modpack` | `{ sections? }` |
+| `start`, `support` | `{ sections? }` |
 
 `sections` is the shared ordered list of extra blocks
 `{ id, title, body, hidden? }`: the site renders non-hidden sections at the end of

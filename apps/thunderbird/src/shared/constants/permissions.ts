@@ -30,8 +30,6 @@ export const PERMISSION_NAMES = [
   "lands.delete",
   "lands.read",
   "metrics.read",
-  "modpacks.create",
-  "modpacks.delete",
   "news.create",
   "news.delete",
   "news.update",

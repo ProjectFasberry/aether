@@ -26,7 +26,7 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 | Store and orders | `src/modules/{store,payments}` | - |
 | Economy | `src/modules/{economy,referrals}` | - |
 | Servers | `src/modules/{server,server-ip}` | [status.md](agent-docs/status.md) |
-| Content | `src/modules/{news,wiki,rules,banner,modpack,releases,content,site}` | [site.md](agent-docs/site.md) |
+| Content | `src/modules/{news,wiki,rules,banner,releases,content,site}` | [site.md](agent-docs/site.md) |
 | Resource packs | `src/modules/content/resourcepack.model.ts`, `src/modules/{private,server}/resourcepack` | [resourcepack.md](agent-docs/resourcepack.md) |
 | Players | `src/modules/{user,avatars,fact,misc}` | - |
 | Activity | `src/modules/server/activity` | - |
@@ -37,7 +37,7 @@ Add `agent-docs/<module>.md` for a new module and list it below.
 ## Layout
 
 - `src/modules/` - domain routes and models: `auth`, `yggdrasil`, `account`,
-  `launcher`, `releases`, `user`, `server`, `news`, `modpack`, `store`,
+  `launcher`, `releases`, `user`, `server`, `news`, `store`,
   `private/*`, etc.
 - `src/shared/` - `env`, database clients, NATS, Redis, MinIO, services,
   constants.

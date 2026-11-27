@@ -5,7 +5,7 @@ import { general } from "#/shared/database/general-db";
  * FAQ entries live in the database so the panel can add, edit and delete them
  * without a deploy. `scope` maps an entry to the page that renders it.
  */
-export const FAQ_SCOPES = ["home", "modpack", "support"] as const;
+export const FAQ_SCOPES = ["home", "support"] as const;
 export const faqScopeSchema = t.UnionEnum(FAQ_SCOPES);
 export const faqScopeFilterSchema = t.Union(FAQ_SCOPES.map((scope) => t.Literal(scope)));
 
