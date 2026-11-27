@@ -12,7 +12,6 @@ import type { DB as reputationDB } from "@gen/db/reputation";
 import { type Static, t, type TSchema } from "elysia";
 import { general } from "#/shared/database/general-db";
 import { skinsService } from "../../../shared/services/skins";
-import { invariant } from "#/utils";
 import {
 	belkoinRatingQuery, charismRatingQuery, landsMembersRatingQuery, landsRatingQuery,
 	parkourRatingQuery, playtimeRatingQuery, purchasesRatingQuery, referralsRatingQuery,
@@ -26,10 +25,13 @@ export const ratingSchema = t.Composite([
 	}),
 ]);
 
+/** The server exists in the catalog but has no database yet. */
+class MissingServerDatabase extends Error {}
+
 function getServerDBInstance<T>({ server, dbs }: { server?: string; dbs: Record<string, Kysely<T> | null> }) {
 	const key = resolveRatingServer(server)
 	const dbInstance = dbs[key];
-	invariant(dbInstance, "Target db instance is not defined")
+	if (!dbInstance) throw new MissingServerDatabase(`No database for server "${key}"`);
 	return { dbInstance };
 }
 
@@ -575,7 +577,17 @@ async function getLandsMembersRating({ asc, limit, endCursor, server }: Static<t
 }
 
 export async function getRating(by: AllowedKeys, query: Static<typeof ratingSchema>) {
-	return ratingConfig[by].fn?.(query)
+	try {
+		return await ratingConfig[by].fn?.(query)
+	} catch (error) {
+		// A server that is not launched yet has no database. An empty page is the
+		// honest answer; a 500 would only expose the missing instance to players.
+		if (error instanceof MissingServerDatabase) {
+			return { data: [], meta: toPageMeta({}) };
+		}
+
+		throw error;
+	}
 }
 
 const RATINGS_SECTIONS = {
