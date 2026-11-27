@@ -1,4 +1,5 @@
 import { t } from "elysia";
+import { galleryPageSchema } from "./gallery.schema";
 
 /**
  * Editable landing content: schemas and page registry.
@@ -74,6 +75,7 @@ export const SITE_PAGES = {
   start: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
   support: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
   modpack: t.Object({ sections: sectionsSchema, blocks: blocksSchema }),
+  gallery: galleryPageSchema,
 } as const;
 
 export type SitePage = keyof typeof SITE_PAGES;
