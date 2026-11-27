@@ -16,12 +16,21 @@ const PERMISSION = "store.item.update" as const;
 
 async function editStoreItem(id: number, values: z.infer<typeof storeItemEditSchema>) {
   const normalized = values.map((entry) => {
-    if (entry.field !== "command" && entry.field !== "refund_cmd") return entry;
+    if (entry.field === "command" || entry.field === "refund_cmd") {
+      return {
+        ...entry,
+        value: normalizeStoreCommand(typeof entry.value === "string" ? entry.value : null),
+      };
+    }
 
-    return {
-      ...entry,
-      value: normalizeStoreCommand(typeof entry.value === "string" ? entry.value : null),
-    };
+    if (entry.field === "title" || entry.field === "value") {
+      return {
+        ...entry,
+        value: typeof entry.value === "string" ? entry.value.trim() : entry.value,
+      };
+    }
+
+    return entry;
   });
 
   const updates = buildUpdates<Selectable<StoreItems>>(normalized as { field: keyof Selectable<StoreItems>; value: Selectable<StoreItems>[keyof Selectable<StoreItems>] }[]);

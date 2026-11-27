@@ -48,11 +48,11 @@ export const storeItemEditSchema = z.array(
 );
 
 export const storeItemCreateSchema = z.object({
-	title: z.string(),
+	title: z.string().trim().min(1),
 	description: z.string().nullable(),
 	price: storePriceStringSchema,
 	type: z.string(),
-	value: z.string(),
+	value: z.string().trim().min(1),
 	currency: z.enum(GAME_CURRENCIES),
 	imageUrl: z.string().optional().nullable(),
 	command: nullableStoreCommandSchema,
