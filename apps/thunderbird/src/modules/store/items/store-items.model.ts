@@ -106,13 +106,13 @@ export const store = {
       if (searchQuery.length < 2) {
         const firstLetter = searchQuery[0]
 
+        // Keep the tie-breaker stable: cursor pagination walks `id`, so an
+        // extra relevance ordering would duplicate rows across pages.
         storeQuery = storeQuery
           .where('title', 'ilike', `${firstLetter}%`)
-          .orderBy(sql<number>`similarity(title, ${searchQuery}) DESC`)
       } else {
         storeQuery = storeQuery
           .where(sql<boolean>`similarity(title, ${searchQuery}) > 0.2`)
-          .orderBy(sql<number>`similarity(title, ${searchQuery})`, 'desc')
       }
     }
 
