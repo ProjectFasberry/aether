@@ -48,10 +48,18 @@ export const twoFactor = new Elysia()
 			detail: { summary: buildRouteSummary("Start two-factor setup") },
 		})
 		.post("/confirm", async ({ nickname, body: { code }, status }) => {
-			const backupCodes = await confirmTwoFactorSetup(nickname, code);
-			if (!backupCodes) return status(400, wrapError("TWO_FACTOR_INVALID"));
+			try {
+				const backupCodes = await confirmTwoFactorSetup(nickname, code);
+				if (!backupCodes) return status(400, wrapError("TWO_FACTOR_INVALID"));
 
-			return { data: { backupCodes } };
+				return { data: { backupCodes } };
+			} catch (error) {
+				if (error instanceof Error && error.message === "TWO_FACTOR_NOT_PENDING") {
+					return status(400, wrapError("TWO_FACTOR_INVALID"));
+				}
+
+				throw error;
+			}
 		}, {
 			body: t.Object({ code: codeSchema }),
 			response: {

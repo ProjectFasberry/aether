@@ -144,8 +144,10 @@ export async function disableTwoFactor(
 	const row = await getTotp(account.id);
 	if (!row?.confirmed_at) return false;
 
-	const step = verifyTotp(decryptSecret(row.secret), code);
-	if (step === null) return false;
+	// A backup code is accepted here too: a user who lost the authenticator
+	// must still be able to turn 2FA off after proving the password.
+	const verified = await verifySecondFactor(nickname, code);
+	if (!verified.ok) return false;
 
 	await general.transaction().execute(async (trx) => {
 		await trx.deleteFrom("account_totp").where("account_id", "=", account.id).execute();
