@@ -106,12 +106,11 @@ export function verifyTotp(secret: string, code: string, window = 1): number | n
 
 export function otpauthUrl(nickname: string, secret: string): string {
 	const label = encodeURIComponent(`Fasberry:${nickname}`);
+	// Defaults are SHA1/6/30; leaving them out keeps the QR dense enough for a
+	// 128x128 in-game map.
 	const params = new URLSearchParams({
 		secret,
 		issuer: "Fasberry",
-		algorithm: "SHA1",
-		digits: String(DIGITS),
-		period: String(PERIOD_S),
 	});
 
 	return `otpauth://totp/${label}?${params.toString()}`;
