@@ -3,6 +3,7 @@ import { SUBJECTS } from "#/shared/nats/subjects";
 import { subscribePlayerJoin } from "./subscribers/sub-player-join";
 import { subscribeReferralCheck } from "./subscribers/sub-referals";
 import { subscribePlaytime } from "./subscribers/sub-playtime";
+import { subscribeTwoFactor } from "./subscribers/sub-two-factor";
 import { subscribeConfig } from "./subscribers/sub-config";
 import { subscribeSkinsChanged } from "./subscribers/sub-skins-changed";
 import { subscribeGrimFlag } from "./subscribers/sub-grim-flag";
@@ -19,6 +20,10 @@ export const SUBSCRIBERS: NatsSubscription[] = [
 	{
 		name: "Playtime",
 		cb: (nc) => subscribePlaytime(nc, SUBJECTS.SERVER.PLAYER.PLAYTIME),
+	},
+	{
+		name: "Two-factor",
+		cb: (nc) => subscribeTwoFactor(nc, `${SUBJECTS.SERVER.PLAYER.TWO_FACTOR.BASE}.>`),
 	},
 	// "Player stats" is not wired: the request/reply responder lives on the
 	// server side and no subject is agreed yet (sub-player-stats.ts stays).

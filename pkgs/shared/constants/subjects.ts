@@ -24,6 +24,11 @@ export const SUBJECTS = {
     PLAYER: {
       BASE: "server.player",
       PLAYTIME: "server.player.playtime.report",
+      TWO_FACTOR: {
+        BASE: "server.player.2fa",
+        SETUP: "server.player.2fa.setup",
+        CONFIRM: "server.player.2fa.confirm",
+      },
       REFERAL: {
         BASE: "server.player.referal",
         CHECK: "server.player.referal.check",
