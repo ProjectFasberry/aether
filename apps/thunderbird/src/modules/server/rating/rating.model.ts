@@ -408,10 +408,12 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
-		fields: [{
-			key: "total", direction, expression: "total"
-		}],
-		parseCursor: (cursor) => ({ total: Number(cursor.total) }),
+		fields: [
+			{ key: "total", direction, expression: "total" },
+			// UUID is the tiebreaker: equal totals must not skip or repeat a row.
+			{ key: "uuid", direction, expression: "uuid" },
+		],
+		parseCursor: (cursor) => ({ total: Number(cursor.total), uuid: cursor.uuid }),
 	});
 
 	const avatarsMap = await skinsService.players.getAvatar(result.rows.map(r => r.nickname!));
@@ -559,6 +561,10 @@ const RATINGS_SECTIONS = {
 		muffin: {
 			title: "Muffin",
 			childs: ["charism", "playtime"],
+		},
+		lobby: {
+			title: "Lobby",
+			childs: ["playtime"],
 		},
 	},
 };

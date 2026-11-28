@@ -16,7 +16,7 @@ import {
 const reportSchema = z.object({
 	id: z.string().uuid(),
 	sessionId: z.string().uuid(),
-	uuid: z.string().max(64).optional(),
+	uuid: z.string().uuid(),
 	nickname: z.string().min(1).max(16),
 	server: z.string().min(1).max(32),
 	seconds: z.number().int().positive().max(MAX_PLAYTIME_REPORT_SECONDS),
@@ -39,7 +39,7 @@ export const subscribePlaytime = (nc: NatsConnection, subject: string) => {
 			void ingestPlaytimeReport({
 				id: parsed.data.id,
 				sessionId: parsed.data.sessionId,
-				uuid: parsed.data.uuid ?? null,
+				uuid: parsed.data.uuid,
 				nickname: parsed.data.nickname,
 				server: parsed.data.server,
 				seconds: parsed.data.seconds,

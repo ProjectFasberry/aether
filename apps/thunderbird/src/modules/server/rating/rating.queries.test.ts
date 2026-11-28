@@ -88,10 +88,11 @@ describe("aggregated rating queries", () => {
 		expect(sql).toContain('"completed" = ');
 	});
 
-	it("sums playtime per player across servers", () => {
+	it("sums playtime per account uuid across servers", () => {
 		const sql = compile(playtimeRatingQuery(dummyDb<generalDB>()));
-		expect(sql).toContain('sum("seconds")');
-		expect(sql).toContain('group by "lower_nickname"');
+		expect(sql).toContain('sum("player_playtime"."seconds")');
+		expect(sql).toContain('group by "player_playtime"."uuid"');
+		expect(sql).toContain('left join "players"');
 	});
 
 	it("filters the playtime leaderboard by server when asked", () => {

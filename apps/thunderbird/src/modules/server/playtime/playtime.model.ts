@@ -10,7 +10,7 @@ import { general } from "#/shared/database/general-db";
 export type PlaytimeReport = {
 	id: string;
 	sessionId: string;
-	uuid: string | null;
+	uuid: string;
 	nickname: string;
 	server: string;
 	seconds: number;
@@ -27,12 +27,22 @@ export async function ingestPlaytimeReport(report: PlaytimeReport): Promise<bool
 	const lowerNickname = report.nickname.toLowerCase();
 
 	return general.transaction().execute(async (trx) => {
+		// The account UUID wins over the one in the report: a legacy CMI row can
+		// carry a premium UUID while the project registered the offline one.
+		const account = await trx
+			.selectFrom("players")
+			.select("uuid")
+			.where("lower_case_nickname", "=", lowerNickname)
+			.executeTakeFirst();
+
+		const uuid = account?.uuid ?? report.uuid;
+
 		const inserted = await trx
 			.insertInto("playtime_reports")
 			.values({
 				id: report.id,
 				session_id: report.sessionId,
-				uuid: report.uuid,
+				uuid,
 				lower_nickname: lowerNickname,
 				nickname: report.nickname,
 				server: report.server,
@@ -47,13 +57,15 @@ export async function ingestPlaytimeReport(report: PlaytimeReport): Promise<bool
 		await trx
 			.insertInto("player_playtime")
 			.values({
+				uuid,
 				lower_nickname: lowerNickname,
 				nickname: report.nickname,
 				server: report.server,
 				seconds: report.seconds,
 			})
 			.onConflict((oc) =>
-				oc.columns(["lower_nickname", "server"]).doUpdateSet({
+				oc.columns(["uuid", "server"]).doUpdateSet({
+					lower_nickname: lowerNickname,
 					nickname: report.nickname,
 					updated_at: new Date(),
 					seconds: sql`"player_playtime"."seconds" + ${report.seconds}`,
@@ -65,18 +77,55 @@ export async function ingestPlaytimeReport(report: PlaytimeReport): Promise<bool
 	});
 }
 
-/** Total playtime in seconds across the requested nicknames. */
+/**
+ * Total playtime in seconds across the requested nicknames. Known players are
+ * resolved to their account UUID; legacy CMI-only rows that have no account
+ * fall back to the stored lowercase nickname.
+ */
 export async function getPlaytimeSeconds(nicknames: string[]): Promise<Map<string, number>> {
 	const lowered = [...new Set(nicknames.map((nickname) => nickname.toLowerCase()))];
 	if (lowered.length === 0) return new Map();
 
-	const rows = await general
-		.selectFrom("player_playtime")
-		.select(["lower_nickname"])
-		.select(sql<number>`sum("seconds")`.as("total"))
-		.where("lower_nickname", "in", lowered)
-		.groupBy("lower_nickname")
+	const accounts = await general
+		.selectFrom("players")
+		.select(["uuid", "lower_case_nickname"])
+		.where("lower_case_nickname", "in", lowered)
 		.execute();
 
-	return new Map(rows.map((row) => [row.lower_nickname, Number(row.total ?? 0)]));
+	const uuidByNickname = new Map(accounts.map((row) => [row.lower_case_nickname, row.uuid]));
+	const result = new Map<string, number>();
+
+	if (accounts.length > 0) {
+		const rows = await general
+			.selectFrom("player_playtime")
+			.select("uuid")
+			.select(sql<number>`sum("seconds")`.as("total"))
+			.where("uuid", "in", accounts.map((row) => row.uuid))
+			.groupBy("uuid")
+			.execute();
+
+		const byUuid = new Map(rows.map((row) => [row.uuid, Number(row.total ?? 0)]));
+
+		for (const [nickname, uuid] of uuidByNickname) {
+			result.set(nickname, byUuid.get(uuid) ?? 0);
+		}
+	}
+
+	const missing = lowered.filter((nickname) => !uuidByNickname.has(nickname));
+
+	if (missing.length > 0) {
+		const rows = await general
+			.selectFrom("player_playtime")
+			.select(sql<string>`lower("nickname")`.as("lower_nickname"))
+			.select(sql<number>`sum("seconds")`.as("total"))
+			.where(sql`lower("nickname")`, "in", missing)
+			.groupBy(sql`lower("nickname")`)
+			.execute();
+
+		for (const row of rows) {
+			result.set(row.lower_nickname, Number(row.total ?? 0));
+		}
+	}
+
+	return new Map(lowered.map((nickname) => [nickname, result.get(nickname) ?? 0]));
 }
