@@ -6,10 +6,12 @@ import {
 	confirmTwoFactorSetup,
 	startTwoFactorSetup,
 } from "#/modules/auth/two-factor.model";
+import { auth } from "#/modules/auth/auth.model";
 
 type Payload = {
 	nickname?: string;
 	code?: string;
+	password?: string;
 };
 
 /**
@@ -34,6 +36,19 @@ async function handleTwoFactor(message: import("@nats-io/nats-core").Msg): Promi
 
 	try {
 		if (action === "setup") {
+			// The in-game session is not enough to change account security: the
+			// player proves the password in an anvil prompt, never in chat.
+			if (typeof parsed.value.password !== "string") {
+				message.respond(JSON.stringify({ error: "PASSWORD_REQUIRED" }));
+				return;
+			}
+
+			const account = await auth.getAccount(nickname);
+			if (!account || !(await Bun.password.verify(parsed.value.password, account.hash))) {
+				message.respond(JSON.stringify({ error: "PASSWORD_OR_LOGIN_INCORRECT" }));
+				return;
+			}
+
 			const data = await startTwoFactorSetup(nickname);
 			if (!data) {
 				message.respond(JSON.stringify({ error: "NOT_FOUND" }));
