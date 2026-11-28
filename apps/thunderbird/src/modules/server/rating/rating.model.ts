@@ -14,9 +14,10 @@ import { general } from "#/shared/database/general-db";
 import { skinsService } from "../../../shared/services/skins";
 import {
 	belkoinRatingQuery, charismRatingQuery, landsMembersRatingQuery, landsRatingQuery,
-	parkourRatingQuery, playtimeRatingQuery, purchasesRatingQuery, referralsRatingQuery,
+	parkourRatingQuery, purchasesRatingQuery, referralsRatingQuery,
 	reputationRatingQuery, resolveRatingServer, wikiRatingQuery,
 } from "./rating.queries";
+import { playtimeRatingQuery } from "#/modules/server/playtime/playtime.queries";
 
 export const ratingSchema = t.Composite([
 	t.Pick(metaSchema, ["asc", "limit", "endCursor"]),
@@ -400,21 +401,15 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 }
 
 async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
-	const dbs: Record<string, Kysely<bisquiteDB> | null> = {
-		bisquite: bisquite,
-		muffin: null,
-	};
-
-	const { dbInstance } = getServerDBInstance<bisquiteDB>({ server, dbs });
 	const direction = getDirection(asc);
 
-	const query = playtimeRatingQuery(dbInstance)
+	const query = playtimeRatingQuery(general, server)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
 		after: endCursor,
 		fields: [{
-			key: "total", direction, expression: "TotalPlayTime"
+			key: "total", direction, expression: "total"
 		}],
 		parseCursor: (cursor) => ({ total: Number(cursor.total) }),
 	});
@@ -425,7 +420,8 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 		kind: "playtime" as const,
 		nickname: row.nickname ?? "unknown",
 		avatar: avatarsMap[row.nickname!],
-		total: Number(row.total ?? 0)
+		// The API reports seconds, the UI formats milliseconds.
+		total: Number(row.total ?? 0) * 1000
 	}))
 
 	return { data, meta: toPageMeta(result) };

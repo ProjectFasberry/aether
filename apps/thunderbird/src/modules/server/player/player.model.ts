@@ -1,6 +1,7 @@
 import { bisquite } from "#/shared/database/bisquite-db"
 import { reputation } from "#/shared/database/reputation-db"
 import { safeJsonParse } from "#/utils";
+import { getPlaytimeSeconds } from "#/modules/server/playtime/playtime.model";
 
 type Skill = {
   line: string;
@@ -143,27 +144,32 @@ export async function getSkills(nickname: string): Promise<SkillsData | null> {
 }
 
 export async function getPlayerGameInfo(nickname: string): Promise<PlayerGameInfo> {
-  const main = await bisquite
-    .selectFrom("cmi_users")
-    .leftJoin("playerpoints_username_cache", "cmi_users.username", "playerpoints_username_cache.username")
-    .leftJoin("playerpoints_points", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
-    .select([
-      "cmi_users.Balance",
-      "cmi_users.UserMeta",
-      "playerpoints_points.points",
-      "cmi_users.player_uuid",
-      "cmi_users.TotalPlayTime",
-      "cmi_users.DisplayName"
-    ])
-    .where("cmi_users.username", "=", nickname)
-    .executeTakeFirst()
+  const [main, playtime] = await Promise.all([
+    bisquite
+      .selectFrom("cmi_users")
+      .leftJoin("playerpoints_username_cache", "cmi_users.username", "playerpoints_username_cache.username")
+      .leftJoin("playerpoints_points", "playerpoints_points.uuid", "playerpoints_username_cache.uuid")
+      .select([
+        "cmi_users.Balance",
+        "cmi_users.UserMeta",
+        "playerpoints_points.points",
+        "cmi_users.player_uuid",
+        "cmi_users.DisplayName"
+      ])
+      .where("cmi_users.username", "=", nickname)
+      .executeTakeFirst(),
+    getPlaytimeSeconds([nickname]),
+  ])
+
+  // Playtime is network-wide and lives in Postgres, not in one server's CMI.
+  const totalPlaytime = (playtime.get(nickname.toLowerCase()) ?? 0) * 1000
 
   if (!main) {
     const s = {
       meta: null,
       reputation: 0,
       displayName: null,
-      totalPlaytime: 0
+      totalPlaytime
     }
 
     return s
@@ -179,6 +185,6 @@ export async function getPlayerGameInfo(nickname: string): Promise<PlayerGameInf
     meta: main.UserMeta,
     reputation: result?.reputation ? result.reputation : 0,
     displayName: main.DisplayName,
-    totalPlaytime: main.TotalPlayTime ?? 0
+    totalPlaytime
   }
 }

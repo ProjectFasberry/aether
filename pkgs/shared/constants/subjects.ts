@@ -23,6 +23,7 @@ export const SUBJECTS = {
     BASE: "server",
     PLAYER: {
       BASE: "server.player",
+      PLAYTIME: "server.player.playtime.report",
       REFERAL: {
         BASE: "server.player.referal",
         CHECK: "server.player.referal.check",

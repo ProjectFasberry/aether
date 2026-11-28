@@ -1,13 +1,13 @@
 import { general } from "#/shared/database/general-db";
 import { logger } from "@repo/shared/utils/logger";
-import { getNetworkPlaytime } from "./playtime";
+import { getPlaytimeSeconds } from "#/modules/server/playtime/playtime.model";
 
-// min playtime for reward //
+// min playtime for reward, in seconds //
 
 // 3 hours
-const MIN_PLAYTIME_FOR_RECIPIENT = 3 * 60 * 60 * 1000;
+const MIN_PLAYTIME_FOR_RECIPIENT = 3 * 60 * 60;
 // 6 hours
-const MIN_PLAYTIME_FOR_INITIATOR = 6 * 60 * 60 * 1000;
+const MIN_PLAYTIME_FOR_INITIATOR = 6 * 60 * 60;
 
 export type ValidatedReferral = { initiator: string; recipient: string };
 
@@ -30,8 +30,8 @@ export async function validateReferral(nickname: string): Promise<ValidatedRefer
 		.where("completed", "=", false)
 		.execute();
 
-	// Self-referrals are never paid: they used to be skipped only because the
-	// CMI lookup needs two distinct rows.
+	// Self-referrals are never paid; the accept endpoint blocks new ones, and
+	// rows created before that check stay harmless.
 	const joined = nickname.toLowerCase();
 	const candidates = pairs
 		.filter((pair) => pair.referrer.toLowerCase() !== pair.referral.toLowerCase())
@@ -45,7 +45,7 @@ export async function validateReferral(nickname: string): Promise<ValidatedRefer
 
 	if (candidates.length === 0) return [];
 
-	const playtime = await getNetworkPlaytime(
+	const playtime = await getPlaytimeSeconds(
 		candidates.flatMap((pair) => [pair.referrer, pair.referral]),
 	);
 

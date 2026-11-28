@@ -49,12 +49,6 @@ export const parkourRatingQuery = (db: Kysely<lobbyDB>) => {
 		.where("ranked.rn", "=", 1)
 }
 
-export const playtimeRatingQuery = (db: Kysely<bisquiteDB>) =>
-	db
-		.selectFrom("cmi_users")
-		.select(["TotalPlayTime as total", "username as nickname"])
-		.where("TotalPlayTime", "is not", null)
-
 export const charismRatingQuery = (db: Kysely<bisquiteDB>) =>
 	db
 		.selectFrom("cmi_users")

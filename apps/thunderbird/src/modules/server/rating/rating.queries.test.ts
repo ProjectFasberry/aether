@@ -16,7 +16,6 @@ import {
 	landsMembersRatingQuery,
 	landsRatingQuery,
 	parkourRatingQuery,
-	playtimeRatingQuery,
 	purchasesRatingQuery,
 	referralsRatingQuery,
 	reputationRatingQuery,
@@ -24,6 +23,7 @@ import {
 	wikiRatingQuery,
 } from "./rating.queries";
 import type { DB as generalDB } from "@gen/db/general";
+import { playtimeRatingQuery } from "#/modules/server/playtime/playtime.queries";
 
 /** Compiles a query without a connection: the Postgres driver is never used. */
 function dummyDb<T>(): Kysely<T> {
@@ -65,11 +65,6 @@ describe("rating queries with cursor pagination", () => {
 		expect(sql).toContain('"ranked"."rn" = ');
 	});
 
-	it("drops playtime rows with null TotalPlayTime", () => {
-		const sql = compile(playtimeRatingQuery(dummyDb<bisquiteDB>()));
-		expect(sql).toContain('"totalplaytime" is not null');
-	});
-
 	it("drops charism rows with null Balance", () => {
 		const sql = compile(charismRatingQuery(dummyDb<bisquiteDB>()));
 		expect(sql).toContain('"balance" is not null');
@@ -91,6 +86,17 @@ describe("aggregated rating queries", () => {
 		const sql = compile(referralsRatingQuery(dummyDb<generalDB>()));
 		expect(sql).toContain("count(*)");
 		expect(sql).toContain('"completed" = ');
+	});
+
+	it("sums playtime per player across servers", () => {
+		const sql = compile(playtimeRatingQuery(dummyDb<generalDB>()));
+		expect(sql).toContain('sum("seconds")');
+		expect(sql).toContain('group by "lower_nickname"');
+	});
+
+	it("filters the playtime leaderboard by server when asked", () => {
+		const sql = compile(playtimeRatingQuery(dummyDb<generalDB>(), "bisquite"));
+		expect(sql).toContain('"server" = ');
 	});
 
 	it("ignores wiki revisions without an author", () => {
