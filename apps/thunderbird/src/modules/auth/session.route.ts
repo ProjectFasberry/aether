@@ -10,6 +10,8 @@ import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { isError } from "@repo/shared/utils";
 import { wrapError } from "@repo/shared/lib/helpers"
+import { DateTime } from "#/helpers/typebox";
+import { getLoginHistory } from "./login-events.model";
 
 const SESSION_ERRORS_MAP = {
   INSUFFICIENT_PERMISSION_BY_TIME: 400,
@@ -56,6 +58,27 @@ export const session = new Elysia()
       },
       detail: {
         summary: buildRouteSummary("Get current session"),
+      },
+    })
+    .get("/history", async ({ nickname }) => {
+      const data = await getLoginHistory(nickname);
+      return { data };
+    }, {
+      response: {
+        200: withData(t.Array(t.Object({
+          id: t.Number(),
+          nickname: t.String(),
+          ip: t.String(),
+          browser: t.String(),
+          os: t.String(),
+          platform: t.String(),
+          client: t.String(),
+          new_device: t.Boolean(),
+          created_at: DateTime,
+        }))),
+      },
+      detail: {
+        summary: buildRouteSummary("Get login history"),
       },
     })
     .delete("/all", async ({ session: sessionToken, nickname, status }) => {

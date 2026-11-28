@@ -13,6 +13,12 @@ import { type Static, t, type Context } from "elysia";
 import { getClientDomain, SESSION_KEY } from "#/modules/auth/cookie";
 import { DateTime } from "#/helpers/typebox";
 import { cookie } from "#/lib/cookies";
+import {
+	displayBrowser,
+	displayOs,
+	displayPlatform,
+	recordLoginEvent,
+} from "./login-events.model";
 
 export const loginLogger = authLogger.child({ name: "login" });
 export const qrLogger = loginLogger.child({ name: "qr" });
@@ -32,6 +38,8 @@ type CreateSessionPayload = {
 export const sessionPayloadSchema = t.Object({
   nickname: t.String(),
   created_at: DateTime,
+  last_seen: t.Optional(DateTime),
+  new_device: t.Optional(t.Boolean()),
   ip: t.String(),
   browser: t.String(),
   platform: t.String(),
@@ -46,6 +54,8 @@ export const sessionParsedPayloadSchema = t.Composite([
   t.Object({
     /** Opaque per-session id (sha256 of the token), safe to show and to put in a URL. */
     id: t.String(),
+    last_seen: DateTime,
+    new_device: t.Boolean(),
     browser: t.Object({
       name: t.String(),
       version: t.String(),
@@ -71,6 +81,8 @@ const MIN_SESSION_EXPIRE_MS = MIN_SESSION_EXPIRE_S * 1000;
 const SESSIONS_LENGTH_LIMIT = 15; // 15 sessions per user
 /** Managing sessions (list delete) requires the acting session to be this old. */
 const SESSION_MANAGE_MIN_AGE_MS = 3 * 24 * 60 * 60 * 1000;
+/** Session JSON is written at most once per five minutes for `last_seen`. */
+const LAST_SEEN_THROTTLE_MS = 5 * 60 * 1000;
 
 /** Stable opaque id for a session token; the raw token never leaves the cookie. */
 export const sessionId = (token: string): string =>
@@ -105,9 +117,12 @@ function buildUA(raw: Record<IterateKey, string | object>): Record<IterateKey, s
 }
 
 type StringifiedUserSessionParsedPayload = Pick<UserSessionParsedPayload, "nickname" | "ip" | "created_at"> & {
+  last_seen?: string | Date;
+  new_device?: boolean;
   browser: string;
   platform: string;
   os: string;
+  client?: "web" | "launcher";
 };
 
 export const session = {
@@ -124,6 +139,15 @@ export const session = {
 
       const sessionData = JSON.parse(sessionDataStr) as UserSessionPayload;
       const nickname = sessionData.nickname;
+
+      // Keep `last_seen` fresh without writing on every request.
+      const nowMs = Date.now();
+      const lastSeenMs = sessionData.last_seen ? new Date(sessionData.last_seen).getTime() : 0;
+
+      if (!lastSeenMs || nowMs - lastSeenMs > LAST_SEEN_THROTTLE_MS) {
+        sessionData.last_seen = new Date(nowMs);
+        await redisClient.set(sessionKey, JSON.stringify(sessionData), "KEEPTTL");
+      }
 
       const userSessionsKey = sessions.getUserSessionsKey(nickname);
       const newExpiresAtTimestamp = Date.now() + SESSION_EXPIRE_MS;
@@ -176,6 +200,14 @@ export const session = {
     if (!parsed.ok || !auth.isSessionFresh(parsed.value)) return null;
 
     const { nickname } = parsed.value;
+
+    const nowMs = Date.now();
+    const lastSeenMs = parsed.value.last_seen ? new Date(parsed.value.last_seen).getTime() : 0;
+
+    if (!lastSeenMs || nowMs - lastSeenMs > LAST_SEEN_THROTTLE_MS) {
+      parsed.value.last_seen = new Date(nowMs);
+      await redisClient.set(sessionKey, JSON.stringify(parsed.value), "KEEPTTL");
+    }
 
     if (ttl < MIN_SESSION_EXPIRE_MS) {
       const userSessionsKey = sessions.getUserSessionsKey(nickname);
@@ -253,9 +285,28 @@ export const session = {
     const infoUpdated = { browser, engine, os, platform, ip };
     const processedUA = buildUA(infoUpdated);
 
+    let newDevice = false;
+
+    try {
+      newDevice = await recordLoginEvent({
+        nickname,
+        ip,
+        browser: displayBrowser(browser),
+        os: displayOs(os),
+        platform: displayPlatform(platform),
+        client,
+      });
+    } catch (error) {
+      // A login must not fail because the history table is unavailable.
+      loginLogger.warn(`failed to record login history for ${nickname}: ${String(error)}`);
+    }
+
+    const now = dayjs().toDate();
     const payload: UserSessionPayload = {
       nickname,
-      created_at: dayjs().toDate(),
+      created_at: now,
+      last_seen: now,
+      new_device: newDevice,
       client,
       ...processedUA,
     };
@@ -420,6 +471,8 @@ export const session = {
       platform: parsePlatform(dataRow.value.platform),
       os: parseOs(dataRow.value.os),
       created_at: dayjs(dataRow.value.created_at).toDate(),
+      last_seen: dayjs(dataRow.value.last_seen ?? dataRow.value.created_at).toDate(),
+      new_device: dataRow.value.new_device ?? false,
     };
   },
 };
@@ -449,6 +502,8 @@ async function getSessionsRows(tokens: string[]): Promise<UserSessionParsedPaylo
       platform: parsePlatform(dataRow.value.platform),
       os: parseOs(dataRow.value.os),
       created_at: dayjs(dataRow.value.created_at).toDate(),
+      last_seen: dayjs(dataRow.value.last_seen ?? dataRow.value.created_at).toDate(),
+      new_device: dataRow.value.new_device ?? false,
     });
   });
 

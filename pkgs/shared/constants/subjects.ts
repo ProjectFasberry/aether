@@ -45,6 +45,7 @@ export const SUBJECTS = {
     AUTHORIZATION: {
       BASE: "events.authorization",
       LOGIN: "events.authorization.login",
+      LOGIN_NEW_DEVICE: "events.authorization.login.new_device",
       REGISTER: "events.authorization.register",
       UNREGISTER: "events.authorization.unregister"
     },
