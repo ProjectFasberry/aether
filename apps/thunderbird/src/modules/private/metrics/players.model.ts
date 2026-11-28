@@ -43,7 +43,7 @@ export async function getPlayersSeries({ from, to, server }: PlayersRange): Prom
 		])
 		.where("event", ">=", from)
 		.where("event", "<", to)
-		.$if(!!server, (qb) => qb.where("server", "=", server as string))
+		.$if(!!server, (qb) => qb.where(sql`lower("server")`, "=", (server as string).toLowerCase()))
 		.groupBy(bucket)
 		.orderBy(bucket)
 		.execute();
@@ -66,7 +66,7 @@ export async function getPlayersTotals({ from, to, server }: PlayersRange): Prom
 		])
 		.where("event", ">=", from)
 		.where("event", "<", to)
-		.$if(!!server, (qb) => qb.where("server", "=", server as string))
+		.$if(!!server, (qb) => qb.where(sql`lower("server")`, "=", (server as string).toLowerCase()))
 		.executeTakeFirst();
 
 	return {
@@ -85,11 +85,13 @@ export async function getPlayersOnline(): Promise<PlayersOnline[]> {
 		.orderBy("nickname")
 		.orderBy("event", "desc");
 
+	const serverKey = sql<string>`lower(last.server)`;
+
 	const rows = await general
 		.selectFrom(last.as("last"))
-		.select(["last.server", sql<number>`count(*)::int`.as("online")])
+		.select([serverKey.as("server"), sql<number>`count(*)::int`.as("online")])
 		.where("last.type", "=", "join")
-		.groupBy("last.server")
+		.groupBy(serverKey)
 		.execute();
 
 	return rows
@@ -98,12 +100,14 @@ export async function getPlayersOnline(): Promise<PlayersOnline[]> {
 }
 
 export async function getKnownServers(): Promise<string[]> {
+	const serverKey = sql<string>`lower("server")`;
+
 	const rows = await general
 		.selectFrom("activity_users")
-		.select("server")
+		.select(serverKey.as("server"))
 		.where("server", "is not", null)
 		.distinct()
-		.orderBy("server")
+		.orderBy(serverKey)
 		.execute();
 
 	return rows.map((row) => row.server).filter((server): server is string => !!server);

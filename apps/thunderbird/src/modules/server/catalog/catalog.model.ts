@@ -5,6 +5,7 @@ import { t } from "elysia";
 export const catalogServerSchema = t.Object({
 	id: t.String(),
 	fullname: t.String(),
+	fullname_en: t.String(),
 	available: t.Boolean(),
 	excluded: t.Boolean(),
 	runtime: serverRuntimeSchema,
@@ -36,6 +37,7 @@ export async function getCatalog(): Promise<ServerCatalog> {
 		servers[id] = {
 			id,
 			fullname: row.fullname,
+			fullname_en: row.fullname_en ?? "",
 			available: row.available,
 			excluded: row.excluded,
 			runtime: {

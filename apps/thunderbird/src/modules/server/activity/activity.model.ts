@@ -55,7 +55,7 @@ export async function getPlayerStatus(nickname: string): Promise<PlayerActivityP
     if (playerStatus) {
       const { currentServer } = playerStatus
 
-      return { type: "online", nickname, server: currentServer, issued_date: dayjs().toDate() }
+      return { type: "online", nickname, server: currentServer.trim().toLowerCase(), issued_date: dayjs().toDate() }
     } else {
       const payload = {
         event: SUBJECTS.SERVER.EVENTS.USER.CHECK_ONLINE,

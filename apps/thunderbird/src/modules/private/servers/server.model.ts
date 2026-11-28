@@ -4,6 +4,7 @@ import { type Static, t } from "elysia";
 export const serverSchema = t.Object({
 	id: t.Number(),
 	fullname: t.String(),
+	fullname_en: t.String(),
 	description: t.Nullable(t.String()),
 	thumbnail: t.String(),
 	origin: t.String(),
@@ -35,6 +36,7 @@ export async function getServers(query: ServerListQuery): Promise<ServerPayload[
 		.select([
 			"id",
 			"fullname",
+			"fullname_en",
 			"description",
 			"thumbnail",
 			"origin",
@@ -67,6 +69,7 @@ export async function getServer(id: number): Promise<ServerPayload | undefined> 
 		.select([
 			"id",
 			"fullname",
+			"fullname_en",
 			"description",
 			"thumbnail",
 			"origin",

@@ -23,6 +23,8 @@ export const serverContentSchema = t.Object({
 export const serverSchema = t.Object({
   online: t.Number(),
   fullname: t.String(),
+  /** English display name; absent in snapshots written before localization. */
+  fullname_en: t.Optional(t.Nullable(t.String())),
   thumbnail: t.String(),
   max: t.Number(),
   players: t.Array(t.String()),
@@ -170,6 +172,7 @@ export const createServerStatusService = ({
               online,
               players: allPlayers.filter((p) => p.currentServer === server).map((p) => p.username),
               fullname: rawData?.fullname ?? "unknown",
+              fullname_en: rawData?.fullname_en ?? null,
               thumbnail: getStaticUrl(rawData?.thumbnail ?? "", config.VOLUME_URL),
               status: running ? "online" : "offline",
               max: 200,

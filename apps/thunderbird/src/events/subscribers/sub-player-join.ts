@@ -44,7 +44,10 @@ async function resolveUuid(nickname: string, uuid?: string) {
 }
 
 async function recordActivity(presence: Presence, type: "join" | "quit") {
-	const { name, server, session } = presence;
+	const { name, session } = presence;
+	// The proxy reports its registered server name ("Lobby"), the catalog and
+	// playtime use the lowercase origin ("lobby"). Store one canonical key.
+	const server = presence.server.trim().toLowerCase();
 	const uuid = await resolveUuid(name, presence.uuid);
 
 	const query = await general

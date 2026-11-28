@@ -9,6 +9,7 @@ import { clientModSchema, getServer, loaderSchema, serverSchema } from "./server
 
 const serverUpdateBody = t.Object({
   fullname: t.Optional(t.String({ minLength: 1, maxLength: 64 })),
+  fullname_en: t.Optional(t.String({ maxLength: 64 })),
   description: t.Optional(t.Nullable(t.String({ maxLength: 1024 }))),
   thumbnail: t.Optional(t.String({ maxLength: 512 })),
   available: t.Optional(t.Boolean()),

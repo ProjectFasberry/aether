@@ -17,6 +17,7 @@ const originSchema = t.String({ minLength: 2, maxLength: 32, pattern: "^[a-z0-9]
 const serverCreateBody = t.Object({
   origin: originSchema,
   fullname: t.String({ minLength: 1, maxLength: 64 }),
+  fullname_en: t.Optional(t.String({ maxLength: 64 })),
   description: t.Optional(t.Nullable(t.String({ maxLength: 1024 }))),
   thumbnail: t.Optional(t.String({ maxLength: 512 })),
   available: t.Optional(t.Boolean()),
@@ -69,6 +70,7 @@ export const serverCreate = new Elysia()
       const values = {
         origin,
         fullname: body.fullname.trim(),
+        fullname_en: body.fullname_en?.trim() || "",
         description: body.description?.trim() || null,
         thumbnail: body.thumbnail?.trim() ?? "",
         available: body.available ?? false,

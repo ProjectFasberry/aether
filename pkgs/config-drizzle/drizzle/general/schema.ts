@@ -804,6 +804,7 @@ export const servers = pgTable("servers", {
 			cache: 1,
 		}),
 	fullname: text().notNull(),
+	fullnameEn: text("fullname_en").default("").notNull(),
 	available: boolean().default(false).notNull(),
 	excluded: boolean().default(false).notNull(),
 	description: text(),
