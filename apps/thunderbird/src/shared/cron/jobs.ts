@@ -238,6 +238,22 @@ export const CRON_JOBS = [
     lockTtlMs: 60 * 60_000
   }),
   defineJob({
+    name: "clean-old-playtime-reports",
+    cron: "0 55 4 * * *",
+    callback: async () => {
+      const { cleanOldPlaytimeReports } = await import("#/modules/server/playtime/playtime-retention");
+      const removed = await cleanOldPlaytimeReports();
+
+      if (removed > 0) {
+        cronLogger.info(`Playtime: removed ${removed} report ids outside the retention window`);
+      }
+    },
+    immediately: false,
+    schedule: true,
+    allowIsDev: true,
+    lockTtlMs: 60 * 60_000
+  }),
+  defineJob({
     name: "process-skin-head-jobs",
     cron: "*/2 * * * *",
     callback: async () => {
