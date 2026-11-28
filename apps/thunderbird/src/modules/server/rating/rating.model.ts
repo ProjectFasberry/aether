@@ -403,7 +403,9 @@ async function getReputationRating({ asc, limit, endCursor, server }: Static<typ
 async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
-	const query = playtimeRatingQuery(general, server)
+	// "global" is the network-wide tab: no server filter, the query sums them.
+	const serverFilter = server && server !== "global" ? server : undefined;
+	const query = playtimeRatingQuery(general, serverFilter)
 
 	const result = await executeWithCursorPagination(query, {
 		perPage: limit,
@@ -551,7 +553,7 @@ export async function getRating(by: AllowedKeys, query: Static<typeof ratingSche
 const RATINGS_SECTIONS = {
 	global: {
 		title: "Глобальные",
-		childs: ["parkour", "belkoin", "wiki", "referrals", "purchases"],
+		childs: ["parkour", "playtime", "belkoin", "wiki", "referrals", "purchases"],
 	},
 	servers: {
 		bisquite: {
