@@ -27,7 +27,7 @@ function pushToReferral({ nickname }: { nickname: string }) {
 	const nc = natsService.getInstance();
 
 	const payload = new TextEncoder().encode(nickname);
-	nc.publish(SUBJECTS.USERS.REWARD_CHECK, payload);
+	nc.publish(SUBJECTS.SERVER.PLAYER.REFERAL.CHECK, payload);
 }
 
 /** `players.uuid` is stable across renames, the nickname in the payload is not. */
@@ -68,9 +68,11 @@ async function handlePresence(payload: Presence, type: "join" | "quit") {
 	const nickname = payload.name;
 
 	try {
-		if (type === "join") pushToReferral({ nickname });
-
+		// Record first: on quit the session must be closed before the referral
+		// check reads playtime, otherwise the last session is not counted.
 		await recordActivity(payload, type);
+
+		pushToReferral({ nickname });
 	} catch (e) {
 		logErrorMsg(e);
 	}

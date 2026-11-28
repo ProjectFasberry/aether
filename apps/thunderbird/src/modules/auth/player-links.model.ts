@@ -25,6 +25,8 @@ const LINK_ERRORS = {
 	NICKNAME_TAKEN: { msg: "Nickname is already taken", code: 409 },
 	ACCOUNT_MISSING: { msg: "Account for this link is missing", code: 404 },
 	REFERRAL_LIMIT: { msg: "Referral limit reached", code: 409 },
+	REFERRAL_SELF: { msg: "You cannot refer yourself", code: 409 },
+	REFERRAL_DEVICE_USED: { msg: "This device already accepted a referral", code: 409 },
 	PASSWORD_IS_UNSAFE: { msg: "Password is unsafe", code: 400 },
 } as const;
 
@@ -44,6 +46,13 @@ const REFERRAL_WINDOW_START = sql<Date>`now() - interval '12 months'`;
 const linkLogger = authLogger.child({ name: "player-links" });
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
+
+/** Postgres unique violation; the referral device index is the one we translate. */
+function isUniqueViolation(error: unknown): error is { code: string; constraint?: string } {
+	return typeof error === "object"
+		&& error !== null
+		&& (error as { code?: string }).code === "23505";
+}
 
 /** Credentials are stored hashed exactly like the password registration route. */
 export async function hashLinkPassword(password: string) {
@@ -235,86 +244,117 @@ export async function acceptReferral({
 	nickname,
 	password,
 	ip,
+	visitorId,
 }: {
 	token: string;
 	nickname: string;
 	password: string;
 	ip?: string | null;
+	/** FingerprintJS id from the client; one device may accept one referral. */
+	visitorId?: string | null;
 }): Promise<{ nickname: string }> {
 	const link = await findLink(token, "referral");
 
 	const referrer = link.referrer;
 	if (!referrer) throw linkError.raise("ACCOUNT_MISSING");
+	if (referrer.toLowerCase() === nickname.trim().toLowerCase()) throw linkError.raise("REFERRAL_SELF");
 
 	const passwordHash = await hashLinkPassword(password);
 
-	const result = await general.transaction().execute(async (trx) => {
-		// Lock the link first, then the referrer: one token must produce exactly
-		// one account even if the request is replayed in parallel.
-		const current = await trx
-			.selectFrom("player_links")
-			.select(["used_at", "expires_at"])
-			.where("id", "=", String(link.id))
-			.forUpdate()
-			.executeTakeFirst();
+	let result: { nickname: string; uuid: string };
 
-		if (!current) throw linkError.raise("LINK_NOT_FOUND");
-		if (current.used_at) throw linkError.raise("LINK_USED");
-		if (new Date(current.expires_at).getTime() <= Date.now()) throw linkError.raise("LINK_EXPIRED");
+	try {
+		result = await general.transaction().execute(async (trx) => {
+			// Lock the link first, then the referrer: one token must produce exactly
+			// one account even if the request is replayed in parallel.
+			const current = await trx
+				.selectFrom("player_links")
+				.select(["used_at", "expires_at"])
+				.where("id", "=", String(link.id))
+				.forUpdate()
+				.executeTakeFirst();
 
-		// Serialize accepts per referrer so two parallel registrations cannot
-		// both pass the limit check.
-		await sql`select pg_advisory_xact_lock(hashtext(${referrer}))`.execute(trx);
+			if (!current) throw linkError.raise("LINK_NOT_FOUND");
+			if (current.used_at) throw linkError.raise("LINK_USED");
+			if (new Date(current.expires_at).getTime() <= Date.now()) throw linkError.raise("LINK_EXPIRED");
 
-		const used = await trx
-			.selectFrom("referrals")
-			.select((expression) => expression.fn.countAll<number>().as("count"))
-			.where("referrer", "=", referrer)
-			.where("created_at", ">", REFERRAL_WINDOW_START)
-			.executeTakeFirst();
+			// Serialize accepts per referrer so two parallel registrations cannot
+			// both pass the limit check.
+			await sql`select pg_advisory_xact_lock(hashtext(${referrer}))`.execute(trx);
 
-		if (Number(used?.count ?? 0) >= REFERRALS_PER_WINDOW) throw linkError.raise("REFERRAL_LIMIT");
+			const used = await trx
+				.selectFrom("referrals")
+				.select((expression) => expression.fn.countAll<number>().as("count"))
+				.where("referrer", "=", referrer)
+				.where("created_at", ">", REFERRAL_WINDOW_START)
+				.executeTakeFirst();
 
-		const lowerNickname = nickname.toLowerCase();
+			if (Number(used?.count ?? 0) >= REFERRALS_PER_WINDOW) throw linkError.raise("REFERRAL_LIMIT");
 
-		const accountExists = await trx
-			.selectFrom("accounts")
-			.select("id")
-			.where("lower_nickname", "=", lowerNickname)
-			.executeTakeFirst();
+			// The same browser accepting several referrals is the cheapest alt-account
+			// farm; the unique index is the race-safe backstop for this check.
+			if (visitorId) {
+				const deviceUsed = await trx
+					.selectFrom("referrals")
+					.select("id")
+					.where("device", "=", visitorId)
+					.executeTakeFirst();
 
-		if (accountExists) throw linkError.raise("NICKNAME_TAKEN");
+				if (deviceUsed) throw linkError.raise("REFERRAL_DEVICE_USED");
+			}
 
-		const playerExists = await trx
-			.selectFrom("players")
-			.select("nickname")
-			.where("lower_case_nickname", "=", lowerNickname)
-			.executeTakeFirst();
+			const lowerNickname = nickname.toLowerCase();
 
-		if (playerExists) throw linkError.raise("NICKNAME_TAKEN");
+			const accountExists = await trx
+				.selectFrom("accounts")
+				.select("id")
+				.where("lower_nickname", "=", lowerNickname)
+				.executeTakeFirst();
 
-		const rows = await createAccountRows(trx, { nickname, password: passwordHash });
+			if (accountExists) throw linkError.raise("NICKNAME_TAKEN");
 
-		await trx
-			.insertInto("referrals")
-			.values({
-				referrer,
-				referral: nickname,
-				payout_after: new Date(Date.now() + REFERRAL_PAYOUT_DELAY_MS),
-				link_id: link.id,
-			})
-			.execute();
+			const playerExists = await trx
+				.selectFrom("players")
+				.select("nickname")
+				.where("lower_case_nickname", "=", lowerNickname)
+				.executeTakeFirst();
 
-		await trx.insertInto("findout").values({ nickname, value: link.findout }).execute();
+			if (playerExists) throw linkError.raise("NICKNAME_TAKEN");
 
-		await trx
-			.updateTable("player_links")
-			.set({ used_at: new Date(), used_by: nickname, ip: ip ?? null })
-			.where("id", "=", String(link.id))
-			.execute();
+			const rows = await createAccountRows(trx, { nickname, password: passwordHash });
 
-		return { nickname, uuid: rows.uuid };
-	});
+			await trx
+				.insertInto("referrals")
+				.values({
+					referrer,
+					referral: nickname,
+					payout_after: new Date(Date.now() + REFERRAL_PAYOUT_DELAY_MS),
+					link_id: link.id,
+					// Kept for manual review: IPs alone are too noisy (NAT, VPN).
+					referrer_ip: ip ?? null,
+					device: visitorId ?? null,
+				})
+				.execute();
+
+			await trx.insertInto("findout").values({ nickname, value: link.findout }).execute();
+
+			await trx
+				.updateTable("player_links")
+				.set({ used_at: new Date(), used_by: nickname, ip: ip ?? null })
+				.where("id", "=", String(link.id))
+				.execute();
+
+			return { nickname, uuid: rows.uuid };
+		});
+	} catch (error) {
+		// Two parallel accepts from the same browser: the index wins, the loser gets
+		// the same message as the pre-check instead of a 500.
+		if (isUniqueViolation(error) && error.constraint === "referrals_device_uq") {
+			throw linkError.raise("REFERRAL_DEVICE_USED");
+		}
+
+		throw error;
+	}
 
 	register.runPostRegistrationEffects({ nickname, uuid: result.uuid });
 	linkLogger.info(`referral accepted: ${nickname} by ${referrer}`);

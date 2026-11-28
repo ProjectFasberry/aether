@@ -19,21 +19,12 @@ export const SUBJECTS = {
     BASE: "luckperms",
     UPDATE: "luckperms:update",
   },
-  /**
-   * @deprecated Will be replaced by SUBJECTS.SERVER.PLAYER.REFERAL.*
-   */
-  USERS: {
-    BASE: "users",
-    REWARD: "users.referal.reward",
-    REWARD_CHECK: "users.referal.check",
-  },
   SERVER: {
     BASE: "server",
     PLAYER: {
       BASE: "server.player",
       REFERAL: {
         BASE: "server.player.referal",
-        REWARD: "server.player.referal.reward",
         CHECK: "server.player.referal.check",
       },
     },

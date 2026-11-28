@@ -59,3 +59,11 @@ export function collectSessions(rows: ActivityRow[], now: Date): ActivitySession
 
   return sessions;
 }
+
+/** Total paired time in milliseconds; open sessions are capped like above. */
+export function sumSessionMs(rows: ActivityRow[], now: Date): number {
+  return collectSessions(rows, now).reduce(
+    (total, session) => total + Math.max(0, session.end.getTime() - session.start.getTime()),
+    0,
+  );
+}

@@ -45,10 +45,10 @@ const linkAccept = new Elysia()
 			throw status(400, wrapError("IP_RESTRICTIONS"));
 		}
 	})
-	.post("/link/accept", async ({ body: { token, nickname, password }, ip, status }) => {
+	.post("/link/accept", async ({ body: { token, nickname, password, visitorId }, ip, status }) => {
 		try {
 			const data = nickname
-				? await acceptReferral({ token, nickname, password, ip })
+				? await acceptReferral({ token, nickname, password, ip, visitorId })
 				: await acceptInvite({ token, password, ip });
 
 			return { data };
@@ -62,6 +62,8 @@ const linkAccept = new Elysia()
 			password: t.String({ minLength: 8, maxLength: 32 }),
 			/** Referral links only: the nickname the player picks. */
 			nickname: t.Optional(t.String({ minLength: 3, maxLength: 16 })),
+			/** Referral links only: FingerprintJS id, used to block repeat devices. */
+			visitorId: t.Optional(t.String({ minLength: 8, maxLength: 64 })),
 		}),
 		response: {
 			200: withData(t.Object({ nickname: t.String() })),
