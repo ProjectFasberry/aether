@@ -18,7 +18,6 @@ import { initOptionCache } from "./shared/constants/options";
 import { SUBSCRIBERS } from "./events/registry";
 import { initServiceState } from "./shared/services/service-state";
 import { signingKeys } from "./modules/yggdrasil/signing-keys.model";
-import { voteSites } from "./modules/server/votes/vote-sites.model";
 import { beginShutdown } from "./shared/shutdown";
 import { handleProcessOnEvent } from "./shared/observability/process";
 import { normalizeError } from "@repo/shared/utils";
@@ -77,13 +76,7 @@ export const lifecycle = defineLifecycle()
     critical: true,
     dependsOn: "db",
     start: () => signingKeys.ensure(),
-  })
-  .add("vote-sites", {
-    critical: false,
-    dependsOn: "db",
-    start: () => voteSites.ensure(),
-  })
-  .add("minio", {
+  })  .add("minio", {
     critical: false,
     timeoutMs: 20_000,
     start: () => minioService.start({

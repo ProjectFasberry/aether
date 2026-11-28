@@ -356,21 +356,6 @@ export const storePromotions = pgTable("store_promotions", {
 	priority: text().notNull(),
 });
 
-export const votedUsers = pgTable("voted_users", {
-	id: integer()
-		.primaryKey()
-		.generatedAlwaysAsIdentity({
-			name: "voted_users_id_seq",
-			startWith: 1,
-			increment: 1,
-			minValue: 1,
-			maxValue: 2147483647,
-			cache: 1,
-		}),
-	nickname: text().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-});
-
 export const storeItems = pgTable(
 	"store_items",
 	{

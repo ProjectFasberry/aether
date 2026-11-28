@@ -91,18 +91,6 @@ type GeneralDB = import("@gen/db/general").DB
  * Grouped queries are wrapped in a subquery: cursor pagination filters on the
  * aggregate column, and a bare alias cannot be used in WHERE.
  */
-export const votesRatingQuery = (db: Kysely<GeneralDB>) =>
-	db
-		.selectFrom(
-			db
-				.selectFrom("voted_users")
-				.select("nickname")
-				.select((eb) => eb.fn.countAll<number>().as("votes"))
-				.groupBy("nickname")
-				.as("counted"),
-		)
-		.selectAll()
-
 export const referralsRatingQuery = (db: Kysely<GeneralDB>) =>
 	db
 		.selectFrom(

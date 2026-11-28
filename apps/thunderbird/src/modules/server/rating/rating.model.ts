@@ -15,7 +15,7 @@ import { skinsService } from "../../../shared/services/skins";
 import {
 	belkoinRatingQuery, charismRatingQuery, landsMembersRatingQuery, landsRatingQuery,
 	parkourRatingQuery, playtimeRatingQuery, purchasesRatingQuery, referralsRatingQuery,
-	reputationRatingQuery, resolveRatingServer, votesRatingQuery, wikiRatingQuery,
+	reputationRatingQuery, resolveRatingServer, wikiRatingQuery,
 } from "./rating.queries";
 
 export const ratingSchema = t.Composite([
@@ -42,7 +42,7 @@ interface RatingEntry {
 
 export const bySchema = t.UnionEnum([
 	"belkoin", "charism", "lands", "lands-members", "reputation", "playtime", "parkour",
-	"votes", "wiki", "referrals", "purchases",
+	"wiki", "referrals", "purchases",
 ]);
 
 type AllowedKeys = Static<typeof bySchema>;
@@ -161,20 +161,6 @@ const ratingConfig = defineRatingConfig({
 			meta: withMeta
 		}),
 		fn: getLandsMembersRating
-	},
-	votes: {
-		schema: t.Object({
-			data: t.Array(
-				t.Object({
-					kind: t.Literal("votes"),
-					nickname: t.String(),
-					votes: t.Number(),
-					avatar: t.String(),
-				})
-			),
-			meta: withMeta
-		}),
-		fn: getVotesRating
 	},
 	wiki: {
 		schema: t.Object({
@@ -445,32 +431,6 @@ async function getPlaytimeRating({ asc, limit, endCursor, server }: Static<typeo
 	return { data, meta: toPageMeta(result) };
 }
 
-async function getVotesRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
-	const direction = getDirection(asc);
-
-	const result = await executeWithCursorPagination(votesRatingQuery(general), {
-		perPage: limit,
-		after: endCursor,
-		fields: [
-			{ key: "votes", direction, expression: "votes" },
-			{ key: "nickname", direction, expression: "nickname" },
-		],
-		parseCursor: (cursor) => ({ votes: Number(cursor.votes), nickname: cursor.nickname }),
-	});
-
-	const avatarsMap = await skinsService.players.getAvatar(result.rows.map((r) => r.nickname ?? ""));
-
-	return {
-		data: result.rows.map((row) => ({
-			kind: "votes" as const,
-			nickname: row.nickname ?? "unknown",
-			votes: Number(row.votes ?? 0),
-			avatar: avatarsMap[row.nickname ?? ""],
-		})),
-		meta: toPageMeta(result),
-	};
-}
-
 async function getReferralsRating({ asc, limit, endCursor }: Static<typeof ratingSchema>): Promise<unknown> {
 	const direction = getDirection(asc);
 
@@ -593,7 +553,7 @@ export async function getRating(by: AllowedKeys, query: Static<typeof ratingSche
 const RATINGS_SECTIONS = {
 	global: {
 		title: "Глобальные",
-		childs: ["parkour", "belkoin", "votes", "wiki", "referrals", "purchases"],
+		childs: ["parkour", "belkoin", "wiki", "referrals", "purchases"],
 	},
 	servers: {
 		bisquite: {
@@ -614,7 +574,6 @@ const RATINGS_SECTIONS_BY_KEY: Record<string, string> = {
 	belkoin: "Белкоин",
 	playtime: "Время игры",
 	parkour: "Паркур",
-	votes: "Голоса",
 	wiki: "Вики",
 	referrals: "Рефералы",
 	purchases: "Покупки",

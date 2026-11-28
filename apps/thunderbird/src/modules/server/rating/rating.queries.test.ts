@@ -21,7 +21,6 @@ import {
 	referralsRatingQuery,
 	reputationRatingQuery,
 	resolveRatingServer,
-	votesRatingQuery,
 	wikiRatingQuery,
 } from "./rating.queries";
 import type { DB as generalDB } from "@gen/db/general";
@@ -88,13 +87,6 @@ describe("rating queries with cursor pagination", () => {
 });
 
 describe("aggregated rating queries", () => {
-	it("counts votes per nickname in a subquery", () => {
-		const sql = compile(votesRatingQuery(dummyDb<generalDB>()));
-		expect(sql).toContain("count(*)");
-		expect(sql).toContain("group by");
-		expect(sql).toContain('from (');
-	});
-
 	it("counts only completed referrals", () => {
 		const sql = compile(referralsRatingQuery(dummyDb<generalDB>()));
 		expect(sql).toContain("count(*)");

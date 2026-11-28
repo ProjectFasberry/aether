@@ -5,7 +5,7 @@ import { clientIp } from "#/shared/services/client-ip";
 /**
  * Per-IP limit for the public surface (reads served to the website, launcher
  * and embeds). Authenticated and internal paths have their own buckets, and
- * endpoints that already throttle (Yggdrasil, auth, the vote webhook) or serve
+ * endpoints that already throttle (Yggdrasil, auth) or serve
  * many files (releases, avatars, the static bundle) are skipped.
  */
 const SKIP_PREFIXES = [
@@ -18,7 +18,6 @@ const SKIP_PREFIXES = [
   "/avatars",
   "/static",
   "/yggdrasil",
-  "/third-party",
   "/.well-known",
 ];
 

@@ -9,7 +9,6 @@ import { health, service } from "./modules/root/service";
 import { force } from "./modules/root/force";
 import { appGroup } from "./modules/root/app";
 import { validateGroup } from "./modules/root/validate";
-import { processPlayerVote } from "./modules/server/votes/process-vote.route";
 import { privated } from "./modules/private";
 import { account } from "./modules/account";
 import { team } from "./modules/team";
@@ -81,6 +80,3 @@ export const root = new Elysia()
   .use(appGroup)
   .use(validateGroup)
   .use(privatedGroup)
-  .group("/third-party", app => app
-    .use(processPlayerVote)
-  )
