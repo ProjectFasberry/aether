@@ -104,9 +104,14 @@ const withPassword = new Elysia()
     detail: {
       summary: buildRouteSummary("Login"),
     },
-  })
+  });
+
+const withTwoFactor = new Elysia()
+  .use(ipPlugin())
+  .use(validateAuthStatus())
+  .resolve(({ headers }) => ({ ua: headers["user-agent"] }))
   .post("/2fa", async ({ status, body: { challenge, code }, ip, ua: userAgentStr, ...ctx }) => {
-    const context = await consumeTwoFactorChallenge(challenge, code);
+    const context = await consumeTwoFactorChallenge(challenge, code, "web");
 
     if (!context || context.client !== "web") {
       return status(400, wrapError("TWO_FACTOR_INVALID"));
@@ -452,6 +457,7 @@ export const withGame = new Elysia()
 export const login = new Elysia()
   .group("/login", app => app
     .use(withPassword)
+    .use(withTwoFactor)
     .group("/qr", app => app
       .use(withQR))
     .group("/game", app => app

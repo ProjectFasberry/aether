@@ -31,8 +31,12 @@ export type LoginEvent = {
  * requests carry no User-Agent, so their first login is the baseline.
  */
 function deviceKey(input: LoginEventInput): string {
+	// Browser and OS minors change on every update; only the family identifies
+	// the device, otherwise every Chrome update looks like a new login.
+	const family = (value: string) => value.replace(/\s+\d.*$/, "").trim() || "unknown";
+
 	return createHash("sha256")
-		.update([input.client, input.browser, input.os, input.platform].join("|"))
+		.update([input.client, family(input.browser), family(input.os), input.platform].join("|"))
 		.digest("hex");
 }
 

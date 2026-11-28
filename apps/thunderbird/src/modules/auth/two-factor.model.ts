@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { general } from "#/shared/database/general-db";
 import { redisService } from "#/shared/redis/client";
 import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
@@ -105,15 +106,23 @@ export async function confirmTwoFactorSetup(nickname: string, code: string): Pro
 	const account = await getAccount(nickname);
 	if (!account) return null;
 
-	const row = await getTotp(account.id);
-	if (!row || row.confirmed_at) throw new Error("TWO_FACTOR_NOT_PENDING");
+	return general.transaction().execute(async (trx) => {
+		// The row lock makes the pending -> confirmed transition exactly once:
+		// two parallel confirms cannot both generate and return backup codes.
+		const row = await trx
+			.selectFrom("account_totp")
+			.select(["secret", "confirmed_at"])
+			.where("account_id", "=", account.id)
+			.forUpdate()
+			.executeTakeFirst();
 
-	const step = verifyTotp(decryptSecret(row.secret), code);
-	if (step === null) return null;
+		if (!row || row.confirmed_at) throw new Error("TWO_FACTOR_NOT_PENDING");
 
-	const codes = generateBackupCodes();
+		const step = verifyTotp(decryptSecret(row.secret), code);
+		if (step === null) return null;
 
-	await general.transaction().execute(async (trx) => {
+		const codes = generateBackupCodes();
+
 		await trx
 			.updateTable("account_totp")
 			.set({ confirmed_at: new Date(), last_used_step: step, updated_at: new Date() })
@@ -125,9 +134,9 @@ export async function confirmTwoFactorSetup(nickname: string, code: string): Pro
 			.insertInto("account_backup_codes")
 			.values(codes.map((codeValue) => ({ account_id: account.id, code_hash: hashBackupCode(codeValue) })))
 			.execute();
-	});
 
-	return codes;
+		return codes;
+	});
 }
 
 export async function disableTwoFactor(
@@ -173,14 +182,17 @@ export async function verifySecondFactor(
 
 	const step = verifyTotp(decryptSecret(row.secret), code);
 
-	if (step !== null && step > Number(row.last_used_step ?? 0)) {
-		await general
+	if (step !== null) {
+		// The conditional update is the replay guard: only the first request
+		// with this step can move last_used_step forward.
+		const usedStep = await general
 			.updateTable("account_totp")
 			.set({ last_used_step: step, updated_at: new Date() })
 			.where("account_id", "=", account.id)
-			.execute();
+			.where(sql<boolean>`("last_used_step" is null or "last_used_step" < ${step})`)
+			.executeTakeFirst();
 
-		return { ok: true, backup: false };
+		return { ok: Number(usedStep.numUpdatedRows ?? 0) > 0, backup: false };
 	}
 
 	const hash = hashBackupCode(normalizeBackupCode(code));
@@ -194,14 +206,15 @@ export async function verifySecondFactor(
 
 	if (!backup) return { ok: false, backup: false };
 
-	await general
+	// Only one concurrent request may consume a one-time code.
+	const consumed = await general
 		.updateTable("account_backup_codes")
 		.set({ used_at: new Date() })
 		.where("id", "=", backup.id)
 		.where("used_at", "is", null)
-		.execute();
+		.executeTakeFirst();
 
-	return { ok: true, backup: true };
+	return { ok: Number(consumed.numUpdatedRows ?? 0) > 0, backup: true };
 }
 
 export async function createTwoFactorChallenge(input: Omit<Challenge, "attempts">): Promise<string> {
@@ -222,6 +235,7 @@ export async function createTwoFactorChallenge(input: Omit<Challenge, "attempts"
 export async function consumeTwoFactorChallenge(
 	token: string,
 	code: string,
+	expectedClient: "web" | "launcher",
 ): Promise<Omit<Challenge, "attempts"> | null> {
 	const redis = redisService.getInstance();
 	const key = challengeKey(token);
@@ -235,6 +249,8 @@ export async function consumeTwoFactorChallenge(
 		await redis.del(key);
 		return null;
 	}
+
+	if (payload.client !== expectedClient) return null;
 
 	if (payload.attempts >= TWO_FACTOR_MAX_ATTEMPTS) {
 		await redis.del(key);

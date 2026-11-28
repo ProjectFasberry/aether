@@ -1,6 +1,7 @@
 import type { NatsConnection } from "@nats-io/nats-core";
 import { safeJsonParse } from "@repo/shared/utils";
 import { logErrorMsg } from "#/shared/observability/log";
+import { allowRequest } from "#/shared/services/rate-limit";
 import {
 	confirmTwoFactorSetup,
 	startTwoFactorSetup,
@@ -25,6 +26,11 @@ async function handleTwoFactor(message: import("@nats-io/nats-core").Msg): Promi
 
 	const nickname = parsed.value.nickname;
 	const action = message.subject.split(".").pop();
+
+	if (!(await allowRequest(`2fa:nats:${action ?? "unknown"}`, nickname.toLowerCase(), 5, 15 * 60))) {
+		message.respond(JSON.stringify({ error: "TOO_MANY_REQUESTS" }));
+		return;
+	}
 
 	try {
 		if (action === "setup") {

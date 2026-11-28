@@ -142,7 +142,7 @@ const loginRoute = new Elysia()
 const loginTwoFactorRoute = new Elysia()
   .use(ipPlugin())
   .post("/login/2fa", async ({ status, body: { challenge, code }, ip, headers, request }) => {
-    const context = await consumeTwoFactorChallenge(challenge, code);
+    const context = await consumeTwoFactorChallenge(challenge, code, "launcher");
 
     if (!context || context.client !== "launcher") {
       return status(400, wrapError("TWO_FACTOR_INVALID"));

@@ -3,6 +3,8 @@ import { defineRequiredSession } from "#/lib/define";
 import { withData, withError } from "#/shared/schemas";
 import { buildRouteSummary } from "#/lib/routes";
 import { wrapError } from "@repo/shared/lib/helpers";
+import { auth } from "./auth.model";
+import { allowRequest } from "#/shared/services/rate-limit";
 import {
 	confirmTwoFactorSetup,
 	disableTwoFactor,
@@ -26,7 +28,16 @@ export const twoFactor = new Elysia()
 			},
 			detail: { summary: buildRouteSummary("Get two-factor status") },
 		})
-		.post("/setup", async ({ nickname, status }) => {
+		.post("/setup", async ({ nickname, body: { password }, status }) => {
+			if (!(await allowRequest("2fa:setup", nickname.toLowerCase(), 5, 15 * 60))) {
+				return status(429, wrapError("TOO_MANY_REQUESTS"));
+			}
+
+			const account = await auth.getAccount(nickname);
+			if (!account || !(await Bun.password.verify(password, account.hash))) {
+				return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
+			}
+
 			try {
 				const data = await startTwoFactorSetup(nickname);
 				if (!data) return status(404, wrapError("NOT_FOUND"));
@@ -43,11 +54,20 @@ export const twoFactor = new Elysia()
 			response: {
 				200: withData(t.Object({ secret: t.String(), otpauth: t.String() })),
 				404: withError(t.String()),
+				400: withError(t.UnionEnum(["PASSWORD_OR_LOGIN_INCORRECT"])),
 				409: withError(t.UnionEnum(["TWO_FACTOR_ALREADY_ENABLED"])),
+				429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
 			},
+			body: t.Object({
+				password: t.String({ minLength: 1, maxLength: 72 }),
+			}),
 			detail: { summary: buildRouteSummary("Start two-factor setup") },
 		})
 		.post("/confirm", async ({ nickname, body: { code }, status }) => {
+			if (!(await allowRequest("2fa:confirm", nickname.toLowerCase(), 5, 15 * 60))) {
+				return status(429, wrapError("TOO_MANY_REQUESTS"));
+			}
+
 			try {
 				const backupCodes = await confirmTwoFactorSetup(nickname, code);
 				if (!backupCodes) return status(400, wrapError("TWO_FACTOR_INVALID"));
@@ -65,10 +85,15 @@ export const twoFactor = new Elysia()
 			response: {
 				200: withData(t.Object({ backupCodes: t.Array(t.String()) })),
 				400: withError(t.UnionEnum(["TWO_FACTOR_INVALID"])),
+				429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
 			},
 			detail: { summary: buildRouteSummary("Confirm two-factor setup") },
 		})
 		.post("/disable", async ({ nickname, body: { password, code }, status }) => {
+			if (!(await allowRequest("2fa:disable", nickname.toLowerCase(), 5, 15 * 60))) {
+				return status(429, wrapError("TOO_MANY_REQUESTS"));
+			}
+
 			const result = await disableTwoFactor(nickname, password, code);
 			if (!result) return status(400, wrapError("TWO_FACTOR_INVALID"));
 
@@ -81,6 +106,7 @@ export const twoFactor = new Elysia()
 			response: {
 				200: withData(t.Literal("OK")),
 				400: withError(t.UnionEnum(["TWO_FACTOR_INVALID"])),
+				429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
 			},
 			detail: { summary: buildRouteSummary("Disable two-factor") },
 		}),
