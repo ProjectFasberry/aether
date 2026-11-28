@@ -10,6 +10,11 @@ import { DateTime } from "#/helpers/typebox";
 import { skinsService } from "#/shared/services/skins";
 import { changePassword } from "#/modules/account/account.model";
 import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
+import {
+	consumeTwoFactorChallenge,
+	createTwoFactorChallenge,
+	isTwoFactorEnabled,
+} from "./two-factor.model";
 
 /**
  * Head images live in a private bucket; hand the launcher an API link that it
@@ -87,6 +92,17 @@ const loginRoute = new Elysia()
       return status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
     }
 
+    if (await isTwoFactorEnabled(account.nickname)) {
+      const challenge = await createTwoFactorChallenge({
+        nickname: account.nickname,
+        ip,
+        ua: headers["user-agent"] ?? "",
+        client: "launcher",
+      });
+
+      return { data: { requires_2fa: true as const, challenge } };
+    }
+
     // One launcher session per account. Browser sessions stay untouched.
     await sessionService.deleteByClient(account.nickname, "launcher");
 
@@ -111,12 +127,61 @@ const loginRoute = new Elysia()
   }, {
     body: loginSchema,
     response: {
-      200: withData(loginPayloadSchema),
+      200: withData(t.Union([
+        loginPayloadSchema,
+        t.Object({ requires_2fa: t.Literal(true), challenge: t.String() }),
+      ])),
       400: withError(t.UnionEnum(["NOT_EXISTS", "PASSWORD_OR_LOGIN_INCORRECT"])),
       429: withError(t.UnionEnum(["TOO_MANY_REQUESTS"])),
     },
     detail: {
       summary: buildRouteSummary("Launcher login"),
+    },
+  });
+
+const loginTwoFactorRoute = new Elysia()
+  .use(ipPlugin())
+  .post("/login/2fa", async ({ status, body: { challenge, code }, ip, headers, request }) => {
+    const context = await consumeTwoFactorChallenge(challenge, code);
+
+    if (!context || context.client !== "launcher") {
+      return status(400, wrapError("TWO_FACTOR_INVALID"));
+    }
+
+    const identity = await auth.getUserIdentity(context.nickname);
+    if (!identity) return status(400, wrapError("TWO_FACTOR_INVALID"));
+
+    await sessionService.deleteByClient(identity.nickname, "launcher");
+
+    const { token, expires_at } = await sessionService.create({
+      nickname: identity.nickname,
+      ip: context.ip || ip,
+      client: "launcher",
+      userAgentStr: context.ua || headers["user-agent"],
+    });
+
+    const avatar = publicAvatar(request, await skinsService.player.getAvatar(identity.nickname));
+
+    return {
+      data: {
+        nickname: identity.nickname,
+        uuid: identity.uuid,
+        avatar,
+        token,
+        expires_at,
+      },
+    };
+  }, {
+    body: t.Object({
+      challenge: t.String({ minLength: 16, maxLength: 128 }),
+      code: t.String({ minLength: 6, maxLength: 20 }),
+    }),
+    response: {
+      200: withData(loginPayloadSchema),
+      400: withError(t.UnionEnum(["TWO_FACTOR_INVALID"])),
+    },
+    detail: {
+      summary: buildRouteSummary("Complete launcher two-factor login"),
     },
   });
 
@@ -200,5 +265,6 @@ const sessionRoute = new Elysia()
 export const clientAuth = new Elysia()
   .group("/client", app => app
     .use(loginRoute)
+    .use(loginTwoFactorRoute)
     .use(sessionRoute),
   );

@@ -18,6 +18,11 @@ import type { QREventsPayload, QREventsEvent, QRValidateTokenPayload } from "@re
 import { isProduction } from "#/shared/env";
 import { allowRequest, LIMITS } from "#/shared/services/rate-limit";
 import { nanoid } from "nanoid";
+import {
+	consumeTwoFactorChallenge,
+	createTwoFactorChallenge,
+	isTwoFactorEnabled,
+} from "./two-factor.model";
 
 const loginSchema = authSchema;
 
@@ -43,6 +48,17 @@ const withPassword = new Elysia()
     const passIsValid = await Bun.password.verify(password, account.hash);
     if (!passIsValid) throw status(400, wrapError("PASSWORD_OR_LOGIN_INCORRECT"));
 
+    if (await isTwoFactorEnabled(account.nickname)) {
+      const challenge = await createTwoFactorChallenge({
+        nickname: account.nickname,
+        ip,
+        ua: userAgentStr ?? "",
+        client: "web",
+      });
+
+      return { data: { requires_2fa: true as const, challenge } };
+    }
+
     const { expires_at: expires, token } = await session.create({
       nickname: account.nickname,
       userAgentStr,
@@ -62,10 +78,16 @@ const withPassword = new Elysia()
     body: loginSchema,
     response: {
       200: withData(
-        t.Object({
-          nickname: t.String(),
-          uuid: t.String(),
-        }),
+        t.Union([
+          t.Object({
+            nickname: t.String(),
+            uuid: t.String(),
+          }),
+          t.Object({
+            requires_2fa: t.Literal(true),
+            challenge: t.String(),
+          }),
+        ]),
       ),
       400: withError(
         t.UnionEnum([
@@ -81,6 +103,44 @@ const withPassword = new Elysia()
     },
     detail: {
       summary: buildRouteSummary("Login"),
+    },
+  })
+  .post("/2fa", async ({ status, body: { challenge, code }, ip, ua: userAgentStr, ...ctx }) => {
+    const context = await consumeTwoFactorChallenge(challenge, code);
+
+    if (!context || context.client !== "web") {
+      return status(400, wrapError("TWO_FACTOR_INVALID"));
+    }
+
+    const identity = await auth.getUserIdentity(context.nickname);
+    if (!identity) return status(400, wrapError("TWO_FACTOR_INVALID"));
+
+    const { expires_at: expires, token } = await session.create({
+      nickname: identity.nickname,
+      userAgentStr: context.ua || userAgentStr,
+      ip: context.ip || ip,
+    });
+
+    cookie.set({
+      cookies: ctx.cookie,
+      key: SESSION_KEY,
+      expires,
+      value: token,
+      domain: getClientDomain(),
+    });
+
+    return { data: { nickname: identity.nickname, uuid: identity.uuid } };
+  }, {
+    body: t.Object({
+      challenge: t.String({ minLength: 16, maxLength: 128 }),
+      code: t.String({ minLength: 6, maxLength: 20 }),
+    }),
+    response: {
+      200: withData(t.Object({ nickname: t.String(), uuid: t.String() })),
+      400: withError(t.UnionEnum(["TWO_FACTOR_INVALID"])),
+    },
+    detail: {
+      summary: buildRouteSummary("Complete two-factor login"),
     },
   });
 

@@ -41,6 +41,8 @@ const envSchema = z.object({
   PANEL_PASSWORD: z.string().min(1),
   /** Shared secret for the Velocity join gate; when unset, verification is off. */
   GATE_SECRET: z.optional(z.string().min(16)),
+  /** 32 random bytes (base64) for TOTP secret encryption; required in production. */
+  AUTH_TOTP_KEY: z.optional(z.string().min(1)),
   /** Payments. A provider without credentials stays disabled. */
   SBP_PROVIDER_URL: z.optional(z.url()),
   SBP_MERCHANT_ID: z.optional(z.string().min(1)),
