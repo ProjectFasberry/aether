@@ -92,7 +92,7 @@ describe("aggregated rating queries", () => {
 		const sql = compile(playtimeRatingQuery(dummyDb<generalDB>()));
 		expect(sql).toContain('sum("player_playtime"."seconds")');
 		expect(sql).toContain('group by "player_playtime"."uuid"');
-		expect(sql).toContain('left join "players"');
+		expect(sql).toContain('inner join "players"');
 	});
 
 	it("filters the playtime leaderboard by server when asked", () => {
