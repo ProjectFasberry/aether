@@ -116,10 +116,10 @@ export async function getPlaytimeSeconds(nicknames: string[]): Promise<Map<strin
 	if (missing.length > 0) {
 		const rows = await general
 			.selectFrom("player_playtime")
-			.select(sql<string>`lower("nickname")`.as("lower_nickname"))
+			.select(["lower_nickname"])
 			.select(sql<number>`sum("seconds")`.as("total"))
-			.where(sql`lower("nickname")`, "in", missing)
-			.groupBy(sql`lower("nickname")`)
+			.where("lower_nickname", "in", missing)
+			.groupBy("lower_nickname")
 			.execute();
 
 		for (const row of rows) {
